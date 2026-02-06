@@ -1,0 +1,106 @@
+{
+  "id": "EUVD-2026-5069",
+  "enisaUuid": "bb4f9dd2-7077-3de3-8747-c670e7e88b09",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/page_alloc: prevent pcp corruption with SMP=n\n\nThe kernel test robot has reported:\n\n BUG: spinlock trylock failure on UP on CPU#0, kcompactd0/28\n  lock: 0xffff888807e35ef0, .magic: dead4ead, .owner: kcompactd0/28, .owner_cpu: 0\n CPU: 0 UID: 0 PID: 28 Comm: kcompactd0 Not tainted 6.18.0-rc5-00127-ga06157804399 #1 PREEMPT  8cc09ef94dcec767faa911515ce9e609c45db470\n Call Trace:\n  <IRQ>\n  __dump_stack (lib/dump_stack.c:95)\n  dump_stack_lvl (lib/dump_stack.c:123)\n  dump_stack (lib/dump_stack.c:130)\n  spin_dump (kernel/locking/spinlock_debug.c:71)\n  do_raw_spin_trylock (kernel/locking/spinlock_debug.c:?)\n  _raw_spin_trylock (include/linux/spinlock_api_smp.h:89 kernel/locking/spinlock.c:138)\n  __free_frozen_pages (mm/page_alloc.c:2973)\n  ___free_pages (mm/page_alloc.c:5295)\n  __free_pages (mm/page_alloc.c:5334)\n  tlb_remove_table_rcu (include/linux/mm.h:? include/linux/mm.h:3122 include/asm-generic/tlb.h:220 mm/mmu_gather.c:227 mm/mmu_gather.c:290)\n  ? __cfi_tlb_remove_table_rcu (mm/mmu_gather.c:289)\n  ? rcu_core (kernel/rcu/tree.c:?)\n  rcu_core (include/linux/rcupdate.h:341 kernel/rcu/tree.c:2607 kernel/rcu/tree.c:2861)\n  rcu_core_si (kernel/rcu/tree.c:2879)\n  handle_softirqs (arch/x86/include/asm/jump_label.h:36 include/trace/events/irq.h:142 kernel/softirq.c:623)\n  __irq_exit_rcu (arch/x86/include/asm/jump_label.h:36 kernel/softirq.c:725)\n  irq_exit_rcu (kernel/softirq.c:741)\n  sysvec_apic_timer_interrupt (arch/x86/kernel/apic/apic.c:1052)\n  </IRQ>\n  <TASK>\n RIP: 0010:_raw_spin_unlock_irqrestore (arch/x86/include/asm/preempt.h:95 include/linux/spinlock_api_smp.h:152 kernel/locking/spinlock.c:194)\n  free_pcppages_bulk (mm/page_alloc.c:1494)\n  drain_pages_zone (include/linux/spinlock.h:391 mm/page_alloc.c:2632)\n  __drain_all_pages (mm/page_alloc.c:2731)\n  drain_all_pages (mm/page_alloc.c:2747)\n  kcompactd (mm/compaction.c:3115)\n  kthread (kernel/kthread.c:465)\n  ? __cfi_kcompactd (mm/compaction.c:3166)\n  ? __cfi_kthread (kernel/kthread.c:412)\n  ret_from_fork (arch/x86/kernel/process.c:164)\n  ? __cfi_kthread (kernel/kthread.c:412)\n  ret_from_fork_asm (arch/x86/entry/entry_64.S:255)\n  </TASK>\n\nMatthew has analyzed the report and identified that in drain_page_zone()\nwe are in a section protected by spin_lock(&pcp->lock) and then get an\ninterrupt that attempts spin_trylock() on the same lock.  The code is\ndesigned to work this way without disabling IRQs and occasionally fail the\ntrylock with a fallback.  However, the SMP=n spinlock implementation\nassumes spin_trylock() will always succeed, and thus it's normally a\nno-op.  Here the enabled lock debugging catches the problem, but otherwise\nit could cause a corruption of the pcp structure.\n\nThe problem has been introduced by commit 574907741599 (\"mm/page_alloc:\nleave IRQs enabled for per-cpu page allocations\").  The pcp locking scheme\nrecognizes the need for disabling IRQs to prevent nesting spin_trylock()\nsections on SMP=n, but the need to prevent the nesting in spin_lock() has\nnot been recognized.  Fix it by introducing local wrappers that change the\nspin_lock() to spin_lock_iqsave() with SMP=n and use them in all places\nthat do spin_lock(&pcp->lock).\n\n[vbabka@suse.cz: add pcp_ prefix to the spin_lock_irqsave wrappers, per Steven]",
+  "datePublished": "Jan 31, 2026, 11:42:04 AM",
+  "dateUpdated": "Jan 31, 2026, 11:42:04 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/4a04ff9cd816e7346fcc8126f00ed80481f6569d",
+    "https://git.kernel.org/stable/c/df63d31e9ae02e2f6cd96147779e4ed7cd0e75f6",
+    "https://git.kernel.org/stable/c/3098f8f7c7b0686c74827aec42a2c45e69801ff8",
+    "https://git.kernel.org/stable/c/038a102535eb49e10e93eafac54352fcc5d78847"
+  ],
+  "aliases": [
+    "CVE-2026-23025"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "06ff1b01-0f46-36f8-ba3c-e2800ddcdbcf",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5749077415994eb02d660b2559b9d8278521e73d <df63d31e9ae02e2f6cd96147779e4ed7cd0e75f6"
+    },
+    {
+      "id": "0b16a7aa-2dc5-343b-bfce-2d915fc7a651",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19-rc6"
+    },
+    {
+      "id": "58c88dd1-cdc5-3326-9d2f-10e7063a854d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5749077415994eb02d660b2559b9d8278521e73d <4a04ff9cd816e7346fcc8126f00ed80481f6569d"
+    },
+    {
+      "id": "7b8189b4-52a5-30e8-bda1-686e154d0e93",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "97a99644-3648-3afc-bf4f-16fa6a446156",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "d1da921452b3ee7e07383c12955ab1c6f3b08752"
+    },
+    {
+      "id": "ad41e27a-e87c-35ef-aaaf-508541b9c863",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5749077415994eb02d660b2559b9d8278521e73d <038a102535eb49e10e93eafac54352fcc5d78847"
+    },
+    {
+      "id": "c554288f-8e1f-3ca4-803f-b36034a24c4e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.67"
+    },
+    {
+      "id": "d4014166-6b25-3498-9b49-c9d709648ff3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.7"
+    },
+    {
+      "id": "d74e8535-8692-3a81-b7f2-8b632c5ee8e0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.122"
+    },
+    {
+      "id": "e4a175c0-3a2e-3df5-9aaf-bc1b3ee6ff8d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.2"
+    },
+    {
+      "id": "ec1976ee-61c3-34cf-bfa1-7530974ad4f7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5749077415994eb02d660b2559b9d8278521e73d <3098f8f7c7b0686c74827aec42a2c45e69801ff8"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "06c25c97-fd0a-3ff6-b063-f73c237a90f3",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2026-5500",
+  "enisaUuid": "9fa986cd-e6d0-32f0-be3d-e73d4ca67e69",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nlibceph: make calc_target() set t->paused, not just clear it\n\nCurrently calc_target() clears t->paused if the request shouldn't be\npaused anymore, but doesn't ever set t->paused even though it's able to\ndetermine when the request should be paused.  Setting t->paused is left\nto __submit_request() which is fine for regular requests but doesn't\nwork for linger requests -- since __submit_request() doesn't operate\non linger requests, there is nowhere for lreq->t.paused to be set.\nOne consequence of this is that watches don't get reestablished on\npaused -> unpaused transitions in cases where requests have been paused\nlong enough for the (paused) unwatch request to time out and for the\nsubsequent (re)watch request to enter the paused state.  On top of the\nwatch not getting reestablished, rbd_reregister_watch() gets stuck with\nrbd_dev->watch_mutex held:\n\n  rbd_register_watch\n    __rbd_register_watch\n      ceph_osdc_watch\n        linger_reg_commit_wait\n\nIt's waiting for lreq->reg_commit_wait to be completed, but for that to\nhappen the respective request needs to end up on need_resend_linger list\nand be kicked when requests are unpaused.  There is no chance for that\nif the request in question is never marked paused in the first place.\n\nThe fact that rbd_dev->watch_mutex remains taken out forever then\nprevents the image from getting unmapped -- \"rbd unmap\" would inevitably\nhang in D state on an attempt to grab the mutex.",
+  "datePublished": "Feb 4, 2026, 4:00:29 PM",
+  "dateUpdated": "Feb 4, 2026, 4:00:29 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/2b3329b3c29d9e188e40d902d5230c2d5989b940",
+    "https://git.kernel.org/stable/c/5d0dc83cb9a69c1d0bea58f1c430199b05f6b021",
+    "https://git.kernel.org/stable/c/4d3399c52e0e61720ae898f5a0b5b75d4460ae24",
+    "https://git.kernel.org/stable/c/4ebc711b738d139cabe2fc9e7e7749847676a342",
+    "https://git.kernel.org/stable/c/6f468f6ff233c6a81e0e761d9124e982903fe9a5",
+    "https://git.kernel.org/stable/c/5647d42c47b535573b63e073e91164d6a5bb058c",
+    "https://git.kernel.org/stable/c/c0fe2994f9a9d0a2ec9e42441ea5ba74b6a16176"
+  ],
+  "aliases": [
+    "CVE-2026-23047"
+  ],
+  "assigner": "Linux",
+  "epss": 0.02,
+  "enisaIdProduct": [
+    {
+      "id": "18db7f55-bb94-3444-a1ac-adeecd8e219a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <5d0dc83cb9a69c1d0bea58f1c430199b05f6b021"
+    },
+    {
+      "id": "2328b080-31e7-3948-a310-8b73a16376c0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2b3329b3c29d9e188e40d902d5230c2d5989b940"
+    },
+    {
+      "id": "250d3c5f-e39b-3884-a109-38a52533f466",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.66"
+    },
+    {
+      "id": "39dda367-214f-3ace-921c-2deb57bcf874",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c0fe2994f9a9d0a2ec9e42441ea5ba74b6a16176"
+    },
+    {
+      "id": "3b8867ed-fdf2-3410-9729-d392823669a4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.198"
+    },
+    {
+      "id": "3f37d1a5-f02c-3557-a501-e37ac0b877ba",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.161"
+    },
+    {
+      "id": "77338773-6524-33d5-bfe7-cf3dd4e0c7b5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <5647d42c47b535573b63e073e91164d6a5bb058c"
+    },
+    {
+      "id": "794b511b-4bbf-3156-abd9-89d7344caf1d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19-rc5"
+    },
+    {
+      "id": "a7724890-89fb-3c5c-80bb-a695f72402d8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4d3399c52e0e61720ae898f5a0b5b75d4460ae24"
+    },
+    {
+      "id": "ce519da7-793c-358e-97f0-7f169bc16cd0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6f468f6ff233c6a81e0e761d9124e982903fe9a5"
+    },
+    {
+      "id": "d59396ef-bb99-3da1-b93f-c510c6ce79b8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.6"
+    },
+    {
+      "id": "de9fe6ac-0219-35c4-b376-559efbbfbba2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4ebc711b738d139cabe2fc9e7e7749847676a342"
+    },
+    {
+      "id": "e4b03b7e-fcdd-355d-adcd-7669bb68334c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.10.248"
+    },
+    {
+      "id": "f0a57290-4011-3143-94f3-55857e284859",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.121"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d762c477-bdce-39f5-bad6-7c3f11f1f405",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

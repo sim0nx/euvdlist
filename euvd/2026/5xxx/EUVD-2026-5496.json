@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-5496",
+  "enisaUuid": "c0c7edb4-f138-3ebb-afb5-b59c894b0fe8",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npNFS: Fix a deadlock when returning a delegation during open()\n\nBen Coddington reports seeing a hang in the following stack trace:\n  0 [ffffd0b50e1774e0] __schedule at ffffffff9ca05415\n  1 [ffffd0b50e177548] schedule at ffffffff9ca05717\n  2 [ffffd0b50e177558] bit_wait at ffffffff9ca061e1\n  3 [ffffd0b50e177568] __wait_on_bit at ffffffff9ca05cfb\n  4 [ffffd0b50e1775c8] out_of_line_wait_on_bit at ffffffff9ca05ea5\n  5 [ffffd0b50e177618] pnfs_roc at ffffffffc154207b [nfsv4]\n  6 [ffffd0b50e1776b8] _nfs4_proc_delegreturn at ffffffffc1506586 [nfsv4]\n  7 [ffffd0b50e177788] nfs4_proc_delegreturn at ffffffffc1507480 [nfsv4]\n  8 [ffffd0b50e1777f8] nfs_do_return_delegation at ffffffffc1523e41 [nfsv4]\n  9 [ffffd0b50e177838] nfs_inode_set_delegation at ffffffffc1524a75 [nfsv4]\n 10 [ffffd0b50e177888] nfs4_process_delegation at ffffffffc14f41dd [nfsv4]\n 11 [ffffd0b50e1778a0] _nfs4_opendata_to_nfs4_state at ffffffffc1503edf [nfsv4]\n 12 [ffffd0b50e1778c0] _nfs4_open_and_get_state at ffffffffc1504e56 [nfsv4]\n 13 [ffffd0b50e177978] _nfs4_do_open at ffffffffc15051b8 [nfsv4]\n 14 [ffffd0b50e1779f8] nfs4_do_open at ffffffffc150559c [nfsv4]\n 15 [ffffd0b50e177a80] nfs4_atomic_open at ffffffffc15057fb [nfsv4]\n 16 [ffffd0b50e177ad0] nfs4_file_open at ffffffffc15219be [nfsv4]\n 17 [ffffd0b50e177b78] do_dentry_open at ffffffff9c09e6ea\n 18 [ffffd0b50e177ba8] vfs_open at ffffffff9c0a082e\n 19 [ffffd0b50e177bd0] dentry_open at ffffffff9c0a0935\n\nThe issue is that the delegreturn is being asked to wait for a layout\nreturn that cannot complete because a state recovery was initiated. The\nstate recovery cannot complete until the open() finishes processing the\ndelegations it was given.\n\nThe solution is to propagate the existing flags that indicate a\nnon-blocking call to the function pnfs_roc(), so that it knows not to\nwait in this situation.",
+  "datePublished": "Feb 4, 2026, 4:04:19 PM",
+  "dateUpdated": "Feb 4, 2026, 4:04:19 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a316fd9d3065b753b03d802530004aea481512cc",
+    "https://git.kernel.org/stable/c/d6c75aa9d607044d1e5c8498eff0259eed356c32",
+    "https://git.kernel.org/stable/c/857bf9056291a16785ae3be1d291026b2437fc48"
+  ],
+  "aliases": [
+    "CVE-2026-23050"
+  ],
+  "assigner": "Linux",
+  "epss": 0.02,
+  "enisaIdProduct": [
+    {
+      "id": "5ad15a6c-8f71-3efc-a5cf-cf6d1682d44d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19-rc6"
+    },
+    {
+      "id": "63f9c3d2-1bd4-38c4-802f-531055839e80",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.67"
+    },
+    {
+      "id": "6e8a2ba0-5a4a-3a39-83a2-1c2b41cd3140",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4.10"
+    },
+    {
+      "id": "7414b14a-9117-3d85-aa67-47e313e11288",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.7"
+    },
+    {
+      "id": "86c3df2d-042a-3a3c-a509-0286ce258665",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "29ade5db12930ec60133f6a02791f4b1a4af2943 <857bf9056291a16785ae3be1d291026b2437fc48"
+    },
+    {
+      "id": "88a691fa-8578-372a-858b-e5ce41b504b4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "29ade5db12930ec60133f6a02791f4b1a4af2943 <a316fd9d3065b753b03d802530004aea481512cc"
+    },
+    {
+      "id": "9c61d309-751a-31ad-8fad-ce5253bb4891",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "29ade5db12930ec60133f6a02791f4b1a4af2943 <d6c75aa9d607044d1e5c8498eff0259eed356c32"
+    },
+    {
+      "id": "b9431c21-1b7a-35be-9659-88bb125c86ca",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f0718261-d5d5-3c37-9bfd-fc237ac40348",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
