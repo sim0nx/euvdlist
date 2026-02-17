@@ -1,0 +1,69 @@
+{
+  "id": "EUVD-2026-5849",
+  "enisaUuid": "efa78da3-acc6-3c93-9057-2a9c104ad195",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncgroup/dmem: avoid pool UAF\n\nAn UAF issue was observed:\n\nBUG: KASAN: slab-use-after-free in page_counter_uncharge+0x65/0x150\nWrite of size 8 at addr ffff888106715440 by task insmod/527\n\nCPU: 4 UID: 0 PID: 527 Comm: insmod    6.19.0-rc7-next-20260129+ #11\nTainted: [O]=OOT_MODULE\nCall Trace:\n<TASK>\ndump_stack_lvl+0x82/0xd0\nkasan_report+0xca/0x100\nkasan_check_range+0x39/0x1c0\npage_counter_uncharge+0x65/0x150\ndmem_cgroup_uncharge+0x1f/0x260\n\nAllocated by task 527:\n\nFreed by task 0:\n\nThe buggy address belongs to the object at ffff888106715400\nwhich belongs to the cache kmalloc-512 of size 512\nThe buggy address is located 64 bytes inside of\nfreed 512-byte region [ffff888106715400, ffff888106715600)\n\nThe buggy address belongs to the physical page:\n\nMemory state around the buggy address:\nffff888106715300: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc\nffff888106715380: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc\n>ffff888106715400: fa fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb\n\t\t\t\t     ^\nffff888106715480: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb\nffff888106715500: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb\n\nThe issue occurs because a pool can still be held by a caller after its\nassociated memory region is unregistered. The current implementation frees\nthe pool even if users still hold references to it (e.g., before uncharge\noperations complete).\n\nThis patch adds a reference counter to each pool, ensuring that a pool is\nonly freed when its reference count drops to zero.",
+  "datePublished": "Feb 14, 2026, 4:27:21 PM",
+  "dateUpdated": "Feb 14, 2026, 4:27:21 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d3081353acaa6a638dcf75726066ea556a2de8d5",
+    "https://git.kernel.org/stable/c/99a2ef500906138ba58093b9893972a5c303c734"
+  ],
+  "aliases": [
+    "CVE-2026-23195"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "03602c0d-412e-4891-a824-4c798c0c5714",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "b168ed458ddecc176f3b9a1f4bcd83d7a4541c14 <99a2ef500906138ba58093b9893972a5c303c734"
+    },
+    {
+      "id": "446c651b-ca9b-47e7-b9d1-e6645d7d9bfc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19"
+    },
+    {
+      "id": "612e46e6-a2e8-4cb7-b5b0-607446776d7f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.14"
+    },
+    {
+      "id": "9db821b7-dbd5-4a7d-b289-83105c325f0b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "b168ed458ddecc176f3b9a1f4bcd83d7a4541c14 <d3081353acaa6a638dcf75726066ea556a2de8d5"
+    },
+    {
+      "id": "b175f4f7-1cb3-495d-b504-73f220fe70a3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.10"
+    },
+    {
+      "id": "b1bdd560-43de-4a7c-91ef-4c58d0dbfeee",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d4ade151-97d8-4cb1-9622-1dcc6425cb24",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

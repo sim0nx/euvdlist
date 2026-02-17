@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-5848",
+  "enisaUuid": "078331a3-0f9a-30d7-bfd0-f44ccd110c68",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nprocfs: avoid fetching build ID while holding VMA lock\n\nFix PROCMAP_QUERY to fetch optional build ID only after dropping mmap_lock\nor per-VMA lock, whichever was used to lock VMA under question, to avoid\ndeadlock reported by syzbot:\n\n -> #1 (&mm->mmap_lock){++++}-{4:4}:\n        __might_fault+0xed/0x170\n        _copy_to_iter+0x118/0x1720\n        copy_page_to_iter+0x12d/0x1e0\n        filemap_read+0x720/0x10a0\n        blkdev_read_iter+0x2b5/0x4e0\n        vfs_read+0x7f4/0xae0\n        ksys_read+0x12a/0x250\n        do_syscall_64+0xcb/0xf80\n        entry_SYSCALL_64_after_hwframe+0x77/0x7f\n\n -> #0 (&sb->s_type->i_mutex_key#8){++++}-{4:4}:\n        __lock_acquire+0x1509/0x26d0\n        lock_acquire+0x185/0x340\n        down_read+0x98/0x490\n        blkdev_read_iter+0x2a7/0x4e0\n        __kernel_read+0x39a/0xa90\n        freader_fetch+0x1d5/0xa80\n        __build_id_parse.isra.0+0xea/0x6a0\n        do_procmap_query+0xd75/0x1050\n        procfs_procmap_ioctl+0x7a/0xb0\n        __x64_sys_ioctl+0x18e/0x210\n        do_syscall_64+0xcb/0xf80\n        entry_SYSCALL_64_after_hwframe+0x77/0x7f\n\n other info that might help us debug this:\n\n  Possible unsafe locking scenario:\n\n        CPU0                    CPU1\n        ----                    ----\n   rlock(&mm->mmap_lock);\n                                lock(&sb->s_type->i_mutex_key#8);\n                                lock(&mm->mmap_lock);\n   rlock(&sb->s_type->i_mutex_key#8);\n\n  *** DEADLOCK ***\n\nThis seems to be exacerbated (as we haven't seen these syzbot reports\nbefore that) by the recent:\n\n\t777a8560fd29 (\"lib/buildid: use __kernel_read() for sleepable context\")\n\nTo make this safe, we need to grab file refcount while VMA is still locked, but\nother than that everything is pretty straightforward. Internal build_id_parse()\nAPI assumes VMA is passed, but it only needs the underlying file reference, so\njust add another variant build_id_parse_file() that expects file passed\ndirectly.\n\n[akpm@linux-foundation.org: fix up kerneldoc]",
+  "datePublished": "Feb 14, 2026, 4:27:24 PM",
+  "dateUpdated": "Feb 14, 2026, 4:27:24 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/b9b97e6aeb534315f9646b2090d1a5024c6a4e82",
+    "https://git.kernel.org/stable/c/cbc03ce3e6ce7e21214c3f02218213574c1a2d08",
+    "https://git.kernel.org/stable/c/b5cbacd7f86f4f62b8813688c8e73be94e8e1951"
+  ],
+  "aliases": [
+    "CVE-2026-23199"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2c3f002f-484d-4f88-954d-534ab034a4cc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.10"
+    },
+    {
+      "id": "46814d4e-5767-4fe2-83a4-04bf24d91cd3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "ed5d583a88a9207b866c14ba834984c6f3c51d23 <b9b97e6aeb534315f9646b2090d1a5024c6a4e82"
+    },
+    {
+      "id": "4e22679a-a296-46ff-b33c-5f53711d6111",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19"
+    },
+    {
+      "id": "525b30bb-9576-463f-ab66-84d9bfe9be30",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.70"
+    },
+    {
+      "id": "87b1f1bc-082a-4e61-8272-8f517fe82077",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "8cd876ec-9fd0-4c08-a678-fcc694b7cd7f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "ed5d583a88a9207b866c14ba834984c6f3c51d23 <cbc03ce3e6ce7e21214c3f02218213574c1a2d08"
+    },
+    {
+      "id": "bc250605-e79d-4e5c-adee-8ecd145fc229",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "ed5d583a88a9207b866c14ba834984c6f3c51d23 <b5cbacd7f86f4f62b8813688c8e73be94e8e1951"
+    },
+    {
+      "id": "cada8eca-2602-47f8-b4bb-471bff7d71a7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.11"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5ac1a4d0-912f-41d2-8aa2-26797667672d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

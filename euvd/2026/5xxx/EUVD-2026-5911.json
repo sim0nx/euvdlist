@@ -1,0 +1,144 @@
+{
+  "id": "EUVD-2026-5911",
+  "enisaUuid": "de35a410-6855-3c58-868b-70f4627b1c01",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsctp: move SCTP_CMD_ASSOC_SHKEY right after SCTP_CMD_PEER_INIT\n\nA null-ptr-deref was reported in the SCTP transmit path when SCTP-AUTH key\ninitialization fails:\n\n  ==================================================================\n  KASAN: null-ptr-deref in range [0x0000000000000018-0x000000000000001f]\n  CPU: 0 PID: 16 Comm: ksoftirqd/0 Tainted: G W 6.6.0 #2\n  RIP: 0010:sctp_packet_bundle_auth net/sctp/output.c:264 [inline]\n  RIP: 0010:sctp_packet_append_chunk+0xb36/0x1260 net/sctp/output.c:401\n  Call Trace:\n\n  sctp_packet_transmit_chunk+0x31/0x250 net/sctp/output.c:189\n  sctp_outq_flush_data+0xa29/0x26d0 net/sctp/outqueue.c:1111\n  sctp_outq_flush+0xc80/0x1240 net/sctp/outqueue.c:1217\n  sctp_cmd_interpreter.isra.0+0x19a5/0x62c0 net/sctp/sm_sideeffect.c:1787\n  sctp_side_effects net/sctp/sm_sideeffect.c:1198 [inline]\n  sctp_do_sm+0x1a3/0x670 net/sctp/sm_sideeffect.c:1169\n  sctp_assoc_bh_rcv+0x33e/0x640 net/sctp/associola.c:1052\n  sctp_inq_push+0x1dd/0x280 net/sctp/inqueue.c:88\n  sctp_rcv+0x11ae/0x3100 net/sctp/input.c:243\n  sctp6_rcv+0x3d/0x60 net/sctp/ipv6.c:1127\n\nThe issue is triggered when sctp_auth_asoc_init_active_key() fails in\nsctp_sf_do_5_1C_ack() while processing an INIT_ACK. In this case, the\ncommand sequence is currently:\n\n- SCTP_CMD_PEER_INIT\n- SCTP_CMD_TIMER_STOP (T1_INIT)\n- SCTP_CMD_TIMER_START (T1_COOKIE)\n- SCTP_CMD_NEW_STATE (COOKIE_ECHOED)\n- SCTP_CMD_ASSOC_SHKEY\n- SCTP_CMD_GEN_COOKIE_ECHO\n\nIf SCTP_CMD_ASSOC_SHKEY fails, asoc->shkey remains NULL, while\nasoc->peer.auth_capable and asoc->peer.peer_chunks have already been set by\nSCTP_CMD_PEER_INIT. This allows a DATA chunk with auth = 1 and shkey = NULL\nto be queued by sctp_datamsg_from_user().\n\nSince command interpretation stops on failure, no COOKIE_ECHO should been\nsent via SCTP_CMD_GEN_COOKIE_ECHO. However, the T1_COOKIE timer has already\nbeen started, and it may enqueue a COOKIE_ECHO into the outqueue later. As\na result, the DATA chunk can be transmitted together with the COOKIE_ECHO\nin sctp_outq_flush_data(), leading to the observed issue.\n\nSimilar to the other places where it calls sctp_auth_asoc_init_active_key()\nright after sctp_process_init(), this patch moves the SCTP_CMD_ASSOC_SHKEY\nimmediately after SCTP_CMD_PEER_INIT, before stopping T1_INIT and starting\nT1_COOKIE. This ensures that if shared key generation fails, authenticated\nDATA cannot be sent. It also allows the T1_INIT timer to retransmit INIT,\ngiving the client another chance to process INIT_ACK and retry key setup.",
+  "datePublished": "Feb 14, 2026, 3:09:54 PM",
+  "dateUpdated": "Feb 14, 2026, 3:09:54 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/5a309bedf02ee08b0653215f06c94d61ec7a214a",
+    "https://git.kernel.org/stable/c/784428ab1889eb185a1459e9d6bc52df33d572ef",
+    "https://git.kernel.org/stable/c/e94294798548e8cfbd80869e1d2f97efce92582c",
+    "https://git.kernel.org/stable/c/e7e81abbcc5620c9532080538f9709a6ea382855",
+    "https://git.kernel.org/stable/c/bf2b543b3cc4ebb4ab5bca4f8dfa5612035d45b8",
+    "https://git.kernel.org/stable/c/0c4adb1f391a7b92a0405e9d7c05624c0d9f8a65",
+    "https://git.kernel.org/stable/c/a80c9d945aef55b23b54838334345f20251dad83"
+  ],
+  "aliases": [
+    "CVE-2026-23125"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "01f70e36-49b3-41d8-bfea-35ab58812099",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "730fc3d05cd4ba4c9ce2de91f3d43349e95dbbf5 <bf2b543b3cc4ebb4ab5bca4f8dfa5612035d45b8"
+    },
+    {
+      "id": "52bd91e0-0fa1-4a80-8ee3-8895bacfe738",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.199"
+    },
+    {
+      "id": "6c6112e8-ef06-48c3-9c6e-2a65f2998d49",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19"
+    },
+    {
+      "id": "6d875518-400e-4276-a08a-eee0a23751e7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "730fc3d05cd4ba4c9ce2de91f3d43349e95dbbf5 <784428ab1889eb185a1459e9d6bc52df33d572ef"
+    },
+    {
+      "id": "76ae5992-411a-4aad-b169-2607a04679e6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "730fc3d05cd4ba4c9ce2de91f3d43349e95dbbf5 <0c4adb1f391a7b92a0405e9d7c05624c0d9f8a65"
+    },
+    {
+      "id": "9a63ddbb-93ff-4b35-afef-9b1e91876832",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "730fc3d05cd4ba4c9ce2de91f3d43349e95dbbf5 <a80c9d945aef55b23b54838334345f20251dad83"
+    },
+    {
+      "id": "b886d639-808b-4c35-8d9c-e272406090f1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.8"
+    },
+    {
+      "id": "c561b756-8bde-44ec-a1a8-d39895f82259",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.10.249"
+    },
+    {
+      "id": "c91d9c52-2c97-4ff1-a2b2-46ea88ac299c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.68"
+    },
+    {
+      "id": "db690640-29dc-410f-88d6-d9b4230d7720",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.122"
+    },
+    {
+      "id": "ea102e9c-39b1-4bc6-ba9c-29a8d27ec755",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "730fc3d05cd4ba4c9ce2de91f3d43349e95dbbf5 <e7e81abbcc5620c9532080538f9709a6ea382855"
+    },
+    {
+      "id": "efbdecf9-a347-48b8-83fe-e3a6d2ea74b7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "730fc3d05cd4ba4c9ce2de91f3d43349e95dbbf5 <e94294798548e8cfbd80869e1d2f97efce92582c"
+    },
+    {
+      "id": "f2faf8bc-da16-4ac8-a587-f0bc6c795203",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.162"
+    },
+    {
+      "id": "f665bd2f-7422-4c98-a6d1-75317c2e0728",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "730fc3d05cd4ba4c9ce2de91f3d43349e95dbbf5 <5a309bedf02ee08b0653215f06c94d61ec7a214a"
+    },
+    {
+      "id": "fbe257ab-0bd7-41f5-a6aa-c7883812ad34",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "fefee639-7536-4a41-be37-4093718716b4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2.6.24"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a422b270-bd25-4375-9b85-83ec26c90d32",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

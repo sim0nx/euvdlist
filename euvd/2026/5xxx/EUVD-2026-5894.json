@@ -1,0 +1,69 @@
+{
+  "id": "EUVD-2026-5894",
+  "enisaUuid": "f2874dbb-a6c4-34ff-8538-1e35f16e4569",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvirtio_net: Fix misalignment bug in struct virtnet_info\n\nUse the new TRAILING_OVERLAP() helper to fix a misalignment bug\nalong with the following warning:\n\ndrivers/net/virtio_net.c:429:46: warning: structure containing a flexible array member is not at the end of another structure [-Wflex-array-member-not-at-end]\n\nThis helper creates a union between a flexible-array member (FAM)\nand a set of members that would otherwise follow it (in this case\n`u8 rss_hash_key_data[VIRTIO_NET_RSS_MAX_KEY_SIZE];`). This\noverlays the trailing members (rss_hash_key_data) onto the FAM\n(hash_key_data) while keeping the FAM and the start of MEMBERS aligned.\nThe static_assert() ensures this alignment remains.\n\nNotice that due to tail padding in flexible `struct\nvirtio_net_rss_config_trailer`, `rss_trailer.hash_key_data`\n(at offset 83 in struct virtnet_info) and `rss_hash_key_data` (at\noffset 84 in struct virtnet_info) are misaligned by one byte. See\nbelow:\n\nstruct virtio_net_rss_config_trailer {\n        __le16                     max_tx_vq;            /*     0     2 */\n        __u8                       hash_key_length;      /*     2     1 */\n        __u8                       hash_key_data[];      /*     3     0 */\n\n        /* size: 4, cachelines: 1, members: 3 */\n        /* padding: 1 */\n        /* last cacheline: 4 bytes */\n};\n\nstruct virtnet_info {\n...\n        struct virtio_net_rss_config_trailer rss_trailer; /*    80     4 */\n\n        /* XXX last struct has 1 byte of padding */\n\n        u8                         rss_hash_key_data[40]; /*    84    40 */\n...\n        /* size: 832, cachelines: 13, members: 48 */\n        /* sum members: 801, holes: 8, sum holes: 31 */\n        /* paddings: 2, sum paddings: 5 */\n};\n\nAfter changes, those members are correctly aligned at offset 795:\n\nstruct virtnet_info {\n...\n        union {\n                struct virtio_net_rss_config_trailer rss_trailer; /*   792     4 */\n                struct {\n                        unsigned char __offset_to_hash_key_data[3]; /*   792     3 */\n                        u8         rss_hash_key_data[40]; /*   795    40 */\n                };                                       /*   792    43 */\n        };                                               /*   792    44 */\n...\n        /* size: 840, cachelines: 14, members: 47 */\n        /* sum members: 801, holes: 8, sum holes: 35 */\n        /* padding: 4 */\n        /* paddings: 1, sum paddings: 4 */\n        /* last cacheline: 8 bytes */\n};\n\nAs a result, the RSS key passed to the device is shifted by 1\nbyte: the last byte is cut off, and instead a (possibly\nuninitialized) byte is added at the beginning.\n\nAs a last note `struct virtio_net_rss_config_hdr *rss_hdr;` is also\nmoved to the end, since it seems those three members should stick\naround together. :)",
+  "datePublished": "Feb 14, 2026, 3:36:08 PM",
+  "dateUpdated": "Feb 14, 2026, 3:36:08 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ae48108c2310f1dd700e0dbb655c2f1d92ed00fc",
+    "https://git.kernel.org/stable/c/4156c3745f06bc197094b9ee97a9584e69ed00bf"
+  ],
+  "aliases": [
+    "CVE-2026-23143"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "146eabd6-d98d-4811-8a17-ec9d76b49fd3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.7"
+    },
+    {
+      "id": "2ea48d85-79e0-4c96-b5a2-190e2f2211d2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19"
+    },
+    {
+      "id": "4986f58c-a0af-484f-ad8f-c954a85dec31",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.15"
+    },
+    {
+      "id": "4a2ce190-4405-445d-9a90-f3e4ec29f4f9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "ed3100e90d0d120a045a551b85eb43cf2527e885 <ae48108c2310f1dd700e0dbb655c2f1d92ed00fc"
+    },
+    {
+      "id": "9470f25f-8d6d-4917-8c0c-b880b96c6dd3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "ed3100e90d0d120a045a551b85eb43cf2527e885 <4156c3745f06bc197094b9ee97a9584e69ed00bf"
+    },
+    {
+      "id": "b7e0a7ac-f95a-4d38-a1e3-28c343225439",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "35471933-591a-46d7-91f8-56d0aaea7c37",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

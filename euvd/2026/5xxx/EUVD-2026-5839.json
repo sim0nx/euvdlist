@@ -1,0 +1,144 @@
+{
+  "id": "EUVD-2026-5839",
+  "enisaUuid": "fcdda00f-ee74-3c35-902a-90d65ad5be8f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmacvlan: fix error recovery in macvlan_common_newlink()\n\nvalis provided a nice repro to crash the kernel:\n\nip link add p1 type veth peer p2\nip link set address 00:00:00:00:00:20 dev p1\nip link set up dev p1\nip link set up dev p2\n\nip link add mv0 link p2 type macvlan mode source\nip link add invalid% link p2 type macvlan mode source macaddr add 00:00:00:00:00:20\n\nping -c1 -I p1 1.2.3.4\n\nHe also gave a very detailed analysis:\n\n<quote valis>\n\nThe issue is triggered when a new macvlan link is created  with\nMACVLAN_MODE_SOURCE mode and MACVLAN_MACADDR_ADD (or\nMACVLAN_MACADDR_SET) parameter, lower device already has a macvlan\nport and register_netdevice() called from macvlan_common_newlink()\nfails (e.g. because of the invalid link name).\n\nIn this case macvlan_hash_add_source is called from\nmacvlan_change_sources() / macvlan_common_newlink():\n\nThis adds a reference to vlan to the port's vlan_source_hash using\nmacvlan_source_entry.\n\nvlan is a pointer to the priv data of the link that is being created.\n\nWhen register_netdevice() fails, the error is returned from\nmacvlan_newlink() to rtnl_newlink_create():\n\n        if (ops->newlink)\n                err = ops->newlink(dev, &params, extack);\n        else\n                err = register_netdevice(dev);\n        if (err < 0) {\n                free_netdev(dev);\n                goto out;\n        }\n\nand free_netdev() is called, causing a kvfree() on the struct\nnet_device that is still referenced in the source entry attached to\nthe lower device's macvlan port.\n\nNow all packets sent on the macvlan port with a matching source mac\naddress will trigger a use-after-free in macvlan_forward_source().\n\n</quote valis>\n\nWith all that, my fix is to make sure we call macvlan_flush_sources()\nregardless of @create value whenever \"goto destroy_macvlan_port;\"\npath is taken.\n\nMany thanks to valis for following up on this issue.",
+  "datePublished": "Feb 14, 2026, 4:27:31 PM",
+  "dateUpdated": "Feb 14, 2026, 4:27:31 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/da5c6b8ae47e414be47e5e04def15b25d5c962dc",
+    "https://git.kernel.org/stable/c/5dae6b36a7cb7a4fcf4121b95e9ca7f96f816c8a",
+    "https://git.kernel.org/stable/c/c43d0e787cbba569ec9d11579ed370b50fab6c9c",
+    "https://git.kernel.org/stable/c/11ba9f0dc865136174cb98834280fb21bbc950c7",
+    "https://git.kernel.org/stable/c/986967a162142710076782d5b93daab93a892980",
+    "https://git.kernel.org/stable/c/cdedcd5aa3f3cb8b7ae0f87ab3a936d0bd583d66",
+    "https://git.kernel.org/stable/c/f8db6475a83649689c087a8f52486fcc53e627e9"
+  ],
+  "aliases": [
+    "CVE-2026-23209"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1020e6e0-d6b1-4f9a-8f78-f12789305f37",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4.9"
+    },
+    {
+      "id": "14aa5b02-e6bd-40e1-9eb5-ff14e5bf0cb1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "aa5fd0fb77486b8a6764ead8627baa14790e4280 <da5c6b8ae47e414be47e5e04def15b25d5c962dc"
+    },
+    {
+      "id": "1b6bbecd-c539-4de2-a438-17607474e27d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "aa5fd0fb77486b8a6764ead8627baa14790e4280 <986967a162142710076782d5b93daab93a892980"
+    },
+    {
+      "id": "1e8e6ad1-f66e-44de-b076-4b644e1af4dd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19"
+    },
+    {
+      "id": "3412ee3f-95d5-4a29-bf3c-58502d0b3904",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.10"
+    },
+    {
+      "id": "40532b73-6a8f-4ec9-a8b1-e4307dd6cc5e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "aa5fd0fb77486b8a6764ead8627baa14790e4280 <5dae6b36a7cb7a4fcf4121b95e9ca7f96f816c8a"
+    },
+    {
+      "id": "4e396f46-5e18-4ad3-9256-7f6889980835",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "aa5fd0fb77486b8a6764ead8627baa14790e4280 <c43d0e787cbba569ec9d11579ed370b50fab6c9c"
+    },
+    {
+      "id": "783ac49f-5466-4b05-92d6-c8418cf2ccc6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.124"
+    },
+    {
+      "id": "7e4cab30-fad0-4979-8aa8-dfaed3b53f1b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "aa5fd0fb77486b8a6764ead8627baa14790e4280 <11ba9f0dc865136174cb98834280fb21bbc950c7"
+    },
+    {
+      "id": "94df6ab3-e1c6-4206-87f7-3da4f0cf2203",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "aa5fd0fb77486b8a6764ead8627baa14790e4280 <cdedcd5aa3f3cb8b7ae0f87ab3a936d0bd583d66"
+    },
+    {
+      "id": "9e864ccd-39cb-49c2-9ec0-c8a338fec5f6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.200"
+    },
+    {
+      "id": "9eb3a00b-aae5-42c2-b06e-0480a75ea6a3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "aa5fd0fb77486b8a6764ead8627baa14790e4280 <f8db6475a83649689c087a8f52486fcc53e627e9"
+    },
+    {
+      "id": "a90b5b35-2c5d-402b-aaa7-6cf0eb638aff",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a91f3063-2188-4cf9-8b82-9a497d000e7a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.70"
+    },
+    {
+      "id": "b90b20a8-37fe-40bf-ba02-9043c8f0e217",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.163"
+    },
+    {
+      "id": "c79e7305-aa1f-4088-bfb1-2e90e6429e78",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.10.250"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "35724a47-961c-4dd8-bb29-f7803099aafc",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

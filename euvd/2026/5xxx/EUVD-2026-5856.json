@@ -1,0 +1,69 @@
+{
+  "id": "EUVD-2026-5856",
+  "enisaUuid": "658e2b50-b699-34cd-ba02-f46fd74734f7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nhwmon: (acpi_power_meter) Fix deadlocks related to acpi_power_meter_notify()\n\nThe acpi_power_meter driver's .notify() callback function,\nacpi_power_meter_notify(), calls hwmon_device_unregister() under a lock\nthat is also acquired by callbacks in sysfs attributes of the device\nbeing unregistered which is prone to deadlocks between sysfs access and\ndevice removal.\n\nAddress this by moving the hwmon device removal in\nacpi_power_meter_notify() outside the lock in question, but notice\nthat doing it alone is not sufficient because two concurrent\nMETER_NOTIFY_CONFIG notifications may be attempting to remove the\nsame device at the same time.  To prevent that from happening, add a\nnew lock serializing the execution of the switch () statement in\nacpi_power_meter_notify().  For simplicity, it is a static mutex\nwhich should not be a problem from the performance perspective.\n\nThe new lock also allows the hwmon_device_register_with_info()\nin acpi_power_meter_notify() to be called outside the inner lock\nbecause it prevents the other notifications handled by that function\nfrom manipulating the \"resource\" object while the hwmon device based\non it is being registered.  The sending of ACPI netlink messages from\nacpi_power_meter_notify() is serialized by the new lock too which\ngenerally helps to ensure that the order of handling firmware\nnotifications is the same as the order of sending netlink messages\nrelated to them.\n\nIn addition, notice that hwmon_device_register_with_info() may fail\nin which case resource->hwmon_dev will become an error pointer,\nso add checks to avoid attempting to unregister the hwmon device\npointer to by it in that case to acpi_power_meter_notify() and\nacpi_power_meter_remove().",
+  "datePublished": "Feb 14, 2026, 4:27:15 PM",
+  "dateUpdated": "Feb 14, 2026, 4:27:15 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/8860ddf0e07be37169d4ef9f2618e39fca934a66",
+    "https://git.kernel.org/stable/c/615901b57b7ef8eb655f71358f7e956e42bcd16b"
+  ],
+  "aliases": [
+    "CVE-2026-23186"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0e4c4d9b-d892-48c1-ab90-abc523e74878",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "16746ce8adfe04f9ff8df75c1133286ba93c0e17 <615901b57b7ef8eb655f71358f7e956e42bcd16b"
+    },
+    {
+      "id": "46c1c630-0fb9-49e1-b546-574dee6490e4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7bb3e152-3d2a-4df9-a039-dc8ce2915e15",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.10"
+    },
+    {
+      "id": "8efa53ce-c689-48f8-98b4-8514ecb1db6c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19"
+    },
+    {
+      "id": "9103e120-a26f-415c-b89a-064037bec3b4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.15"
+    },
+    {
+      "id": "c024bb57-5f88-4433-95c9-5c5766261360",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "16746ce8adfe04f9ff8df75c1133286ba93c0e17 <8860ddf0e07be37169d4ef9f2618e39fca934a66"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b6034852-b114-43d9-a367-a05144eb78e9",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

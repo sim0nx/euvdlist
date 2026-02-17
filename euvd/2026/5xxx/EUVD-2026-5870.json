@@ -1,0 +1,114 @@
+{
+  "id": "EUVD-2026-5870",
+  "enisaUuid": "c940a292-afda-3277-803c-e28538c540ea",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nflex_proportions: make fprop_new_period() hardirq safe\n\nBernd has reported a lockdep splat from flexible proportions code that is\nessentially complaining about the following race:\n\n<timer fires>\nrun_timer_softirq - we are in softirq context\n  call_timer_fn\n    writeout_period\n      fprop_new_period\n        write_seqcount_begin(&p->sequence);\n\n        <hardirq is raised>\n        ...\n        blk_mq_end_request()\n\t  blk_update_request()\n\t    ext4_end_bio()\n\t      folio_end_writeback()\n\t\t__wb_writeout_add()\n\t\t  __fprop_add_percpu_max()\n\t\t    if (unlikely(max_frac < FPROP_FRAC_BASE)) {\n\t\t      fprop_fraction_percpu()\n\t\t\tseq = read_seqcount_begin(&p->sequence);\n\t\t\t  - sees odd sequence so loops indefinitely\n\nNote that a deadlock like this is only possible if the bdi has configured\nmaximum fraction of writeout throughput which is very rare in general but\nfrequent for example for FUSE bdis.  To fix this problem we have to make\nsure write section of the sequence counter is irqsafe.",
+  "datePublished": "Feb 14, 2026, 4:01:31 PM",
+  "dateUpdated": "Feb 14, 2026, 4:01:31 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0acc9ba7a1b5ba4d998c5753e709be904e179b75",
+    "https://git.kernel.org/stable/c/884b2590ffcc7222cbbd6298051f4c243cc36f5d",
+    "https://git.kernel.org/stable/c/78ede9ebd679dadf480dce6f7b798e3603f88348",
+    "https://git.kernel.org/stable/c/b91a84299d72ae0e05551e851e47cd3008bd025b",
+    "https://git.kernel.org/stable/c/dd9e2f5b38f1fdd49b1ab6d3a85f81c14369eacc"
+  ],
+  "aliases": [
+    "CVE-2026-23168"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "01d290bb-e7e7-4099-bcf0-7f23791bd8f3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.69"
+    },
+    {
+      "id": "0e1d7a9d-50de-4d51-90bd-62648c28c6f2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19"
+    },
+    {
+      "id": "14b17af2-30d4-4779-bbd3-7d58ee1d59b4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a91befde350375b1ff954635acdde14dc92cd9a8 <884b2590ffcc7222cbbd6298051f4c243cc36f5d"
+    },
+    {
+      "id": "493f2149-d8c5-40aa-834b-1808ab31c085",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.123"
+    },
+    {
+      "id": "648f5a19-6332-491f-990a-29976899b070",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a91befde350375b1ff954635acdde14dc92cd9a8 <78ede9ebd679dadf480dce6f7b798e3603f88348"
+    },
+    {
+      "id": "714605d1-d01c-4702-9fed-914bdc6ca0d1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a91befde350375b1ff954635acdde14dc92cd9a8 <b91a84299d72ae0e05551e851e47cd3008bd025b"
+    },
+    {
+      "id": "9e4ad206-b668-436b-b452-85777b24a7e6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a91befde350375b1ff954635acdde14dc92cd9a8 <0acc9ba7a1b5ba4d998c5753e709be904e179b75"
+    },
+    {
+      "id": "c0301ebb-c7b0-40ad-a7cd-aeea0380a6d4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d7cb94d8-16aa-4c7d-a014-4f74d589e836",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.9"
+    },
+    {
+      "id": "ead1e6e3-68b8-4291-82a4-e3fb82aa3242",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.0"
+    },
+    {
+      "id": "f45f0b5b-9075-498e-a5c0-b608620cadb1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a91befde350375b1ff954635acdde14dc92cd9a8 <dd9e2f5b38f1fdd49b1ab6d3a85f81c14369eacc"
+    },
+    {
+      "id": "fa67b2ab-4c11-4f76-b059-124b6d678aef",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.162"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2d8e35ec-31be-438f-a7eb-e9d672e0b3f6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

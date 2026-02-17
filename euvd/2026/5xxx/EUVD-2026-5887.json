@@ -1,0 +1,91 @@
+{
+  "id": "EUVD-2026-5887",
+  "enisaUuid": "3d87ad28-365c-3827-a99f-813272d528c8",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnvmet: fix race in nvmet_bio_done() leading to NULL pointer dereference\n\nThere is a race condition in nvmet_bio_done() that can cause a NULL\npointer dereference in blk_cgroup_bio_start():\n\n1. nvmet_bio_done() is called when a bio completes\n2. nvmet_req_complete() is called, which invokes req->ops->queue_response(req)\n3. The queue_response callback can re-queue and re-submit the same request\n4. The re-submission reuses the same inline_bio from nvmet_req\n5. Meanwhile, nvmet_req_bio_put() (called after nvmet_req_complete)\n   invokes bio_uninit() for inline_bio, which sets bio->bi_blkg to NULL\n6. The re-submitted bio enters submit_bio_noacct_nocheck()\n7. blk_cgroup_bio_start() dereferences bio->bi_blkg, causing a crash:\n\n  BUG: kernel NULL pointer dereference, address: 0000000000000028\n  #PF: supervisor read access in kernel mode\n  RIP: 0010:blk_cgroup_bio_start+0x10/0xd0\n  Call Trace:\n   submit_bio_noacct_nocheck+0x44/0x250\n   nvmet_bdev_execute_rw+0x254/0x370 [nvmet]\n   process_one_work+0x193/0x3c0\n   worker_thread+0x281/0x3a0\n\nFix this by reordering nvmet_bio_done() to call nvmet_req_bio_put()\nBEFORE nvmet_req_complete(). This ensures the bio is cleaned up before\nthe request can be re-submitted, preventing the race condition.",
+  "datePublished": "Feb 14, 2026, 4:01:17 PM",
+  "dateUpdated": "Feb 14, 2026, 4:01:17 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ee10b06980acca1d46e0fa36d6fb4a9578eab6e4",
+    "https://git.kernel.org/stable/c/68207ceefd71cc74ce4e983fa9bd10c3122e349b",
+    "https://git.kernel.org/stable/c/0fcee2cfc4b2e16e62ff8e0cc2cd8dd24efad65e"
+  ],
+  "aliases": [
+    "CVE-2026-23148"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "00866fa2-07e4-4f25-8a15-5e84c404246f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "190f4c2c863af7cc5bb354b70e0805f06419c038 <0fcee2cfc4b2e16e62ff8e0cc2cd8dd24efad65e"
+    },
+    {
+      "id": "02cf21e0-a7cc-4021-a5cb-bc8f26b484dc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.69"
+    },
+    {
+      "id": "06b8e1fa-b568-400a-823f-d9bb05180386",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "464c1d3c-045d-478e-aa95-8acc2e95c4c0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "551b34f7-1fc3-4f43-b245-4719f98628f2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2e2028fcf924d1c6df017033c8d6e28b735a0508"
+    },
+    {
+      "id": "b3e1d9e2-1731-42e7-9d78-75629882f48b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "190f4c2c863af7cc5bb354b70e0805f06419c038 <68207ceefd71cc74ce4e983fa9bd10c3122e349b"
+    },
+    {
+      "id": "bb4728b3-5dd1-48ab-9a4b-856629e23dc6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19"
+    },
+    {
+      "id": "c929ae3e-2bed-4d3e-a759-50f12a0e909c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.9"
+    },
+    {
+      "id": "ef6357dd-a885-48e2-b329-5a02fed3e151",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "431e58d56fcb5ff1f9eb630724a922e0d2a941df <ee10b06980acca1d46e0fa36d6fb4a9578eab6e4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f8b1139f-8cb1-43cb-9c66-fbd13f249309",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

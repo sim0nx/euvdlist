@@ -1,0 +1,69 @@
+{
+  "id": "EUVD-2026-5836",
+  "enisaUuid": "20674a98-4a34-3e9c-b405-613c3cba19ea",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nice: Fix PTP NULL pointer dereference during VSI rebuild\n\nFix race condition where PTP periodic work runs while VSI is being\nrebuilt, accessing NULL vsi->rx_rings.\n\nThe sequence was:\n1. ice_ptp_prepare_for_reset() cancels PTP work\n2. ice_ptp_rebuild() immediately queues PTP work\n3. VSI rebuild happens AFTER ice_ptp_rebuild()\n4. PTP work runs and accesses NULL vsi->rx_rings\n\nFix: Keep PTP work cancelled during rebuild, only queue it after\nVSI rebuild completes in ice_rebuild().\n\nAdded ice_ptp_queue_work() helper function to encapsulate the logic\nfor queuing PTP work, ensuring it's only queued when PTP is supported\nand the state is ICE_PTP_READY.\n\nError log:\n[  121.392544] ice 0000:60:00.1: PTP reset successful\n[  121.392692] BUG: kernel NULL pointer dereference, address: 0000000000000000\n[  121.392712] #PF: supervisor read access in kernel mode\n[  121.392720] #PF: error_code(0x0000) - not-present page\n[  121.392727] PGD 0\n[  121.392734] Oops: Oops: 0000 [#1] SMP NOPTI\n[  121.392746] CPU: 8 UID: 0 PID: 1005 Comm: ice-ptp-0000:60 Tainted: G S                  6.19.0-rc6+ #4 PREEMPT(voluntary)\n[  121.392761] Tainted: [S]=CPU_OUT_OF_SPEC\n[  121.392773] RIP: 0010:ice_ptp_update_cached_phctime+0xbf/0x150 [ice]\n[  121.393042] Call Trace:\n[  121.393047]  <TASK>\n[  121.393055]  ice_ptp_periodic_work+0x69/0x180 [ice]\n[  121.393202]  kthread_worker_fn+0xa2/0x260\n[  121.393216]  ? __pfx_ice_ptp_periodic_work+0x10/0x10 [ice]\n[  121.393359]  ? __pfx_kthread_worker_fn+0x10/0x10\n[  121.393371]  kthread+0x10d/0x230\n[  121.393382]  ? __pfx_kthread+0x10/0x10\n[  121.393393]  ret_from_fork+0x273/0x2b0\n[  121.393407]  ? __pfx_kthread+0x10/0x10\n[  121.393417]  ret_from_fork_asm+0x1a/0x30\n[  121.393432]  </TASK>",
+  "datePublished": "Feb 14, 2026, 4:27:31 PM",
+  "dateUpdated": "Feb 14, 2026, 4:27:31 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/7565d4df66b6619b50dc36618d8b8f1787d77e19",
+    "https://git.kernel.org/stable/c/fc6f36eaaedcf4b81af6fe1a568f018ffd530660"
+  ],
+  "aliases": [
+    "CVE-2026-23210"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2396101b-6f1c-4e99-8069-8c8dae16c92f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "803bef817807d2d36c930dada20c96fffae0dd19 <fc6f36eaaedcf4b81af6fe1a568f018ffd530660"
+    },
+    {
+      "id": "361c50f7-2b0f-4aee-88c1-443aec1d60f5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "36b0fc74-5f3d-4acf-877f-d3c3b5e26eb7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.9"
+    },
+    {
+      "id": "61d4e297-fcbd-40ae-9551-4b0af0b39270",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19"
+    },
+    {
+      "id": "90d896a0-af4a-435d-99d4-f09e22af26d5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "803bef817807d2d36c930dada20c96fffae0dd19 <7565d4df66b6619b50dc36618d8b8f1787d77e19"
+    },
+    {
+      "id": "dc7fca0f-e9f1-4009-b6c5-6755c7a81f06",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.10"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3f9d7367-288d-4e2f-8918-2aa8666530d9",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
