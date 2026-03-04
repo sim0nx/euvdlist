@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-9401",
+  "enisaUuid": "4a069fca-51d8-30c3-be23-7f1c8822bb7f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: nf_tables: fix use-after-free in nf_tables_addchain()\n\nnf_tables_addchain() publishes the chain to table->chains via\nlist_add_tail_rcu() (in nft_chain_add()) before registering hooks.\nIf nf_tables_register_hook() then fails, the error path calls\nnft_chain_del() (list_del_rcu()) followed by nf_tables_chain_destroy()\nwith no RCU grace period in between.\n\nThis creates two use-after-free conditions:\n\n 1) Control-plane: nf_tables_dump_chains() traverses table->chains\n    under rcu_read_lock(). A concurrent dump can still be walking\n    the chain when the error path frees it.\n\n 2) Packet path: for NFPROTO_INET, nf_register_net_hook() briefly\n    installs the IPv4 hook before IPv6 registration fails.  Packets\n    entering nft_do_chain() via the transient IPv4 hook can still be\n    dereferencing chain->blob_gen_X when the error path frees the\n    chain.\n\nAdd synchronize_rcu() between nft_chain_del() and the chain destroy\nso that all RCU readers -- both dump threads and in-flight packet\nevaluation -- have finished before the chain is freed.",
+  "datePublished": "Mar 4, 2026, 12:58:42 PM",
+  "dateUpdated": "Mar 4, 2026, 12:58:42 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/dbd0af8083dd201f07c49110b2ee93710abdff28",
+    "https://git.kernel.org/stable/c/2f9a4ffeb763aec822f8ff3d1e82202d27d46d4b",
+    "https://git.kernel.org/stable/c/71e99ee20fc3f662555118cf1159443250647533"
+  ],
+  "aliases": [
+    "CVE-2026-23231"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "7ef4b402-0b73-3d65-82a9-9b6b2dabc2f5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "91c7b38dc9f0de4f7f444b796d14476bc12df7bc <dbd0af8083dd201f07c49110b2ee93710abdff28"
+    },
+    {
+      "id": "996e194f-cc73-37e8-8a15-12fea3011b53",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.4"
+    },
+    {
+      "id": "99eba2d7-9557-3f6b-afa5-a930c9c941e6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "91c7b38dc9f0de4f7f444b796d14476bc12df7bc <71e99ee20fc3f662555118cf1159443250647533"
+    },
+    {
+      "id": "a97aa48a-a5d2-3e22-af4d-40d41fac9fa0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc1"
+    },
+    {
+      "id": "baa91e05-9c34-34fc-8f71-3de4ecb26f19",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "3.16"
+    },
+    {
+      "id": "bec7400c-b58d-3ad5-89b1-0cef9fbeca9c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "91c7b38dc9f0de4f7f444b796d14476bc12df7bc <2f9a4ffeb763aec822f8ff3d1e82202d27d46d4b"
+    },
+    {
+      "id": "ded39d4a-d78c-3cc6-8481-65a76b54b37f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ed578caa-12cc-321e-856c-7cb8b718bc86",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.14"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7180a53d-5edb-36c8-9ba9-5016ac3708ba",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
