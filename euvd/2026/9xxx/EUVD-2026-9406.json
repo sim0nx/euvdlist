@@ -1,0 +1,159 @@
+{
+  "id": "EUVD-2026-9406",
+  "enisaUuid": "160144ea-39dd-3646-9dcd-54c943ec5977",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nf2fs: fix to avoid UAF in f2fs_write_end_io()\n\nAs syzbot reported an use-after-free issue in f2fs_write_end_io().\n\nIt is caused by below race condition:\n\nloop device\t\t\t\tumount\n- worker_thread\n - loop_process_work\n  - do_req_filebacked\n   - lo_rw_aio\n    - lo_rw_aio_complete\n     - blk_mq_end_request\n      - blk_update_request\n       - f2fs_write_end_io\n        - dec_page_count\n        - folio_end_writeback\n\t\t\t\t\t- kill_f2fs_super\n\t\t\t\t\t - kill_block_super\n\t\t\t\t\t  - f2fs_put_super\n\t\t\t\t\t : free(sbi)\n       : get_pages(, F2FS_WB_CP_DATA)\n         accessed sbi which is freed\n\nIn kill_f2fs_super(), we will drop all page caches of f2fs inodes before\ncall free(sbi), it guarantee that all folios should end its writeback, so\nit should be safe to access sbi before last folio_end_writeback().\n\nLet's relocate ckpt thread wakeup flow before folio_end_writeback() to\nresolve this issue.",
+  "datePublished": "Mar 4, 2026, 2:36:38 PM",
+  "dateUpdated": "Mar 4, 2026, 2:36:38 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0fb58aff0dafd6837cc91f4154f3ed6e020358fa",
+    "https://git.kernel.org/stable/c/2f67ff1e15a8a4d0e4ffc6564ab20d03d7398fe9",
+    "https://git.kernel.org/stable/c/505e1c0530db6152cab3feef8e3e4da3d3e358c9",
+    "https://git.kernel.org/stable/c/acc2c97fc0005846e5cf11b5ba3189fef130c9b3",
+    "https://git.kernel.org/stable/c/cf4a9e1bc8129eb63fda5f8bdcd8d87f0bd76f42",
+    "https://git.kernel.org/stable/c/995030be4ce6338c6ff814583c14166446a64008",
+    "https://git.kernel.org/stable/c/a42f99be8a16b32a0bb91bb6dda212a6ad61be5d",
+    "https://git.kernel.org/stable/c/ce2739e482bce8d2c014d76c4531c877f382aa54"
+  ],
+  "aliases": [
+    "CVE-2026-23234"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "00f5afc6-959d-38c3-90b8-1b106ba685fb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e234088758fca3a669ebb1a02d8bf7bf60f0e4ff <995030be4ce6338c6ff814583c14166446a64008"
+    },
+    {
+      "id": "0bf0f47e-de5e-387c-8beb-e147cf80f54d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.10.251"
+    },
+    {
+      "id": "1bc82696-75e3-35da-9e10-bccb429bf138",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "27dee7e1-c185-389a-978e-c65a33d6c210",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e234088758fca3a669ebb1a02d8bf7bf60f0e4ff <ce2739e482bce8d2c014d76c4531c877f382aa54"
+    },
+    {
+      "id": "2a2ea425-dab0-3d79-aa6e-62f5ac7f022e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e234088758fca3a669ebb1a02d8bf7bf60f0e4ff <acc2c97fc0005846e5cf11b5ba3189fef130c9b3"
+    },
+    {
+      "id": "3128fb33-98e0-35b1-8d9a-f6400cf90206",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e234088758fca3a669ebb1a02d8bf7bf60f0e4ff <0fb58aff0dafd6837cc91f4154f3ed6e020358fa"
+    },
+    {
+      "id": "3c95f184-9a2f-3cb3-b1a2-eb84a1155ee3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.3"
+    },
+    {
+      "id": "439ea7a4-bf6a-3dec-a4ca-0b8228ff8cb7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.127"
+    },
+    {
+      "id": "485c933c-cde3-38f8-bcd0-84c3806abd4b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc1"
+    },
+    {
+      "id": "7641887b-5a85-3f47-9fc8-33360b10a2ac",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e234088758fca3a669ebb1a02d8bf7bf60f0e4ff <2f67ff1e15a8a4d0e4ffc6564ab20d03d7398fe9"
+    },
+    {
+      "id": "801442df-ade6-31aa-b374-dc13dcb370cd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.164"
+    },
+    {
+      "id": "9fb985a2-ca36-3633-a15f-e934b55e083c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.201"
+    },
+    {
+      "id": "b79e36a2-2389-3fab-b86e-ecd16be42de6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e234088758fca3a669ebb1a02d8bf7bf60f0e4ff <505e1c0530db6152cab3feef8e3e4da3d3e358c9"
+    },
+    {
+      "id": "da45be59-892f-3506-9816-c0cf46ef4c36",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e234088758fca3a669ebb1a02d8bf7bf60f0e4ff <cf4a9e1bc8129eb63fda5f8bdcd8d87f0bd76f42"
+    },
+    {
+      "id": "e4d72375-448d-35e8-96d1-5d10e3e1f2cc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "3.13"
+    },
+    {
+      "id": "e99cc679-3b52-3a09-8f71-859cf5855af4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e234088758fca3a669ebb1a02d8bf7bf60f0e4ff <a42f99be8a16b32a0bb91bb6dda212a6ad61be5d"
+    },
+    {
+      "id": "ed44e34e-0c77-3d8b-b0e4-ba1dd972c870",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.74"
+    },
+    {
+      "id": "f9d0491d-aec6-3605-942d-204387354b0c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "bddda815-9315-3422-8451-26423931e2b0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
