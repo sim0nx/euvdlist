@@ -1,0 +1,99 @@
+{
+  "id": "EUVD-2026-10576",
+  "enisaUuid": "8043a0a3-fd40-3c00-a47f-8a1fdbab0021",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntls: Fix race condition in tls_sw_cancel_work_tx()\n\nThis issue was discovered during a code audit.\n\nAfter cancel_delayed_work_sync() is called from tls_sk_proto_close(),\ntx_work_handler() can still be scheduled from paths such as the\nDelayed ACK handler or ksoftirqd.\nAs a result, the tx_work_handler() worker may dereference a freed\nTLS object.\n\nThe following is a simple race scenario:\n\n          cpu0                         cpu1\n\ntls_sk_proto_close()\n  tls_sw_cancel_work_tx()\n                                 tls_write_space()\n                                   tls_sw_write_space()\n                                     if (!test_and_set_bit(BIT_TX_SCHEDULED, &tx_ctx->tx_bitmask))\n    set_bit(BIT_TX_SCHEDULED, &ctx->tx_bitmask);\n    cancel_delayed_work_sync(&ctx->tx_work.work);\n                                     schedule_delayed_work(&tx_ctx->tx_work.work, 0);\n\nTo prevent this race condition, cancel_delayed_work_sync() is\nreplaced with disable_delayed_work_sync().",
+  "datePublished": "Mar 10, 2026, 5:28:27 PM",
+  "dateUpdated": "Mar 10, 2026, 5:28:27 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a5de36d6cee74a92c1a21b260bc507e64bc451de",
+    "https://git.kernel.org/stable/c/854cd32bc74fe573353095e90958490e4e4d641b",
+    "https://git.kernel.org/stable/c/17153f154f80be2b47ebf52840f2d8f724eb2f3b",
+    "https://git.kernel.org/stable/c/7bb09315f93dce6acc54bf59e5a95ba7365c2be4"
+  ],
+  "aliases": [
+    "CVE-2026-23240"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "00622fe1-d5ec-3c62-ac65-672807dc96bb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.75"
+    },
+    {
+      "id": "095e3003-7fcc-3585-977d-1209dfa32ebd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc2"
+    },
+    {
+      "id": "2d4c21f0-d549-3a24-ada8-5daa76bf189a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "5671bf2b-e071-3a51-aabb-659e4c23ebd2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    },
+    {
+      "id": "69f6b8a3-64f8-31e7-8299-4e0bc4e3a346",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "f87e62d45e51b12d48d2cb46b5cde8f83b866bc4 <7bb09315f93dce6acc54bf59e5a95ba7365c2be4"
+    },
+    {
+      "id": "802d1009-4bed-359a-80ab-ec91b3cf6b64",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "f87e62d45e51b12d48d2cb46b5cde8f83b866bc4 <a5de36d6cee74a92c1a21b260bc507e64bc451de"
+    },
+    {
+      "id": "92505753-544e-30b0-ac21-c628fe1f8560",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "f87e62d45e51b12d48d2cb46b5cde8f83b866bc4 <17153f154f80be2b47ebf52840f2d8f724eb2f3b"
+    },
+    {
+      "id": "ae28c1c0-e5b8-3376-85cd-0d0606abc407",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b1d97737-1187-3d06-b905-8d71044a42ab",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.3"
+    },
+    {
+      "id": "f708dbb5-9988-3069-8b46-2dfaf8b30d94",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "f87e62d45e51b12d48d2cb46b5cde8f83b866bc4 <854cd32bc74fe573353095e90958490e4e4d641b"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a14b2df5-c931-3ee1-9e61-a833f692345d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
