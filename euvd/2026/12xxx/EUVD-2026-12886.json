@@ -1,0 +1,69 @@
+{
+  "id": "EUVD-2026-12886",
+  "enisaUuid": "1b6a1c48-1877-39b4-8f8d-5945f0728d9d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: add proper RCU protection to /proc/net/ptype\n\nYin Fengwei reported an RCU stall in ptype_seq_show() and provided\na patch.\n\nReal issue is that ptype_seq_next() and ptype_seq_show() violate\nRCU rules.\n\nptype_seq_show() runs under rcu_read_lock(), and reads pt->dev\nto get device name without any barrier.\n\nAt the same time, concurrent writers can remove a packet_type structure\n(which is correctly freed after an RCU grace period) and clear pt->dev\nwithout an RCU grace period.\n\nDefine ptype_iter_state to carry a dev pointer along seq_net_private:\n\nstruct ptype_iter_state {\n\tstruct seq_net_private\tp;\n\tstruct net_device\t*dev; // added in this patch\n};\n\nWe need to record the device pointer in ptype_get_idx() and\nptype_seq_next() so that ptype_seq_show() is safe against\nconcurrent pt->dev changes.\n\nWe also need to add full RCU protection in ptype_seq_next().\n(Missing READ_ONCE() when reading list.next values)\n\nMany thanks to Dong Chenchen for providing a repro.",
+  "datePublished": "Mar 18, 2026, 5:41:01 PM",
+  "dateUpdated": "Mar 18, 2026, 5:41:01 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/589a530ae44d0c80f523fcfd1a15af8087f27d35",
+    "https://git.kernel.org/stable/c/f613e8b4afea0cd17c7168e8b00e25bc8d33175d"
+  ],
+  "aliases": [
+    "CVE-2026-23255"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2c611310-7a8e-3e4c-96fe-3087b12a0b6e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f613e8b4afea0cd17c7168e8b00e25bc8d33175d"
+    },
+    {
+      "id": "341e54cb-921a-33cb-a5e3-865a3a127915",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <589a530ae44d0c80f523fcfd1a15af8087f27d35"
+    },
+    {
+      "id": "38124a56-7578-3f3f-adf2-9b44a69dfb64",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9b5d60d8-f669-3f75-b839-5903d187bf3d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.10"
+    },
+    {
+      "id": "b504ae9f-2cd8-3d16-a96b-ff98adb6e378",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19"
+    },
+    {
+      "id": "c5237d3c-8537-3cbd-b7a3-5534738502b9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2.6.12"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7408f578-4d95-320b-a676-d260b7efd426",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
