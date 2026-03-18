@@ -1,0 +1,99 @@
+{
+  "id": "EUVD-2026-12852",
+  "enisaUuid": "14d45bee-4cd6-3a75-8092-70bbf6e14c78",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfs: check for deleted cursors when revalidating two btrees\n\nThe free space and inode btree repair functions will rebuild both btrees\nat the same time, after which it needs to evaluate both btrees to\nconfirm that the corruptions are gone.\n\nHowever, Jiaming Zhang ran syzbot and produced a crash in the second\nxchk_allocbt call.  His root-cause analysis is as follows (with minor\ncorrections):\n\n In xrep_revalidate_allocbt(), xchk_allocbt() is called twice (first\n for BNOBT, second for CNTBT). The cause of this issue is that the\n first call nullified the cursor required by the second call.\n\n Let's first enter xrep_revalidate_allocbt() via following call chain:\n\n xfs_file_ioctl() ->\n xfs_ioc_scrubv_metadata() ->\n xfs_scrub_metadata() ->\n `sc->ops->repair_eval(sc)` ->\n xrep_revalidate_allocbt()\n\n xchk_allocbt() is called twice in this function. In the first call:\n\n /* Note that sc->sm->sm_type is XFS_SCRUB_TYPE_BNOPT now */\n xchk_allocbt() ->\n xchk_btree() ->\n `bs->scrub_rec(bs, recp)` ->\n xchk_allocbt_rec() ->\n xchk_allocbt_xref() ->\n xchk_allocbt_xref_other()\n\n since sm_type is XFS_SCRUB_TYPE_BNOBT, pur is set to &sc->sa.cnt_cur.\n Kernel called xfs_alloc_get_rec() and returned -EFSCORRUPTED. Call\n chain:\n\n xfs_alloc_get_rec() ->\n xfs_btree_get_rec() ->\n xfs_btree_check_block() ->\n (XFS_IS_CORRUPT || XFS_TEST_ERROR), the former is false and the latter\n is true, return -EFSCORRUPTED. This should be caused by\n ioctl$XFS_IOC_ERROR_INJECTION I guess.\n\n Back to xchk_allocbt_xref_other(), after receiving -EFSCORRUPTED from\n xfs_alloc_get_rec(), kernel called xchk_should_check_xref(). In this\n function, *curpp (points to sc->sa.cnt_cur) is nullified.\n\n Back to xrep_revalidate_allocbt(), since sc->sa.cnt_cur has been\n nullified, it then triggered null-ptr-deref via xchk_allocbt() (second\n call) -> xchk_btree().\n\nSo.  The bnobt revalidation failed on a cross-reference attempt, so we\ndeleted the cntbt cursor, and then crashed when we tried to revalidate\nthe cntbt.  Therefore, check for a null cntbt cursor before that\nrevalidation, and mark the repair incomplete.  Also we can ignore the\nsecond tree entirely if the first tree was rebuilt but is already\ncorrupt.\n\nApply the same fix to xrep_revalidate_iallocbt because it has the same\nproblem.",
+  "datePublished": "Mar 18, 2026, 5:01:40 PM",
+  "dateUpdated": "Mar 18, 2026, 5:01:40 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d69de525bc7ab27713342080bf50826df3f6a68f",
+    "https://git.kernel.org/stable/c/b04baa848c0543b240b1bd8aecff470382f6f154",
+    "https://git.kernel.org/stable/c/5991e96f2ae82df60a3e4ed00f3432d9f3502a99",
+    "https://git.kernel.org/stable/c/55e03b8cbe2783ec9acfb88e8adb946ed504e117"
+  ],
+  "aliases": [
+    "CVE-2026-23249"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1b1b0015-1a33-390c-8512-6c5607ed1305",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "317e3c9d-8bca-3492-8e35-1e9cca83d7cf",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.75"
+    },
+    {
+      "id": "31de4945-89af-38e0-a190-293c77977115",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.8"
+    },
+    {
+      "id": "47b47946-8a45-3464-a0fd-b6d476bca93f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "589499d9-9f0b-3aca-9f12-0c45709a7dbb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dbfbf3bdf639a20da7d5fb390cd2e197d25aa418 <55e03b8cbe2783ec9acfb88e8adb946ed504e117"
+    },
+    {
+      "id": "7bd5ae7e-63d6-3b9f-857a-397206edf8a4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dbfbf3bdf639a20da7d5fb390cd2e197d25aa418 <d69de525bc7ab27713342080bf50826df3f6a68f"
+    },
+    {
+      "id": "87ebd583-f0b7-3f05-bb3e-d2e7e86915ba",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dbfbf3bdf639a20da7d5fb390cd2e197d25aa418 <b04baa848c0543b240b1bd8aecff470382f6f154"
+    },
+    {
+      "id": "90c84016-8a02-337d-8384-ea11893f38be",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    },
+    {
+      "id": "b1efdfec-65f7-34d4-9ede-56d3d9a7f44e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dbfbf3bdf639a20da7d5fb390cd2e197d25aa418 <5991e96f2ae82df60a3e4ed00f3432d9f3502a99"
+    },
+    {
+      "id": "d830c2a4-d1ab-3c72-a9ac-7c008d12a59b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7d7d4502-26a6-3303-a5b3-5e910f22e80e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
