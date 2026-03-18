@@ -1,0 +1,70 @@
+{
+  "id": "EUVD-2026-12811",
+  "enisaUuid": "c346c7e8-15b0-3a3f-b9d7-7e0eecd3d94b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nperf/core: Fix refcount bug and potential UAF in perf_mmap\n\nSyzkaller reported a refcount_t: addition on 0; use-after-free warning\nin perf_mmap.\n\nThe issue is caused by a race condition between a failing mmap() setup\nand a concurrent mmap() on a dependent event (e.g., using output\nredirection).\n\nIn perf_mmap(), the ring_buffer (rb) is allocated and assigned to\nevent->rb with the mmap_mutex held. The mutex is then released to\nperform map_range().\n\nIf map_range() fails, perf_mmap_close() is called to clean up.\nHowever, since the mutex was dropped, another thread attaching to\nthis event (via inherited events or output redirection) can acquire\nthe mutex, observe the valid event->rb pointer, and attempt to\nincrement its reference count. If the cleanup path has already\ndropped the reference count to zero, this results in a\nuse-after-free or refcount saturation warning.\n\nFix this by extending the scope of mmap_mutex to cover the\nmap_range() call. This ensures that the ring buffer initialization\nand mapping (or cleanup on failure) happens atomically effectively,\npreventing other threads from accessing a half-initialized or\ndying ring buffer.",
+  "datePublished": "Mar 18, 2026, 10:05:10 AM",
+  "dateUpdated": "Mar 18, 2026, 10:05:10 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/c27dea9f50ed525facb62ef647dddc4722456e07",
+    "https://git.kernel.org/stable/c/ac7ecb65af170a7fc193e7bd8be15dac84ec6a56",
+    "https://git.kernel.org/stable/c/77de62ad3de3967818c3dbe656b7336ebee461d2"
+  ],
+  "aliases": [
+    "CVE-2026-23248"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2763131b-a1a4-3563-ab45-3d41d0f379ac",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.7"
+    },
+    {
+      "id": "633ab25a-1826-3758-a972-77ae91c835a7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <ac7ecb65af170a7fc193e7bd8be15dac84ec6a56"
+    },
+    {
+      "id": "6bd403a1-bed5-32a3-908e-2b62876337bf",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <77de62ad3de3967818c3dbe656b7336ebee461d2"
+    },
+    {
+      "id": "6e547fbd-d487-3d4b-b73d-60cbf5b8f314",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c27dea9f50ed525facb62ef647dddc4722456e07"
+    },
+    {
+      "id": "935219d4-370b-3edb-9c11-0b5181c58dbc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc2"
+    },
+    {
+      "id": "f24e12de-b208-3ff6-b235-19d004dc8d1a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.17"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9260463e-4c97-3bdd-ae4a-672b13958ddf",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

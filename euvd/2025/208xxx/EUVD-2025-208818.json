@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2025-208818",
+  "enisaUuid": "b20ecd01-7689-3df4-bb5d-8615821e85bb",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs: ntfs3: fix infinite loop in attr_load_runs_range on inconsistent metadata\n\nWe found an infinite loop bug in the ntfs3 file system that can lead to a\nDenial-of-Service (DoS) condition.\n\nA malformed NTFS image can cause an infinite loop when an attribute header\nindicates an empty run list, while directory entries reference it as\ncontaining actual data. In NTFS, setting evcn=-1 with svcn=0 is a valid way\nto represent an empty run list, and run_unpack() correctly handles this by\nchecking if evcn + 1 equals svcn and returning early without parsing any run\ndata. However, this creates a problem when there is metadata inconsistency,\nwhere the attribute header claims to be empty (evcn=-1) but the caller\nexpects to read actual data. When run_unpack() immediately returns success\nupon seeing this condition, it leaves the runs_tree uninitialized with\nrun->runs as a NULL. The calling function attr_load_runs_range() assumes\nthat a successful return means that the runs were loaded and sets clen to 0,\nexpecting the next run_lookup_entry() call to succeed. Because runs_tree\nremains uninitialized, run_lookup_entry() continues to fail, and the loop\nincrements vcn by zero (vcn += 0), leading to an infinite loop.\n\nThis patch adds a retry counter to detect when run_lookup_entry() fails\nconsecutively after attr_load_runs_vcn(). If the run is still not found on\nthe second attempt, it indicates corrupted metadata and returns -EINVAL,\npreventing the Denial-of-Service (DoS) vulnerability.",
+  "datePublished": "Mar 18, 2026, 10:05:01 AM",
+  "dateUpdated": "Mar 18, 2026, 10:05:01 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6f07a590616ff5f57f7c041d98e463fad9e9f763",
+    "https://git.kernel.org/stable/c/a89bc96d5abd8a4a8d5d911884ea347efcdf460b",
+    "https://git.kernel.org/stable/c/af839013c70a24779f9d1afb1575952009312d38",
+    "https://git.kernel.org/stable/c/78b61f7eac37a63284774b147f38dd0be6cad43c",
+    "https://git.kernel.org/stable/c/c0b43c45d45f59e7faad48675a50231a210c379b",
+    "https://git.kernel.org/stable/c/3c3a6e951b9b53dab2ac460a655313cf04c4a10a",
+    "https://git.kernel.org/stable/c/4b90f16e4bb5607fb35e7802eb67874038da4640"
+  ],
+  "aliases": [
+    "CVE-2025-71265"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0b745762-01c5-3934-8b26-c20120854a1b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    },
+    {
+      "id": "1f009c39-63e4-3128-bdd5-769f00fa27b1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <af839013c70a24779f9d1afb1575952009312d38"
+    },
+    {
+      "id": "2b6b314e-07bc-394a-9ce8-93130b7cf47b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a89bc96d5abd8a4a8d5d911884ea347efcdf460b"
+    },
+    {
+      "id": "3a64f610-ef90-3df5-8394-68e14e6092a9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "3e7057d1-46f0-3b34-8bd6-f48857a5188a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.75"
+    },
+    {
+      "id": "5cd01b88-f08a-3c7a-9b48-9aefd9d4bb37",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.165"
+    },
+    {
+      "id": "65666c14-abfe-38a7-ab7c-3af25aa48692",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc1"
+    },
+    {
+      "id": "6f23bb53-fc89-3a0e-b7a5-f546ccff8225",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <3c3a6e951b9b53dab2ac460a655313cf04c4a10a"
+    },
+    {
+      "id": "76191ff6-4372-3251-a464-54480d060303",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4b90f16e4bb5607fb35e7802eb67874038da4640"
+    },
+    {
+      "id": "b68548f7-3166-3cbb-a48d-9825e48e771d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c0b43c45d45f59e7faad48675a50231a210c379b"
+    },
+    {
+      "id": "c70759ae-ff49-3f7a-bce2-216601587a92",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6f07a590616ff5f57f7c041d98e463fad9e9f763"
+    },
+    {
+      "id": "d01928f0-ae97-3ce7-ba66-229ae2d96164",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.202"
+    },
+    {
+      "id": "d31f489f-ec7f-301b-94ab-471075054185",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <78b61f7eac37a63284774b147f38dd0be6cad43c"
+    },
+    {
+      "id": "e3a78e53-4916-3ac4-9af9-aa29c077c96f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.128"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "41419fa3-48ba-3b66-a8bb-54febd3ad1ee",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
