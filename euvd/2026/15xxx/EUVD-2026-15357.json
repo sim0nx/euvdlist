@@ -1,0 +1,83 @@
+{
+  "id": "EUVD-2026-15357",
+  "enisaUuid": "9ffec6d4-357d-3965-a248-11347e518c13",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsched/deadline: Fix missing ENQUEUE_REPLENISH during PI de-boosting\n\nRunning stress-ng --schedpolicy 0 on an RT kernel on a big machine\nmight lead to the following WARNINGs (edited).\n\n sched: DL de-boosted task PID 22725: REPLENISH flag missing\n\n WARNING: CPU: 93 PID: 0 at kernel/sched/deadline.c:239 dequeue_task_dl+0x15c/0x1f8\n ... (running_bw underflow)\n Call trace:\n  dequeue_task_dl+0x15c/0x1f8 (P)\n  dequeue_task+0x80/0x168\n  deactivate_task+0x24/0x50\n  push_dl_task+0x264/0x2e0\n  dl_task_timer+0x1b0/0x228\n  __hrtimer_run_queues+0x188/0x378\n  hrtimer_interrupt+0xfc/0x260\n  ...\n\nThe problem is that when a SCHED_DEADLINE task (lock holder) is\nchanged to a lower priority class via sched_setscheduler(), it may\nfail to properly inherit the parameters of potential DEADLINE donors\nif it didn't already inherit them in the past (shorter deadline than\ndonor's at that time). This might lead to bandwidth accounting\ncorruption, as enqueue_task_dl() won't recognize the lock holder as\nboosted.\n\nThe scenario occurs when:\n1. A DEADLINE task (donor) blocks on a PI mutex held by another\n   DEADLINE task (holder), but the holder doesn't inherit parameters\n   (e.g., it already has a shorter deadline)\n2. sched_setscheduler() changes the holder from DEADLINE to a lower\n   class while still holding the mutex\n3. The holder should now inherit DEADLINE parameters from the donor\n   and be enqueued with ENQUEUE_REPLENISH, but this doesn't happen\n\nFix the issue by introducing __setscheduler_dl_pi(), which detects when\na DEADLINE (proper or boosted) task gets setscheduled to a lower\npriority class. In case, the function makes the task inherit DEADLINE\nparameters of the donoer (pi_se) and sets ENQUEUE_REPLENISH flag to\nensure proper bandwidth accounting during the next enqueue operation.",
+  "datePublished": "Mar 25, 2026, 10:27:52 AM",
+  "dateUpdated": "Mar 25, 2026, 10:27:52 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ba1c22924ddcc280672a2a06a9ca99ee3a1b92c3",
+    "https://git.kernel.org/stable/c/d658686a1331db3bb108ca079d76deb3208ed949"
+  ],
+  "aliases": [
+    "CVE-2026-23371"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0121d6a4-f817-3cbc-9dc9-806f275d8061",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2279f540ea7d05f22d2f0c4224319330228586bc <d658686a1331db3bb108ca079d76deb3208ed949"
+    },
+    {
+      "id": "200edd6f-540a-3d0d-9757-71bf3a112e60",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.10"
+    },
+    {
+      "id": "259ac4e8-e504-3baf-b5f5-dd41c2094bb1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "3cc3d77dc541181f97f1dc96d2977ef8359fd760"
+    },
+    {
+      "id": "32248543-5d93-34bd-aba3-daa531c213fa",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "5ecd1e8e-a6d3-33fc-bbb5-5354aae1f959",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.7"
+    },
+    {
+      "id": "75ad9baf-f091-34ca-8c19-b15bc8d40358",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "d2b65976bf1ae9d0d9dd5770cd01695559438309"
+    },
+    {
+      "id": "cffe5701-3a27-37c9-a0a9-3fd5801ade92",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2279f540ea7d05f22d2f0c4224319330228586bc <ba1c22924ddcc280672a2a06a9ca99ee3a1b92c3"
+    },
+    {
+      "id": "e6061286-7a63-3a9a-996c-dc6139316c02",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "55a73a80-f612-3936-8191-bebc63573537",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

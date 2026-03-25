@@ -1,0 +1,54 @@
+{
+  "id": "EUVD-2026-15293",
+  "enisaUuid": "ba20aaa4-727c-3bec-b197-1ca532d8776f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: nft_set_rbtree: validate open interval overlap\n\n[ Upstream commit 648946966a08e4cb1a71619e3d1b12bd7642de7b ]\n\nOpen intervals do not have an end element, in particular an open\ninterval at the end of the set is hard to validate because of it is\nlacking the end element, and interval validation relies on such end\nelement to perform the checks.\n\nThis patch adds a new flag field to struct nft_set_elem, this is not an\nissue because this is a temporary object that is allocated in the stack\nfrom the insert/deactivate path. This flag field is used to specify that\nthis is the last element in this add/delete command.\n\nThe last flag is used, in combination with the start element cookie, to\ncheck if there is a partial overlap, eg.\n\n   Already exists:   255.255.255.0-255.255.255.254\n   Add interval:     255.255.255.0-255.255.255.255\n                     ~~~~~~~~~~~~~\n             start element overlap\n\nBasically, the idea is to check for an existing end element in the set\nif there is an overlap with an existing start element.\n\nHowever, the last open interval can come in any position in the add\ncommand, the corner case can get a bit more complicated:\n\n   Already exists:   255.255.255.0-255.255.255.254\n   Add intervals:    255.255.255.0-255.255.255.255,255.255.255.0-255.255.255.254\n                     ~~~~~~~~~~~~~\n             start element overlap\n\nTo catch this overlap, annotate that the new start element is a possible\noverlap, then report the overlap if the next element is another start\nelement that confirms that previous element in an open interval at the\nend of the set.\n\nFor deletions, do not update the start cookie when deleting an open\ninterval, otherwise this can trigger spurious EEXIST when adding new\nelements.\n\nUnfortunately, there is no NFT_SET_ELEM_INTERVAL_OPEN flag which would\nmake easier to detect open interval overlaps.",
+  "datePublished": "Mar 25, 2026, 10:27:23 AM",
+  "dateUpdated": "Mar 25, 2026, 10:27:23 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6db2be971e3d70c9e3f85d39eff7103c2ee2f579"
+  ],
+  "aliases": [
+    "CVE-2026-23333"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "31145e21-7774-3a2c-8ed4-2d045072dc69",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "7c84d41416d836ef7e533bd4d64ccbdf40c5ac70 <6db2be971e3d70c9e3f85d39eff7103c2ee2f579"
+    },
+    {
+      "id": "3c197056-6dc7-3960-88ab-c894aca83763",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.6"
+    },
+    {
+      "id": "4d2e73bb-db65-3355-b461-33a1a263844e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.4"
+    },
+    {
+      "id": "80bf1a78-a65f-3493-badd-325edad7a26f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b8810793-2f5c-3829-8889-904d420ede2b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

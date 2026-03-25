@@ -1,0 +1,114 @@
+{
+  "id": "EUVD-2026-15384",
+  "enisaUuid": "8c390e2e-e5ba-3883-961d-b6009dbd9c6a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngve: fix incorrect buffer cleanup in gve_tx_clean_pending_packets for QPL\n\nIn DQ-QPL mode, gve_tx_clean_pending_packets() incorrectly uses the RDA\nbuffer cleanup path. It iterates num_bufs times and attempts to unmap\nentries in the dma array.\n\nThis leads to two issues:\n1. The dma array shares storage with tx_qpl_buf_ids (union).\n Interpreting buffer IDs as DMA addresses results in attempting to\n unmap incorrect memory locations.\n2. num_bufs in QPL mode (counting 2K chunks) can significantly exceed\n the size of the dma array, causing out-of-bounds access warnings\n(trace below is how we noticed this issue).\n\nUBSAN: array-index-out-of-bounds in\ndrivers/net/ethernet/drivers/net/ethernet/google/gve/gve_tx_dqo.c:178:5 index 18 is out of\nrange for type 'dma_addr_t[18]' (aka 'unsigned long long[18]')\nWorkqueue: gve gve_service_task [gve]\nCall Trace:\n<TASK>\ndump_stack_lvl+0x33/0xa0\n__ubsan_handle_out_of_bounds+0xdc/0x110\ngve_tx_stop_ring_dqo+0x182/0x200 [gve]\ngve_close+0x1be/0x450 [gve]\ngve_reset+0x99/0x120 [gve]\ngve_service_task+0x61/0x100 [gve]\nprocess_scheduled_works+0x1e9/0x380\n\nFix this by properly checking for QPL mode and delegating to\ngve_free_tx_qpl_bufs() to reclaim the buffers.",
+  "datePublished": "Mar 25, 2026, 10:28:04 AM",
+  "dateUpdated": "Mar 25, 2026, 10:28:04 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/71511dae56a75ce161aa746741e5c498feaea393",
+    "https://git.kernel.org/stable/c/c171f90f58974c784db25e0606051541cb71b7f0",
+    "https://git.kernel.org/stable/c/07e0c80e17ef781799e7cd5c41a7bf44f1bf6a5f",
+    "https://git.kernel.org/stable/c/3744ebd8ffaa542ae8110fb449adcac0202f4cc8",
+    "https://git.kernel.org/stable/c/fb868db5f4bccd7a78219313ab2917429f715cea"
+  ],
+  "aliases": [
+    "CVE-2026-23386"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2810fb70-9894-32f1-9223-2147f559fc24",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "2c706ac8-cbd6-3f76-b859-cabc528d9d6a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a6fb8d5a8b6925f1e635818d3dd2d89531d4a058 <71511dae56a75ce161aa746741e5c498feaea393"
+    },
+    {
+      "id": "3e036a15-3ee8-38f1-bafe-eaeabe9d975f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a6fb8d5a8b6925f1e635818d3dd2d89531d4a058 <c171f90f58974c784db25e0606051541cb71b7f0"
+    },
+    {
+      "id": "72101b21-ba04-3697-92e4-4a022deb22a0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a6fb8d5a8b6925f1e635818d3dd2d89531d4a058 <3744ebd8ffaa542ae8110fb449adcac0202f4cc8"
+    },
+    {
+      "id": "b7b1dfa0-e4f5-38fc-a216-86e819d78d74",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a6fb8d5a8b6925f1e635818d3dd2d89531d4a058 <fb868db5f4bccd7a78219313ab2917429f715cea"
+    },
+    {
+      "id": "bac66a6f-cb18-35cf-ae52-e37bd7843066",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.7"
+    },
+    {
+      "id": "c4f4f57d-8022-36c7-88b7-9a4e8fb6d22e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.17"
+    },
+    {
+      "id": "ca4efdc1-2985-3cf9-b4bb-61ef7a78df36",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc2"
+    },
+    {
+      "id": "d8c64b7d-2265-3f2f-9688-7c00c02f52e7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.78"
+    },
+    {
+      "id": "d8e17874-d29f-3d04-b5a9-99cdbca4487f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.130"
+    },
+    {
+      "id": "dfdbb338-6b26-3577-a7e4-433657bbe9c1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.6"
+    },
+    {
+      "id": "eacc09b7-0c21-3e0c-a455-a525ef3c0efd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a6fb8d5a8b6925f1e635818d3dd2d89531d4a058 <07e0c80e17ef781799e7cd5c41a7bf44f1bf6a5f"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2977c868-4dfd-3632-b9db-5988f34313c0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

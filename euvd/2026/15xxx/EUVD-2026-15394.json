@@ -1,0 +1,99 @@
+{
+  "id": "EUVD-2026-15394",
+  "enisaUuid": "aeb190b6-a16e-32c2-98cc-4ee457cf4988",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbridge: cfm: Fix race condition in peer_mep deletion\n\nWhen a peer MEP is being deleted, cancel_delayed_work_sync() is called\non ccm_rx_dwork before freeing. However, br_cfm_frame_rx() runs in\nsoftirq context under rcu_read_lock (without RTNL) and can re-schedule\nccm_rx_dwork via ccm_rx_timer_start() between cancel_delayed_work_sync()\nreturning and kfree_rcu() being called.\n\nThe following is a simple race scenario:\n\n           cpu0                                     cpu1\n\nmep_delete_implementation()\n  cancel_delayed_work_sync(ccm_rx_dwork);\n                                           br_cfm_frame_rx()\n                                             // peer_mep still in hlist\n                                             if (peer_mep->ccm_defect)\n                                               ccm_rx_timer_start()\n                                                 queue_delayed_work(ccm_rx_dwork)\n  hlist_del_rcu(&peer_mep->head);\n  kfree_rcu(peer_mep, rcu);\n                                           ccm_rx_work_expired()\n                                             // on freed peer_mep\n\nTo prevent this, cancel_delayed_work_sync() is replaced with\ndisable_delayed_work_sync() in both peer MEP deletion paths, so\nthat subsequent queue_delayed_work() calls from br_cfm_frame_rx()\nare silently rejected.\n\nThe cc_peer_disable() helper retains cancel_delayed_work_sync()\nbecause it is also used for the CC enable/disable toggle path where\nthe work must remain re-schedulable.",
+  "datePublished": "Mar 25, 2026, 10:33:17 AM",
+  "dateUpdated": "Mar 25, 2026, 10:33:17 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e89dbd2736a45f0507949af4748cbbf3ff793146",
+    "https://git.kernel.org/stable/c/d8f35767bacb3c7769d470a41cf161e3f3c07e70",
+    "https://git.kernel.org/stable/c/1fd81151f65927fd9edb8ecd12ad45527dbbe5ab",
+    "https://git.kernel.org/stable/c/3715a00855316066cdda69d43648336367422127"
+  ],
+  "aliases": [
+    "CVE-2026-23393"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2ea12928-3105-3551-82a0-ca9d156e1b2e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dc32cbb3dbd7da38c700d6e0fc6354df24920525 <3715a00855316066cdda69d43648336367422127"
+    },
+    {
+      "id": "55d92541-9b41-372c-b0a5-6d920cdf2bb3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.78"
+    },
+    {
+      "id": "89772c37-1da3-3fd3-a1da-383bca0d836a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.11"
+    },
+    {
+      "id": "920ecbd5-adaa-3175-808a-cfe418cd9d43",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b434b6e1-4262-3081-a685-294736a09bc1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dc32cbb3dbd7da38c700d6e0fc6354df24920525 <d8f35767bacb3c7769d470a41cf161e3f3c07e70"
+    },
+    {
+      "id": "c6563de5-11c9-3753-8565-f32ab2251b11",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dc32cbb3dbd7da38c700d6e0fc6354df24920525 <1fd81151f65927fd9edb8ecd12ad45527dbbe5ab"
+    },
+    {
+      "id": "cca9bcfd-4089-325e-87f7-8e5fa7da266c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.20"
+    },
+    {
+      "id": "d9fe1183-3be9-3219-98b3-ef9a154585d7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc5"
+    },
+    {
+      "id": "e4ebbc42-05a2-336c-9170-3f0b1c6c4a2c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.10"
+    },
+    {
+      "id": "f273da2e-de5a-3e76-9aa0-0dae1aa32479",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dc32cbb3dbd7da38c700d6e0fc6354df24920525 <e89dbd2736a45f0507949af4748cbbf3ff793146"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "478b7943-c5f6-3680-b831-1791cef5137c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

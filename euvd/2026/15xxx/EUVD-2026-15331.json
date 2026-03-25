@@ -1,0 +1,115 @@
+{
+  "id": "EUVD-2026-15331",
+  "enisaUuid": "91f33d9e-4c36-3d12-8272-fcdec1481fb8",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrbd: fix \"LOGIC BUG\" in drbd_al_begin_io_nonblock()\n\nEven though we check that we \"should\" be able to do lc_get_cumulative()\nwhile holding the device->al_lock spinlock, it may still fail,\nif some other code path decided to do lc_try_lock() with bad timing.\n\nIf that happened, we logged \"LOGIC BUG for enr=...\",\nbut still did not return an error.\n\nThe rest of the code now assumed that this request has references\nfor the relevant activity log extents.\n\nThe implcations are that during an active resync, mutual exclusivity of\nresync versus application IO is not guaranteed. And a potential crash\nat this point may not realizs that these extents could have been target\nof in-flight IO and would need to be resynced just in case.\n\nAlso, once the request completes, it will give up activity log references it\ndoes not even hold, which will trigger a BUG_ON(refcnt == 0) in lc_put().\n\nFix:\n\nDo not crash the kernel for a condition that is harmless during normal\noperation: also catch \"e->refcnt == 0\", not only \"e == NULL\"\nwhen being noisy about \"al_complete_io() called on inactive extent %u\\n\".\n\nAnd do not try to be smart and \"guess\" whether something will work, then\nbe surprised when it does not.\nDeal with the fact that it may or may not work.  If it does not, remember a\npossible \"partially in activity log\" state (only possible for requests that\ncross extent boundaries), and return an error code from\ndrbd_al_begin_io_nonblock().\n\nA latter call for the same request will then resume from where we left off.",
+  "datePublished": "Mar 25, 2026, 10:27:40 AM",
+  "dateUpdated": "Mar 25, 2026, 10:27:40 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/7752569fc78e89794ce28946529850282233f99d",
+    "https://git.kernel.org/stable/c/e91d8d6565b7819d13dab21d4dbed5b45efba59b",
+    "https://git.kernel.org/stable/c/eef1390125b660b8b61f9f227a03bb9c5e6d36a5",
+    "https://git.kernel.org/stable/c/d1ef3aed4df2ef1fe46befd8f2da9a6ec5445508",
+    "https://git.kernel.org/stable/c/f558e5404a72054b525dced1a0c66aa95a144153",
+    "https://git.kernel.org/stable/c/ab140365fb62c0bdab22b2f516aff563b2559e3b"
+  ],
+  "aliases": [
+    "CVE-2026-23356"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0f7f6d7b-d02d-3ccf-8abe-1ffe30cf8374",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.167"
+    },
+    {
+      "id": "2004009d-ba03-39e0-a7b7-999564c084dd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.7"
+    },
+    {
+      "id": "252a7000-0b66-36b4-b982-ad5494bf99f9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc2"
+    },
+    {
+      "id": "2e0920b0-7b0b-3f06-8c08-88e5103c78d1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <ab140365fb62c0bdab22b2f516aff563b2559e3b"
+    },
+    {
+      "id": "4a01a494-21fc-3ff2-b4d1-309c191cfd4c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.77"
+    },
+    {
+      "id": "54591753-e288-3157-84aa-053d3257f8b8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <7752569fc78e89794ce28946529850282233f99d"
+    },
+    {
+      "id": "547f875c-f1a5-3bbd-83f7-707a59f792d4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.17"
+    },
+    {
+      "id": "5522b1c6-c943-3256-9c73-b93a7d0b433a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f558e5404a72054b525dced1a0c66aa95a144153"
+    },
+    {
+      "id": "62e04694-e2c2-3c63-9a59-b41361da00b4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d1ef3aed4df2ef1fe46befd8f2da9a6ec5445508"
+    },
+    {
+      "id": "7b7c7827-2b60-35e5-8095-e917f8a15e8a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e91d8d6565b7819d13dab21d4dbed5b45efba59b"
+    },
+    {
+      "id": "9e189a87-4d7b-3281-b139-243780ea03eb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.130"
+    },
+    {
+      "id": "fae555db-1981-3d76-b98f-ef7c763c1705",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <eef1390125b660b8b61f9f227a03bb9c5e6d36a5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7cd3b3f9-2015-327c-acf5-94bf418ff588",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
