@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-16993",
+  "enisaUuid": "977fd8cc-af94-38bc-bc05-a6f35f357e2e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrust_binder: call set_notification_done() without proc lock\n\nConsider the following sequence of events on a death listener:\n1. The remote process dies and sends a BR_DEAD_BINDER message.\n2. The local process invokes the BC_CLEAR_DEATH_NOTIFICATION command.\n3. The local process then invokes the BC_DEAD_BINDER_DONE.\nThen, the kernel will reply to the BC_DEAD_BINDER_DONE command with a\nBR_CLEAR_DEATH_NOTIFICATION_DONE reply using push_work_if_looper().\n\nHowever, this can result in a deadlock if the current thread is not a\nlooper. This is because dead_binder_done() still holds the proc lock\nduring set_notification_done(), which called push_work_if_looper().\nNormally, push_work_if_looper() takes the thread lock, which is fine to\ntake under the proc lock. But if the current thread is not a looper,\nthen it falls back to delivering the reply to the process work queue,\nwhich involves taking the proc lock. Since the proc lock is already\nheld, this is a deadlock.\n\nFix this by releasing the proc lock during set_notification_done(). It\nwas not intentional that it was held during that function to begin with.\n\nI don't think this ever happens in Android because BC_DEAD_BINDER_DONE\nis only invoked in response to BR_DEAD_BINDER messages, and the kernel\nalways delivers BR_DEAD_BINDER to a looper. So there's no scenario where\nAndroid userspace will call BC_DEAD_BINDER_DONE on a non-looper thread.",
+  "datePublished": "Mar 29, 2026, 12:55:50 PM",
+  "dateUpdated": "Mar 29, 2026, 12:55:50 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/dd109e3442817bc03ad1f3ffd541092f8c428141",
+    "https://git.kernel.org/stable/c/3be72099067d2cd4a0e089696f19780f75b2b88a",
+    "https://git.kernel.org/stable/c/2e303f0febb65a434040774b793ba8356698802b"
+  ],
+  "aliases": [
+    "CVE-2026-23400"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "04338a4c-1d78-3dd1-973a-f559e6760677",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "67c7cb99-3755-3d46-ae9f-8a0306345ea5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.18"
+    },
+    {
+      "id": "7308d22a-7cc1-3e73-82b3-f1be6b323106",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "eafedbc7c050c44744fbdf80bdf3315e860b7513 <3be72099067d2cd4a0e089696f19780f75b2b88a"
+    },
+    {
+      "id": "94ce2ee6-123a-3dc7-99d1-3e2e01f195f1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "eafedbc7c050c44744fbdf80bdf3315e860b7513 <dd109e3442817bc03ad1f3ffd541092f8c428141"
+    },
+    {
+      "id": "97d93221-a9d8-35bf-bf5e-fd4967992904",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.19"
+    },
+    {
+      "id": "a9c3b3ec-0fd1-31f2-a16d-8f9f4c61dd83",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.9"
+    },
+    {
+      "id": "e1d24097-5047-300a-a066-59f8b84bce82",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "eafedbc7c050c44744fbdf80bdf3315e860b7513 <2e303f0febb65a434040774b793ba8356698802b"
+    },
+    {
+      "id": "f3f7cfe0-ee2a-3e43-a036-c9bad440de3a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "012f4e62-fdca-3e3a-a936-35885e1f10d5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
