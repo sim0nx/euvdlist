@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-18746",
+  "enisaUuid": "d6406df5-dc3b-3a07-bc58-33478915bb81",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/poll: fix multishot recv missing EOF on wakeup race\n\nWhen a socket send and shutdown() happen back-to-back, both fire\nwake-ups before the receiver's task_work has a chance to run. The first\nwake gets poll ownership (poll_refs=1), and the second bumps it to 2.\nWhen io_poll_check_events() runs, it calls io_poll_issue() which does a\nrecv that reads the data and returns IOU_RETRY. The loop then drains all\naccumulated refs (atomic_sub_return(2) -> 0) and exits, even though only\nthe first event was consumed. Since the shutdown is a persistent state\nchange, no further wakeups will happen, and the multishot recv can hang\nforever.\n\nCheck specifically for HUP in the poll loop, and ensure that another\nloop is done to check for status if more than a single poll activation\nis pending. This ensures we don't lose the shutdown event.",
+  "datePublished": "Apr 3, 2026, 3:15:51 PM",
+  "dateUpdated": "Apr 3, 2026, 3:15:51 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0f4ce79b8db7b040373fc664c8bc6c5fd74bd196",
+    "https://git.kernel.org/stable/c/bf33554b6abf7e7faeadd8af1b82037ea755a6bb",
+    "https://git.kernel.org/stable/c/a68ed2df72131447d131531a08fe4dfcf4fa4653"
+  ],
+  "aliases": [
+    "CVE-2026-23473"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "03529c8c-120e-3e5b-b095-cb8b65a0512e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dbc2564cfe0faff439dc46adb8c009589054ea46 <0f4ce79b8db7b040373fc664c8bc6c5fd74bd196"
+    },
+    {
+      "id": "0c0d2bf2-6beb-3568-91e5-6258ae9f6558",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dbc2564cfe0faff439dc46adb8c009589054ea46 <a68ed2df72131447d131531a08fe4dfcf4fa4653"
+    },
+    {
+      "id": "52f5f813-f617-399e-b3d7-a1cb59aad11f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.20"
+    },
+    {
+      "id": "7ab1bffa-9d46-34c5-a185-3eb86efc896a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc5"
+    },
+    {
+      "id": "a65196ef-6d76-3fe2-bc38-ed8ce78badfa",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dbc2564cfe0faff439dc46adb8c009589054ea46 <bf33554b6abf7e7faeadd8af1b82037ea755a6bb"
+    },
+    {
+      "id": "cb09603c-b92d-35a0-b5fc-51198d34474f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "de8feeae-e530-3dfe-9b61-c71f9cbf6042",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.19"
+    },
+    {
+      "id": "ee17e36e-b01b-36e5-9cd1-4cc07dc8b61a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.10"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7c83fbd5-c6e0-332f-a942-9202d62c536c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

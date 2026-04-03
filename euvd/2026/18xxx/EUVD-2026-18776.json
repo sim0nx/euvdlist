@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-18776",
+  "enisaUuid": "01de6596-a1f6-30f3-b5c4-6380514a7d80",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/huge_memory: fix use of NULL folio in move_pages_huge_pmd()\n\nmove_pages_huge_pmd() handles UFFDIO_MOVE for both normal THPs and huge\nzero pages.  For the huge zero page path, src_folio is explicitly set to\nNULL, and is used as a sentinel to skip folio operations like lock and\nrmap.\n\nIn the huge zero page branch, src_folio is NULL, so folio_mk_pmd(NULL,\npgprot) passes NULL through folio_pfn() and page_to_pfn().  With\nSPARSEMEM_VMEMMAP this silently produces a bogus PFN, installing a PMD\npointing to non-existent physical memory.  On other memory models it is a\nNULL dereference.\n\nUse page_folio(src_page) to obtain the valid huge zero folio from the\npage, which was obtained from pmd_page() and remains valid throughout.\n\nAfter commit d82d09e48219 (\"mm/huge_memory: mark PMD mappings of the huge\nzero folio special\"), moved huge zero PMDs must remain special so\nvm_normal_page_pmd() continues to treat them as special mappings.\n\nmove_pages_huge_pmd() currently reconstructs the destination PMD in the\nhuge zero page branch, which drops PMD state such as pmd_special() on\narchitectures with CONFIG_ARCH_HAS_PTE_SPECIAL.  As a result,\nvm_normal_page_pmd() can treat the moved huge zero PMD as a normal page\nand corrupt its refcount.\n\nInstead of reconstructing the PMD from the folio, derive the destination\nentry from src_pmdval after pmdp_huge_clear_flush(), then handle the PMD\nmetadata the same way move_huge_pmd() does for moved entries by marking it\nsoft-dirty and clearing uffd-wp.",
+  "datePublished": "Apr 3, 2026, 3:16:01 PM",
+  "dateUpdated": "Apr 3, 2026, 3:16:01 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f3caaee0f9e489fd2282d4ce45791dc8aed2da62",
+    "https://git.kernel.org/stable/c/e3133d0986dc5a231d5419167dbac65312b28b41",
+    "https://git.kernel.org/stable/c/fae654083bfa409bb2244f390232e2be47f05bfc"
+  ],
+  "aliases": [
+    "CVE-2026-31397"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "14198646-c0a8-3f1c-9deb-a470a66e5efb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e3981db444a0a18d350d9f92e3f2e8d489b54211 <e3133d0986dc5a231d5419167dbac65312b28b41"
+    },
+    {
+      "id": "30f9ffcd-b4d6-3a52-bef5-d0727823991f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e3981db444a0a18d350d9f92e3f2e8d489b54211 <f3caaee0f9e489fd2282d4ce45791dc8aed2da62"
+    },
+    {
+      "id": "46efd7c5-4a1d-313c-9ad9-36738e01a06e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "5e429bb9-1769-3e3f-900c-d4b8a8340946",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.10"
+    },
+    {
+      "id": "72af9369-530b-3f1a-8d22-34897e763cdc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "82e3f0f1-8c41-37dc-bfa6-4d922a38bff1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.20"
+    },
+    {
+      "id": "be622c1b-6b79-35b8-9c87-5d689d37651c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e3981db444a0a18d350d9f92e3f2e8d489b54211 <fae654083bfa409bb2244f390232e2be47f05bfc"
+    },
+    {
+      "id": "ff831e72-7f2c-3c8d-8b84-1e5ee0cd3cb4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "eab54f9c-b5bb-31df-8a2d-b8e712ead5d3",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-18677",
+  "enisaUuid": "7b2ae051-1d8b-399e-94d3-34c365e79006",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: shaper: protect from late creation of hierarchy\n\nWe look up a netdev during prep of Netlink ops (pre- callbacks)\nand take a ref to it. Then later in the body of the callback\nwe take its lock or RCU which are the actual protections.\n\nThe netdev may get unregistered in between the time we take\nthe ref and the time we lock it. We may allocate the hierarchy\nafter flush has already run, which would lead to a leak.\n\nTake the instance lock in pre- already, this saves us from the race\nand removes the need for dedicated lock/unlock callbacks completely.\nAfter all, if there's any chance of write happening concurrently\nwith the flush - we're back to leaking the hierarchy.\n\nWe may take the lock for devices which don't support shapers but\nwe're only dealing with SET operations here, not taking the lock\nwould be optimizing for an error case.",
+  "datePublished": "Apr 3, 2026, 3:15:21 PM",
+  "dateUpdated": "Apr 3, 2026, 3:15:21 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/719f6784f918f9e32f3ff3b197f900e852223f9d",
+    "https://git.kernel.org/stable/c/d22921727023e7852704965e935f4d1fc83a5ec9",
+    "https://git.kernel.org/stable/c/d75ec7e8ba1979a1eb0b9211d94d749cdce849c8"
+  ],
+  "aliases": [
+    "CVE-2026-23436"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "237f6a4b-2c5f-3adf-bab2-bb32d76d7abd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "93954b40f6a4fc43226c01a15b02732f884500f1 <719f6784f918f9e32f3ff3b197f900e852223f9d"
+    },
+    {
+      "id": "4ab94a94-ea20-342a-ba84-131bba606f9c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.20"
+    },
+    {
+      "id": "b5cfd88d-9d98-327e-8918-8790371075ed",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "93954b40f6a4fc43226c01a15b02732f884500f1 <d75ec7e8ba1979a1eb0b9211d94d749cdce849c8"
+    },
+    {
+      "id": "d43816b7-c93c-3050-9d4b-2848228e07c5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.13"
+    },
+    {
+      "id": "d8276e97-c11e-3795-af21-3dbcd53a7083",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.10"
+    },
+    {
+      "id": "e0b9270d-e08c-3d3a-82dc-3b2105c75c3b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc5"
+    },
+    {
+      "id": "e76bfa39-8546-3093-a513-5b9c3f059ee4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ff187c36-a23e-3bc2-bedd-f32e3cf8bcd9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "93954b40f6a4fc43226c01a15b02732f884500f1 <d22921727023e7852704965e935f4d1fc83a5ec9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b1fcc031-3d4b-3771-9a18-a372676485c0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

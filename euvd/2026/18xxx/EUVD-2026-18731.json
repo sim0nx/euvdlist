@@ -1,0 +1,114 @@
+{
+  "id": "EUVD-2026-18731",
+  "enisaUuid": "e52df441-a811-38c7-a1c9-08e4d5a9447b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbtrfs: log new dentries when logging parent dir of a conflicting inode\n\nIf we log the parent directory of a conflicting inode, we are not logging\nthe new dentries of the directory, so when we finish we have the parent\ndirectory's inode marked as logged but we did not log its new dentries.\nAs a consequence if the parent directory is explicitly fsynced later and\nit does not have any new changes since we logged it, the fsync is a no-op\nand after a power failure the new dentries are missing.\n\nExample scenario:\n\n  $ mkdir foo\n\n  $ sync\n\n  $rmdir foo\n\n  $ mkdir dir1\n  $ mkdir dir2\n\n  # A file with the same name and parent as the directory we just deleted\n  # and was persisted in a past transaction. So the deleted directory's\n  # inode is a conflicting inode of this new file's inode.\n  $ touch foo\n\n  $ ln foo dir2/link\n\n  # The fsync on dir2 will log the parent directory (\".\") because the\n  # conflicting inode (deleted directory) does not exists anymore, but it\n  # it does not log its new dentries (dir1).\n  $ xfs_io -c \"fsync\" dir2\n\n  # This fsync on the parent directory is no-op, since the previous fsync\n  # logged it (but without logging its new dentries).\n  $ xfs_io -c \"fsync\" .\n\n  <power failure>\n\n  # After log replay dir1 is missing.\n\nFix this by ensuring we log new dir dentries whenever we log the parent\ndirectory of a no longer existing conflicting inode.\n\nA test case for fstests will follow soon.",
+  "datePublished": "Apr 3, 2026, 3:15:44 PM",
+  "dateUpdated": "Apr 3, 2026, 3:15:44 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/56e72c8b02d982be775d9df025357c152383ee84",
+    "https://git.kernel.org/stable/c/f556b1e09d054e31f464c0fd37280c2b5a393fee",
+    "https://git.kernel.org/stable/c/1cf30c73602c69d750c9345c47f2c0e9d0cfb578",
+    "https://git.kernel.org/stable/c/6f5a51969b1deb79aefd2194b48fe7e78e72ff7e",
+    "https://git.kernel.org/stable/c/9573a365ff9ff45da9222d3fe63695ce562beb24"
+  ],
+  "aliases": [
+    "CVE-2026-23465"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2c6423e2-74d4-3ab6-9b48-4bc705bddc23",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a3baaf0d786e22fc86295fda9c58ba0dee07599f <6f5a51969b1deb79aefd2194b48fe7e78e72ff7e"
+    },
+    {
+      "id": "3ed961ad-688c-3c86-aac8-84413c1ca4ba",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.20"
+    },
+    {
+      "id": "472c706c-8690-3b14-8270-799feb5dc688",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.1"
+    },
+    {
+      "id": "5ac17bb1-bc71-354b-90d7-66f0a84eb7d2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.130"
+    },
+    {
+      "id": "60d39554-4f18-383d-922a-a5f73d6672cc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a3baaf0d786e22fc86295fda9c58ba0dee07599f <1cf30c73602c69d750c9345c47f2c0e9d0cfb578"
+    },
+    {
+      "id": "7b6fb4e7-73d8-3a68-9d07-7e03634f0654",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.78"
+    },
+    {
+      "id": "89396495-434a-3d52-ab97-353ed96a2b26",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc5"
+    },
+    {
+      "id": "a3e45533-4a5c-3535-80eb-e69d66786d58",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a3baaf0d786e22fc86295fda9c58ba0dee07599f <9573a365ff9ff45da9222d3fe63695ce562beb24"
+    },
+    {
+      "id": "aee36c7f-8c18-3be4-8f46-95af5d08589e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "baa98b28-0c03-353f-be22-1911ee6e198b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.10"
+    },
+    {
+      "id": "ef3c4899-8f08-36a0-af88-23e2cf0b6c75",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a3baaf0d786e22fc86295fda9c58ba0dee07599f <f556b1e09d054e31f464c0fd37280c2b5a393fee"
+    },
+    {
+      "id": "f95be68b-13d2-3aed-9d81-6c533ef94ff2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a3baaf0d786e22fc86295fda9c58ba0dee07599f <56e72c8b02d982be775d9df025357c152383ee84"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6a3c2ce6-0574-393c-a812-cf7b8d042a28",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

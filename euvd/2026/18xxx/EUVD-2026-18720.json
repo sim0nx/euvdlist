@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-18720",
+  "enisaUuid": "17d9f98d-11ff-37f7-89a2-f66507405f4d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/rose: fix NULL pointer dereference in rose_transmit_link on reconnect\n\nsyzkaller reported a bug [1], and the reproducer is available at [2].\n\nROSE sockets use four sk->sk_state values: TCP_CLOSE, TCP_LISTEN,\nTCP_SYN_SENT, and TCP_ESTABLISHED. rose_connect() already rejects\ncalls for TCP_ESTABLISHED (-EISCONN) and TCP_CLOSE with SS_CONNECTING\n(-ECONNREFUSED), but lacks a check for TCP_SYN_SENT.\n\nWhen rose_connect() is called a second time while the first connection\nattempt is still in progress (TCP_SYN_SENT), it overwrites\nrose->neighbour via rose_get_neigh(). If that returns NULL, the socket\nis left with rose->state == ROSE_STATE_1 but rose->neighbour == NULL.\nWhen the socket is subsequently closed, rose_release() sees\nROSE_STATE_1 and calls rose_write_internal() ->\nrose_transmit_link(skb, NULL), causing a NULL pointer dereference.\n\nPer connect(2), a second connect() while a connection is already in\nprogress should return -EALREADY. Add this missing check for\nTCP_SYN_SENT to complete the state validation in rose_connect().\n\n[1] https://syzkaller.appspot.com/bug?extid=d00f90e0af54102fb271\n[2] https://gist.github.com/mrpre/9e6779e0d13e2c66779b1653fef80516",
+  "datePublished": "Apr 3, 2026, 3:15:40 PM",
+  "dateUpdated": "Apr 3, 2026, 3:15:40 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/c2ab74c12932e52cfa1e7e4582d42b0c8bec96c7",
+    "https://git.kernel.org/stable/c/0c9fb70a206a8734e10468ecc24d57c7596cf64e",
+    "https://git.kernel.org/stable/c/508f49ccbe0329641bb681f7d0052bb4e5943252",
+    "https://git.kernel.org/stable/c/0c3e8bff808f17ad37a51d8e719eed22c7863120",
+    "https://git.kernel.org/stable/c/a12254050e3050f1011cd24f3b880a6882d0139d",
+    "https://git.kernel.org/stable/c/e1f0a18c9564cdb16523c802e2c6fe5874e3d944"
+  ],
+  "aliases": [
+    "CVE-2026-23460"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0277a242-376a-3e91-ae4f-d2b9694ea07a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.10"
+    },
+    {
+      "id": "0d1e0e56-c932-3607-ac77-cb739c2f9269",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <508f49ccbe0329641bb681f7d0052bb4e5943252"
+    },
+    {
+      "id": "17ec9fde-36ed-35e0-8ec9-6f10d12395ae",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc5"
+    },
+    {
+      "id": "344b51b0-5ef7-3bfa-85a1-815e8c6bcfa5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e1f0a18c9564cdb16523c802e2c6fe5874e3d944"
+    },
+    {
+      "id": "3bdbb648-6863-397c-b699-b5b526f1dc3d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "420e79df-10fc-34ae-8644-e22a093e8a50",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0c9fb70a206a8734e10468ecc24d57c7596cf64e"
+    },
+    {
+      "id": "87cce617-80e1-324c-ab63-5372c9de072b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.20"
+    },
+    {
+      "id": "8c3b8a98-90bc-3445-abb9-49251f064f18",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a12254050e3050f1011cd24f3b880a6882d0139d"
+    },
+    {
+      "id": "8c856b35-65a4-393c-a256-c2c56748de64",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.78"
+    },
+    {
+      "id": "9a1b2b9d-66cb-3bd8-89ae-8274be3927ae",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.130"
+    },
+    {
+      "id": "9adaf4e2-8790-3a53-8fa3-00f48e1efa9c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c2ab74c12932e52cfa1e7e4582d42b0c8bec96c7"
+    },
+    {
+      "id": "b3645ff1-cbd7-3037-834b-2b3e67884b7e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "d091157b-cf55-3740-a3b7-c8c03b49c245",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0c3e8bff808f17ad37a51d8e719eed22c7863120"
+    },
+    {
+      "id": "d2562062-1f33-3c07-8c11-722dff084ad9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.167"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4adb27cc-c464-34ce-a48b-c36081aab854",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
