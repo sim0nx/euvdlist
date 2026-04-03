@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-18647",
+  "enisaUuid": "e98fa08a-06a4-39fe-8f78-376c6a8fb46c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: arm64: Fix ID register initialization for non-protected pKVM guests\n\nIn protected mode, the hypervisor maintains a separate instance of\nthe `kvm` structure for each VM. For non-protected VMs, this structure is\ninitialized from the host's `kvm` state.\n\nCurrently, `pkvm_init_features_from_host()` copies the\n`KVM_ARCH_FLAG_ID_REGS_INITIALIZED` flag from the host without the\nunderlying `id_regs` data being initialized. This results in the\nhypervisor seeing the flag as set while the ID registers remain zeroed.\n\nConsequently, `kvm_has_feat()` checks at EL2 fail (return 0) for\nnon-protected VMs. This breaks logic that relies on feature detection,\nsuch as `ctxt_has_tcrx()` for TCR2_EL1 support. As a result, certain\nsystem registers (e.g., TCR2_EL1, PIR_EL1, POR_EL1) are not\nsaved/restored during the world switch, which could lead to state\ncorruption.\n\nFix this by explicitly copying the ID registers from the host `kvm` to\nthe hypervisor `kvm` for non-protected VMs during initialization, since\nwe trust the host with its non-protected guests' features. Also ensure\n`KVM_ARCH_FLAG_ID_REGS_INITIALIZED` is cleared initially in\n`pkvm_init_features_from_host` so that `vm_copy_id_regs` can properly\ninitialize them and set the flag once done.",
+  "datePublished": "Apr 3, 2026, 1:24:33 PM",
+  "dateUpdated": "Apr 3, 2026, 1:24:33 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/bce3847f7c51b86332bf2e554c9e80ca3820f16c",
+    "https://git.kernel.org/stable/c/858620655c1fbff05997e162fc7d83a3293d5142",
+    "https://git.kernel.org/stable/c/7e7c2cf0024d89443a7af52e09e47b1fe634ab17"
+  ],
+  "aliases": [
+    "CVE-2026-23425"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "14f409ab-b1f7-35b1-ba0e-b042fff08545",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "41d6028e28bd474298ff10409c292ec46cf43a90 <7e7c2cf0024d89443a7af52e09e47b1fe634ab17"
+    },
+    {
+      "id": "561446b7-777f-3449-bd84-0eb25e94e097",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0-rc2"
+    },
+    {
+      "id": "5cd6151e-d5a4-38c7-854b-124635047ebe",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.14"
+    },
+    {
+      "id": "8420862d-e4b4-3a26-b749-b403b893a600",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.17"
+    },
+    {
+      "id": "9183c6fa-2897-39bf-93b1-5297fcf5265f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "41d6028e28bd474298ff10409c292ec46cf43a90 <858620655c1fbff05997e162fc7d83a3293d5142"
+    },
+    {
+      "id": "9ff69780-003f-3378-a727-c6bd60ee2c4c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.7"
+    },
+    {
+      "id": "b8891a82-4730-3ffa-a14a-650bbe7d922e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "41d6028e28bd474298ff10409c292ec46cf43a90 <bce3847f7c51b86332bf2e554c9e80ca3820f16c"
+    },
+    {
+      "id": "f6f26de3-49f9-387c-a582-a7baf8ffa2cd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "de5ea077-de7b-3448-b476-2cec56c0404b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
