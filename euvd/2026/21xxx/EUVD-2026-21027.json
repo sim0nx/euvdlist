@@ -1,0 +1,49 @@
+{
+  "id": "EUVD-2026-21027",
+  "enisaUuid": "b8dfc0a7-26a6-334c-8f76-52639609a5cb",
+  "description": "Wasmtime is a runtime for WebAssembly. From 32.0.0 to before 36.0.7, 42.0.2, and 43.0.1, Wasmtime's Cranelift compilation backend contains a bug on aarch64 when performing a certain shape of heap accesses which means that the wrong address is accessed. When combined with explicit bounds checks a guest WebAssembly module this can create a situation where there are two diverging computations for the same address: one for the address to bounds-check and one for the address to load. This difference in address being operated on means that a guest module can pass a bounds check but then load a different address. Combined together this enables an arbitrary read/write primitive for guest WebAssembly when accesssing host memory. This is a sandbox escape as guests are able to read/write arbitrary host memory. This vulnerability has a few ingredients, all of which must be met, for this situation to occur and bypass the sandbox restrictions. This miscompiled shape of load only occurs on 64-bit WebAssembly linear memories, or when Config::wasm_memory64 is enabled. 32-bit WebAssembly is not affected. Spectre mitigations or signals-based-traps must be disabled. When spectre mitigations are enabled then the offending shape of load is not generated. When signals-based-traps are disabled then spectre mitigations are also automatically disabled. The specific bug in Cranelift is a miscompile of a load of the shape load(iadd(base, ishl(index, amt))) where amt is a constant. The amt value is masked incorrectly to test if it's a certain value, and this incorrect mask means that Cranelift can pattern-match this lowering rule during instruction selection erroneously, diverging from WebAssembly's and Cranelift's semantics. This incorrect lowering would, for example, load an address much further away than intended as the correct address's computation would have wrapped around to a smaller value insetad. This vulnerability is fixed in 36.0.7, 42.0.2, and 43.0.1.",
+  "datePublished": "Apr 9, 2026, 6:45:44 PM",
+  "dateUpdated": "Apr 9, 2026, 6:45:44 PM",
+  "baseScore": 9.0,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:L/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H",
+  "references": [
+    "https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-jhxm-h53p-jm7w"
+  ],
+  "aliases": [
+    "CVE-2026-34971"
+  ],
+  "assigner": "GitHub_M",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "a0cad648-cef0-3962-8c6f-2d7312e279dc",
+      "product": {
+        "name": "wasmtime"
+      },
+      "product_version": "37.0.0, < 42.0.2"
+    },
+    {
+      "id": "aa073dbd-51e0-3a32-b834-8ca9172828a0",
+      "product": {
+        "name": "wasmtime"
+      },
+      "product_version": "43.0.0, < 44.0.1"
+    },
+    {
+      "id": "f3069c30-2bf2-3aec-8f38-46011d64a889",
+      "product": {
+        "name": "wasmtime"
+      },
+      "product_version": "32.0.0, < 36.0.7"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9b07a78d-991c-34fa-8038-7a790c54988f",
+      "vendor": {
+        "name": "bytecodealliance"
+      }
+    }
+  ]
+}
