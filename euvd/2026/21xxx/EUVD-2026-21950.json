@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-21950",
+  "enisaUuid": "31c0772d-5108-36bf-b26e-c3be56033599",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrds: ib: reject FRMR registration before IB connection is established\n\nrds_ib_get_mr() extracts the rds_ib_connection from conn->c_transport_data\nand passes it to rds_ib_reg_frmr() for FRWR memory registration. On a\nfresh outgoing connection, ic is allocated in rds_ib_conn_alloc() with\ni_cm_id = NULL because the connection worker has not yet called\nrds_ib_conn_path_connect() to create the rdma_cm_id. When sendmsg() with\nRDS_CMSG_RDMA_MAP is called on such a connection, the sendmsg path parses\nthe control message before any connection establishment, allowing\nrds_ib_post_reg_frmr() to dereference ic->i_cm_id->qp and crash the\nkernel.\n\nThe existing guard in rds_ib_reg_frmr() only checks for !ic (added in\ncommit 9e630bcb7701), which does not catch this case since ic is allocated\nearly and is always non-NULL once the connection object exists.\n\n KASAN: null-ptr-deref in range [0x0000000000000010-0x0000000000000017]\n RIP: 0010:rds_ib_post_reg_frmr+0x50e/0x920\n Call Trace:\n  rds_ib_post_reg_frmr (net/rds/ib_frmr.c:167)\n  rds_ib_map_frmr (net/rds/ib_frmr.c:252)\n  rds_ib_reg_frmr (net/rds/ib_frmr.c:430)\n  rds_ib_get_mr (net/rds/ib_rdma.c:615)\n  __rds_rdma_map (net/rds/rdma.c:295)\n  rds_cmsg_rdma_map (net/rds/rdma.c:860)\n  rds_sendmsg (net/rds/send.c:1363)\n  ____sys_sendmsg\n  do_syscall_64\n\nAdd a check in rds_ib_get_mr() that verifies ic, i_cm_id, and qp are all\nnon-NULL before proceeding with FRMR registration, mirroring the guard\nalready present in rds_ib_post_inv(). Return -ENODEV when the connection\nis not ready, which the existing error handling in rds_cmsg_send() converts\nto -EAGAIN for userspace retry and triggers rds_conn_connect_if_down() to\nstart the connection worker.",
+  "datePublished": "Apr 13, 2026, 1:40:28 PM",
+  "dateUpdated": "Apr 13, 2026, 1:40:28 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/450ec93c0f172374acbf236f1f5f02d53650aa2d",
+    "https://git.kernel.org/stable/c/6b0a8de67ac0c74e1a7df92b73c862cb36780dfc",
+    "https://git.kernel.org/stable/c/a5bfd14c9a299e6db4add4440430ee5e010b03ad",
+    "https://git.kernel.org/stable/c/23e07c340c445f0ebff7757ba15434cb447eb662",
+    "https://git.kernel.org/stable/c/47de5b73db3b88f45c107393f26aeba26e9e8fae",
+    "https://git.kernel.org/stable/c/a54ecccfae62c5c85259ae5ea5d9c20009519049"
+  ],
+  "aliases": [
+    "CVE-2026-31425"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "073437f0-05d6-3221-94da-89180e6a7efd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.134"
+    },
+    {
+      "id": "09271200-4814-38d8-a013-ed5a1ff6bde7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.12"
+    },
+    {
+      "id": "09cd00b5-3d35-3196-929f-e6fc77f8e272",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1659185fb4d0025835eb2058a141f0746c5cab00 <23e07c340c445f0ebff7757ba15434cb447eb662"
+    },
+    {
+      "id": "186535d8-d55b-3df8-8fe3-bd0269e87efa",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1659185fb4d0025835eb2058a141f0746c5cab00 <a54ecccfae62c5c85259ae5ea5d9c20009519049"
+    },
+    {
+      "id": "1b8a5326-c4a8-39f0-8906-487ce4e0ffdc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "23eb787d-b2ce-3a52-998e-c71a044a111e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4.6"
+    },
+    {
+      "id": "35839891-7cb3-3f38-81ba-11bb6d0f69a1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "3b3cc241-5be4-3426-a82f-2601a94885f0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1659185fb4d0025835eb2058a141f0746c5cab00 <a5bfd14c9a299e6db4add4440430ee5e010b03ad"
+    },
+    {
+      "id": "543ab39f-ccc1-3de0-a139-7715ac7770b4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1659185fb4d0025835eb2058a141f0746c5cab00 <450ec93c0f172374acbf236f1f5f02d53650aa2d"
+    },
+    {
+      "id": "9ceb797a-cfc3-34cc-a8eb-401ccfc0224a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1659185fb4d0025835eb2058a141f0746c5cab00 <6b0a8de67ac0c74e1a7df92b73c862cb36780dfc"
+    },
+    {
+      "id": "d475b2fb-63db-3869-b111-d3429176fb1d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.22"
+    },
+    {
+      "id": "e2181d48-2bd8-3089-9732-27c94589ffec",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.81"
+    },
+    {
+      "id": "e874b872-7018-3f4d-9269-a132a9bdb87a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1659185fb4d0025835eb2058a141f0746c5cab00 <47de5b73db3b88f45c107393f26aeba26e9e8fae"
+    },
+    {
+      "id": "e9f6d5e7-ae42-34af-962d-c7de7c565ca6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.168"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4e1b58f2-6d86-3d17-b346-6eaded6c87ae",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
