@@ -1,0 +1,99 @@
+{
+  "id": "EUVD-2026-23816",
+  "enisaUuid": "a304035c-0eaf-3ad3-ac85-01ee17f12b22",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: skb: fix cross-cache free of KFENCE-allocated skb head\n\nSKB_SMALL_HEAD_CACHE_SIZE is intentionally set to a non-power-of-2\nvalue (e.g. 704 on x86_64) to avoid collisions with generic kmalloc\nbucket sizes. This ensures that skb_kfree_head() can reliably use\nskb_end_offset to distinguish skb heads allocated from\nskb_small_head_cache vs. generic kmalloc caches.\n\nHowever, when KFENCE is enabled, kfence_ksize() returns the exact\nrequested allocation size instead of the slab bucket size. If a caller\n(e.g. bpf_test_init) allocates skb head data via kzalloc() and the\nrequested size happens to equal SKB_SMALL_HEAD_CACHE_SIZE, then\nslab_build_skb() -> ksize() returns that exact value. After subtracting\nskb_shared_info overhead, skb_end_offset ends up matching\nSKB_SMALL_HEAD_HEADROOM, causing skb_kfree_head() to incorrectly free\nthe object to skb_small_head_cache instead of back to the original\nkmalloc cache, resulting in a slab cross-cache free:\n\n  kmem_cache_free(skbuff_small_head): Wrong slab cache. Expected\n  skbuff_small_head but got kmalloc-1k\n\nFix this by always calling kfree(head) in skb_kfree_head(). This keeps\nthe free path generic and avoids allocator-specific misclassification\nfor KFENCE objects.",
+  "datePublished": "Apr 20, 2026, 9:43:03 AM",
+  "dateUpdated": "Apr 20, 2026, 9:43:03 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/60313768a8edc7094435975587c00c2d7b834083",
+    "https://git.kernel.org/stable/c/2d64618ea846d8d033477311f805ca487d6a6696",
+    "https://git.kernel.org/stable/c/474e00b935db250cac320d10c1d3cf4e44b46721",
+    "https://git.kernel.org/stable/c/0f42e3f4fe2a58394e37241d02d9ca6ab7b7d516"
+  ],
+  "aliases": [
+    "CVE-2026-31429"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "381d80b8-9cda-3b7c-b04e-77bdc1663ada",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.13"
+    },
+    {
+      "id": "54bb29a4-e022-3416-a463-75eb8eae75ee",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.82"
+    },
+    {
+      "id": "58b52708-8ffc-31d9-ab52-f80ac525c0a7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bf9f1baa279f0758dc2297080360c5a616843927 <0f42e3f4fe2a58394e37241d02d9ca6ab7b7d516"
+    },
+    {
+      "id": "58e12822-3c17-3206-828c-b136730f2341",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.23"
+    },
+    {
+      "id": "5c40d2e3-a4fb-36be-bbcd-eed55ce68130",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bf9f1baa279f0758dc2297080360c5a616843927 <60313768a8edc7094435975587c00c2d7b834083"
+    },
+    {
+      "id": "5cd12c38-dca0-3402-91c0-df35f01cb75e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "73c230b6-836f-3312-a537-bac33f188d5c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9e537f48-b7dd-3799-ad27-bf306201fb05",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.3"
+    },
+    {
+      "id": "c96a3f0f-1bcf-3d0c-a0ac-33a32f797cac",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bf9f1baa279f0758dc2297080360c5a616843927 <2d64618ea846d8d033477311f805ca487d6a6696"
+    },
+    {
+      "id": "f247132d-7f54-3a44-b814-bbf6c78a5e4b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bf9f1baa279f0758dc2297080360c5a616843927 <474e00b935db250cac320d10c1d3cf4e44b46721"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "03f309c0-89c2-37b8-a19d-77718618cd8c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
