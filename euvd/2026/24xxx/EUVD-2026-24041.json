@@ -1,0 +1,36 @@
+{
+  "id": "EUVD-2026-24041",
+  "enisaUuid": "d066312b-27fc-394d-8949-374c331eae72",
+  "description": "OpenEXR provides the specification and reference implementation of the EXR file format, an image storage format for the motion picture industry. Versions 3.4.0 through 3.4.9 have a signed integer overflow vulnerability in OpenEXR's HTJ2K (High-Throughput JPEG 2000) decompression path. The `ht_undo_impl()` function in `src/lib/OpenEXRCore/internal_ht.cpp` accumulates a bytes-per-line value (`bpl`) using a 32-bit signed integer with no overflow guard. A crafted EXR file with 16,385 FLOAT channels at the HTJ2K maximum width of 32,767 causes `bpl` to overflow `INT_MAX`, producing undefined behavior confirmed by UBSan. On an\nallocator-permissive host where the required ~64 GB allocation succeeds, the wrapped negative `bpl` value would subsequently be used as a per-scanline pointer advance, which would produce a heap out-of-bounds write. On a memory-constrained host, the allocation fails before `ht_undo_impl()` is entered. This is the second distinct integer overflow in `ht_undo_impl()`. CVE-2026-34545 addressed a different overflow in the same function \u2014 the `int16_t p` pixel-loop counter at line ~302 that overflows when iterating over channels whose `width` exceeds 32,767. The CVE-2026-34545 fix did not touch the `int bpl` accumulator at line 211, which is the subject of this advisory. The `bpl` accumulator was also not addressed by any of the 8 advisories in the 2026-04-05 v3.4.9 release batch. This finding is structurally identical to CVE-2026-34588 (PIZ `wcount*nx` overflow in `internal_piz.c`) and should be remediated with the same pattern. The CVE-2026-34588 fix did not touch `internal_ht.cpp`. Version 3.4.10 contains a remediation that addresses the vulnerability in `internal_ht.cpp`.",
+  "datePublished": "Apr 21, 2026, 1:27:01 AM",
+  "dateUpdated": "Apr 21, 2026, 1:27:01 AM",
+  "baseScore": 5.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+  "references": [
+    "https://github.com/AcademySoftwareFoundation/openexr/security/advisories/GHSA-r3mr-mx8q-jcw5",
+    "https://github.com/AcademySoftwareFoundation/openexr/releases/tag/v3.4.10"
+  ],
+  "aliases": [
+    "CVE-2026-39886"
+  ],
+  "assigner": "GitHub_M",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "18d19a59-105c-3b64-975b-5e22645905f8",
+      "product": {
+        "name": "OpenEXR"
+      },
+      "product_version": "3.4.0, < 3.4.10"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "10c63c20-9e95-3ebf-b6d2-0d46641a775f",
+      "vendor": {
+        "name": "AcademySoftwareFoundation"
+      }
+    }
+  ]
+}
