@@ -1,0 +1,115 @@
+{
+  "id": "EUVD-2026-24784",
+  "enisaUuid": "a957d60f-3a0f-3721-b8ff-96e89971bda4",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\next4: avoid infinite loops caused by residual data\n\nOn the mkdir/mknod path, when mapping logical blocks to physical blocks,\nif inserting a new extent into the extent tree fails (in this example,\nbecause the file system disabled the huge file feature when marking the\ninode as dirty), ext4_ext_map_blocks() only calls ext4_free_blocks() to\nreclaim the physical block without deleting the corresponding data in\nthe extent tree. This causes subsequent mkdir operations to reference\nthe previously reclaimed physical block number again, even though this\nphysical block is already being used by the xattr block. Therefore, a\nsituation arises where both the directory and xattr are using the same\nbuffer head block in memory simultaneously.\n\nThe above causes ext4_xattr_block_set() to enter an infinite loop about\n\"inserted\" and cannot release the inode lock, ultimately leading to the\n143s blocking problem mentioned in [1].\n\nIf the metadata is corrupted, then trying to remove some extent space\ncan do even more harm. Also in case EXT4_GET_BLOCKS_DELALLOC_RESERVE\nwas passed, remove space wrongly update quota information.\nJan Kara suggests distinguishing between two cases:\n\n1) The error is ENOSPC or EDQUOT - in this case the filesystem is fully\nconsistent and we must maintain its consistency including all the\naccounting. However these errors can happen only early before we've\ninserted the extent into the extent tree. So current code works correctly\nfor this case.\n\n2) Some other error - this means metadata is corrupted. We should strive to\ndo as few modifications as possible to limit damage. So I'd just skip\nfreeing of allocated blocks.\n\n[1]\nINFO: task syz.0.17:5995 blocked for more than 143 seconds.\nCall Trace:\n inode_lock_nested include/linux/fs.h:1073 [inline]\n __start_dirop fs/namei.c:2923 [inline]\n start_dirop fs/namei.c:2934 [inline]",
+  "datePublished": "Apr 22, 2026, 1:53:44 PM",
+  "dateUpdated": "Apr 22, 2026, 1:53:44 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/c66545e83a802c3851d9be27a41c0479dd29ff0c",
+    "https://git.kernel.org/stable/c/ecc50bfca9b5c2ee6aeef998181689b80477367b",
+    "https://git.kernel.org/stable/c/3a7667595bcad84da53fc156a418e110267c3412",
+    "https://git.kernel.org/stable/c/416c86f30f91b4fb2642ef6b102596ca898f41a5",
+    "https://git.kernel.org/stable/c/64f425b06b3bea9abc8977fd3982779b3ad070c9",
+    "https://git.kernel.org/stable/c/5422fe71d26d42af6c454ca9527faaad4e677d6c"
+  ],
+  "aliases": [
+    "CVE-2026-31448"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0d853cf8-69ca-3f04-ad81-0ab2f8e443fa",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.11"
+    },
+    {
+      "id": "1b55fda0-7e76-3b59-bee4-16ac6a588986",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <64f425b06b3bea9abc8977fd3982779b3ad070c9"
+    },
+    {
+      "id": "3cd33fcc-ca34-366d-b4ca-ab126fa3f291",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <416c86f30f91b4fb2642ef6b102596ca898f41a5"
+    },
+    {
+      "id": "721e519a-9a82-3ffd-8cfd-ac00e2793aff",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c66545e83a802c3851d9be27a41c0479dd29ff0c"
+    },
+    {
+      "id": "87748f00-48f7-3537-b220-f87df22d7795",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "947e5d08-db16-32a0-8cc0-301abd66dced",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <5422fe71d26d42af6c454ca9527faaad4e677d6c"
+    },
+    {
+      "id": "ab17702c-f616-37bc-abc6-7c48151997fd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.168"
+    },
+    {
+      "id": "ae9b1946-0279-367e-a496-9cbd45ffb186",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <ecc50bfca9b5c2ee6aeef998181689b80477367b"
+    },
+    {
+      "id": "d526ef5d-edc2-3d28-bc79-c2063541430d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.21"
+    },
+    {
+      "id": "e152aa1e-787e-3d5e-8f43-fde6d246a4d3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <3a7667595bcad84da53fc156a418e110267c3412"
+    },
+    {
+      "id": "ee487e08-cc91-38e0-96aa-6aebe4e41f2b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.80"
+    },
+    {
+      "id": "fc606ff4-28c7-3211-b4c4-91673032b2fe",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.131"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f70702e3-a072-3fa1-9330-160c8660d0e8",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
