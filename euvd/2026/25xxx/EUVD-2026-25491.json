@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-25491",
+  "enisaUuid": "cfe12f53-36b0-3e5d-ac52-65d584411133",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: fix possible deadlock between unlink and dio_end_io_write\n\nocfs2_unlink takes orphan dir inode_lock first and then ip_alloc_sem,\nwhile in ocfs2_dio_end_io_write, it acquires these locks in reverse order.\nThis creates an ABBA lock ordering violation on lock classes\nocfs2_sysfile_lock_key[ORPHAN_DIR_SYSTEM_INODE] and\nocfs2_file_ip_alloc_sem_key.\n\nLock Chain #0 (orphan dir inode_lock -> ip_alloc_sem):\nocfs2_unlink\n  ocfs2_prepare_orphan_dir\n    ocfs2_lookup_lock_orphan_dir\n      inode_lock(orphan_dir_inode) <- lock A\n    __ocfs2_prepare_orphan_dir\n      ocfs2_prepare_dir_for_insert\n        ocfs2_extend_dir\n\t  ocfs2_expand_inline_dir\n\t    down_write(&oi->ip_alloc_sem) <- Lock B\n\nLock Chain #1 (ip_alloc_sem -> orphan dir inode_lock):\nocfs2_dio_end_io_write\n  down_write(&oi->ip_alloc_sem) <- Lock B\n  ocfs2_del_inode_from_orphan()\n    inode_lock(orphan_dir_inode) <- Lock A\n\nDeadlock Scenario:\n  CPU0 (unlink)                     CPU1 (dio_end_io_write)\n  ------                            ------\n  inode_lock(orphan_dir_inode)\n                                    down_write(ip_alloc_sem)\n  down_write(ip_alloc_sem)\n                                    inode_lock(orphan_dir_inode)\n\nSince ip_alloc_sem is to protect allocation changes, which is unrelated\nwith operations in ocfs2_del_inode_from_orphan.  So move\nocfs2_del_inode_from_orphan out of ip_alloc_sem to fix the deadlock.",
+  "datePublished": "Apr 24, 2026, 3:32:34 PM",
+  "dateUpdated": "Apr 24, 2026, 3:32:34 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/2b884d52273c60c298bd570163e8053657bbaff6",
+    "https://git.kernel.org/stable/c/bc0fb5c7d54c78be43a536df0e20dee32adb27d3",
+    "https://git.kernel.org/stable/c/f9fb1a7b635849322e1d7b7b6b26389778ec8e82",
+    "https://git.kernel.org/stable/c/e049f7a9bd80b7319590789ea5e1c523d6339d91",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-31598"
+  ],
+  "aliases": [
+    "GHSA-cqwh-r98h-2279",
+    "CVE-2026-31598"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "262c01b8-4e41-3472-bcee-473789c795dd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.14"
+    },
+    {
+      "id": "31e3a9c5-de0e-3c07-a4d2-7d15cc92309d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e049f7a9bd80b7319590789ea5e1c523d6339d91"
+    },
+    {
+      "id": "6193d5b6-4ccc-3551-8de5-3d2cda4dd18a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f9fb1a7b635849322e1d7b7b6b26389778ec8e82"
+    },
+    {
+      "id": "72a7c6e9-34f0-3b11-afc8-75bca6737310",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <bc0fb5c7d54c78be43a536df0e20dee32adb27d3"
+    },
+    {
+      "id": "82ce51fd-4d24-31c9-b50a-7e8ea59089ad",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0.1"
+    },
+    {
+      "id": "c51c2c23-cc02-3c35-8736-33f736883a17",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.83"
+    },
+    {
+      "id": "ca590161-14f9-3be8-97e9-d02dc6cea127",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2b884d52273c60c298bd570163e8053657bbaff6"
+    },
+    {
+      "id": "d7ff08f1-36f9-3c88-826f-8dfa01357072",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.24"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b3597b36-7a6a-34c6-b486-e1425c5cdcb5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

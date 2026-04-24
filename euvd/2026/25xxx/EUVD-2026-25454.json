@@ -1,0 +1,101 @@
+{
+  "id": "EUVD-2026-25454",
+  "enisaUuid": "ed2288bd-d7bd-3e9c-958d-3c72be1cf8ac",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nx86/cpu: Remove X86_CR4_FRED from the CR4 pinned bits mask\n\nCommit in Fixes added the FRED CR4 bit to the CR4 pinned bits mask so\nthat whenever something else modifies CR4, that bit remains set. Which\nin itself is a perfectly fine idea.\n\nHowever, there's an issue when during boot FRED is initialized: first on\nthe BSP and later on the APs. Thus, there's a window in time when\nexceptions cannot be handled.\n\nThis becomes particularly nasty when running as SEV-{ES,SNP} or TDX\nguests which, when they manage to trigger exceptions during that short\nwindow described above, triple fault due to FRED MSRs not being set up\nyet.\n\nSee Link tag below for a much more detailed explanation of the\nsituation.\n\nSo, as a result, the commit in that Link URL tried to address this\nshortcoming by temporarily disabling CR4 pinning when an AP is not\nonline yet.\n\nHowever, that is a problem in itself because in this case, an attack on\nthe kernel needs to only modify the online bit - a single bit in RW\nmemory - and then disable CR4 pinning and then disable SM*P, leading to\nmore and worse things to happen to the system.\n\nSo, instead, remove the FRED bit from the CR4 pinning mask, thus\nobviating the need to temporarily disable CR4 pinning.\n\nIf someone manages to disable FRED when poking at CR4, then\nidt_invalidate() would make sure the system would crash'n'burn on the\nfirst exception triggered, which is a much better outcome security-wise.",
+  "datePublished": "Apr 24, 2026, 3:32:33 PM",
+  "dateUpdated": "Apr 24, 2026, 3:32:33 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d7853d9fe94abf43b46c57b0b7f8418198b7615a",
+    "https://git.kernel.org/stable/c/a6e14114684d2324e5401617d6d01acb4a4e0e22",
+    "https://git.kernel.org/stable/c/00d956dafa76f86a73424fe5cce3d604a8be2e4b",
+    "https://git.kernel.org/stable/c/411df123c017169922cc767affce76282b8e6c85",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-31561"
+  ],
+  "aliases": [
+    "GHSA-pgvp-p3vq-7q7h",
+    "CVE-2026-31561"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0114406c-8b42-3dd7-a83c-dcabb6e6fe7c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "ff45746fbf005f96e42bea466698e3fdbf926013 <411df123c017169922cc767affce76282b8e6c85"
+    },
+    {
+      "id": "06c75f08-7529-3215-83d8-8208c3c9db00",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.11"
+    },
+    {
+      "id": "071a29bf-381f-311e-b7ed-9f96b1b95bd8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "0d1d94cf-180c-3701-b224-f1017a707ffb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "ff45746fbf005f96e42bea466698e3fdbf926013 <d7853d9fe94abf43b46c57b0b7f8418198b7615a"
+    },
+    {
+      "id": "34ca3318-a413-34af-beb6-1181ca3cc435",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.21"
+    },
+    {
+      "id": "40071c46-de0b-34f8-881c-174f1a8bb17e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "ff45746fbf005f96e42bea466698e3fdbf926013 <00d956dafa76f86a73424fe5cce3d604a8be2e4b"
+    },
+    {
+      "id": "821c531c-9912-3809-8f20-d95a75ccf570",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "ff45746fbf005f96e42bea466698e3fdbf926013 <a6e14114684d2324e5401617d6d01acb4a4e0e22"
+    },
+    {
+      "id": "8376789d-6050-36b1-8b48-6276608d6c5b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.80"
+    },
+    {
+      "id": "c33a4448-cc0e-39fe-a83b-d64aad853910",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.9"
+    },
+    {
+      "id": "c568eb17-413a-346d-a412-c10317435a97",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "89dbd48c-f330-3a50-a77c-c3ce17f0f606",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

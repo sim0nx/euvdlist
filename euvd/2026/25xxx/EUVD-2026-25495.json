@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-25495",
+  "enisaUuid": "fb7d232c-9eec-307f-bfa3-5d7820e38701",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: ctxfi: Limit PTP to a single page\n\nCommit 391e69143d0a increased CT_PTP_NUM from 1 to 4 to support 256\nplayback streams, but the additional pages are not used by the card\ncorrectly. The CT20K2 hardware already has multiple VMEM_PTPAL\nregisters, but using them separately would require refactoring the\nentire virtual memory allocation logic.\n\nct_vm_map() always uses PTEs in vm->ptp[0].area regardless of\nCT_PTP_NUM. On AMD64 systems, a single PTP covers 512 PTEs (2M). When\naggregate memory allocations exceed this limit, ct_vm_map() tries to\naccess beyond the allocated space and causes a page fault:\n\n  BUG: unable to handle page fault for address: ffffd4ae8a10a000\n  Oops: Oops: 0002 [#1] SMP PTI\n  RIP: 0010:ct_vm_map+0x17c/0x280 [snd_ctxfi]\n  Call Trace:\n  atc_pcm_playback_prepare+0x225/0x3b0\n  ct_pcm_playback_prepare+0x38/0x60\n  snd_pcm_do_prepare+0x2f/0x50\n  snd_pcm_action_single+0x36/0x90\n  snd_pcm_action_nonatomic+0xbf/0xd0\n  snd_pcm_ioctl+0x28/0x40\n  __x64_sys_ioctl+0x97/0xe0\n  do_syscall_64+0x81/0x610\n  entry_SYSCALL_64_after_hwframe+0x76/0x7e\n\nRevert CT_PTP_NUM to 1. The 256 SRC_RESOURCE_NUM and playback_count\nremain unchanged.",
+  "datePublished": "Apr 24, 2026, 3:32:35 PM",
+  "dateUpdated": "Apr 24, 2026, 3:32:35 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/365c36e1a126c6aa1aecedd3a351bcabc66f0c29",
+    "https://git.kernel.org/stable/c/3fd0685d7fef68c2d8a04876bcf9eaa0724ad6a5",
+    "https://git.kernel.org/stable/c/b7f5ecd13cce8c2f8fa5a84c9aab65997142577e",
+    "https://git.kernel.org/stable/c/ad9011a795407093dcf507f6e5da1828987b4b47",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-31602"
+  ],
+  "aliases": [
+    "GHSA-426x-jc5h-fmgg",
+    "CVE-2026-31602"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0beb59ce-a08d-39ea-b06a-7da6a69d044c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <ad9011a795407093dcf507f6e5da1828987b4b47"
+    },
+    {
+      "id": "44f2191e-9c26-3485-b958-121592d1b322",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.24"
+    },
+    {
+      "id": "46b506c7-5dbb-3f60-a583-928aeddcf493",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <365c36e1a126c6aa1aecedd3a351bcabc66f0c29"
+    },
+    {
+      "id": "6cceb076-c293-3c50-8764-e27c61d8f49c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.14"
+    },
+    {
+      "id": "779c9a93-4186-3e75-a5c7-01aeb513da6a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0.1"
+    },
+    {
+      "id": "d3b1541e-0187-3302-838e-190ddd00f4ab",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <3fd0685d7fef68c2d8a04876bcf9eaa0724ad6a5"
+    },
+    {
+      "id": "ef7cf32b-9db8-3844-aa73-df90ec7ee552",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b7f5ecd13cce8c2f8fa5a84c9aab65997142577e"
+    },
+    {
+      "id": "f7623df6-4ffa-3d7d-a36c-a34cd545d9a2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.83"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f9ad3317-58f7-3276-878c-92ccac2d3996",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

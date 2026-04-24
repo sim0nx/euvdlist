@@ -1,0 +1,86 @@
+{
+  "id": "EUVD-2026-25434",
+  "enisaUuid": "3142772b-8875-3ad8-816d-b2e4670d8395",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntracing: Fix trace_marker copy link list updates\n\nWhen the \"copy_trace_marker\" option is enabled for an instance, anything\nwritten into /sys/kernel/tracing/trace_marker is also copied into that\ninstances buffer. When the option is set, that instance's trace_array\ndescriptor is added to the marker_copies link list. This list is protected\nby RCU, as all iterations uses an RCU protected list traversal.\n\nWhen the instance is deleted, all the flags that were enabled are cleared.\nThis also clears the copy_trace_marker flag and removes the trace_array\ndescriptor from the list.\n\nThe issue is after the flags are called, a direct call to\nupdate_marker_trace() is performed to clear the flag. This function\nreturns true if the state of the flag changed and false otherwise. If it\nreturns true here, synchronize_rcu() is called to make sure all readers\nsee that its removed from the list.\n\nBut since the flag was already cleared, the state does not change and the\nsynchronization is never called, leaving a possible UAF bug.\n\nMove the clearing of all flags below the updating of the copy_trace_marker\noption which then makes sure the synchronization is performed.\n\nAlso use the flag for checking the state in update_marker_trace() instead\nof looking at if the list is empty.",
+  "datePublished": "Apr 24, 2026, 3:32:32 PM",
+  "dateUpdated": "Apr 24, 2026, 3:32:33 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/75668e58244e63ec3785098a02e1cdcff14a6c2e",
+    "https://git.kernel.org/stable/c/cc267e4b4302247dc67ef937a9ac587a696a43c1",
+    "https://git.kernel.org/stable/c/07183aac4a6828e474f00b37c9d795d0d99e18a7",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-31541"
+  ],
+  "aliases": [
+    "GHSA-mfcj-fwjx-5q54",
+    "CVE-2026-31541"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "040bb058-a24d-3f84-bd7e-139ce72a72e8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "0985f576-f73c-31d0-b29d-d1a041c7dd92",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "7b382efd5e8af4c0c67e70ad3fb599dcd2dc0b86 <07183aac4a6828e474f00b37c9d795d0d99e18a7"
+    },
+    {
+      "id": "30f23453-6628-342b-8bf8-bc0e6104beb3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.20"
+    },
+    {
+      "id": "7ad49c21-b0c5-3c13-93d5-dc10ff841b72",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7f4a8941-6838-368a-8e4a-4ce8ffbed506",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "7b382efd5e8af4c0c67e70ad3fb599dcd2dc0b86 <75668e58244e63ec3785098a02e1cdcff14a6c2e"
+    },
+    {
+      "id": "a0a4d372-3e7c-3046-a4a8-81d88d14c238",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "a9af99fc-cdaf-3dfa-b5d1-5ed38d025a48",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "7b382efd5e8af4c0c67e70ad3fb599dcd2dc0b86 <cc267e4b4302247dc67ef937a9ac587a696a43c1"
+    },
+    {
+      "id": "cfe3f3ed-2c19-32a9-9dbb-1756b1e9892b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.10"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0e0f0d2b-90c7-3b16-b092-6c543969dae8",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
