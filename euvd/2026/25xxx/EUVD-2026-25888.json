@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-25888",
+  "enisaUuid": "ed9a0ccd-a4e9-3859-ab2a-877d2ba77ab6",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nigb: remove napi_synchronize() in igb_down()\n\nWhen an AF_XDP zero-copy application terminates abruptly (e.g., kill -9),\nthe XSK buffer pool is destroyed but NAPI polling continues.\nigb_clean_rx_irq_zc() repeatedly returns the full budget, preventing\nnapi_complete_done() from clearing NAPI_STATE_SCHED.\n\nigb_down() calls napi_synchronize() before napi_disable() for each queue\nvector. napi_synchronize() spins waiting for NAPI_STATE_SCHED to clear,\nwhich never happens. igb_down() blocks indefinitely, the TX watchdog\nfires, and the TX queue remains permanently stalled.\n\nnapi_disable() already handles this correctly: it sets NAPI_STATE_DISABLE.\nAfter a full-budget poll, __napi_poll() checks napi_disable_pending(). If\nset, it forces completion and clears NAPI_STATE_SCHED, breaking the loop\nthat napi_synchronize() cannot.\n\nnapi_synchronize() was added in commit 41f149a285da (\"igb: Fix possible\npanic caused by Rx traffic arrival while interface is down\").\nnapi_disable() provides stronger guarantees: it prevents further\nscheduling and waits for any active poll to exit.\nOther Intel drivers (ixgbe, ice, i40e) use napi_disable() without a\npreceding napi_synchronize() in their down paths.\n\nRemove redundant napi_synchronize() call and reorder napi_disable()\nbefore igb_set_queue_napi() so the queue-to-NAPI mapping is only\ncleared after polling has fully stopped.",
+  "datePublished": "Apr 27, 2026, 5:34:29 PM",
+  "dateUpdated": "Apr 27, 2026, 5:34:29 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/4700471775746058c962ded6e659bf908fd76e13",
+    "https://git.kernel.org/stable/c/27f5997686ee7fb7ac01be72b2010f168a3409fc",
+    "https://git.kernel.org/stable/c/b1e067240379f950a0022208e0685f3465c211cb"
+  ],
+  "aliases": [
+    "CVE-2026-31691"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3f91ccb8-e374-3f6f-aba6-1a2a362f554e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2c6196013f84651772388a86dfd4bb033d0c0d45 <b1e067240379f950a0022208e0685f3465c211cb"
+    },
+    {
+      "id": "4aeefa13-0122-32b7-9669-b9f132055247",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.14"
+    },
+    {
+      "id": "912d776c-0c00-3e42-8ad8-3f0243a8fb0f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2c6196013f84651772388a86dfd4bb033d0c0d45 <4700471775746058c962ded6e659bf908fd76e13"
+    },
+    {
+      "id": "d7119490-bd70-301d-895f-8669a937a88a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "dc260d6d-7186-3f18-a7af-55b59e6dba37",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.13"
+    },
+    {
+      "id": "e1e4ba54-0e41-3e39-b9db-4a2463fbe277",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.23"
+    },
+    {
+      "id": "e8cf16c9-d069-31fc-8e7f-0f2e46d4b2ba",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2c6196013f84651772388a86dfd4bb033d0c0d45 <27f5997686ee7fb7ac01be72b2010f168a3409fc"
+    },
+    {
+      "id": "f4a9ac1c-d298-394c-a5b6-2a84dacf8999",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "aab2ef5a-c223-3a60-9455-5ac4b02f3b96",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
