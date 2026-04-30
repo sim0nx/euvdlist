@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2026-26365",
+  "enisaUuid": "47931947-4eb7-3b5b-b034-7163e49175bd",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxen/privcmd: fix double free via VMA splitting\n\nprivcmd_vm_ops defines .close (privcmd_close), but neither .may_split\nnor .open. When userspace does a partial munmap() on a privcmd mapping,\nthe kernel splits the VMA via __split_vma(). Since may_split is NULL,\nthe split is allowed. vm_area_dup() copies vm_private_data (a pages\narray allocated in alloc_empty_pages()) into the new VMA without any\nfixup, because there is no .open callback.\n\nBoth VMAs now point to the same pages array. When the unmapped portion\nis closed, privcmd_close() calls:\n    - xen_unmap_domain_gfn_range()\n    - xen_free_unpopulated_pages()\n    - kvfree(pages)\n\nThe surviving VMA still holds the dangling pointer. When it is later\ndestroyed, the same sequence runs again, which leads to a double free.\n\nFix this issue by adding a .may_split callback denying the VMA split.\n\nThis is XSA-487 / CVE-2026-31787",
+  "datePublished": "Apr 30, 2026, 10:31:28 AM",
+  "dateUpdated": "Apr 30, 2026, 10:39:37 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/dbf862ce9f009128ab86b234d91413a3e450beb4",
+    "https://git.kernel.org/stable/c/2b985d3a024b9e8c24e21671b34e855569763808",
+    "https://git.kernel.org/stable/c/1576ff3869cbd3620717195f971c85b7d7fd62b5",
+    "https://git.kernel.org/stable/c/402d84ad9e89bd4cbfd07ca8598532b7021daf95",
+    "https://git.kernel.org/stable/c/2894a351fe2ea8684919d36df3188b9a35e3926f",
+    "https://git.kernel.org/stable/c/446ee446d9ae66f36e95c3c90bbcc4e56b94cde0",
+    "https://git.kernel.org/stable/c/71bf829800758a6e3889096e4754ef47ba7fc850"
+  ],
+  "aliases": [
+    "CVE-2026-31787"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "197cc311-a37f-3989-80a7-ba86519a3124",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2b985d3a024b9e8c24e21671b34e855569763808"
+    },
+    {
+      "id": "23525d89-0288-3d4e-8d91-769cb95dec76",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.204"
+    },
+    {
+      "id": "300dd05a-1f2c-3d51-bfa7-5b232ef68564",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2894a351fe2ea8684919d36df3188b9a35e3926f"
+    },
+    {
+      "id": "308f9c8b-490c-3f66-aa8e-5ef1bd4f9df0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <402d84ad9e89bd4cbfd07ca8598532b7021daf95"
+    },
+    {
+      "id": "5e1f4054-e3d8-309a-ab40-7910ba1cdd1e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0.3"
+    },
+    {
+      "id": "7100f9a4-b6c5-30f5-9466-4768c88e571b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.170"
+    },
+    {
+      "id": "7594f867-38dc-36d4-a16a-136f0f3ce931",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <1576ff3869cbd3620717195f971c85b7d7fd62b5"
+    },
+    {
+      "id": "7902f25d-754e-330a-a097-8efeee00150e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.137"
+    },
+    {
+      "id": "8032c820-7082-364d-b6c6-b9598f2123ee",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.10.254"
+    },
+    {
+      "id": "8d589b19-3ade-3616-9233-49700d99325a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <446ee446d9ae66f36e95c3c90bbcc4e56b94cde0"
+    },
+    {
+      "id": "9a06f683-3aed-32f6-8ccb-319cbfdf6b89",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.85"
+    },
+    {
+      "id": "ce6c65fa-005e-3b24-abb5-267d5dfbfb3b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <dbf862ce9f009128ab86b234d91413a3e450beb4"
+    },
+    {
+      "id": "d0e91dd9-56db-31f5-8044-c2e0e7e1b036",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <71bf829800758a6e3889096e4754ef47ba7fc850"
+    },
+    {
+      "id": "f2e3ec93-2f53-335e-9100-0371dbaf9202",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.26"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "cf210a00-aa9a-3774-b6fb-033961b4e24e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
