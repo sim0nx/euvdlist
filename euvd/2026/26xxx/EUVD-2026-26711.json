@@ -1,0 +1,45 @@
+{
+  "id": "EUVD-2026-26711",
+  "enisaUuid": "f28264fa-2fcc-303f-bd3b-fa09a7d0a7bf",
+  "description": "Allocation of Resources Without Limits or Throttling vulnerability in mtrudel bandit allows unauthenticated remote denial of service via memory exhaustion when WebSocket permessage-deflate compression is enabled.\n\n'Elixir.Bandit.WebSocket.PerMessageDeflate':inflate/2 in lib/bandit/websocket/permessage_deflate.ex calls :zlib.inflate/2 with no output-size cap, then materializes the entire decompressed payload as a single binary via IO.iodata_to_binary/1. The websocket_options.max_frame_size option only bounds the on-the-wire (compressed) frame size, not the decompressed output. A high-ratio compressed frame (e.g. uniform data at ~1024:1 ratio) can stay well under any wire-size limit while forcing GiB-scale heap allocations in the connection process before any application code runs.\n\nAn unauthenticated attacker who can open a WebSocket connection can send a single such frame to exhaust the BEAM node's memory and trigger an OOM kill.\n\nThis vulnerability requires both Bandit's server-level websocket_options.compress and the per-upgrade compress: true option passed to WebSockAdapter.upgrade/4 to be enabled. Stock Phoenix and LiveView applications are not affected as they default to compress: false.\n\nThis issue affects bandit: from 0.5.9 before 1.11.0.",
+  "datePublished": "May 1, 2026, 8:34:24 PM",
+  "dateUpdated": "May 1, 2026, 8:34:24 PM",
+  "baseScore": 8.2,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/mtrudel/bandit/security/advisories/GHSA-frh3-6pv6-rc8j",
+    "https://cna.erlef.org/cves/CVE-2026-39804.html",
+    "https://osv.dev/vulnerability/EEF-CVE-2026-39804",
+    "https://github.com/mtrudel/bandit/commit/8156921a51e684a951221da7bc30a70a022f722e"
+  ],
+  "aliases": [
+    "CVE-2026-39804"
+  ],
+  "assigner": "EEF",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "5f9bf6d9-5a13-364c-9fe7-a1a153cfed7c",
+      "product": {
+        "name": "bandit"
+      },
+      "product_version": "da4027cff7d2b80319e76fe7a32f84beceec490a <1.11.0"
+    },
+    {
+      "id": "83eebfd8-5199-3e29-9de8-48f823b2116d",
+      "product": {
+        "name": "bandit"
+      },
+      "product_version": "0.5.9 <1.11.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "8dccafa1-d92a-30a6-b404-a2a41f873cfa",
+      "vendor": {
+        "name": "mtrudel"
+      }
+    }
+  ]
+}
