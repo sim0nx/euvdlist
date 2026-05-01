@@ -1,0 +1,99 @@
+{
+  "id": "EUVD-2026-26546",
+  "enisaUuid": "3b27d10a-9de5-357e-80ac-e1572e89323f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsched_ext: Fix stale direct dispatch state in ddsp_dsq_id\n\n@p->scx.ddsp_dsq_id can be left set (non-SCX_DSQ_INVALID) triggering a\nspurious warning in mark_direct_dispatch() when the next wakeup's\nops.select_cpu() calls scx_bpf_dsq_insert(), such as:\n\n WARNING: kernel/sched/ext.c:1273 at scx_dsq_insert_commit+0xcd/0x140\n\nThe root cause is that ddsp_dsq_id was only cleared in dispatch_enqueue(),\nwhich is not reached in all paths that consume or cancel a direct dispatch\nverdict.\n\nFix it by clearing it at the right places:\n\n - direct_dispatch(): cache the direct dispatch state in local variables\n   and clear it before dispatch_enqueue() on the synchronous path. For\n   the deferred path, the direct dispatch state must remain set until\n   process_ddsp_deferred_locals() consumes them.\n\n - process_ddsp_deferred_locals(): cache the dispatch state in local\n   variables and clear it before calling dispatch_to_local_dsq(), which\n   may migrate the task to another rq.\n\n - do_enqueue_task(): clear the dispatch state on the enqueue path\n   (local/global/bypass fallbacks), where the direct dispatch verdict is\n   ignored.\n\n - dequeue_task_scx(): clear the dispatch state after dispatch_dequeue()\n   to handle both the deferred dispatch cancellation and the holding_cpu\n   race, covering all cases where a pending direct dispatch is\n   cancelled.\n\n - scx_disable_task(): clear the direct dispatch state when\n   transitioning a task out of the current scheduler. Waking tasks may\n   have had the direct dispatch state set by the outgoing scheduler's\n   ops.select_cpu() and then been queued on a wake_list via\n   ttwu_queue_wakelist(), when SCX_OPS_ALLOW_QUEUED_WAKEUP is set. Such\n   tasks are not on the runqueue and are not iterated by scx_bypass(),\n   so their direct dispatch state won't be cleared. Without this clear,\n   any subsequent SCX scheduler that tries to direct dispatch the task\n   will trigger the WARN_ON_ONCE() in mark_direct_dispatch().",
+  "datePublished": "May 1, 2026, 2:14:31 PM",
+  "dateUpdated": "May 1, 2026, 2:14:31 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ca685511f7afd42cdcbb0feea42e5d332d384251",
+    "https://git.kernel.org/stable/c/5e7b2cc8fae9ec2a5bc53311191d2faaff75a4b5",
+    "https://git.kernel.org/stable/c/7ea601daa0153e19cd1c6e6b300348c70c05fe77",
+    "https://git.kernel.org/stable/c/7e0ffb72de8aa3b25989c2d980e81b829c577010"
+  ],
+  "aliases": [
+    "CVE-2026-31733"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "05001688-3979-3a0f-95e1-3a38ad514fa8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "0ebd53bf-8d2c-31c3-91c9-cd582d653e47",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.82"
+    },
+    {
+      "id": "1ac2bbf0-1bb9-3fc6-a78b-a5f978a50839",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5b26f7b920f76b2b9cc398c252a9e35e44bf5bb9 <7ea601daa0153e19cd1c6e6b300348c70c05fe77"
+    },
+    {
+      "id": "1d3752f1-4992-38f3-8c58-11bf6aba6501",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5b26f7b920f76b2b9cc398c252a9e35e44bf5bb9 <5e7b2cc8fae9ec2a5bc53311191d2faaff75a4b5"
+    },
+    {
+      "id": "381cc49d-89e5-39fc-ab25-68dc8e4dcc13",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.22"
+    },
+    {
+      "id": "3de302ff-3577-302d-b4da-3171f934d493",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5b26f7b920f76b2b9cc398c252a9e35e44bf5bb9 <ca685511f7afd42cdcbb0feea42e5d332d384251"
+    },
+    {
+      "id": "8896e147-3b4f-3ae9-9405-1c57aa794707",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a4bade33-7ad1-31eb-bff1-60c394300bdd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.12"
+    },
+    {
+      "id": "bccb4758-052d-31e5-a895-6fca0a4d4bdb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.12"
+    },
+    {
+      "id": "c295f1ce-f124-327b-9ebb-2a6d3484d8f4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5b26f7b920f76b2b9cc398c252a9e35e44bf5bb9 <7e0ffb72de8aa3b25989c2d980e81b829c577010"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3e281ff4-4c7b-3939-8567-ca88af017299",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

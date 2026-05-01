@@ -1,0 +1,144 @@
+{
+  "id": "EUVD-2026-26567",
+  "enisaUuid": "e5f89557-a397-3e23-bc0a-ba7007e2ea4b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: cdns3: gadget: fix state inconsistency on gadget init failure\n\nWhen cdns3_gadget_start() fails, the DRD hardware is left in gadget mode\nwhile software state remains INACTIVE, creating hardware/software state\ninconsistency.\n\nWhen switching to host mode via sysfs:\n  echo host > /sys/class/usb_role/13180000.usb-role-switch/role\n\nThe role state is not set to CDNS_ROLE_STATE_ACTIVE due to the error,\nso cdns_role_stop() skips cleanup because state is still INACTIVE.\nThis violates the DRD controller design specification (Figure22),\nwhich requires returning to idle state before switching roles.\n\nThis leads to a synchronous external abort in xhci_gen_setup() when\nsetting up the host controller:\n\n[  516.440698] configfs-gadget 13180000.usb: failed to start g1: -19\n[  516.442035] cdns-usb3 13180000.usb: Failed to add gadget\n[  516.443278] cdns-usb3 13180000.usb: set role 2 has failed\n...\n[ 1301.375722] xhci-hcd xhci-hcd.1.auto: xHCI Host Controller\n[ 1301.377716] Internal error: synchronous external abort: 96000010 [#1] PREEMPT SMP\n[ 1301.382485] pc : xhci_gen_setup+0xa4/0x408\n[ 1301.393391] backtrace:\n    ...\n    xhci_gen_setup+0xa4/0x408    <-- CRASH\n    xhci_plat_setup+0x44/0x58\n    usb_add_hcd+0x284/0x678\n    ...\n    cdns_role_set+0x9c/0xbc        <-- Role switch\n\nFix by calling cdns_drd_gadget_off() in the error path to properly\nclean up the DRD gadget state.",
+  "datePublished": "May 1, 2026, 2:14:45 PM",
+  "dateUpdated": "May 1, 2026, 2:14:45 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/fb7110a052467098967284ef14d306810b354937",
+    "https://git.kernel.org/stable/c/9b1d301fbae837bf6979a19030b81d869bb15f7a",
+    "https://git.kernel.org/stable/c/cfca84f5986afceb63a3adf39d4a98e915aebbc2",
+    "https://git.kernel.org/stable/c/c7e475ae3a5593c5db21b3b7dca4ba8bdac9b47f",
+    "https://git.kernel.org/stable/c/5a85599ca4d2584d89dc69f4fc49303b75a42338",
+    "https://git.kernel.org/stable/c/b490f0e477d26d29ed51e5dc47e3b9bd31bcb49f",
+    "https://git.kernel.org/stable/c/c32f8748d70c8fc77676ad92ed76cede17bf2c48"
+  ],
+  "aliases": [
+    "CVE-2026-31754"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "025cded0-e0c3-3dcb-9c93-f3247c9139f8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "7733f6c32e36ff9d7adadf40001039bf219b1cbe <fb7110a052467098967284ef14d306810b354937"
+    },
+    {
+      "id": "2d49612c-a541-37a9-8795-f95248ae4c33",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "3f852d32-ce29-3eef-aabc-f027aa4369e3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.4"
+    },
+    {
+      "id": "4ceee2e4-10c0-36b0-b8a7-e9d453fff26a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "7733f6c32e36ff9d7adadf40001039bf219b1cbe <c32f8748d70c8fc77676ad92ed76cede17bf2c48"
+    },
+    {
+      "id": "5c4c5911-3370-35af-a77b-3eaf4d27fd0c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.168"
+    },
+    {
+      "id": "644e7858-0608-3147-966d-3a93a32f207f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "7733f6c32e36ff9d7adadf40001039bf219b1cbe <c7e475ae3a5593c5db21b3b7dca4ba8bdac9b47f"
+    },
+    {
+      "id": "6b8aeb8e-b729-32c7-9c3c-649551a21a7a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.12"
+    },
+    {
+      "id": "71ed882e-8b7c-36e6-b955-e880308b0f46",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "7733f6c32e36ff9d7adadf40001039bf219b1cbe <b490f0e477d26d29ed51e5dc47e3b9bd31bcb49f"
+    },
+    {
+      "id": "86922bbf-9b9b-334d-8788-87da96c4dea0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "7733f6c32e36ff9d7adadf40001039bf219b1cbe <cfca84f5986afceb63a3adf39d4a98e915aebbc2"
+    },
+    {
+      "id": "a54a42fd-9092-3a8b-af25-e3796235af04",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.203"
+    },
+    {
+      "id": "b139a0bd-a7b0-3dc3-ac01-c7f1b1598757",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "7733f6c32e36ff9d7adadf40001039bf219b1cbe <9b1d301fbae837bf6979a19030b81d869bb15f7a"
+    },
+    {
+      "id": "c028faff-f209-3cc8-8fac-63a1f6f9206e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.134"
+    },
+    {
+      "id": "c689d846-0e21-35ef-af6b-17a1d09c1be3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "d4270b66-3b99-31dc-b037-65d13319df80",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.81"
+    },
+    {
+      "id": "d56d421d-ccf7-3296-85b4-01b7125ad01b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "7733f6c32e36ff9d7adadf40001039bf219b1cbe <5a85599ca4d2584d89dc69f4fc49303b75a42338"
+    },
+    {
+      "id": "e2a9e4a9-d36d-3c83-8c49-d9d98c0ebae5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.22"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "aeada891-11f9-3026-9ac3-91246b82eb5d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

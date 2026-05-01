@@ -1,0 +1,144 @@
+{
+  "id": "EUVD-2026-26653",
+  "enisaUuid": "4638664a-2035-31f3-9741-334450302025",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: target: tcm_loop: Drain commands in target_reset handler\n\ntcm_loop_target_reset() violates the SCSI EH contract: it returns SUCCESS\nwithout draining any in-flight commands.  The SCSI EH documentation\n(scsi_eh.rst) requires that when a reset handler returns SUCCESS the driver\nhas made lower layers \"forget about timed out scmds\" and is ready for new\ncommands.  Every other SCSI LLD (virtio_scsi, mpt3sas, ipr, scsi_debug,\nmpi3mr) enforces this by draining or completing outstanding commands before\nreturning SUCCESS.\n\nBecause tcm_loop_target_reset() doesn't drain, the SCSI EH reuses in-flight\nscsi_cmnd structures for recovery commands (e.g. TUR) while the target core\nstill has async completion work queued for the old se_cmd.  The memset in\nqueuecommand zeroes se_lun and lun_ref_active, causing\ntransport_lun_remove_cmd() to skip its percpu_ref_put().  The leaked LUN\nreference prevents transport_clear_lun_ref() from completing, hanging\nconfigfs LUN unlink forever in D-state:\n\n  INFO: task rm:264 blocked for more than 122 seconds.\n  rm              D    0   264    258 0x00004000\n  Call Trace:\n   __schedule+0x3d0/0x8e0\n   schedule+0x36/0xf0\n   transport_clear_lun_ref+0x78/0x90 [target_core_mod]\n   core_tpg_remove_lun+0x28/0xb0 [target_core_mod]\n   target_fabric_port_unlink+0x50/0x60 [target_core_mod]\n   configfs_unlink+0x156/0x1f0 [configfs]\n   vfs_unlink+0x109/0x290\n   do_unlinkat+0x1d5/0x2d0\n\nFix this by making tcm_loop_target_reset() actually drain commands:\n\n 1. Issue TMR_LUN_RESET via tcm_loop_issue_tmr() to drain all commands that\n    the target core knows about (those not yet CMD_T_COMPLETE).\n\n 2. Use blk_mq_tagset_busy_iter() to iterate all started requests and\n    flush_work() on each se_cmd \u2014 this drains any deferred completion work\n    for commands that already had CMD_T_COMPLETE set before the TMR (which\n    the TMR skips via __target_check_io_state()).  This is the same pattern\n    used by mpi3mr, scsi_debug, and libsas to drain outstanding commands\n    during reset.",
+  "datePublished": "May 1, 2026, 2:15:47 PM",
+  "dateUpdated": "May 1, 2026, 2:15:47 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/757c43c692294cdfad31390accc0e90429b2ef8a",
+    "https://git.kernel.org/stable/c/103f79e4949513247d763c6e7f3cbbf62017afdf",
+    "https://git.kernel.org/stable/c/15f5241d5a52364a7e7867b49128b0442dbcad9d",
+    "https://git.kernel.org/stable/c/7cbd69aaa507b1245240a28022bf5da0f07c68d9",
+    "https://git.kernel.org/stable/c/a836054ea81014117ec6b73529a21626a9e1f829",
+    "https://git.kernel.org/stable/c/05ac3754467363558a0a54ae4bb7c89b2c9574cf",
+    "https://git.kernel.org/stable/c/1333eee56cdf3f0cf67c6ab4114c2c9e0a952026"
+  ],
+  "aliases": [
+    "CVE-2026-43054"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "03658208-d0ec-3801-8650-3a293eeacd16",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.81"
+    },
+    {
+      "id": "1b3de8bd-0800-3506-81eb-479287b0c07e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e0eb5d38b732b011cd9ed5b1bf9f59b83c2500d3 <7cbd69aaa507b1245240a28022bf5da0f07c68d9"
+    },
+    {
+      "id": "34eede0d-5361-32ae-8e79-4bbf6ce55597",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.168"
+    },
+    {
+      "id": "4afe8714-40f5-369e-be8f-a1934251e9e8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.22"
+    },
+    {
+      "id": "557ba133-fd75-3b59-a524-e9ae3b336522",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e0eb5d38b732b011cd9ed5b1bf9f59b83c2500d3 <757c43c692294cdfad31390accc0e90429b2ef8a"
+    },
+    {
+      "id": "76b8b5aa-4d71-35bb-ad87-86e441cda3d9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "93d53f0d-51f3-3f4d-9ac0-f2c88e2bcb77",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e0eb5d38b732b011cd9ed5b1bf9f59b83c2500d3 <1333eee56cdf3f0cf67c6ab4114c2c9e0a952026"
+    },
+    {
+      "id": "9baf1795-c350-3f53-851f-1567e7200557",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a0a2f575-94ad-3942-b528-97cac9b76665",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e0eb5d38b732b011cd9ed5b1bf9f59b83c2500d3 <15f5241d5a52364a7e7867b49128b0442dbcad9d"
+    },
+    {
+      "id": "a7211f2a-002e-3749-af2b-0e27b3898e6f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.13"
+    },
+    {
+      "id": "a7c18a19-5e45-340b-ae85-e372724e42e4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e0eb5d38b732b011cd9ed5b1bf9f59b83c2500d3 <103f79e4949513247d763c6e7f3cbbf62017afdf"
+    },
+    {
+      "id": "b3652eab-2f8a-3373-82f1-a2fa6018a428",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.12"
+    },
+    {
+      "id": "b8ebac97-3384-3a4c-a25c-39bf746f04da",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e0eb5d38b732b011cd9ed5b1bf9f59b83c2500d3 <05ac3754467363558a0a54ae4bb7c89b2c9574cf"
+    },
+    {
+      "id": "c6542ca5-0107-3373-8358-10b81bcb7f4a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.203"
+    },
+    {
+      "id": "fb122193-53a3-35e2-a71b-01326e769ce5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.134"
+    },
+    {
+      "id": "fbc81afc-cc9d-378a-9a51-244b2a7c8d65",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "e0eb5d38b732b011cd9ed5b1bf9f59b83c2500d3 <a836054ea81014117ec6b73529a21626a9e1f829"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a177b708-7bb4-3b59-86a3-801e01bb0837",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

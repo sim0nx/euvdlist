@@ -1,0 +1,69 @@
+{
+  "id": "EUVD-2026-26608",
+  "enisaUuid": "0465d6f0-4349-38f6-9637-18eb8ac6ce61",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix incorrect pruning due to atomic fetch precision tracking\n\nWhen backtrack_insn encounters a BPF_STX instruction with BPF_ATOMIC\nand BPF_FETCH, the src register (or r0 for BPF_CMPXCHG) also acts as\na destination, thus receiving the old value from the memory location.\n\nThe current backtracking logic does not account for this. It treats\natomic fetch operations the same as regular stores where the src\nregister is only an input. This leads the backtrack_insn to fail to\npropagate precision to the stack location, which is then not marked\nas precise!\n\nLater, the verifier's path pruning can incorrectly consider two states\nequivalent when they differ in terms of stack state. Meaning, two\nbranches can be treated as equivalent and thus get pruned when they\nshould not be seen as such.\n\nFix it as follows: Extend the BPF_LDX handling in backtrack_insn to\nalso cover atomic fetch operations via is_atomic_fetch_insn() helper.\nWhen the fetch dst register is being tracked for precision, clear it,\nand propagate precision over to the stack slot. For non-stack memory,\nthe precision walk stops at the atomic instruction, same as regular\nBPF_LDX. This covers all fetch variants.\n\nBefore:\n\n  0: (b7) r1 = 8                        ; R1=8\n  1: (7b) *(u64 *)(r10 -8) = r1         ; R1=8 R10=fp0 fp-8=8\n  2: (b7) r2 = 0                        ; R2=0\n  3: (db) r2 = atomic64_fetch_add((u64 *)(r10 -8), r2)          ; R2=8 R10=fp0 fp-8=mmmmmmmm\n  4: (bf) r3 = r10                      ; R3=fp0 R10=fp0\n  5: (0f) r3 += r2\n  mark_precise: frame0: last_idx 5 first_idx 0 subseq_idx -1\n  mark_precise: frame0: regs=r2 stack= before 4: (bf) r3 = r10\n  mark_precise: frame0: regs=r2 stack= before 3: (db) r2 = atomic64_fetch_add((u64 *)(r10 -8), r2)\n  mark_precise: frame0: regs=r2 stack= before 2: (b7) r2 = 0\n  6: R2=8 R3=fp8\n  6: (b7) r0 = 0                        ; R0=0\n  7: (95) exit\n\nAfter:\n\n  0: (b7) r1 = 8                        ; R1=8\n  1: (7b) *(u64 *)(r10 -8) = r1         ; R1=8 R10=fp0 fp-8=8\n  2: (b7) r2 = 0                        ; R2=0\n  3: (db) r2 = atomic64_fetch_add((u64 *)(r10 -8), r2)          ; R2=8 R10=fp0 fp-8=mmmmmmmm\n  4: (bf) r3 = r10                      ; R3=fp0 R10=fp0\n  5: (0f) r3 += r2\n  mark_precise: frame0: last_idx 5 first_idx 0 subseq_idx -1\n  mark_precise: frame0: regs=r2 stack= before 4: (bf) r3 = r10\n  mark_precise: frame0: regs=r2 stack= before 3: (db) r2 = atomic64_fetch_add((u64 *)(r10 -8), r2)\n  mark_precise: frame0: regs= stack=-8 before 2: (b7) r2 = 0\n  mark_precise: frame0: regs= stack=-8 before 1: (7b) *(u64 *)(r10 -8) = r1\n  mark_precise: frame0: regs=r1 stack= before 0: (b7) r1 = 8\n  6: R2=8 R3=fp8\n  6: (b7) r0 = 0                        ; R0=0\n  7: (95) exit",
+  "datePublished": "May 1, 2026, 2:15:16 PM",
+  "dateUpdated": "May 1, 2026, 2:15:16 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/7ffbe45b1d227e24659998a91cfd4c27af457e71",
+    "https://git.kernel.org/stable/c/179ee84a89114b854ac2dd1d293633a7f6c8dac1"
+  ],
+  "aliases": [
+    "CVE-2026-43009"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "4cdbc333-ff59-3a0b-915e-451fd664b416",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5ca419f2864a2c60940dcf4bbaeb69546200e36f <179ee84a89114b854ac2dd1d293633a7f6c8dac1"
+    },
+    {
+      "id": "6076366d-da49-318a-9f16-df9feb9b3826",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7d24c1e3-fa9b-3275-997b-f60501b38886",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.12"
+    },
+    {
+      "id": "8e67be79-0406-31c1-bb73-881930ff6cbd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5ca419f2864a2c60940dcf4bbaeb69546200e36f <7ffbe45b1d227e24659998a91cfd4c27af457e71"
+    },
+    {
+      "id": "d9c3bafc-2437-39a1-8729-844d0dff6207",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.12"
+    },
+    {
+      "id": "da71d84f-b39b-355f-8c03-8eb43be20632",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d8f57c8a-1478-3b6d-a09f-37675ef9d083",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

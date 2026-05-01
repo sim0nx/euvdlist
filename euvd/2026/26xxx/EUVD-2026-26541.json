@@ -1,0 +1,159 @@
+{
+  "id": "EUVD-2026-26541",
+  "enisaUuid": "d6943d8e-0ca9-383c-8e15-679eaa01ec00",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: u_ether: Fix race between gether_disconnect and eth_stop\n\nA race condition between gether_disconnect() and eth_stop() leads to a\nNULL pointer dereference. Specifically, if eth_stop() is triggered\nconcurrently while gether_disconnect() is tearing down the endpoints,\neth_stop() attempts to access the cleared endpoint descriptor, causing\nthe following NPE:\n\n  Unable to handle kernel NULL pointer dereference\n  Call trace:\n   __dwc3_gadget_ep_enable+0x60/0x788\n   dwc3_gadget_ep_enable+0x70/0xe4\n   usb_ep_enable+0x60/0x15c\n   eth_stop+0xb8/0x108\n\nBecause eth_stop() crashes while holding the dev->lock, the thread\nrunning gether_disconnect() fails to acquire the same lock and spins\nforever, resulting in a hardlockup:\n\n  Core - Debugging Information for Hardlockup core(7)\n  Call trace:\n   queued_spin_lock_slowpath+0x94/0x488\n   _raw_spin_lock+0x64/0x6c\n   gether_disconnect+0x19c/0x1e8\n   ncm_set_alt+0x68/0x1a0\n   composite_setup+0x6a0/0xc50\n\nThe root cause is that the clearing of dev->port_usb in\ngether_disconnect() is delayed until the end of the function.\n\nMove the clearing of dev->port_usb to the very beginning of\ngether_disconnect() while holding dev->lock. This cuts off the link\nimmediately, ensuring eth_stop() will see dev->port_usb as NULL and\nsafely bail out.",
+  "datePublished": "May 1, 2026, 2:14:28 PM",
+  "dateUpdated": "May 1, 2026, 2:14:28 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f02980594deef751e42133714aee25228f1494c6",
+    "https://git.kernel.org/stable/c/e1e7a66584bf0aff3becb73c19fa31527889fc9e",
+    "https://git.kernel.org/stable/c/a259ba0bce3b192c04334499690372a250f7d0b1",
+    "https://git.kernel.org/stable/c/f6813c2b2ae78def76b69e0f9d72f80e4a1c4aca",
+    "https://git.kernel.org/stable/c/bbb09bb89ffa571475f66daca9482b974cd29d6a",
+    "https://git.kernel.org/stable/c/6ad77458637b78ec655e3da5f112c862e6690a9d",
+    "https://git.kernel.org/stable/c/8ff689edfeceb5e3ec1623e09af2b2aa0f1098a8",
+    "https://git.kernel.org/stable/c/e1eabb072c75681f78312c484ccfffb7430f206e"
+  ],
+  "aliases": [
+    "CVE-2026-31728"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0307fcab-9379-3f93-9200-18bba02df47a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2b3d942c4878084a37991a65e66512c02b8fa2ad <6ad77458637b78ec655e3da5f112c862e6690a9d"
+    },
+    {
+      "id": "10a36672-464f-3b61-9da9-67ee30c6e40c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2b3d942c4878084a37991a65e66512c02b8fa2ad <8ff689edfeceb5e3ec1623e09af2b2aa0f1098a8"
+    },
+    {
+      "id": "4005e221-afd8-353a-a644-62dfc10fa438",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2b3d942c4878084a37991a65e66512c02b8fa2ad <e1e7a66584bf0aff3becb73c19fa31527889fc9e"
+    },
+    {
+      "id": "4f58455f-8863-3f71-a2d4-631451f0ce6d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "5545f379-2949-336f-add8-932859759708",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2.6.27"
+    },
+    {
+      "id": "62e67492-0eb6-3715-add0-f8fbe14ca5d1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.81"
+    },
+    {
+      "id": "a33ce1f6-c00c-3db5-b8b2-3fbb0bffa433",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.10.253"
+    },
+    {
+      "id": "a40a7d69-fea5-3cb0-9a45-2a62f1b9e891",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2b3d942c4878084a37991a65e66512c02b8fa2ad <bbb09bb89ffa571475f66daca9482b974cd29d6a"
+    },
+    {
+      "id": "abadf582-ecf7-30af-9bfe-01fd31ce62af",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.12"
+    },
+    {
+      "id": "b3c382e4-a659-32de-981d-e64a3b2cabe9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2b3d942c4878084a37991a65e66512c02b8fa2ad <e1eabb072c75681f78312c484ccfffb7430f206e"
+    },
+    {
+      "id": "bd313e79-35b1-37e4-90ff-741daf354c59",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.203"
+    },
+    {
+      "id": "c2e7359f-bdcd-3acf-88bc-a80e966b13d5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.134"
+    },
+    {
+      "id": "c990dafe-4b65-3c96-81b9-06a5226e582a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "cab8046b-fd7e-38ed-a3e4-b7262bf15647",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2b3d942c4878084a37991a65e66512c02b8fa2ad <f02980594deef751e42133714aee25228f1494c6"
+    },
+    {
+      "id": "cb62d304-b85a-3213-ad58-6d3f94e543ce",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.22"
+    },
+    {
+      "id": "ee59b5d2-491c-3417-a666-eb8c0f8381d7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2b3d942c4878084a37991a65e66512c02b8fa2ad <f6813c2b2ae78def76b69e0f9d72f80e4a1c4aca"
+    },
+    {
+      "id": "f2627f88-29e5-3bb4-ad07-8674d704843c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2b3d942c4878084a37991a65e66512c02b8fa2ad <a259ba0bce3b192c04334499690372a250f7d0b1"
+    },
+    {
+      "id": "fc98135f-3455-301a-a115-e84232289f05",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.169"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2387a817-6db5-351e-a2c6-c709db225d9c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

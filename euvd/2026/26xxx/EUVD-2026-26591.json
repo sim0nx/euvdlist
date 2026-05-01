@@ -1,0 +1,159 @@
+{
+  "id": "EUVD-2026-26591",
+  "enisaUuid": "df655b5d-65ee-365b-acbe-c1cc9dfcbd8a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: caiaq: fix stack out-of-bounds read in init_card\n\nThe loop creates a whitespace-stripped copy of the card shortname\nwhere `len < sizeof(card->id)` is used for the bounds check. Since\nsizeof(card->id) is 16 and the local id buffer is also 16 bytes,\nwriting 16 non-space characters fills the entire buffer,\noverwriting the terminating nullbyte.\n\nWhen this non-null-terminated string is later passed to\nsnd_card_set_id() -> copy_valid_id_string(), the function scans\nforward with `while (*nid && ...)` and reads past the end of the\nstack buffer, reading the contents of the stack.\n\nA USB device with a product name containing many non-ASCII, non-space\ncharacters (e.g. multibyte UTF-8) will reliably trigger this as follows:\n\n  BUG: KASAN: stack-out-of-bounds in copy_valid_id_string\n       sound/core/init.c:696 [inline]\n  BUG: KASAN: stack-out-of-bounds in snd_card_set_id_no_lock+0x698/0x74c\n       sound/core/init.c:718\n\nThe off-by-one has been present since commit bafeee5b1f8d (\"ALSA:\nsnd_usb_caiaq: give better shortname\") from June 2009 (v2.6.31-rc1),\nwhich first introduced this whitespace-stripping loop. The original\ncode never accounted for the null terminator when bounding the copy.\n\nFix this by changing the loop bound to `sizeof(card->id) - 1`,\nensuring at least one byte remains as the null terminator.",
+  "datePublished": "May 1, 2026, 2:15:05 PM",
+  "dateUpdated": "May 1, 2026, 2:15:05 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/02d9c5b0b5553a391448b6d655262bd829f90234",
+    "https://git.kernel.org/stable/c/3f7f8bae0d52cbd07ab04b76b6aac89ef98ee9f6",
+    "https://git.kernel.org/stable/c/66194c2575a4f567577ae70b1d7561163ce791a6",
+    "https://git.kernel.org/stable/c/a82c1bce2d1299dd3c686a8fe48cf75b79a403c7",
+    "https://git.kernel.org/stable/c/3178b62e2e31bab39f63d4c8e54bf4ee0a425627",
+    "https://git.kernel.org/stable/c/3afa2e67f3523a980a2f90fd63c22322ac2b9ce0",
+    "https://git.kernel.org/stable/c/7594a6464873d90fd229e5b94cdd3b92c9feabed",
+    "https://git.kernel.org/stable/c/45424e871abf2a152e247a9cff78359f18dd95c0"
+  ],
+  "aliases": [
+    "CVE-2026-31778"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "37ffdda5-8571-3131-9a5e-4f348e61aaab",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.203"
+    },
+    {
+      "id": "3b8a9c94-5d9b-30bb-9193-ab6eeb7fd3f8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.81"
+    },
+    {
+      "id": "44c1153d-446c-39a7-a62d-aa49376b46fd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bafeee5b1f8d32cbf791c322b40a6fa91d8ccf7a <66194c2575a4f567577ae70b1d7561163ce791a6"
+    },
+    {
+      "id": "49bae971-8b1a-3acf-aab6-de5d7c1b72fa",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.12"
+    },
+    {
+      "id": "557fa8ce-29f6-3a8f-9962-b75e58566ef1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "59d162eb-cb60-38d7-8f84-06c5a645c6a0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.10.253"
+    },
+    {
+      "id": "5fbbb7d0-b453-3841-908e-43abdcd29cfb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.168"
+    },
+    {
+      "id": "8308ca0f-8636-3c48-8a01-80c9011d219f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bafeee5b1f8d32cbf791c322b40a6fa91d8ccf7a <7594a6464873d90fd229e5b94cdd3b92c9feabed"
+    },
+    {
+      "id": "84f52052-79ba-37a8-9168-b8ae77177678",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "2.6.31"
+    },
+    {
+      "id": "87a3457c-9d43-35c1-8548-95cb59ed74f8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bafeee5b1f8d32cbf791c322b40a6fa91d8ccf7a <3afa2e67f3523a980a2f90fd63c22322ac2b9ce0"
+    },
+    {
+      "id": "bfa94329-f691-390e-839a-24ca019daf8d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bafeee5b1f8d32cbf791c322b40a6fa91d8ccf7a <45424e871abf2a152e247a9cff78359f18dd95c0"
+    },
+    {
+      "id": "c16fab0b-34f6-32d0-bf1e-dd82a5010b89",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bafeee5b1f8d32cbf791c322b40a6fa91d8ccf7a <3178b62e2e31bab39f63d4c8e54bf4ee0a425627"
+    },
+    {
+      "id": "cd835c7c-1468-33bc-a8b9-7026a7cb1c93",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bafeee5b1f8d32cbf791c322b40a6fa91d8ccf7a <a82c1bce2d1299dd3c686a8fe48cf75b79a403c7"
+    },
+    {
+      "id": "d710c7ff-06fc-372f-b12c-cd3c2b48d808",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.22"
+    },
+    {
+      "id": "e5d75d60-9521-32e7-922d-4db9180967ff",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bafeee5b1f8d32cbf791c322b40a6fa91d8ccf7a <3f7f8bae0d52cbd07ab04b76b6aac89ef98ee9f6"
+    },
+    {
+      "id": "edea79ff-fe41-3fc8-862a-51b052874d44",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.134"
+    },
+    {
+      "id": "f198a84c-b7e5-3ec5-a5f8-2d7d1fe05de0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bafeee5b1f8d32cbf791c322b40a6fa91d8ccf7a <02d9c5b0b5553a391448b6d655262bd829f90234"
+    },
+    {
+      "id": "f81bf419-4a88-3e1c-b7c6-0134f5da1793",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "8a665598-8875-3bd9-ace3-2de7c8a82cf1",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
