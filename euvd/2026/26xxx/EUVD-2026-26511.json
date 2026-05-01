@@ -1,0 +1,114 @@
+{
+  "id": "EUVD-2026-26511",
+  "enisaUuid": "c29b86c8-c372-3b71-8948-110288b91c9e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nf2fs: fix use-after-free of sbi in f2fs_compress_write_end_io()\n\nIn f2fs_compress_write_end_io(), dec_page_count(sbi, type) can bring\nthe F2FS_WB_CP_DATA counter to zero, unblocking\nf2fs_wait_on_all_pages() in f2fs_put_super() on a concurrent unmount\nCPU. The unmount path then proceeds to call\nf2fs_destroy_page_array_cache(sbi), which destroys\nsbi->page_array_slab via kmem_cache_destroy(), and eventually\nkfree(sbi). Meanwhile, the bio completion callback is still executing:\nwhen it reaches page_array_free(sbi, ...), it dereferences\nsbi->page_array_slab \u2014 a destroyed slab cache \u2014 to call\nkmem_cache_free(), causing a use-after-free.\n\nThis is the same class of bug as CVE-2026-23234 (which fixed the\nequivalent race in f2fs_write_end_io() in data.c), but in the\ncompressed writeback completion path that was not covered by that fix.\n\nFix this by moving dec_page_count() to after page_array_free(), so\nthat all sbi accesses complete before the counter decrement that can\nunblock unmount. For non-last folios (where atomic_dec_return on\ncic->pending_pages is nonzero), dec_page_count is called immediately\nbefore returning \u2014 page_array_free is not reached on this path, so\nthere is no post-decrement sbi access. For the last folio,\npage_array_free runs while the F2FS_WB_CP_DATA counter is still\nnonzero (this folio has not yet decremented it), keeping sbi alive,\nand dec_page_count runs as the final operation.",
+  "datePublished": "May 1, 2026, 1:56:01 PM",
+  "dateUpdated": "May 1, 2026, 1:56:01 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ef57cd3329b40c739b9a2e1a8a21ecc4171c6280",
+    "https://git.kernel.org/stable/c/f5154cf3ce1c8193f0c1891d3769f62740cfe6fe",
+    "https://git.kernel.org/stable/c/c76cf339b87975ae5b2c06d2d774d5667d25a12a",
+    "https://git.kernel.org/stable/c/2c97dcb6147c8f7f25c629b93be1e69617de5d4a",
+    "https://git.kernel.org/stable/c/39d4ee19c1e7d753dd655aebee632271b171f43a"
+  ],
+  "aliases": [
+    "CVE-2026-31702"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0b45ef1c-bba4-3090-af7d-0521482e35b1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4c8ff7095bef64fc47e996a938f7d57f9e077da3 <39d4ee19c1e7d753dd655aebee632271b171f43a"
+    },
+    {
+      "id": "1aa954c2-0e41-3c4e-9bbd-81df98a7fcbc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0.2"
+    },
+    {
+      "id": "34bd7371-eef6-3ce0-aaea-743bc7815b32",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4c8ff7095bef64fc47e996a938f7d57f9e077da3 <2c97dcb6147c8f7f25c629b93be1e69617de5d4a"
+    },
+    {
+      "id": "9b796d8d-9378-323a-b96c-86e8f373d04c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.6"
+    },
+    {
+      "id": "b4e36ac3-6625-3a75-9e26-5fd14b7e268b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4c8ff7095bef64fc47e996a938f7d57f9e077da3 <ef57cd3329b40c739b9a2e1a8a21ecc4171c6280"
+    },
+    {
+      "id": "c4331aff-04c3-3137-8c97-a8ca2bd8192b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.25"
+    },
+    {
+      "id": "c9c949ae-6a77-302c-9f59-ba4d87ee3586",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4c8ff7095bef64fc47e996a938f7d57f9e077da3 <f5154cf3ce1c8193f0c1891d3769f62740cfe6fe"
+    },
+    {
+      "id": "cd88b2ef-328b-39d1-8f37-85a9ccb741da",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4c8ff7095bef64fc47e996a938f7d57f9e077da3 <c76cf339b87975ae5b2c06d2d774d5667d25a12a"
+    },
+    {
+      "id": "d7447049-dceb-3a8d-a069-edd9e2a6f3f6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.1-rc1"
+    },
+    {
+      "id": "db52dbc4-36ab-3e70-ab86-0ebe893a565e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.136"
+    },
+    {
+      "id": "f52b7430-2cab-3da5-af3a-4a3615b81d23",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.84"
+    },
+    {
+      "id": "f73b89f6-f58b-3720-bfc9-0e8364ad1f8b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "211e87f8-0763-35d8-815b-ccf3afd7e23a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

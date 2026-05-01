@@ -1,0 +1,99 @@
+{
+  "id": "EUVD-2026-26516",
+  "enisaUuid": "73d0e57e-2778-3b8d-aa9e-e2fb6a94af41",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: validate response sizes in ipc_validate_msg()\n\nipc_validate_msg() computes the expected message size for each\nresponse type by adding (or multiplying) attacker-controlled fields\nfrom the daemon response to a fixed struct size in unsigned int\narithmetic.  Three cases can overflow:\n\n  KSMBD_EVENT_RPC_REQUEST:\n      msg_sz = sizeof(struct ksmbd_rpc_command) + resp->payload_sz;\n  KSMBD_EVENT_SHARE_CONFIG_REQUEST:\n      msg_sz = sizeof(struct ksmbd_share_config_response) +\n               resp->payload_sz;\n  KSMBD_EVENT_LOGIN_REQUEST_EXT:\n      msg_sz = sizeof(struct ksmbd_login_response_ext) +\n               resp->ngroups * sizeof(gid_t);\n\nresp->payload_sz is __u32 and resp->ngroups is __s32.  Each addition\ncan wrap in unsigned int; the multiplication by sizeof(gid_t) mixes\nsigned and size_t, so a negative ngroups is converted to SIZE_MAX\nbefore the multiply.  A wrapped value of msg_sz that happens to\nequal entry->msg_sz bypasses the size check on the next line, and\ndownstream consumers (smb2pdu.c:6742 memcpy using rpc_resp->payload_sz,\nkmemdup in ksmbd_alloc_user using resp_ext->ngroups) then trust the\nunverified length.\n\nUse check_add_overflow() on the RPC_REQUEST and SHARE_CONFIG_REQUEST\npaths to detect integer overflow without constraining functional\npayload size; userspace ksmbd-tools grows NDR responses in 4096-byte\nchunks for calls like NetShareEnumAll, so a hard transport cap is\nunworkable on the response side.  For LOGIN_REQUEST_EXT, reject\nresp->ngroups outside the signed [0, NGROUPS_MAX] range up front and\nreport the error from ipc_validate_msg() so it fires at the IPC\nboundary; with that bound the subsequent multiplication and addition\nstay well below UINT_MAX.  The now-redundant ngroups check and\npr_err in ksmbd_alloc_user() are removed.\n\nThis is the response-side analogue of aab98e2dbd64 (\"ksmbd: fix\ninteger overflows on 32 bit systems\"), which hardened the request\nside.",
+  "datePublished": "May 1, 2026, 1:56:05 PM",
+  "dateUpdated": "May 1, 2026, 1:56:05 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/7dd0c858e1909769a4c91842724315ee74f1a5f1",
+    "https://git.kernel.org/stable/c/299db777ea0cfa5c407e41b045c24a14c034c27b",
+    "https://git.kernel.org/stable/c/99c631d0366c1eab8fb188fe66425f4581ebdde4",
+    "https://git.kernel.org/stable/c/d6a6aa81eac2c9bff66dc6e191179cb69a14426b"
+  ],
+  "aliases": [
+    "CVE-2026-31707"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "074ff0b0-0d42-38b1-a05d-33ca9c263ca5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.1-rc1"
+    },
+    {
+      "id": "20082384-cd3f-35f9-a38b-d301002f2d91",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "0626e6641f6b467447c81dd7678a69c66f7746cf <7dd0c858e1909769a4c91842724315ee74f1a5f1"
+    },
+    {
+      "id": "2d3849c5-bfdc-3eca-92c2-616f37103a5c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.84"
+    },
+    {
+      "id": "4be09eff-0ea8-31a5-9095-a27d26b173e0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "0626e6641f6b467447c81dd7678a69c66f7746cf <d6a6aa81eac2c9bff66dc6e191179cb69a14426b"
+    },
+    {
+      "id": "719b30fe-376b-3b25-8937-37d61d17343f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.15"
+    },
+    {
+      "id": "8a3ad701-a08e-3143-b023-b104d99e082b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "0626e6641f6b467447c81dd7678a69c66f7746cf <99c631d0366c1eab8fb188fe66425f4581ebdde4"
+    },
+    {
+      "id": "8f358769-a3d6-3565-b2cc-092457a08c14",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9944ea4f-4b39-3f62-ab12-3e293d258ff7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.25"
+    },
+    {
+      "id": "d11ddaea-7018-3caf-bd7a-99ed90fc6ea8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0.2"
+    },
+    {
+      "id": "f8566623-db0d-39f6-a0d2-0216c95e47b3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "0626e6641f6b467447c81dd7678a69c66f7746cf <299db777ea0cfa5c407e41b045c24a14c034c27b"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "30d761c1-af80-38a4-b130-0e557292fe7e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "id": "EUVD-2026-26518",
+  "enisaUuid": "a46f2e88-e08c-37a5-a0d9-99e2fe695d95",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: validate the whole DACL before rewriting it in cifsacl\n\nbuild_sec_desc() and id_mode_to_cifs_acl() derive a DACL pointer from a\nserver-supplied dacloffset and then use the incoming ACL to rebuild the\nchmod/chown security descriptor.\n\nThe original fix only checked that the struct smb_acl header fits before\nreading dacl_ptr->size or dacl_ptr->num_aces.  That avoids the immediate\nheader-field OOB read, but the rewrite helpers still walk ACEs based on\npdacl->num_aces with no structural validation of the incoming DACL body.\n\nA malicious server can return a truncated DACL that still contains a\nheader, claims one or more ACEs, and then drive\nreplace_sids_and_copy_aces() or set_chmod_dacl() past the validated\nextent while they compare or copy attacker-controlled ACEs.\n\nFactor the DACL structural checks into validate_dacl(), extend them to\nvalidate each ACE against the DACL bounds, and use the shared validator\nbefore the chmod/chown rebuild paths.  parse_dacl() reuses the same\nvalidator so the read-side parser and write-side rewrite paths agree on\nwhat constitutes a well-formed incoming DACL.",
+  "datePublished": "May 1, 2026, 1:56:06 PM",
+  "dateUpdated": "May 1, 2026, 1:56:06 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/b78db9bddc84136f6a0bb49e8883cf200dfb87a8",
+    "https://git.kernel.org/stable/c/0a8cf165566ba55a39fd0f4de172119dd646d39a"
+  ],
+  "aliases": [
+    "CVE-2026-31709"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "01e0a6f5-b2fd-34d9-97b4-5f19033e865f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bc3e9dd9d104ca1b75644eab87b38ce8a924aef4 <b78db9bddc84136f6a0bb49e8883cf200dfb87a8"
+    },
+    {
+      "id": "0cd29d01-824d-306d-96f3-c0098d61b8d9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "0da10bf0-9e53-3d5c-b94c-cd236f6c7028",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.12"
+    },
+    {
+      "id": "349a8168-2412-3a6b-83ed-8163a9453ea2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.1-rc1"
+    },
+    {
+      "id": "4de298e8-2274-3b58-bd10-1172653ab2fb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0.2"
+    },
+    {
+      "id": "8be96afe-ab33-36f0-8fcc-14b8772a6a0a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "bc3e9dd9d104ca1b75644eab87b38ce8a924aef4 <0a8cf165566ba55a39fd0f4de172119dd646d39a"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ffe3fa68-c96b-302c-aa3a-d7a80f113374",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

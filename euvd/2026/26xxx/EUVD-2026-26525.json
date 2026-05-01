@@ -1,0 +1,114 @@
+{
+  "id": "EUVD-2026-26525",
+  "enisaUuid": "232618b7-3615-3228-b709-5ab27ced6730",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs/ntfs3: validate rec->used in journal-replay file record check\n\ncheck_file_record() validates rec->total against the record size but\nnever validates rec->used.  The do_action() journal-replay handlers read\nrec->used from disk and use it to compute memmove lengths:\n\n  DeleteAttribute:    memmove(attr, ..., used - asize - roff)\n  CreateAttribute:    memmove(..., attr, used - roff)\n  change_attr_size:   memmove(..., used - PtrOffset(rec, next))\n\nWhen rec->used is smaller than the offset of a validated attribute, or\nlarger than the record size, these subtractions can underflow allowing\nus to copy huge amounts of memory in to a 4kb buffer, generally\nconsidered a bad idea overall.\n\nThis requires a corrupted filesystem, which isn't a threat model the\nkernel really needs to worry about, but checking for such an obvious\nout-of-bounds value is good to keep things robust, especially on journal\nreplay\n\nFix this up by bounding rec->used correctly.\n\nThis is much like commit b2bc7c44ed17 (\"fs/ntfs3: Fix slab-out-of-bounds\nread in DeleteIndexEntryRoot\") which checked different values in this\nsame switch statement.",
+  "datePublished": "May 1, 2026, 1:56:11 PM",
+  "dateUpdated": "May 1, 2026, 1:56:11 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f90b8a1798b750755a9e9aee66678f0a1820bbaf",
+    "https://git.kernel.org/stable/c/4b1613d7e2deda831a97e427d1ea586e50fe1be5",
+    "https://git.kernel.org/stable/c/0112e6279420d4005b3d57af36fb45c01b8d0116",
+    "https://git.kernel.org/stable/c/f79d0403ea20a81bc29105bba54fbcab54e8c403",
+    "https://git.kernel.org/stable/c/0ca0485e4b2e837ebb6cbd4f2451aba665a03e4b"
+  ],
+  "aliases": [
+    "CVE-2026-31716"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "17772a9a-e2e6-32e0-bad6-6c970992812f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "b46acd6a6a627d876898e1c84d3f84902264b445 <4b1613d7e2deda831a97e427d1ea586e50fe1be5"
+    },
+    {
+      "id": "18ca9b66-2478-38ef-bd53-f6edee55c03c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.84"
+    },
+    {
+      "id": "6fe47c3a-a0fb-3f56-ab10-7a4dc236fcf8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.25"
+    },
+    {
+      "id": "73f9522a-e47b-31d5-af5f-075f0dd67358",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.15"
+    },
+    {
+      "id": "78ccdeec-d5f7-3557-a1ae-1ca584bc263e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.1-rc1"
+    },
+    {
+      "id": "8bbdd3f4-9fa2-373a-b3ae-8e2f8c79beec",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0.2"
+    },
+    {
+      "id": "9ad788ea-5555-393c-9e40-a6f379074641",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "b46acd6a6a627d876898e1c84d3f84902264b445 <0ca0485e4b2e837ebb6cbd4f2451aba665a03e4b"
+    },
+    {
+      "id": "b3a2a067-c3a2-35cf-9827-f66dd57d80dc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "b46acd6a6a627d876898e1c84d3f84902264b445 <f90b8a1798b750755a9e9aee66678f0a1820bbaf"
+    },
+    {
+      "id": "bb8a9490-e7bd-30ed-9f21-4138ee6576dd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "b46acd6a6a627d876898e1c84d3f84902264b445 <0112e6279420d4005b3d57af36fb45c01b8d0116"
+    },
+    {
+      "id": "cc05b2fb-4858-34ea-90ec-76ea861cc4bc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.136"
+    },
+    {
+      "id": "d2b2fcf2-6180-3892-8035-220feef23c9c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "b46acd6a6a627d876898e1c84d3f84902264b445 <f79d0403ea20a81bc29105bba54fbcab54e8c403"
+    },
+    {
+      "id": "e5cac3e7-acff-39d3-85bc-621d9546d1b1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b8681069-1ef5-3b8b-b4a0-9eeb9b4d89f5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
