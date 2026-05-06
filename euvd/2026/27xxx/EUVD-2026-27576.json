@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-27576",
+  "enisaUuid": "cc73b49a-af52-3b8a-b700-5098c707775e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: ioam6: fix OOB and missing lock\n\nWhen trace->type.bit6 is set:\n\n    if (trace->type.bit6) {\n        ...\n        queue = skb_get_tx_queue(dev, skb);\n        qdisc = rcu_dereference(queue->qdisc);\n\nThis code can lead to an out-of-bounds access of the dev->_tx[] array\nwhen is_input is true. In such a case, the packet is on the RX path and\nskb->queue_mapping contains the RX queue index of the ingress device. If\nthe ingress device has more RX queues than the egress device (dev) has\nTX queues, skb_get_queue_mapping(skb) will exceed dev->num_tx_queues.\nAdd a check to avoid this situation since skb_get_tx_queue() does not\nclamp the index. This issue has also revealed that per queue visibility\ncannot be accurate and will be replaced later as a new feature.\n\nWhile at it, add missing lock around qdisc_qstats_qlen_backlog(). The\nfunction __ioam6_fill_trace_data() is called from both softirq and\nprocess contexts, hence the use of spin_lock_bh() here.",
+  "datePublished": "May 6, 2026, 7:40:18 AM",
+  "dateUpdated": "May 6, 2026, 7:40:18 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6d1d9ed9b409e0662241e3d245d574a18f643494",
+    "https://git.kernel.org/stable/c/95a1334748c95dd15546056280ade0c4b8dd7b78",
+    "https://git.kernel.org/stable/c/b30b1675aa2bcf0491fd3830b051df4e08a7c8ca"
+  ],
+  "aliases": [
+    "CVE-2026-43083"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "16c0c1b3-e9f2-3d8b-aff0-0c382d95e508",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.24"
+    },
+    {
+      "id": "38273f09-f5ed-39f4-aa7f-20b3c2c05734",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "4a982a73-4e7d-3c73-ad0a-457bd3806b8d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "b63c5478e9cb1d1504eb02d9dac827ad24612b32 <b30b1675aa2bcf0491fd3830b051df4e08a7c8ca"
+    },
+    {
+      "id": "4e6ce2e9-ab67-3bb1-9fd4-45fad8cb5632",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.17"
+    },
+    {
+      "id": "8a5dc79a-eac1-3d72-8b8f-31eafe2de65a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "b63c5478e9cb1d1504eb02d9dac827ad24612b32 <6d1d9ed9b409e0662241e3d245d574a18f643494"
+    },
+    {
+      "id": "8ca31722-c26b-3f4e-a5f9-0302940c47c0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "b63c5478e9cb1d1504eb02d9dac827ad24612b32 <95a1334748c95dd15546056280ade0c4b8dd7b78"
+    },
+    {
+      "id": "b26b500a-e4f1-3caf-8cef-40ef7f4c70fe",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "e88638ce-5c90-3aaa-a425-c836afd34280",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.14"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0b737783-d240-3e6a-9d3a-29c5f65475c5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

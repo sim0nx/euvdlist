@@ -1,0 +1,100 @@
+{
+  "id": "EUVD-2026-27560",
+  "enisaUuid": "aa1c1fbd-9c4a-35e3-ae35-f29b5721445e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: fix out-of-bounds write in ocfs2_write_end_inline\n\nKASAN reports a use-after-free write of 4086 bytes in\nocfs2_write_end_inline, called from ocfs2_write_end_nolock during a\ncopy_file_range splice fallback on a corrupted ocfs2 filesystem mounted on\na loop device.  The actual bug is an out-of-bounds write past the inode\nblock buffer, not a true use-after-free.  The write overflows into an\nadjacent freed page, which KASAN reports as UAF.\n\nThe root cause is that ocfs2_try_to_write_inline_data trusts the on-disk\nid_count field to determine whether a write fits in inline data.  On a\ncorrupted filesystem, id_count can exceed the physical maximum inline data\ncapacity, causing writes to overflow the inode block buffer.\n\nCall trace (crash path):\n\n   vfs_copy_file_range (fs/read_write.c:1634)\n     do_splice_direct\n       splice_direct_to_actor\n         iter_file_splice_write\n           ocfs2_file_write_iter\n             generic_perform_write\n               ocfs2_write_end\n                 ocfs2_write_end_nolock (fs/ocfs2/aops.c:1949)\n                   ocfs2_write_end_inline (fs/ocfs2/aops.c:1915)\n                     memcpy_from_folio     <-- KASAN: write OOB\n\nSo add id_count upper bound check in ocfs2_validate_inode_block() to\nalongside the existing i_size check to fix it.",
+  "datePublished": "May 6, 2026, 7:40:03 AM",
+  "dateUpdated": "May 6, 2026, 7:40:03 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e2c9dc6b6e96f3585f2a1062ca3374a52db0938f",
+    "https://git.kernel.org/stable/c/947f953978b0d9463498d548d0f054f5a75be2e9",
+    "https://git.kernel.org/stable/c/0c1af902223b6fcedb60904ca0b551254686c7b9",
+    "https://git.kernel.org/stable/c/69d3c69ade1e4285ab4ca48fe7acee0767e65604",
+    "https://git.kernel.org/stable/c/7bc5da4842bed3252d26e742213741a4d0ac1b14"
+  ],
+  "aliases": [
+    "CVE-2026-43075"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "07a849da-4613-3e32-b2df-f30060b3a9cf",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.14"
+    },
+    {
+      "id": "1fd80d2a-ef8f-370c-b286-cae3815fedb4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <7bc5da4842bed3252d26e742213741a4d0ac1b14"
+    },
+    {
+      "id": "4c2deaeb-5ff3-3a8c-9ab3-874707febd02",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <947f953978b0d9463498d548d0f054f5a75be2e9"
+    },
+    {
+      "id": "a818d645-67e4-3438-9221-92494b348b06",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.24"
+    },
+    {
+      "id": "c0b78863-b103-34cf-8fa8-4e56af95304b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e2c9dc6b6e96f3585f2a1062ca3374a52db0938f"
+    },
+    {
+      "id": "c7f5b5db-65b1-3144-9d44-4a87ca9f37fd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.83"
+    },
+    {
+      "id": "c952b5d2-8535-3dbd-9b1a-be7a57e7f245",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "ce92f22e-a9e6-3531-ad62-d7d03e49006f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.136"
+    },
+    {
+      "id": "e809afe4-8008-336b-b6ca-d368acfcea34",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <69d3c69ade1e4285ab4ca48fe7acee0767e65604"
+    },
+    {
+      "id": "f6627e25-c2f2-3d95-ba4b-0bd74c9cecaa",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0c1af902223b6fcedb60904ca0b551254686c7b9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5e205fa9-61d3-3bf3-9e0d-d8d960b7b73c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

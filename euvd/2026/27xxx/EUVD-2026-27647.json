@@ -1,0 +1,85 @@
+{
+  "id": "EUVD-2026-27647",
+  "enisaUuid": "54505920-70bc-324e-931e-aea6c01a2fb8",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: hci_sync: annotate data-races around hdev->req_status\n\n__hci_cmd_sync_sk() sets hdev->req_status under hdev->req_lock:\n\n    hdev->req_status = HCI_REQ_PEND;\n\nHowever, several other functions read or write hdev->req_status without\nholding any lock:\n\n  - hci_send_cmd_sync() reads req_status in hci_cmd_work (workqueue)\n  - hci_cmd_sync_complete() reads/writes from HCI event completion\n  - hci_cmd_sync_cancel() / hci_cmd_sync_cancel_sync() read/write\n  - hci_abort_conn() reads in connection abort path\n\nSince __hci_cmd_sync_sk() runs on hdev->req_workqueue while\nhci_send_cmd_sync() runs on hdev->workqueue, these are different\nworkqueues that can execute concurrently on different CPUs. The plain\nC accesses constitute a data race.\n\nAdd READ_ONCE()/WRITE_ONCE() annotations on all concurrent accesses\nto hdev->req_status to prevent potential compiler optimizations that\ncould affect correctness (e.g., load fusing in the wait_event\ncondition or store reordering).",
+  "datePublished": "May 6, 2026, 7:40:43 AM",
+  "dateUpdated": "May 6, 2026, 7:40:43 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6e539907c0d11f514c5e0b049b27b04dff48a5b1",
+    "https://git.kernel.org/stable/c/a7a1cdb4a64ca74eb95cc46648fccb8cd3f9af27",
+    "https://git.kernel.org/stable/c/40734ce8efc34c4a0d0222855798c0dc14b65f2e",
+    "https://git.kernel.org/stable/c/b6807cfc195ef99e1ac37b2e1e60df40295daa8c"
+  ],
+  "aliases": [
+    "CVE-2026-43119"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1f34b849-53b8-3731-9932-884cb8be7803",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.14"
+    },
+    {
+      "id": "311b4c8a-7d22-3e27-a04f-a7ebc52719c4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "384cb9f5-e3d7-32f0-a488-673dcbe0e339",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6e539907c0d11f514c5e0b049b27b04dff48a5b1"
+    },
+    {
+      "id": "39b4442c-1afc-37fd-93df-8327577575ec",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <40734ce8efc34c4a0d0222855798c0dc14b65f2e"
+    },
+    {
+      "id": "55178167-ce86-38bb-82ae-f7e9d19b99a5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a7a1cdb4a64ca74eb95cc46648fccb8cd3f9af27"
+    },
+    {
+      "id": "8eacb23d-c0de-34e5-a2c9-871e70b074b7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.83"
+    },
+    {
+      "id": "f46ef1e7-14f3-3520-a075-38a5c88ecda9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.24"
+    },
+    {
+      "id": "f4e8927e-55d7-39d0-85f9-ea03a6bf4c1c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b6807cfc195ef99e1ac37b2e1e60df40295daa8c"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7dfdbead-eadc-3597-8ae2-a15fb40e8a2f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

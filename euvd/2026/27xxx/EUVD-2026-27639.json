@@ -1,0 +1,55 @@
+{
+  "id": "EUVD-2026-27639",
+  "enisaUuid": "e104087b-55af-3ced-b094-709b81a6954b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsrcu: Use irq_work to start GP in tiny SRCU\n\nTiny SRCU's srcu_gp_start_if_needed() directly calls schedule_work(),\nwhich acquires the workqueue pool->lock.\n\nThis causes a lockdep splat when call_srcu() is called with a scheduler\nlock held, due to:\n\n  call_srcu() [holding pi_lock]\n    srcu_gp_start_if_needed()\n      schedule_work() -> pool->lock\n\n  workqueue_init() / create_worker() [holding pool->lock]\n    wake_up_process() -> try_to_wake_up() -> pi_lock\n\nAlso add irq_work_sync() to cleanup_srcu_struct() to prevent a\nuse-after-free if a queued irq_work fires after cleanup begins.\n\nTested with rcutorture SRCU-T and no lockdep warnings.\n\n[ Thanks to Boqun for similar fix in patch \"rcu: Use an intermediate irq_work\nto start process_srcu()\" ]",
+  "datePublished": "May 6, 2026, 7:40:40 AM",
+  "dateUpdated": "May 6, 2026, 7:40:40 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/bb37286db65368cb72ba8757ad86299c4e4a73fc",
+    "https://git.kernel.org/stable/c/a6fc88b22bc8d12ad52e8412c667ec0f5bf055af"
+  ],
+  "aliases": [
+    "CVE-2026-43115"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "004a4a33-3924-3d32-bfe0-f72ce9f6c62a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <bb37286db65368cb72ba8757ad86299c4e4a73fc"
+    },
+    {
+      "id": "56926e68-aa80-3942-bf98-f5d99aa4af09",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a6fc88b22bc8d12ad52e8412c667ec0f5bf055af"
+    },
+    {
+      "id": "6fcc28ec-0e62-325f-a212-0c98b44a127f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.14"
+    },
+    {
+      "id": "bec7f21f-b371-3036-9e7a-4d3628c15bf2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "cbf72c05-09cf-3b71-a9a0-c60a85c1abf6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
