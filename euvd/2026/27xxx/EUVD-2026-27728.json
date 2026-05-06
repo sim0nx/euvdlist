@@ -1,0 +1,114 @@
+{
+  "id": "EUVD-2026-27728",
+  "enisaUuid": "f9d5704c-2c36-39a4-9546-2a26412a5920",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: always flush state and policy upon NETDEV_UNREGISTER event\n\nsyzbot is reporting that \"struct xfrm_state\" refcount is leaking.\n\n  unregister_netdevice: waiting for netdevsim0 to become free. Usage count = 2\n  ref_tracker: netdev@ffff888052f24618 has 1/1 users at\n       __netdev_tracker_alloc include/linux/netdevice.h:4400 [inline]\n       netdev_tracker_alloc include/linux/netdevice.h:4412 [inline]\n       xfrm_dev_state_add+0x3a5/0x1080 net/xfrm/xfrm_device.c:316\n       xfrm_state_construct net/xfrm/xfrm_user.c:986 [inline]\n       xfrm_add_sa+0x34ff/0x5fa0 net/xfrm/xfrm_user.c:1022\n       xfrm_user_rcv_msg+0x58e/0xc00 net/xfrm/xfrm_user.c:3507\n       netlink_rcv_skb+0x158/0x420 net/netlink/af_netlink.c:2550\n       xfrm_netlink_rcv+0x71/0x90 net/xfrm/xfrm_user.c:3529\n       netlink_unicast_kernel net/netlink/af_netlink.c:1318 [inline]\n       netlink_unicast+0x5aa/0x870 net/netlink/af_netlink.c:1344\n       netlink_sendmsg+0x8c8/0xdd0 net/netlink/af_netlink.c:1894\n       sock_sendmsg_nosec net/socket.c:727 [inline]\n       __sock_sendmsg net/socket.c:742 [inline]\n       ____sys_sendmsg+0xa5d/0xc30 net/socket.c:2592\n       ___sys_sendmsg+0x134/0x1d0 net/socket.c:2646\n       __sys_sendmsg+0x16d/0x220 net/socket.c:2678\n       do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]\n       do_syscall_64+0xcd/0xf80 arch/x86/entry/syscall_64.c:94\n       entry_SYSCALL_64_after_hwframe+0x77/0x7f\n\nThis is because commit d77e38e612a0 (\"xfrm: Add an IPsec hardware\noffloading API\") implemented xfrm_dev_unregister() as no-op despite\nxfrm_dev_state_add() from xfrm_state_construct() acquires a reference\nto \"struct net_device\".\nI guess that that commit expected that NETDEV_DOWN event is fired before\nNETDEV_UNREGISTER event fires, and also assumed that xfrm_dev_state_add()\nis called only if (dev->features & NETIF_F_HW_ESP) != 0.\n\nSabrina Dubroca identified steps to reproduce the same symptoms as below.\n\n  echo 0 > /sys/bus/netdevsim/new_device\n  dev=$(ls -1 /sys/bus/netdevsim/devices/netdevsim0/net/)\n  ip xfrm state add src 192.168.13.1 dst 192.168.13.2 proto esp \\\n     spi 0x1000 mode tunnel aead 'rfc4106(gcm(aes))' $key 128   \\\n     offload crypto dev $dev dir out\n  ethtool -K $dev esp-hw-offload off\n  echo 0 > /sys/bus/netdevsim/del_device\n\nLike these steps indicate, the NETIF_F_HW_ESP bit can be cleared after\nxfrm_dev_state_add() acquired a reference to \"struct net_device\".\nAlso, xfrm_dev_state_add() does not check for the NETIF_F_HW_ESP bit\nwhen acquiring a reference to \"struct net_device\".\n\nCommit 03891f820c21 (\"xfrm: handle NETDEV_UNREGISTER for xfrm device\")\nre-introduced the NETDEV_UNREGISTER event to xfrm_dev_event(), but that\ncommit for unknown reason chose to share xfrm_dev_down() between the\nNETDEV_DOWN event and the NETDEV_UNREGISTER event.\nI guess that that commit missed the behavior in the previous paragraph.\n\nTherefore, we need to re-introduce xfrm_dev_unregister() in order to\nrelease the reference to \"struct net_device\" by unconditionally flushing\nstate and policy.",
+  "datePublished": "May 6, 2026, 11:27:43 AM",
+  "dateUpdated": "May 6, 2026, 11:27:43 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/166801e49a5b5fc127b8c9e2f110f303cfddfbc3",
+    "https://git.kernel.org/stable/c/a3c8fede034fa27892f87c863cbd5493167d17ed",
+    "https://git.kernel.org/stable/c/59581778792cbaf8ad788f4a21dc663ce986050e",
+    "https://git.kernel.org/stable/c/8c75c455ecd3bfd2f36abf66edb7021c4fa19ec4",
+    "https://git.kernel.org/stable/c/4efa91a28576054aae0e6dad9cba8fed8293aef8"
+  ],
+  "aliases": [
+    "CVE-2026-43167"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1b75a721-4c1f-3c8b-a4bf-2e89cc808216",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4.12"
+    },
+    {
+      "id": "1da22fbf-2de8-3b4e-8af1-8639bd666d09",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "2977aca9-5b8d-3d84-a647-53bd33d1f3b5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.75"
+    },
+    {
+      "id": "2c7b4a41-9aed-3828-8fab-606b9b341649",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "d77e38e612a017480157fe6d2c1422f42cb5b7e3 <59581778792cbaf8ad788f4a21dc663ce986050e"
+    },
+    {
+      "id": "3ee40567-2e2e-3250-aaec-26bae9970bad",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "93071d32-03d3-3049-9f4e-84832e9b1c2c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "d77e38e612a017480157fe6d2c1422f42cb5b7e3 <a3c8fede034fa27892f87c863cbd5493167d17ed"
+    },
+    {
+      "id": "95f983e6-100b-361b-86c0-a4953198d546",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "d77e38e612a017480157fe6d2c1422f42cb5b7e3 <166801e49a5b5fc127b8c9e2f110f303cfddfbc3"
+    },
+    {
+      "id": "c3a5f344-4514-38a8-a550-50e95799dba5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "cfd01a81-e643-3bf2-87d3-35b5c2799e7f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "d77e38e612a017480157fe6d2c1422f42cb5b7e3 <4efa91a28576054aae0e6dad9cba8fed8293aef8"
+    },
+    {
+      "id": "e3316041-e81c-327f-8418-2ede1568dcd5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "d77e38e612a017480157fe6d2c1422f42cb5b7e3 <8c75c455ecd3bfd2f36abf66edb7021c4fa19ec4"
+    },
+    {
+      "id": "e84a1127-c8bc-37f8-a354-cd1d06ce0b4e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    },
+    {
+      "id": "f865484c-5ab7-36f8-80dd-e6be3032a6ac",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.128"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "520d9a70-ded8-30a8-af14-bfe9783c7299",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

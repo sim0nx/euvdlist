@@ -1,0 +1,70 @@
+{
+  "id": "EUVD-2026-27686",
+  "enisaUuid": "8f21e40e-3f4e-3c73-b6b7-08ebd4ff32bb",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nntfs3: fix circular locking dependency in run_unpack_ex\n\nSyzbot reported a circular locking dependency between wnd->rw_lock\n(sbi->used.bitmap) and ni->file.run_lock.\n\nThe deadlock scenario:\n1. ntfs_extend_mft() takes ni->file.run_lock then wnd->rw_lock.\n2. run_unpack_ex() takes wnd->rw_lock then tries to acquire\n   ni->file.run_lock inside ntfs_refresh_zone().\n\nThis creates an AB-BA deadlock.\n\nFix this by using down_read_trylock() instead of down_read() when\nacquiring run_lock in run_unpack_ex(). If the lock is contended,\nskip ntfs_refresh_zone() - the MFT zone will be refreshed on the\nnext MFT operation. This breaks the circular dependency since we\nnever block waiting for run_lock while holding wnd->rw_lock.",
+  "datePublished": "May 6, 2026, 11:27:16 AM",
+  "dateUpdated": "May 6, 2026, 11:27:16 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/b014372b62237521444ee51384549bdf48b79015",
+    "https://git.kernel.org/stable/c/b8d22d9d8260b0f4f4d8e2898c98037c9982ea66",
+    "https://git.kernel.org/stable/c/08ce2fee1b869ecbfbd94e0eb2630e52203a2e03"
+  ],
+  "aliases": [
+    "CVE-2026-43127"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "00050f30-e7c1-340f-ab05-1ba16d1eca7a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b8d22d9d8260b0f4f4d8e2898c98037c9982ea66"
+    },
+    {
+      "id": "21ed0010-4fa9-3a24-9ec3-e8da8e5774d2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b014372b62237521444ee51384549bdf48b79015"
+    },
+    {
+      "id": "7fa3c185-3f40-36ca-8f06-9a7becb6319a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <08ce2fee1b869ecbfbd94e0eb2630e52203a2e03"
+    },
+    {
+      "id": "b4834c0d-f593-3d8e-af31-2539b1f684f8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "e46a1c84-082e-3e91-a388-d0a87a44ed11",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    },
+    {
+      "id": "f884fac5-eb2b-353a-9404-795264dfe93e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2ec059fa-1f5f-3ff8-9832-62663b7400c5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "id": "EUVD-2026-27792",
+  "enisaUuid": "31a7361c-5e3b-3383-ab8b-6a731a006b6e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: chips-media: wave5: Fix device cleanup order to prevent kernel panic\n\nMove video device unregistration to the beginning of the remove function\nto ensure all video operations are stopped before cleaning up the worker\nthread and disabling PM runtime. This prevents hardware register access\nafter the device has been powered down.\n\nIn polling mode, the hrtimer periodically triggers\nwave5_vpu_timer_callback() which queues work to the kthread worker.\nThe worker executes wave5_vpu_irq_work_fn() which reads hardware\nregisters via wave5_vdi_read_register().\n\nThe original cleanup order disabled PM runtime and powered down hardware\nbefore unregistering video devices. When autosuspend triggers and powers\noff the hardware, the video devices are still registered and the worker\nthread can still be triggered by the hrtimer, causing it to attempt\nreading registers from powered-off hardware. This results in a bus error\n(synchronous external abort) and kernel panic.\n\nThis causes random kernel panics during encoding operations:\n\n  Internal error: synchronous external abort: 0000000096000010\n    [#1] PREEMPT SMP\n  Modules linked in: wave5 rpmsg_ctrl rpmsg_char ...\n  CPU: 0 UID: 0 PID: 1520 Comm: vpu_irq_thread\n    Tainted: G   M    W\n  pc : wave5_vdi_read_register+0x10/0x38 [wave5]\n  lr : wave5_vpu_irq_work_fn+0x28/0x60 [wave5]\n  Call trace:\n   wave5_vdi_read_register+0x10/0x38 [wave5]\n   kthread_worker_fn+0xd8/0x238\n   kthread+0x104/0x120\n   ret_from_fork+0x10/0x20\n  Code: aa1e03e9 d503201f f9416800 8b214000 (b9400000)\n  ---[ end trace 0000000000000000 ]---\n  Kernel panic - not syncing: synchronous external abort:\n    Fatal exception",
+  "datePublished": "May 6, 2026, 11:28:26 AM",
+  "dateUpdated": "May 6, 2026, 11:28:26 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/b73d85231d5b1400a4fa5046cdac6c4d7cc6d969",
+    "https://git.kernel.org/stable/c/526816f2e331954d80fed8b37fa94efbbdde2b8d",
+    "https://git.kernel.org/stable/c/dc2b7deae740a3ed138fb7ae17c97fa4055cfc5f",
+    "https://git.kernel.org/stable/c/b74cedac643b02aefa7da881b58a3792859d9748"
+  ],
+  "aliases": [
+    "CVE-2026-43229"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "468fcbc8-5a66-3030-94ff-49e781051973",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "95b17f40-9c76-366d-b752-66f9233a3a61",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "9707a6254a8a6b978bde811a44fe07d86c229d1c <dc2b7deae740a3ed138fb7ae17c97fa4055cfc5f"
+    },
+    {
+      "id": "b2ec2236-663d-358e-80e6-acf88fb94bc8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "9707a6254a8a6b978bde811a44fe07d86c229d1c <b73d85231d5b1400a4fa5046cdac6c4d7cc6d969"
+    },
+    {
+      "id": "b839ce7f-7d32-30c6-9d8f-6b9529661389",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "9707a6254a8a6b978bde811a44fe07d86c229d1c <526816f2e331954d80fed8b37fa94efbbdde2b8d"
+    },
+    {
+      "id": "bd847c76-2b0e-3cbb-b42f-d2bcbd9247a9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "be19d48e-46f6-3faf-b286-895ff70c0889",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.75"
+    },
+    {
+      "id": "ccb49d15-ad66-31e4-813c-d3f226327140",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "9707a6254a8a6b978bde811a44fe07d86c229d1c <b74cedac643b02aefa7da881b58a3792859d9748"
+    },
+    {
+      "id": "e0c3ebf6-e236-32b4-b5f3-cbb32928b4b3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "f0098964-aab2-3f34-a9a5-beae4b676a85",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    },
+    {
+      "id": "f834ea14-6f7f-3083-8bb8-8b59e9ced311",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.8"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6aae6f8c-9d79-3a54-9594-a1b496a58a54",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-27682",
+  "enisaUuid": "b69c3d63-bb85-300b-87f9-daf7a7784d5f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/zcrx: fix user_ref race between scrub and refill paths\n\nThe io_zcrx_put_niov_uref() function uses a non-atomic\ncheck-then-decrement pattern (atomic_read followed by separate\natomic_dec) to manipulate user_refs. This is serialized against other\ncallers by rq_lock, but io_zcrx_scrub() modifies the same counter with\natomic_xchg() WITHOUT holding rq_lock.\n\nOn SMP systems, the following race exists:\n\n  CPU0 (refill, holds rq_lock)          CPU1 (scrub, no rq_lock)\n  put_niov_uref:\n    atomic_read(uref) - 1\n    // window opens\n                                        atomic_xchg(uref, 0) - 1\n                                        return_niov_freelist(niov) [PUSH #1]\n    // window closes\n    atomic_dec(uref) - wraps to -1\n    returns true\n    return_niov(niov)\n    return_niov_freelist(niov)           [PUSH #2: DOUBLE-FREE]\n\nThe same niov is pushed to the freelist twice, causing free_count to\nexceed nr_iovs. Subsequent freelist pushes then perform an out-of-bounds\nwrite (a u32 value) past the kvmalloc'd freelist array into the adjacent\nslab object.\n\nFix this by replacing the non-atomic read-then-dec in\nio_zcrx_put_niov_uref() with an atomic_try_cmpxchg loop that atomically\ntests and decrements user_refs. This makes the operation safe against\nconcurrent atomic_xchg from scrub without requiring scrub to acquire\nrq_lock.\n\n[pavel: removed a warning and a comment]",
+  "datePublished": "May 6, 2026, 11:27:08 AM",
+  "dateUpdated": "May 6, 2026, 11:27:08 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a94f096e28bfc7975163a6b80f1c8f323efe317a",
+    "https://git.kernel.org/stable/c/485dc691257b96e6d3bdc25b0eff2daadcc5c46c",
+    "https://git.kernel.org/stable/c/003049b1c4fb8aabb93febb7d1e49004f6ad653b"
+  ],
+  "aliases": [
+    "CVE-2026-43121"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "06830b1c-3b22-3fd5-88f5-8f98f808bded",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    },
+    {
+      "id": "24f91acf-2a21-3ac1-9e7b-0a0a451a9978",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "34a3e60821ab9f335a58d43a88cccdbefdebdec3 <a94f096e28bfc7975163a6b80f1c8f323efe317a"
+    },
+    {
+      "id": "3957a151-084d-335a-8849-45cee1dc5ede",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "586c9c7e-2918-3981-b0d1-fc063d5da580",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "5ade8673-77a8-36f6-9ce9-aceed48e933d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9de833df-b0f3-3d68-afa4-18253554597e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "34a3e60821ab9f335a58d43a88cccdbefdebdec3 <485dc691257b96e6d3bdc25b0eff2daadcc5c46c"
+    },
+    {
+      "id": "d112f2f6-41f1-3a8a-a548-4a08afe11909",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.15"
+    },
+    {
+      "id": "f7fe335d-be85-36ed-9faa-9b7142b8f0be",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "34a3e60821ab9f335a58d43a88cccdbefdebdec3 <003049b1c4fb8aabb93febb7d1e49004f6ad653b"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7d8bb907-8f71-3af3-96d2-48dfede376f3",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

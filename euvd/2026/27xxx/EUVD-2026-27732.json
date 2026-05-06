@@ -1,0 +1,99 @@
+{
+  "id": "EUVD-2026-27732",
+  "enisaUuid": "06836ab6-73c5-3942-b56d-52477e4b95ab",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/buddy: Prevent BUG_ON by validating rounded allocation\n\nWhen DRM_BUDDY_CONTIGUOUS_ALLOCATION is set, the requested size is\nrounded up to the next power-of-two via roundup_pow_of_two().\nSimilarly, for non-contiguous allocations with large min_block_size,\nthe size is aligned up via round_up(). Both operations can produce a\nrounded size that exceeds mm->size, which later triggers\nBUG_ON(order > mm->max_order).\n\nExample scenarios:\n- 9G CONTIGUOUS allocation on 10G VRAM memory:\n  roundup_pow_of_two(9G) = 16G > 10G\n- 9G allocation with 8G min_block_size on 10G VRAM memory:\n  round_up(9G, 8G) = 16G > 10G\n\nFix this by checking the rounded size against mm->size. For\nnon-contiguous or range allocations where size > mm->size is invalid,\nreturn -EINVAL immediately. For contiguous allocations without range\nrestrictions, allow the request to fall through to the existing\n__alloc_contig_try_harder() fallback.\n\nThis ensures invalid user input returns an error or uses the fallback\npath instead of hitting BUG_ON.\n\nv2: (Matt A)\n- Add Fixes, Cc stable, and Closes tags for context",
+  "datePublished": "May 6, 2026, 11:27:45 AM",
+  "dateUpdated": "May 6, 2026, 11:27:45 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d764b8dd420098a4d253b8a5b27568c897edb2cf",
+    "https://git.kernel.org/stable/c/6236c1cd9fdf433d39ed28b2491ccdfe7ae95061",
+    "https://git.kernel.org/stable/c/ecb32c60d8cbed2ee9ce9f343b6aa2f32babc727",
+    "https://git.kernel.org/stable/c/5488a29596cdba93a60a79398dc9b69d5bdadf92"
+  ],
+  "aliases": [
+    "CVE-2026-43169"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1f5c8842-d404-3914-9a04-59343ea4a314",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "29e954df-ac8c-36f5-a641-b2dd4bc8b253",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6b51b7fb-f301-35d8-a771-0b036ecc63a8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "0a1844bf0b532d84324453374ad6845f64066c28 <ecb32c60d8cbed2ee9ce9f343b6aa2f32babc727"
+    },
+    {
+      "id": "6bd82b1b-beec-324e-a78b-d692db313da0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.7"
+    },
+    {
+      "id": "a0533dfb-3d0f-3527-a4c7-a6b5b11f5bcc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "a27b01ea-0153-3a4a-bbed-2c9234ef903f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.75"
+    },
+    {
+      "id": "ac4885e5-6244-3b2a-b735-3d881fc24409",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "0a1844bf0b532d84324453374ad6845f64066c28 <5488a29596cdba93a60a79398dc9b69d5bdadf92"
+    },
+    {
+      "id": "b1bb845f-dd51-31c8-acf4-4b5b87b82ee0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    },
+    {
+      "id": "c4873fed-d236-3f09-b53e-1eeb2dd20ffe",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "0a1844bf0b532d84324453374ad6845f64066c28 <d764b8dd420098a4d253b8a5b27568c897edb2cf"
+    },
+    {
+      "id": "e8002928-5229-33f0-975e-61c7966695ee",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "0a1844bf0b532d84324453374ad6845f64066c28 <6236c1cd9fdf433d39ed28b2491ccdfe7ae95061"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a4479026-911c-3067-8e9c-43c8bc1ff42b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

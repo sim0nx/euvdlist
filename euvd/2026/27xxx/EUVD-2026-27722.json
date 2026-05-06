@@ -1,0 +1,113 @@
+{
+  "id": "EUVD-2026-27722",
+  "enisaUuid": "d5eaf4ff-3c95-3c93-b571-4a69cf2eaed4",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niommu/vt-d: Skip dev-iotlb flush for inaccessible PCIe device without scalable mode\n\nPCIe endpoints with ATS enabled and passed through to userspace\n(e.g., QEMU, DPDK) can hard-lock the host when their link drops,\neither by surprise removal or by a link fault.\n\nCommit 4fc82cd907ac (\"iommu/vt-d: Don't issue ATS Invalidation\nrequest when device is disconnected\") adds pci_dev_is_disconnected()\nto devtlb_invalidation_with_pasid() so ATS invalidation is skipped\nonly when the device is being safely removed, but it applies only\nwhen Intel IOMMU scalable mode is enabled.\n\nWith scalable mode disabled or unsupported, a system hard-lock\noccurs when a PCIe endpoint's link drops because the Intel IOMMU\nwaits indefinitely for an ATS invalidation that cannot complete.\n\nCall Trace:\n qi_submit_sync\n qi_flush_dev_iotlb\n __context_flush_dev_iotlb.part.0\n domain_context_clear_one_cb\n pci_for_each_dma_alias\n device_block_translation\n blocking_domain_attach_dev\n iommu_deinit_device\n __iommu_group_remove_device\n iommu_release_device\n iommu_bus_notifier\n blocking_notifier_call_chain\n bus_notify\n device_del\n pci_remove_bus_device\n pci_stop_and_remove_bus_device\n pciehp_unconfigure_device\n pciehp_disable_slot\n pciehp_handle_presence_or_link_change\n pciehp_ist\n\nCommit 81e921fd3216 (\"iommu/vt-d: Fix NULL domain on device release\")\nadds intel_pasid_teardown_sm_context() to intel_iommu_release_device(),\nwhich calls qi_flush_dev_iotlb() and can also hard-lock the system\nwhen a PCIe endpoint's link drops.\n\nCall Trace:\n qi_submit_sync\n qi_flush_dev_iotlb\n __context_flush_dev_iotlb.part.0\n intel_context_flush_no_pasid\n device_pasid_table_teardown\n pci_pasid_table_teardown\n pci_for_each_dma_alias\n intel_pasid_teardown_sm_context\n intel_iommu_release_device\n iommu_deinit_device\n __iommu_group_remove_device\n iommu_release_device\n iommu_bus_notifier\n blocking_notifier_call_chain\n bus_notify\n device_del\n pci_remove_bus_device\n pci_stop_and_remove_bus_device\n pciehp_unconfigure_device\n pciehp_disable_slot\n pciehp_handle_presence_or_link_change\n pciehp_ist\n\nSometimes the endpoint loses connection without a link-down event\n(e.g., due to a link fault); killing the process (virsh destroy)\nthen hard-locks the host.\n\nCall Trace:\n qi_submit_sync\n qi_flush_dev_iotlb\n __context_flush_dev_iotlb.part.0\n domain_context_clear_one_cb\n pci_for_each_dma_alias\n device_block_translation\n blocking_domain_attach_dev\n __iommu_attach_device\n __iommu_device_set_domain\n __iommu_group_set_domain_internal\n iommu_detach_group\n vfio_iommu_type1_detach_group\n vfio_group_detach_container\n vfio_group_fops_release\n __fput\n\npci_dev_is_disconnected() only covers safe-removal paths;\npci_device_is_present() tests accessibility by reading\nvendor/device IDs and internally calls pci_dev_is_disconnected().\nOn a ConnectX-5 (8 GT/s, x2) this costs ~70 \u00b5s.\n\nSince __context_flush_dev_iotlb() is only called on\n{attach,release}_dev paths (not hot), add pci_device_is_present()\nthere to skip inaccessible devices and avoid the hard-lock.",
+  "datePublished": "May 6, 2026, 11:27:39 AM",
+  "dateUpdated": "May 6, 2026, 11:27:39 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/48b3f08e68b29a79527869cdde7298ca2a9b9646",
+    "https://git.kernel.org/stable/c/e70d5feb10c5ba2bbf7ca400b8f39a2f82d653e8",
+    "https://git.kernel.org/stable/c/bc0490ad9edf5c6f98e39fbbee2877b85261a5ae",
+    "https://git.kernel.org/stable/c/42662d19839f34735b718129ea200e3734b07e50"
+  ],
+  "aliases": [
+    "CVE-2026-43161"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1f13556d-3d60-34f5-b3bc-ecd0ff1accdb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "37764b952e1b39053defc7ebe5dcd8c4e3e78de9 <bc0490ad9edf5c6f98e39fbbee2877b85261a5ae"
+    },
+    {
+      "id": "1fda4d09-3a3c-3398-a626-dabde1d0551e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "3566d322-3347-32a2-a8b8-0fea41be7647",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.77"
+    },
+    {
+      "id": "3c1836b2-47b2-3a1c-8ce3-e75671f0540e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "41a69232-5e8d-338c-a82f-b7a5e9833339",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "4380e000-97d3-3e68-a2ed-2de02008c6ae",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.14"
+    },
+    {
+      "id": "7c1f8516-e9d2-3212-bad5-9b5f5eb0f7cf",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.17"
+    },
+    {
+      "id": "95f7e391-7cdf-3f52-941e-9ce4ebbc9af6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "37764b952e1b39053defc7ebe5dcd8c4e3e78de9 <48b3f08e68b29a79527869cdde7298ca2a9b9646"
+    },
+    {
+      "id": "b1226b5d-8ce5-36cb-b573-e30bca3fdbbb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "99301a53a1378f8863ac7850b9589f997bb0e125"
+    },
+    {
+      "id": "b8ee0887-bb0f-3524-bec8-e9ed803bab5a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "37764b952e1b39053defc7ebe5dcd8c4e3e78de9 <42662d19839f34735b718129ea200e3734b07e50"
+    },
+    {
+      "id": "d781ba2b-f32a-3d63-8661-fc8827a30069",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "948ec6d003280d49aca49b366aa5cb140f87434d"
+    },
+    {
+      "id": "e0b28d92-38bc-38e4-8d96-83241927c0b0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "37764b952e1b39053defc7ebe5dcd8c4e3e78de9 <e70d5feb10c5ba2bbf7ca400b8f39a2f82d653e8"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4d8f6a9a-dcf8-3402-8f4e-ec3226c3b757",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
