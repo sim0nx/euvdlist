@@ -1,0 +1,70 @@
+{
+  "id": "EUVD-2025-209748",
+  "enisaUuid": "5c153e29-10d9-3629-bdc5-41068d3597b5",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nspi: cadence-quadspi: Parse DT for flashes with the rest of the DT parsing\n\nThe recent refactoring of where runtime PM is enabled done in commit\nf1eb4e792bb1 (\"spi: spi-cadence-quadspi: Enable pm runtime earlier to\navoid imbalance\") made the fact that when we do a pm_runtime_disable()\nin the error paths of probe() we can trigger a runtime disable which in\nturn results in duplicate clock disables.  This is particularly likely\nto happen when there is missing or broken DT description for the flashes\nattached to the controller.\n\nEarly on in the probe function we do a pm_runtime_get_noresume() since\nthe probe function leaves the device in a powered up state but in the\nerror path we can't assume that PM is enabled so we also manually\ndisable everything, including clocks. This means that when runtime PM is\nactive both it and the probe function release the same reference to the\nmain clock for the IP, triggering warnings from the clock subsystem:\n\n[    8.693719] clk:75:7 already disabled\n[    8.693791] WARNING: CPU: 1 PID: 185 at /usr/src/kernel/drivers/clk/clk.c:1188 clk_core_disable+0xa0/0xb\n...\n[    8.694261]  clk_core_disable+0xa0/0xb4 (P)\n[    8.694272]  clk_disable+0x38/0x60\n[    8.694283]  cqspi_probe+0x7c8/0xc5c [spi_cadence_quadspi]\n[    8.694309]  platform_probe+0x5c/0xa4\n\nDealing with this issue properly is complicated by the fact that we\ndon't know if runtime PM is active so can't tell if it will disable the\nclocks or not.  We can, however, sidestep the issue for the flash\ndescriptions by moving their parsing to when we parse the controller\nproperties which also save us doing a bunch of setup which can never be\nused so let's do that.",
+  "datePublished": "May 8, 2026, 1:11:10 PM",
+  "dateUpdated": "May 8, 2026, 1:11:10 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/08dca4c8099a41a9fa3be128a793387603f73a17",
+    "https://git.kernel.org/stable/c/dcaa104ad9c860a6dbd5797919e0ec0b1cd5a57a",
+    "https://git.kernel.org/stable/c/9f0736a4e136a6eb61e0cf530ddc18ab6d816ba3"
+  ],
+  "aliases": [
+    "CVE-2025-71299"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "105b22fc-c9d3-3ab4-a02a-03557adc5a32",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <08dca4c8099a41a9fa3be128a793387603f73a17"
+    },
+    {
+      "id": "3b127bb9-ae91-3599-95c5-aa08577e420d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <9f0736a4e136a6eb61e0cf530ddc18ab6d816ba3"
+    },
+    {
+      "id": "3d17ba98-bed8-33ef-a402-3446bee92db9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <dcaa104ad9c860a6dbd5797919e0ec0b1cd5a57a"
+    },
+    {
+      "id": "495e78da-f1ca-3c71-ad05-de5506c4fe2b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "dc87c13c-1a42-3e26-8325-95c1f2310213",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "ea9c3b62-e5db-39ea-8ad8-c37707e71022",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5204fb92-eea1-393f-9641-cf211b9f47f4",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

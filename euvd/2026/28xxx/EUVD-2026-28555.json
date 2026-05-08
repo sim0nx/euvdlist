@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-28555",
+  "enisaUuid": "36f629f1-bc05-3b5c-97e8-476fb7df2634",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/slab: do not access current->mems_allowed_seq if !allow_spin\n\nLockdep complains when get_from_any_partial() is called in an NMI\ncontext, because current->mems_allowed_seq is seqcount_spinlock_t and\nnot NMI-safe:\n\n  ================================\n  WARNING: inconsistent lock state\n  6.19.0-rc5-kfree-rcu+ #315 Tainted: G                 N\n  --------------------------------\n  inconsistent {INITIAL USE} -> {IN-NMI} usage.\n  kunit_try_catch/9989 [HC1[1]:SC0[0]:HE0:SE1] takes:\n  ffff889085799820 (&____s->seqcount#3){.-.-}-{0:0}, at: ___slab_alloc+0x58f/0xc00\n  {INITIAL USE} state was registered at:\n    lock_acquire+0x185/0x320\n    kernel_init_freeable+0x391/0x1150\n    kernel_init+0x1f/0x220\n    ret_from_fork+0x736/0x8f0\n    ret_from_fork_asm+0x1a/0x30\n  irq event stamp: 56\n  hardirqs last  enabled at (55): [<ffffffff850a68d7>] _raw_spin_unlock_irq+0x27/0x70\n  hardirqs last disabled at (56): [<ffffffff850858ca>] __schedule+0x2a8a/0x6630\n  softirqs last  enabled at (0): [<ffffffff81536711>] copy_process+0x1dc1/0x6a10\n  softirqs last disabled at (0): [<0000000000000000>] 0x0\n\n  other info that might help us debug this:\n   Possible unsafe locking scenario:\n\n         CPU0\n         ----\n    lock(&____s->seqcount#3);\n    <Interrupt>\n      lock(&____s->seqcount#3);\n\n   *** DEADLOCK ***\n\nAccording to Documentation/locking/seqlock.rst, seqcount_t is not\nNMI-safe and seqcount_latch_t should be used when read path can interrupt\nthe write-side critical section. In this case, do not access\ncurrent->mems_allowed_seq and avoid retry.",
+  "datePublished": "May 8, 2026, 1:11:11 PM",
+  "dateUpdated": "May 8, 2026, 1:11:11 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/353dd9934447b9193643ae1afd938607a74d4915",
+    "https://git.kernel.org/stable/c/efd767ddcef0669bbd33c6a823ea0a88f06d4b29",
+    "https://git.kernel.org/stable/c/144080a5823b2dbd635acb6decf7ab23182664f3"
+  ],
+  "aliases": [
+    "CVE-2026-43285"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "07f127c5-786b-3f05-ac91-b6804df78021",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "40195f86-ecba-370d-a5a6-f9a30119926b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.18"
+    },
+    {
+      "id": "7e16065f-1aa2-3b0f-ad78-4cae9170ce70",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "af92793e52c3a99b828ed4bdd277fd3e11c18d08 <353dd9934447b9193643ae1afd938607a74d4915"
+    },
+    {
+      "id": "86ed9b5a-fe09-313c-abf1-1b7121fa39d3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    },
+    {
+      "id": "8f3ee5a7-8e99-3827-ac12-7b44acb338dd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "c09aad22-8e45-38b6-8694-bd377981ba79",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d1406100-65e9-32dc-b6ff-6e44c4273ff9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "af92793e52c3a99b828ed4bdd277fd3e11c18d08 <144080a5823b2dbd635acb6decf7ab23182664f3"
+    },
+    {
+      "id": "e0da1093-62b4-3bfb-af15-253984e1abba",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "af92793e52c3a99b828ed4bdd277fd3e11c18d08 <efd767ddcef0669bbd33c6a823ea0a88f06d4b29"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "8ab200fa-1caa-3239-a370-2d4e120d92c2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

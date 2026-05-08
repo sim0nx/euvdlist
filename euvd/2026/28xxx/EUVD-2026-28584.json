@@ -1,0 +1,145 @@
+{
+  "id": "EUVD-2026-28584",
+  "enisaUuid": "2cc3c7e5-3352-3c9c-bcbe-89d22fba706a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndm: remove fake timeout to avoid leak request\n\nSince commit 15f73f5b3e59 (\"blk-mq: move failure injection out of\nblk_mq_complete_request\"), drivers are responsible for calling\nblk_should_fake_timeout() at appropriate code paths and opportunities.\n\nHowever, the dm driver does not implement its own timeout handler and\nrelies on the timeout handling of its slave devices.\n\nIf an io-timeout-fail error is injected to a dm device, the request\nwill be leaked and never completed, causing tasks to hang indefinitely.\n\nReproduce:\n1. prepare dm which has iscsi slave device\n2. inject io-timeout-fail to dm\n   echo 1 >/sys/class/block/dm-0/io-timeout-fail\n   echo 100 >/sys/kernel/debug/fail_io_timeout/probability\n   echo 10 >/sys/kernel/debug/fail_io_timeout/times\n3. read/write dm\n4. iscsiadm -m node -u\n\nResult: hang task like below\n[  862.243768] INFO: task kworker/u514:2:151 blocked for more than 122 seconds.\n[  862.244133]       Tainted: G            E       6.19.0-rc1+ #51\n[  862.244337] \"echo 0 > /proc/sys/kernel/hung_task_timeout_secs\" disables this message.\n[  862.244718] task:kworker/u514:2  state:D stack:0     pid:151   tgid:151   ppid:2      task_flags:0x4288060 flags:0x00080000\n[  862.245024] Workqueue: iscsi_ctrl_3:1 __iscsi_unbind_session [scsi_transport_iscsi]\n[  862.245264] Call Trace:\n[  862.245587]  <TASK>\n[  862.245814]  __schedule+0x810/0x15c0\n[  862.246557]  schedule+0x69/0x180\n[  862.246760]  blk_mq_freeze_queue_wait+0xde/0x120\n[  862.247688]  elevator_change+0x16d/0x460\n[  862.247893]  elevator_set_none+0x87/0xf0\n[  862.248798]  blk_unregister_queue+0x12e/0x2a0\n[  862.248995]  __del_gendisk+0x231/0x7e0\n[  862.250143]  del_gendisk+0x12f/0x1d0\n[  862.250339]  sd_remove+0x85/0x130 [sd_mod]\n[  862.250650]  device_release_driver_internal+0x36d/0x530\n[  862.250849]  bus_remove_device+0x1dd/0x3f0\n[  862.251042]  device_del+0x38a/0x930\n[  862.252095]  __scsi_remove_device+0x293/0x360\n[  862.252291]  scsi_remove_target+0x486/0x760\n[  862.252654]  __iscsi_unbind_session+0x18a/0x3e0 [scsi_transport_iscsi]\n[  862.252886]  process_one_work+0x633/0xe50\n[  862.253101]  worker_thread+0x6df/0xf10\n[  862.253647]  kthread+0x36d/0x720\n[  862.254533]  ret_from_fork+0x2a6/0x470\n[  862.255852]  ret_from_fork_asm+0x1a/0x30\n[  862.256037]  </TASK>\n\nRemove the blk_should_fake_timeout() check from dm, as dm has no\nnative timeout handling and should not attempt to fake timeouts.",
+  "datePublished": "May 8, 2026, 1:11:31 PM",
+  "dateUpdated": "May 8, 2026, 1:11:31 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ece6720de9403260088209b0b92d45e0b49ff856",
+    "https://git.kernel.org/stable/c/8200fca818c1e2f65bc6cb16d934ff6049302197",
+    "https://git.kernel.org/stable/c/b307b6307f6459841312432bd4bc9519cbac97f5",
+    "https://git.kernel.org/stable/c/4f9e7ca933a9fbf9912a384b061a00c77332cbf0",
+    "https://git.kernel.org/stable/c/cf2d06c9fd4b6521ea5b7f73c99c64c2c6f5e224",
+    "https://git.kernel.org/stable/c/6cdb21e0c9fdee484feba14fc9e72e9d07daf9f3",
+    "https://git.kernel.org/stable/c/c8a23d4c995ef4227bd4de64cd3910637ee6162e",
+    "https://git.kernel.org/stable/c/f3a9c95a15d2f4466acad5c68faeff79ca5e9f47"
+  ],
+  "aliases": [
+    "CVE-2026-43314"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "02bc0041-d14c-3e08-bbda-6553409f59d7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6cdb21e0c9fdee484feba14fc9e72e9d07daf9f3"
+    },
+    {
+      "id": "062f7900-9a4d-3436-9462-1bb92e067d7d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b307b6307f6459841312432bd4bc9519cbac97f5"
+    },
+    {
+      "id": "1b0b3b44-689d-3042-8999-d5b6b6e965fe",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.10.252"
+    },
+    {
+      "id": "246c1a88-2d29-39be-9c30-177b612fe4a5",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.202"
+    },
+    {
+      "id": "3bf8c875-7136-3e07-8eac-220cc58f5c5b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4f9e7ca933a9fbf9912a384b061a00c77332cbf0"
+    },
+    {
+      "id": "4faa93d4-735c-353c-baf0-0a0e04951b3b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.128"
+    },
+    {
+      "id": "5407e57a-6d4e-3161-b085-750f3c64282a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    },
+    {
+      "id": "5cc61461-f13e-3f06-b468-b46cc577ea71",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c8a23d4c995ef4227bd4de64cd3910637ee6162e"
+    },
+    {
+      "id": "63dac60d-9ed9-380c-aacf-f5049a6edac0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <cf2d06c9fd4b6521ea5b7f73c99c64c2c6f5e224"
+    },
+    {
+      "id": "7b34bb16-8b9c-34fd-925c-1bebcf25033f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f3a9c95a15d2f4466acad5c68faeff79ca5e9f47"
+    },
+    {
+      "id": "8955f86f-2f9f-3741-998a-bcb5102ed105",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.165"
+    },
+    {
+      "id": "8dd0e5eb-ce9c-3868-83d1-789abd194cb0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.75"
+    },
+    {
+      "id": "90255a26-e55a-3cff-913d-281f5f242be3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "a1cbb3f0-ff48-352d-bc5d-75bc98cf1ded",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <8200fca818c1e2f65bc6cb16d934ff6049302197"
+    },
+    {
+      "id": "a7840f84-9545-3722-bc7c-7bf3ea4bf313",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "f84a6fe9-ac6d-37ea-a290-7a9d400ae97f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <ece6720de9403260088209b0b92d45e0b49ff856"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "1a7af15b-94f9-351c-b6b2-91b33371c7ae",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

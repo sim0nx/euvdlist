@@ -1,0 +1,55 @@
+{
+  "id": "EUVD-2026-28581",
+  "enisaUuid": "440bac2c-5743-3699-ab20-09a3297c661b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsoc/tegra: pmc: Fix unsafe generic_handle_irq() call\n\nCurrently, when resuming from system suspend on Tegra platforms,\nthe following warning is observed:\n\nWARNING: CPU: 0 PID: 14459 at kernel/irq/irqdesc.c:666\nCall trace:\n handle_irq_desc+0x20/0x58 (P)\n tegra186_pmc_wake_syscore_resume+0xe4/0x15c\n syscore_resume+0x3c/0xb8\n suspend_devices_and_enter+0x510/0x540\n pm_suspend+0x16c/0x1d8\n\nThe warning occurs because generic_handle_irq() is being called from\na non-interrupt context which is considered as unsafe.\n\nFix this warning by deferring generic_handle_irq() call to an IRQ work\nwhich gets executed in hard IRQ context where generic_handle_irq()\ncan be called safely.\n\nWhen PREEMPT_RT kernels are used, regular IRQ work (initialized with\ninit_irq_work) is deferred to run in per-CPU kthreads in preemptible\ncontext rather than hard IRQ context. Hence, use the IRQ_WORK_INIT_HARD\nvariant so that with PREEMPT_RT kernels, the IRQ work is processed in\nhardirq context instead of being deferred to a thread which is required\nfor calling generic_handle_irq().\n\nOn non-PREEMPT_RT kernels, both init_irq_work() and IRQ_WORK_INIT_HARD()\nexecute in IRQ context, so this change has no functional impact for\nstandard kernel configurations.\n\n[treding@nvidia.com: miscellaneous cleanups]",
+  "datePublished": "May 8, 2026, 1:11:29 PM",
+  "dateUpdated": "May 8, 2026, 1:11:29 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/64016227dcdb968b7030eda04304f3d0df5d209d",
+    "https://git.kernel.org/stable/c/e6d96073af681780820c94079b978474a8a44413"
+  ],
+  "aliases": [
+    "CVE-2026-43311"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1c332438-134e-3e90-bb5a-7234a04daa21",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e6d96073af681780820c94079b978474a8a44413"
+    },
+    {
+      "id": "5085870e-d275-3068-9e0e-06503edf75bc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "9f337552-7311-30ee-9690-be58d63e967f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "bd0a37e5-0450-3dea-ac07-eae19ead5768",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <64016227dcdb968b7030eda04304f3d0df5d209d"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9a2dbef2-b5ab-32a1-bdc7-7da2843e0b1e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
