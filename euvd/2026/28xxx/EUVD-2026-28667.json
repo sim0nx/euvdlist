@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-28667",
+  "enisaUuid": "e69204cb-7141-3525-8cc5-a258591e37ee",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbtrfs: fix transaction abort when snapshotting received subvolumes\n\nCurrently a user can trigger a transaction abort by snapshotting a\npreviously received snapshot a bunch of times until we reach a\nBTRFS_UUID_KEY_RECEIVED_SUBVOL item overflow (the maximum item size we\ncan store in a leaf). This is very likely not common in practice, but\nif it happens, it turns the filesystem into RO mode. The snapshot, send\nand set_received_subvol and subvol_setflags (used by receive) don't\nrequire CAP_SYS_ADMIN, just inode_owner_or_capable(). A malicious user\ncould use this to turn a filesystem into RO mode and disrupt a system.\n\nReproducer script:\n\n  $ cat test.sh\n  #!/bin/bash\n\n  DEV=/dev/sdi\n  MNT=/mnt/sdi\n\n  # Use smallest node size to make the test faster.\n  mkfs.btrfs -f --nodesize 4K $DEV\n  mount $DEV $MNT\n\n  # Create a subvolume and set it to RO so that it can be used for send.\n  btrfs subvolume create $MNT/sv\n  touch $MNT/sv/foo\n  btrfs property set $MNT/sv ro true\n\n  # Send and receive the subvolume into snaps/sv.\n  mkdir $MNT/snaps\n  btrfs send $MNT/sv | btrfs receive $MNT/snaps\n\n  # Now snapshot the received subvolume, which has a received_uuid, a\n  # lot of times to trigger the leaf overflow.\n  total=500\n  for ((i = 1; i <= $total; i++)); do\n      echo -ne \"\\rCreating snapshot $i/$total\"\n      btrfs subvolume snapshot -r $MNT/snaps/sv $MNT/snaps/sv_$i > /dev/null\n  done\n  echo\n\n  umount $MNT\n\nWhen running the test:\n\n  $ ./test.sh\n  (...)\n  Create subvolume '/mnt/sdi/sv'\n  At subvol /mnt/sdi/sv\n  At subvol sv\n  Creating snapshot 496/500ERROR: Could not create subvolume: Value too large for defined data type\n  Creating snapshot 497/500ERROR: Could not create subvolume: Read-only file system\n  Creating snapshot 498/500ERROR: Could not create subvolume: Read-only file system\n  Creating snapshot 499/500ERROR: Could not create subvolume: Read-only file system\n  Creating snapshot 500/500ERROR: Could not create subvolume: Read-only file system\n\nAnd in dmesg/syslog:\n\n  $ dmesg\n  (...)\n  [251067.627338] BTRFS warning (device sdi): insert uuid item failed -75 (0x4628b21c4ac8d898, 0x2598bee2b1515c91) type 252!\n  [251067.629212] ------------[ cut here ]------------\n  [251067.630033] BTRFS: Transaction aborted (error -75)\n  [251067.630871] WARNING: fs/btrfs/transaction.c:1907 at create_pending_snapshot.cold+0x52/0x465 [btrfs], CPU#10: btrfs/615235\n  [251067.632851] Modules linked in: btrfs dm_zero (...)\n  [251067.644071] CPU: 10 UID: 0 PID: 615235 Comm: btrfs Tainted: G        W           6.19.0-rc8-btrfs-next-225+ #1 PREEMPT(full)\n  [251067.646165] Tainted: [W]=WARN\n  [251067.646733] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.16.2-0-gea1b7a073390-prebuilt.qemu.org 04/01/2014\n  [251067.648735] RIP: 0010:create_pending_snapshot.cold+0x55/0x465 [btrfs]\n  [251067.649984] Code: f0 48 0f (...)\n  [251067.653313] RSP: 0018:ffffce644908fae8 EFLAGS: 00010292\n  [251067.653987] RAX: 00000000ffffff01 RBX: ffff8e5639e63a80 RCX: 00000000ffffffd3\n  [251067.655042] RDX: ffff8e53faa76b00 RSI: 00000000ffffffb5 RDI: ffffffffc0919750\n  [251067.656077] RBP: ffffce644908fbd8 R08: 0000000000000000 R09: ffffce644908f820\n  [251067.657068] R10: ffff8e5adc1fffa8 R11: 0000000000000003 R12: ffff8e53c0431bd0\n  [251067.658050] R13: ffff8e5414593600 R14: ffff8e55efafd000 R15: 00000000ffffffb5\n  [251067.659019] FS:  00007f2a4944b3c0(0000) GS:ffff8e5b27dae000(0000) knlGS:0000000000000000\n  [251067.660115] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033\n  [251067.660943] CR2: 00007ffc5aa57898 CR3: 00000005813a2003 CR4: 0000000000370ef0\n  [251067.661972] Call Trace:\n  [251067.662292]  <TASK>\n  [251067.662653]  create_pending_snapshots+0x97/0xc0 [btrfs]\n  [251067.663413]  btrfs_commit_transaction+0x26e/0xc00 [btrfs]\n  [251067.664257]  ? btrfs_qgroup_convert_reserved_meta+0x35/0x390 [btrfs]\n  [251067.665238]  ? _raw_spin_unlock+0x15/0x30\n  [251067.665837]  ? record_root_\n---truncated---",
+  "datePublished": "May 8, 2026, 2:21:15 PM",
+  "dateUpdated": "May 8, 2026, 2:21:15 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/9a9227b488ffb7cdbb5d930a01fc6956c05ba61a",
+    "https://git.kernel.org/stable/c/6bce705b699cba9afccb996c77d194fe003dfa2a",
+    "https://git.kernel.org/stable/c/e3d8efc157bc590457d3e31da403af1a221643d6",
+    "https://git.kernel.org/stable/c/bac55dde8efa457e769c934fd88a63f2141ba238",
+    "https://git.kernel.org/stable/c/770af8e465c2c3de528f85e840eab462dd41542b",
+    "https://git.kernel.org/stable/c/e1b18b959025e6b5dbad668f391f65d34b39595a"
+  ],
+  "aliases": [
+    "CVE-2026-43361"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "08b332ab-60e4-3d03-adaf-f7e6371f37bb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dd5f9615fc5c5e8d3751aab3a17b92768fb1ce70 <bac55dde8efa457e769c934fd88a63f2141ba238"
+    },
+    {
+      "id": "0dc4e21b-9861-3f46-87dd-be227dc79afc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "1b0b6b30-fa32-3aed-8ee5-63c4b845390a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.78"
+    },
+    {
+      "id": "4ef4108f-fa83-3e6d-a97a-39834c047c5c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.19"
+    },
+    {
+      "id": "4fa67ef5-b665-318c-a266-b631c79de4b7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.167"
+    },
+    {
+      "id": "7b583505-e638-3523-80de-f9cc727ac0d8",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "8e4c933c-e60e-34e6-a724-e3bc42734b6e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.130"
+    },
+    {
+      "id": "99b99aee-4da9-384a-bc6f-f7395b5c3887",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.9"
+    },
+    {
+      "id": "a4826630-f6c7-38a3-b9e8-fa16e2f76723",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dd5f9615fc5c5e8d3751aab3a17b92768fb1ce70 <e1b18b959025e6b5dbad668f391f65d34b39595a"
+    },
+    {
+      "id": "af3f1f1f-cc7a-368f-b147-7cb7cff45d62",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dd5f9615fc5c5e8d3751aab3a17b92768fb1ce70 <770af8e465c2c3de528f85e840eab462dd41542b"
+    },
+    {
+      "id": "b81fafad-fd8a-3c45-8f52-4302636e6953",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "3.12"
+    },
+    {
+      "id": "c8885b1f-f1ca-37be-abe3-947830741c00",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dd5f9615fc5c5e8d3751aab3a17b92768fb1ce70 <9a9227b488ffb7cdbb5d930a01fc6956c05ba61a"
+    },
+    {
+      "id": "d8647a33-c485-3963-8cb3-c7c074d7bffc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dd5f9615fc5c5e8d3751aab3a17b92768fb1ce70 <6bce705b699cba9afccb996c77d194fe003dfa2a"
+    },
+    {
+      "id": "da2a7afa-e85e-3799-96c5-553f2d35f773",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "dd5f9615fc5c5e8d3751aab3a17b92768fb1ce70 <e3d8efc157bc590457d3e31da403af1a221643d6"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "04cb50e4-1776-3992-b539-526ff626ef19",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

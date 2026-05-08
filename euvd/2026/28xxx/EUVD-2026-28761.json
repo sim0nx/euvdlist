@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-28761",
+  "enisaUuid": "d4332e21-4772-30f7-af55-02a2555bb648",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmctp: route: hold key->lock in mctp_flow_prepare_output()\n\nmctp_flow_prepare_output() checks key->dev and may call\nmctp_dev_set_key(), but it does not hold key->lock while doing so.\n\nmctp_dev_set_key() and mctp_dev_release_key() are annotated with\n__must_hold(&key->lock), so key->dev access is intended to be\nserialized by key->lock. The mctp_sendmsg() transmit path reaches\nmctp_flow_prepare_output() via mctp_local_output() -> mctp_dst_output()\nwithout holding key->lock, so the check-and-set sequence is racy.\n\nExample interleaving:\n\n  CPU0                                  CPU1\n  ----                                  ----\n  mctp_flow_prepare_output(key, devA)\n    if (!key->dev)  // sees NULL\n                                        mctp_flow_prepare_output(\n                                            key, devB)\n                                          if (!key->dev)  // still NULL\n                                          mctp_dev_set_key(devB, key)\n                                            mctp_dev_hold(devB)\n                                            key->dev = devB\n    mctp_dev_set_key(devA, key)\n      mctp_dev_hold(devA)\n      key->dev = devA   // overwrites devB\n\nNow both devA and devB references were acquired, but only the final\nkey->dev value is tracked for release. One reference can be lost,\ncausing a resource leak as mctp_dev_release_key() would only decrease\nthe reference on one dev.\n\nFix by taking key->lock around the key->dev check and\nmctp_dev_set_key() call.",
+  "datePublished": "May 8, 2026, 2:22:19 PM",
+  "dateUpdated": "May 8, 2026, 2:22:19 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/47893166bc5611ee9a20de6b8d2933b2320fb772",
+    "https://git.kernel.org/stable/c/86f5334fcb48a5b611c33364ab52ca684d0f6d91",
+    "https://git.kernel.org/stable/c/0695712f3a6f1a48915f95767cfb42077683dcdc",
+    "https://git.kernel.org/stable/c/925a5ffd99cddd7a7e41d5ad120c7a2c6d50260f",
+    "https://git.kernel.org/stable/c/8d27d9b260dd19c1b519e1a13de6448f9984e30e",
+    "https://git.kernel.org/stable/c/7d86aa41c073c4e7eb75fd2e674f1fd8f289728a"
+  ],
+  "aliases": [
+    "CVE-2026-43455"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1463c2d1-8eae-3b6d-92b8-496a7453f377",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "67737c457281dd199ceb9e31b6ba7efd3bfe566d <0695712f3a6f1a48915f95767cfb42077683dcdc"
+    },
+    {
+      "id": "1d5bac3a-71e9-36ac-9d33-b4738f1196c2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "3413e664-12ed-3fdd-b632-023cc90796a9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "67737c457281dd199ceb9e31b6ba7efd3bfe566d <7d86aa41c073c4e7eb75fd2e674f1fd8f289728a"
+    },
+    {
+      "id": "433040d1-4d41-305d-976b-7a54e04f57df",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.9"
+    },
+    {
+      "id": "48f1d923-16db-38f2-b87a-17da2449798a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "67737c457281dd199ceb9e31b6ba7efd3bfe566d <8d27d9b260dd19c1b519e1a13de6448f9984e30e"
+    },
+    {
+      "id": "9276059c-85a5-358d-b959-e663f94ab739",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "67737c457281dd199ceb9e31b6ba7efd3bfe566d <47893166bc5611ee9a20de6b8d2933b2320fb772"
+    },
+    {
+      "id": "a5ef5fa2-343f-3fd9-ae02-4c0f158eb0c6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.78"
+    },
+    {
+      "id": "ab9fbf5e-937a-3b31-a20e-e526fe75ef2b",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "67737c457281dd199ceb9e31b6ba7efd3bfe566d <86f5334fcb48a5b611c33364ab52ca684d0f6d91"
+    },
+    {
+      "id": "baa79ebe-c917-34d5-a4da-68218d70db53",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.167"
+    },
+    {
+      "id": "c00d0832-93c0-325d-a98c-d309b5d554d1",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.16"
+    },
+    {
+      "id": "c8246520-57a7-3f8e-9ecc-454a8899d973",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "dc770eb4-6324-3ab3-a28a-25b24b57460e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.130"
+    },
+    {
+      "id": "dc9b511e-6e2f-3f27-957e-2d3c4111888f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.19"
+    },
+    {
+      "id": "e4485bed-b185-3a57-9ff0-ef98362b61a7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "67737c457281dd199ceb9e31b6ba7efd3bfe566d <925a5ffd99cddd7a7e41d5ad120c7a2c6d50260f"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "44f73f7d-91b0-3149-8ee3-37ee4afadc4a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

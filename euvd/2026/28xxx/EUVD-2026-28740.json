@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-28740",
+  "enisaUuid": "0d32c33d-05d7-3701-8425-a888fffdff0d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrust_binder: check ownership before using vma\n\nWhen installing missing pages (or zapping them), Rust Binder will look\nup the vma in the mm by address, and then call vm_insert_page (or\nzap_page_range_single). However, if the vma is closed and replaced with\na different vma at the same address, this can lead to Rust Binder\ninstalling pages into the wrong vma.\n\nBy installing the page into a writable vma, it becomes possible to write\nto your own binder pages, which are normally read-only. Although you're\nnot supposed to be able to write to those pages, the intent behind the\ndesign of Rust Binder is that even if you get that ability, it should not\nlead to anything bad. Unfortunately, due to another bug, that is not the\ncase.\n\nTo fix this, store a pointer in vm_private_data and check that the vma\nreturned by vma_lookup() has the right vm_ops and vm_private_data before\ntrying to use the vma. This should ensure that Rust Binder will refuse\nto interact with any other VMA. The plan is to introduce more vma\nabstractions to avoid this unsafe access to vm_ops and vm_private_data,\nbut for now let's start with the simplest possible fix.\n\nC Binder performs the same check in a slightly different way: it\nprovides a vm_ops->close that sets a boolean to true, then checks that\nboolean after calling vma_lookup(), but this is more fragile\nthan the solution in this patch. (We probably still want to do both, but\nthe vm_ops->close callback will be added later as part of the follow-up\nvma API changes.)\n\nIt's still possible to remap the vma so that pages appear in the right\nvma, but at the wrong offset, but this is a separate issue and will be\nfixed when Rust Binder gets a vm_ops->close callback.",
+  "datePublished": "May 8, 2026, 2:22:05 PM",
+  "dateUpdated": "May 8, 2026, 2:22:05 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/20a01f20d1f4064d90a8627aa41b5987f0220bb9",
+    "https://git.kernel.org/stable/c/5a472d04fb4b9115fb7d1535bd885cea450f14db",
+    "https://git.kernel.org/stable/c/8ef2c15aeae07647f530d30f6daaf79eb801bcd1"
+  ],
+  "aliases": [
+    "CVE-2026-43434"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "123b7bf2-8971-3dd4-942a-296f637cfd88",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "eafedbc7c050c44744fbdf80bdf3315e860b7513 <5a472d04fb4b9115fb7d1535bd885cea450f14db"
+    },
+    {
+      "id": "2f701add-1a1b-3fe5-965a-bd8ab4d88841",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "eafedbc7c050c44744fbdf80bdf3315e860b7513 <8ef2c15aeae07647f530d30f6daaf79eb801bcd1"
+    },
+    {
+      "id": "3f77410f-5103-3f8b-a42b-cb9f6308fe0d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.18"
+    },
+    {
+      "id": "5dc1992d-6f8c-3e71-8476-3eea06e7f09e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "816b25e1-f3af-3859-8d18-9c7fb5fe4913",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "eafedbc7c050c44744fbdf80bdf3315e860b7513 <20a01f20d1f4064d90a8627aa41b5987f0220bb9"
+    },
+    {
+      "id": "8e894593-bd4b-3a08-8833-a9ee2700ba21",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a7820f66-9642-3b7f-a3ec-d6fefbc0f46d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.19"
+    },
+    {
+      "id": "ce6779fe-70cb-3da7-a966-3524c4c0aa3f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "68fda372-1667-3a28-9c4c-b56d8fb230b3",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

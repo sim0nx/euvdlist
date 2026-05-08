@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-28774",
+  "enisaUuid": "c3509893-9f5e-3959-bd5e-28b081041710",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/mlx5: Fix deadlock between devlink lock and esw->wq\n\nesw->work_queue executes esw_functions_changed_event_handler ->\nesw_vfs_changed_event_handler and acquires the devlink lock.\n\n.eswitch_mode_set (acquires devlink lock in devlink_nl_pre_doit) ->\nmlx5_devlink_eswitch_mode_set -> mlx5_eswitch_disable_locked ->\nmlx5_eswitch_event_handler_unregister -> flush_workqueue deadlocks\nwhen esw_vfs_changed_event_handler executes.\n\nFix that by no longer flushing the work to avoid the deadlock, and using\na generation counter to keep track of work relevance. This avoids an old\nhandler manipulating an esw that has undergone one or more mode changes:\n- the counter is incremented in mlx5_eswitch_event_handler_unregister.\n- the counter is read and passed to the ephemeral mlx5_host_work struct.\n- the work handler takes the devlink lock and bails out if the current\n  generation is different than the one it was scheduled to operate on.\n- mlx5_eswitch_cleanup does the final draining before destroying the wq.\n\nNo longer flushing the workqueue has the side effect of maybe no longer\ncancelling pending vport_change_handler work items, but that's ok since\nthose are disabled elsewhere:\n- mlx5_eswitch_disable_locked disables the vport eq notifier.\n- mlx5_esw_vport_disable disarms the HW EQ notification and marks\n  vport->enabled under state_lock to false to prevent pending vport\n  handler from doing anything.\n- mlx5_eswitch_cleanup destroys the workqueue and makes sure all events\n  are disabled/finished.",
+  "datePublished": "May 8, 2026, 2:22:28 PM",
+  "dateUpdated": "May 8, 2026, 2:22:28 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0de867f6e34eae6907b367fd152c55e61cb98608",
+    "https://git.kernel.org/stable/c/957d2a58f7f8ebcbdd0a85935e0d2675134b890d",
+    "https://git.kernel.org/stable/c/3c7313cb41b1b427078440364d2f042c276a1c0b",
+    "https://git.kernel.org/stable/c/4a7838bebc38374f74baaf88bf2cf8d439a92923",
+    "https://git.kernel.org/stable/c/90e7e5d14d0bd25ffd019a3aa39d9f1c05fedbe1",
+    "https://git.kernel.org/stable/c/aed763abf0e905b4b8d747d1ba9e172961572f57"
+  ],
+  "aliases": [
+    "CVE-2026-43468"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "12dde226-0b3b-3137-bc21-769fd87e81ec",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.130"
+    },
+    {
+      "id": "22a01e33-1342-3844-9b20-6e1b65b319da",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.78"
+    },
+    {
+      "id": "2e314c64-7f4e-31c7-80c0-26a61bd09d94",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "f1bc646c9a06f09aad5d8bacb87103b5573ee45e <aed763abf0e905b4b8d747d1ba9e172961572f57"
+    },
+    {
+      "id": "35e4506d-6b43-3519-bbb7-cedcbbf3ddc4",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "f1bc646c9a06f09aad5d8bacb87103b5573ee45e <957d2a58f7f8ebcbdd0a85935e0d2675134b890d"
+    },
+    {
+      "id": "514d1570-536d-3bf8-be65-a34f879c2ccc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "59dda850-cb33-396b-9e65-4b87a325b6b7",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "f1bc646c9a06f09aad5d8bacb87103b5573ee45e <4a7838bebc38374f74baaf88bf2cf8d439a92923"
+    },
+    {
+      "id": "5d865aac-15e3-382b-b0fc-e3a32192eace",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.167"
+    },
+    {
+      "id": "8af0cb24-7b6f-3f28-8b1c-da4a5affa09f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.19"
+    },
+    {
+      "id": "a07e14d6-bd11-3468-b4e9-840ed62d53e2",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.9"
+    },
+    {
+      "id": "bce94a7b-925c-3ba0-86cc-448240db1047",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "f1bc646c9a06f09aad5d8bacb87103b5573ee45e <90e7e5d14d0bd25ffd019a3aa39d9f1c05fedbe1"
+    },
+    {
+      "id": "c41f3d34-4264-3949-b533-c320e247d3eb",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "f1bc646c9a06f09aad5d8bacb87103b5573ee45e <3c7313cb41b1b427078440364d2f042c276a1c0b"
+    },
+    {
+      "id": "c528fdbe-3f43-309c-a45d-d98c20fd5352",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.0"
+    },
+    {
+      "id": "ee1f455c-d2b3-3c31-ba16-002a3caf5c64",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "f5d2b318-3058-39a1-9ac0-ad3152326e80",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "f1bc646c9a06f09aad5d8bacb87103b5573ee45e <0de867f6e34eae6907b367fd152c55e61cb98608"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d696b557-55ec-3512-87bd-d1db6ab600d7",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
