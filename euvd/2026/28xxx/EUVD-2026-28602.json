@@ -1,0 +1,99 @@
+{
+  "id": "EUVD-2026-28602",
+  "enisaUuid": "c53f1f46-6f1f-3445-b1cc-c3ad59791751",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdgpu: fix sync handling in amdgpu_dma_buf_move_notify\n\nInvalidating a dmabuf will impact other users of the shared BO.\nIn the scenario where process A moves the BO, it needs to inform\nprocess B about the move and process B will need to update its\npage table.\n\nThe commit fixes a synchronisation bug caused by the use of the\nticket: it made amdgpu_vm_handle_moved behave as if updating\nthe page table immediately was correct but in this case it's not.\n\nAn example is the following scenario, with 2 GPUs and glxgears\nrunning on GPU0 and Xorg running on GPU1, on a system where P2P\nPCI isn't supported:\n\nglxgears:\n  export linear buffer from GPU0 and import using GPU1\n  submit frame rendering to GPU0\n  submit tiled->linear blit\nXorg:\n  copy of linear buffer\n\nThe sequence of jobs would be:\n  drm_sched_job_run                       # GPU0, frame rendering\n  drm_sched_job_queue                     # GPU0, blit\n  drm_sched_job_done                      # GPU0, frame rendering\n  drm_sched_job_run                       # GPU0, blit\n  move linear buffer for GPU1 access      #\n  amdgpu_dma_buf_move_notify -> update pt # GPU0\n\nIt this point the blit job on GPU0 is still running and would\nlikely produce a page fault.",
+  "datePublished": "May 8, 2026, 1:26:13 PM",
+  "dateUpdated": "May 8, 2026, 1:26:13 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/82a7ea35a1526bef8ae170c33ff80e5db7728961",
+    "https://git.kernel.org/stable/c/89a9389ad70d3c69538e59d87df67d407aef4c26",
+    "https://git.kernel.org/stable/c/3307459eb3583115264421e859858d1f90f3694a",
+    "https://git.kernel.org/stable/c/b18fc0ab837381c1a6ef28386602cd888f2d9edf"
+  ],
+  "aliases": [
+    "CVE-2026-43318"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1cc48873-896b-30f4-b125-12ce3c9fa377",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "22cb000a-de24-3db8-9720-d0817c8981c3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.7"
+    },
+    {
+      "id": "3d4f4bc6-1dec-377d-acc0-76cb5d53bf38",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a448cb003edcb4b63d0a9c95f3faab724e6150fb <89a9389ad70d3c69538e59d87df67d407aef4c26"
+    },
+    {
+      "id": "4ffd0f71-da0c-361e-a7a2-2c686edd0d79",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.16"
+    },
+    {
+      "id": "5b235e1d-5c15-3d1a-8c16-d7f9f298f73a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.75"
+    },
+    {
+      "id": "712759b5-d807-39bd-9e51-48726008e4b0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.6"
+    },
+    {
+      "id": "84a00301-b316-3135-9b1d-5598b145be58",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "c8161e35-87fa-33e7-9abf-8b1c3305cbfe",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a448cb003edcb4b63d0a9c95f3faab724e6150fb <b18fc0ab837381c1a6ef28386602cd888f2d9edf"
+    },
+    {
+      "id": "d82554ce-5424-3230-b4ba-cab50f1f1256",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a448cb003edcb4b63d0a9c95f3faab724e6150fb <82a7ea35a1526bef8ae170c33ff80e5db7728961"
+    },
+    {
+      "id": "ea85ff3c-9cba-3b27-bfc5-3964b8bd945c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "a448cb003edcb4b63d0a9c95f3faab724e6150fb <3307459eb3583115264421e859858d1f90f3694a"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c3d8369e-f872-3a6f-a3e1-41752f65ec67",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

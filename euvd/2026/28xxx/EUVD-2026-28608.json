@@ -1,0 +1,144 @@
+{
+  "id": "EUVD-2026-28608",
+  "enisaUuid": "15506f02-eabc-3b37-b432-b7ced29e3c22",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nUSB: dummy-hcd: Fix interrupt synchronization error\n\nThis fixes an error in synchronization in the dummy-hcd driver.  The\nerror has a somewhat involved history.  The synchronization mechanism\nwas introduced by commit 7dbd8f4cabd9 (\"USB: dummy-hcd: Fix erroneous\nsynchronization change\"), which added an emulated \"interrupts enabled\"\nflag together with code emulating synchronize_irq() (it waits until\nall current handler callbacks have returned).\n\nBut the emulated interrupt-disable occurred too late, after the driver\ncontaining the handler callback routines had been told that it was\nunbound and no more callbacks would occur.  Commit 4a5d797a9f9c (\"usb:\ngadget: dummy_hcd: fix gpf in gadget_setup\") tried to fix this by\nmoving the synchronize_irq() emulation code from dummy_stop() to\ndummy_pullup(), which runs before the unbind callback.\n\nThere still were races, though, because the emulated interrupt-disable\nstill occurred too late.  It couldn't be moved to dummy_pullup(),\nbecause that routine can be called for reasons other than an impending\nunbind.  Therefore commits 7dc0c55e9f30 (\"USB: UDC core: Add\nudc_async_callbacks gadget op\") and 04145a03db9d (\"USB: UDC: Implement\nudc_async_callbacks in dummy-hcd\") added an API allowing the UDC core\nto tell dummy-hcd exactly when emulated interrupts and their callbacks\nshould be disabled.\n\nThat brings us to the current state of things, which is still wrong\nbecause the emulated synchronize_irq() occurs before the emulated\ninterrupt-disable!  That's no good, beause it means that more emulated\ninterrupts can occur after the synchronize_irq() emulation has run,\nleading to the possibility that a callback handler may be running when\nthe gadget driver is unbound.\n\nTo fix this, we have to move the synchronize_irq() emulation code yet\nagain, to the dummy_udc_async_callbacks() routine, which takes care of\nenabling and disabling emulated interrupt requests.  The\nsynchronization will now run immediately after emulated interrupts are\ndisabled, which is where it belongs.",
+  "datePublished": "May 8, 2026, 1:31:08 PM",
+  "dateUpdated": "May 8, 2026, 1:31:08 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d847f375b1bcea713143bc02720d13d2d01b012a",
+    "https://git.kernel.org/stable/c/cbf7df5e5d27cd5bea92ee9a75a4b28dbcc718d4",
+    "https://git.kernel.org/stable/c/5aa776c8615bea3b1eaeec87b0788375800ead4f",
+    "https://git.kernel.org/stable/c/94d4fab1dd9e64f45449bcc7d6a5acf796b13015",
+    "https://git.kernel.org/stable/c/5687a09776069bd915560021c9728ca528440128",
+    "https://git.kernel.org/stable/c/8bcd80219d8e10e660bf29b20e41bb8beb4e4cb7",
+    "https://git.kernel.org/stable/c/2ca9e46f8f1f5a297eb0ac83f79d35d5b3a02541"
+  ],
+  "aliases": [
+    "CVE-2026-43324"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1583b132-2862-34c3-a4b0-1ccd99d728b0",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "04145a03db9d78469e0817ab3a767c76c0fb0947 <94d4fab1dd9e64f45449bcc7d6a5acf796b13015"
+    },
+    {
+      "id": "17751ab8-2490-3941-ae86-fd6b81c31e84",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.12"
+    },
+    {
+      "id": "3b689dfc-50ea-35b3-a427-7d7005f1892f",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.134"
+    },
+    {
+      "id": "490be0bb-e9eb-3cc5-8a72-aea3924d9db3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.81"
+    },
+    {
+      "id": "5025666a-a836-3011-9283-1b0af5e913ba",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "04145a03db9d78469e0817ab3a767c76c0fb0947 <d847f375b1bcea713143bc02720d13d2d01b012a"
+    },
+    {
+      "id": "6be36e71-61d6-3705-901a-73d16e942c17",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "04145a03db9d78469e0817ab3a767c76c0fb0947 <5687a09776069bd915560021c9728ca528440128"
+    },
+    {
+      "id": "97a8745c-414e-3fbf-8b6a-c19db8efc1d9",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 5.15.203"
+    },
+    {
+      "id": "9f8caae0-ab51-3529-a040-1601b34f9639",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "04145a03db9d78469e0817ab3a767c76c0fb0947 <2ca9e46f8f1f5a297eb0ac83f79d35d5b3a02541"
+    },
+    {
+      "id": "aa8174e0-6d8c-3320-9bb2-e46702f8adcd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.22"
+    },
+    {
+      "id": "b6cba485-1ca7-364c-8c59-a87f4c1c9d6c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "04145a03db9d78469e0817ab3a767c76c0fb0947 <cbf7df5e5d27cd5bea92ee9a75a4b28dbcc718d4"
+    },
+    {
+      "id": "b9ca74f5-e436-374f-87d8-3fefa2b4e927",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.1.168"
+    },
+    {
+      "id": "df628b62-fc81-33c7-86fb-63c37c517a65",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "04145a03db9d78469e0817ab3a767c76c0fb0947 <8bcd80219d8e10e660bf29b20e41bb8beb4e4cb7"
+    },
+    {
+      "id": "eea40e91-5484-3ad7-9f89-c7fc7e6fd05a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "04145a03db9d78469e0817ab3a767c76c0fb0947 <5aa776c8615bea3b1eaeec87b0788375800ead4f"
+    },
+    {
+      "id": "f56e7379-251b-3203-b23b-10d4f928b05c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "fcfa66ab-a818-3a49-b252-f3e8845a30c3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ff0f338b-0f51-387c-9c8e-947447c0633d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "5.14"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3318e5ba-3408-35f6-9c04-7716f47ebf6b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
