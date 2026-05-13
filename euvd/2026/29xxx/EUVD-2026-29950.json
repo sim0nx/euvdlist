@@ -1,0 +1,45 @@
+{
+  "id": "EUVD-2026-29950",
+  "enisaUuid": "91f09931-e822-3c02-a8de-e17f4fcb8fe6",
+  "description": "Allocation of Resources Without Limits or Throttling vulnerability in mtrudel bandit allows unauthenticated remote denial of service via memory exhaustion.\n\nThe chunked clause of 'Elixir.Bandit.HTTP1.Socket':read_data/2 in lib/bandit/http1/socket.ex ignores the caller-supplied :length option when reading HTTP/1 chunked request bodies. Instead of capping the accumulated body at the configured limit (e.g. Plug.Parsers' default 8 MB), do_read_chunked_data!/5 buffers every received chunk into an iolist unconditionally and materializes the entire body as a single binary. The function always returns {:ok, body, ...}, so callers cannot interpose a 413 response.\n\nBecause Plug.Parsers runs before routing and authentication in the standard Phoenix endpoint, an unauthenticated attacker needs no valid route or credentials. Sending a single Transfer-Encoding: chunked POST request with an arbitrarily large body to any path causes the BEAM process to exhaust available memory and be terminated by the OS OOM killer.\n\nThe content-length path in the same function correctly enforces the limit and is not affected.\n\nThis issue affects bandit: from 1.4.0 before 1.11.1.",
+  "datePublished": "May 13, 2026, 1:36:09 PM",
+  "dateUpdated": "May 13, 2026, 1:48:03 PM",
+  "baseScore": 8.7,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/mtrudel/bandit/security/advisories/GHSA-9q9q-324x-93r2",
+    "https://cna.erlef.org/cves/CVE-2026-39803.html",
+    "https://osv.dev/vulnerability/EEF-CVE-2026-39803",
+    "https://github.com/mtrudel/bandit/commit/ae3520dfdbfab115c638f8c7f6f6b805db34e1ab"
+  ],
+  "aliases": [
+    "CVE-2026-39803"
+  ],
+  "assigner": "EEF",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1742be6d-6840-398d-90ec-211c82739c99",
+      "product": {
+        "name": "bandit"
+      },
+      "product_version": "903e209a521bc216b9f9065c01ae9a0cac2d5a10 <ae3520dfdbfab115c638f8c7f6f6b805db34e1ab"
+    },
+    {
+      "id": "f5788f90-a08e-33fc-b065-7bf32999edc5",
+      "product": {
+        "name": "bandit"
+      },
+      "product_version": "1.4.0 <1.11.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "78a04871-0eeb-3ee4-8337-7593e5cd0a4f",
+      "vendor": {
+        "name": "mtrudel"
+      }
+    }
+  ]
+}
