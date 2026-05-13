@@ -1,0 +1,99 @@
+{
+  "id": "EUVD-2026-30022",
+  "enisaUuid": "05cd86f5-867e-32c9-9742-f6d60e7e4e4f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\narm64: contpte: fix set_access_flags() no-op check for SMMU/ATS faults\n\ncontpte_ptep_set_access_flags() compared the gathered ptep_get() value\nagainst the requested entry to detect no-ops. ptep_get() ORs AF/dirty\nfrom all sub-PTEs in the CONT block, so a dirty sibling can make the\ntarget appear already-dirty. When the gathered value matches entry, the\nfunction returns 0 even though the target sub-PTE still has PTE_RDONLY\nset in hardware.\n\nFor a CPU with FEAT_HAFDBS this gathered view is fine, since hardware may\nset AF/dirty on any sub-PTE and CPU TLB behavior is effectively gathered\nacross the CONT range. But page-table walkers that evaluate each\ndescriptor individually (e.g. a CPU without DBM support, or an SMMU\nwithout HTTU, or with HA/HD disabled in CD.TCR) can keep faulting on the\nunchanged target sub-PTE, causing an infinite fault loop.\n\nGathering can therefore cause false no-ops when only a sibling has been\nupdated:\n - write faults: target still has PTE_RDONLY (needs PTE_RDONLY cleared)\n - read faults:  target still lacks PTE_AF\n\nFix by checking each sub-PTE against the requested AF/dirty/write state\n(the same bits consumed by __ptep_set_access_flags()), using raw\nper-PTE values rather than the gathered ptep_get() view, before\nreturning no-op. Keep using the raw target PTE for the write-bit unfold\ndecision.\n\nPer Arm ARM (DDI 0487) D8.7.1 (\"The Contiguous bit\"), any sub-PTE in a CONT\nrange may become the effective cached translation and software must\nmaintain consistent attributes across the range.",
+  "datePublished": "May 13, 2026, 3:08:32 PM",
+  "dateUpdated": "May 13, 2026, 3:08:32 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/05d239f2c95e66e27e7fb4e99ee07eb56e3e34b0",
+    "https://git.kernel.org/stable/c/6f92a7a8b48a523f910ef25dd83808710724f59b",
+    "https://git.kernel.org/stable/c/09d620555e59768776090073a2c59d2bc8506eb3",
+    "https://git.kernel.org/stable/c/97c5550b763171dbef61e6239cab372b9f9cd4a2"
+  ],
+  "aliases": [
+    "CVE-2026-43486"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "01d22cd9-d4bd-3a36-ba58-e8cb523f562d",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.19.9"
+    },
+    {
+      "id": "1359b40d-a5b9-381a-b888-364a6fa99399",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4602e5757bcceb231c3a13c36c373ad4a750eddb <09d620555e59768776090073a2c59d2bc8506eb3"
+    },
+    {
+      "id": "55456c89-1e38-3076-a437-e856f95358fd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.19"
+    },
+    {
+      "id": "72d953b3-9b9d-31b5-9587-5e45f044c448",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "6.9"
+    },
+    {
+      "id": "adf971ab-1eef-35af-bd55-9055c31f6a8e",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4602e5757bcceb231c3a13c36c373ad4a750eddb <97c5550b763171dbef61e6239cab372b9f9cd4a2"
+    },
+    {
+      "id": "b0d29d44-88ef-328f-94fd-379eb3b3b263",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4602e5757bcceb231c3a13c36c373ad4a750eddb <05d239f2c95e66e27e7fb4e99ee07eb56e3e34b0"
+    },
+    {
+      "id": "c2c5d242-7523-333d-b909-e00f75ae2b67",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "db2218e2-929d-3372-9476-cd04ce761f78",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.78"
+    },
+    {
+      "id": "fdc4e910-4089-3b3d-a789-17b82e97c26c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "4602e5757bcceb231c3a13c36c373ad4a750eddb <6f92a7a8b48a523f910ef25dd83808710724f59b"
+    },
+    {
+      "id": "fed3effc-88ca-3dba-876e-a82d8c61013a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "be6c48be-946d-3110-8d29-e6869a2d2125",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
