@@ -1,0 +1,100 @@
+{
+  "id": "EUVD-2026-31273",
+  "enisaUuid": "1b2a9804-3f72-3984-a316-eaa94fd67c99",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfbdev: udlfb: add vm_ops to dlfb_ops_mmap to prevent use-after-free\n\ndlfb_ops_mmap() uses remap_pfn_range() to map vmalloc framebuffer pages\nto userspace but sets no vm_ops on the VMA. This means the kernel cannot\ntrack active mmaps. When dlfb_realloc_framebuffer() replaces the backing\nbuffer via FBIOPUT_VSCREENINFO, existing mmap PTEs are not invalidated.\nOn USB disconnect, dlfb_ops_destroy() calls vfree() on the old pages\nwhile userspace PTEs still reference them, resulting in a use-after-free:\nthe process retains read/write access to freed kernel pages.\n\nAdd vm_operations_struct with open/close callbacks that maintain an\natomic mmap_count on struct dlfb_data. In dlfb_realloc_framebuffer(),\ncheck mmap_count and return -EBUSY if the buffer is currently mapped,\npreventing buffer replacement while userspace holds stale PTEs.\n\nTested with PoC using dummy_hcd + raw_gadget USB device emulation.",
+  "datePublished": "May 21, 2026, 12:12:47 PM",
+  "dateUpdated": "May 21, 2026, 12:12:47 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/4f312c30f0368e8d2a76aa650dff73f23490b5e7",
+    "https://git.kernel.org/stable/c/18dd358de72d57993422cbb5dfb29ccd74efe192",
+    "https://git.kernel.org/stable/c/da9b065cedfd3b574f229d5be594e6aa47a27ae6",
+    "https://git.kernel.org/stable/c/a2c53a3822ee26e8d758071815b9ed3bf6669fc1",
+    "https://git.kernel.org/stable/c/8de779dc40d35d39fa07387b6f921eb11df0f511"
+  ],
+  "aliases": [
+    "CVE-2026-43497"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "14473b27-6d7d-36e0-91df-48c53f8d29fc",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <da9b065cedfd3b574f229d5be594e6aa47a27ae6"
+    },
+    {
+      "id": "5427f631-a42c-356f-8aeb-9ef5449ace45",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <8de779dc40d35d39fa07387b6f921eb11df0f511"
+    },
+    {
+      "id": "74444393-d45c-3b7f-a8fe-b8349c8c02cd",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.1-rc3"
+    },
+    {
+      "id": "7ae547d0-f54b-3786-bf93-acf875f6636a",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.6.140"
+    },
+    {
+      "id": "89e72e0a-56a8-3e30-9230-8c1750911677",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.18.30"
+    },
+    {
+      "id": "9f59ecbd-a072-382f-8ca8-2b6bbfd13a08",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a2c53a3822ee26e8d758071815b9ed3bf6669fc1"
+    },
+    {
+      "id": "be6c2016-bf2f-3d71-ac90-a0f62cd60da6",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 6.12.88"
+    },
+    {
+      "id": "cd31161a-ca5a-384b-af14-e1d3d7117794",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4f312c30f0368e8d2a76aa650dff73f23490b5e7"
+    },
+    {
+      "id": "d33b5b75-ff4f-3276-9d6c-c40aaec3e87c",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <18dd358de72d57993422cbb5dfb29ccd74efe192"
+    },
+    {
+      "id": "dcc253e5-735f-3881-a117-e587b2dd7da3",
+      "product": {
+        "name": "Linux"
+      },
+      "product_version": "patch: 7.0.7"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a6e59266-4ccb-318d-aba7-448f9f03c13b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
