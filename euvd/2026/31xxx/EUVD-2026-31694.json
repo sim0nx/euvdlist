@@ -1,0 +1,45 @@
+{
+  "id": "EUVD-2026-31694",
+  "enisaUuid": "63ed2da5-8baf-31c4-8c05-e0cba1a6f595",
+  "description": "Allocation of Resources Without Limits or Throttling vulnerability in benoitc hackney allows Flooding. The WebSocket client in src/hackney_ws.erl imposes no upper bound on memory consumption in three code paths. First, read_handshake_response/3 accumulates received bytes into a growing buffer with no size cap; the per-receive timeout resets on every chunk, so a server that streams bytes without ever sending \\r\\n\\r\\n causes the buffer to grow until memory is exhausted. Second, parse_payload/9 and parse_active_payload/8 do not validate the declared frame payload length against any limit; because RFC 6455 allows payload lengths up to 2^63-1 bytes, a server that announces a very large frame and dribbles bytes causes the accumulation buffer to grow until OOM. Third, the frag_buffer field in #ws_data{} accumulates continuation frames indefinitely; a server that sends an endless stream of non-final (nofin) fragmented frames without ever sending a final (fin) frame grows frag_buffer without bound.\n\nIn all three cases the attacker only needs to control the WebSocket server the hackney client connects to, with no authentication or special client configuration required.\n\nThis issue affects hackney: from 2.0.0 before 4.0.1.",
+  "datePublished": "May 25, 2026, 2:00:49 PM",
+  "dateUpdated": "May 25, 2026, 2:00:49 PM",
+  "baseScore": 8.7,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/benoitc/hackney/security/advisories/GHSA-q8jg-fgj4-fphf",
+    "https://cna.erlef.org/cves/CVE-2026-47073.html",
+    "https://osv.dev/vulnerability/EEF-CVE-2026-47073",
+    "https://github.com/benoitc/hackney/commit/ce0109e2970ace6e20ff29bae9d05c3ac22ec6dc"
+  ],
+  "aliases": [
+    "CVE-2026-47073"
+  ],
+  "assigner": "EEF",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "878f5636-72d4-3ee1-81d4-15d2e5c6befa",
+      "product": {
+        "name": "hackney"
+      },
+      "product_version": "690cecaf236fba49526da404a5bc889a24367a3e <ce0109e2970ace6e20ff29bae9d05c3ac22ec6dc"
+    },
+    {
+      "id": "d8ebd856-3b84-3aaa-a39f-b8f732eb1388",
+      "product": {
+        "name": "hackney"
+      },
+      "product_version": "2.0.0 <4.0.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "10fb2d23-8787-3327-a97e-0af98f57c6ed",
+      "vendor": {
+        "name": "benoitc"
+      }
+    }
+  ]
+}
