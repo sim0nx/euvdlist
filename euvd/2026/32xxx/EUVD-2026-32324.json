@@ -1,0 +1,170 @@
+{
+  "id": "EUVD-2026-32324",
+  "enisaUuid": "6135c8bd-f417-309c-b723-fe835a7ffa96",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\next4: don't zero the entire extent if EXT4_EXT_DATA_PARTIAL_VALID1\n\nWhen allocating initialized blocks from a large unwritten extent, or\nwhen splitting an unwritten extent during end I/O and converting it to\ninitialized, there is currently a potential issue of stale data if the\nextent needs to be split in the middle.\n\n       0  A      B  N\n       [UUUUUUUUUUUU]    U: unwritten extent\n       [--DDDDDDDD--]    D: valid data\n          |<-  ->| ----> this range needs to be initialized\n\next4_split_extent() first try to split this extent at B with\nEXT4_EXT_DATA_ENTIRE_VALID1 and EXT4_EXT_MAY_ZEROOUT flag set, but\next4_split_extent_at() failed to split this extent due to temporary lack\nof space. It zeroout B to N and mark the entire extent from 0 to N\nas written.\n\n       0  A      B  N\n       [WWWWWWWWWWWW]    W: written extent\n       [SSDDDDDDDDZZ]    Z: zeroed, S: stale data\n\next4_split_extent() then try to split this extent at A with\nEXT4_EXT_DATA_VALID2 flag set. This time, it split successfully and left\na stale written extent from 0 to A.\n\n       0  A      B   N\n       [WW|WWWWWWWWWW]\n       [SS|DDDDDDDDZZ]\n\nFix this by pass EXT4_EXT_DATA_PARTIAL_VALID1 to ext4_split_extent_at()\nwhen splitting at B, don't convert the entire extent to written and left\nit as unwritten after zeroing out B to N. The remaining work is just\nlike the standard two-part split. ext4_split_extent() will pass the\nEXT4_EXT_DATA_VALID2 flag when it calls ext4_split_extent_at() for the\nsecond time, allowing it to properly handle the split. If the split is\nsuccessful, it will keep extent from 0 to A as unwritten.",
+  "datePublished": "May 27, 2026, 12:15:37 PM",
+  "dateUpdated": "May 27, 2026, 12:15:37 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/58ddae5d77b1db3a27b891c75a8fa120239ac092",
+    "https://git.kernel.org/stable/c/d17857b4fb9ba5745b59be0ef38fd532991fccbf",
+    "https://git.kernel.org/stable/c/d67c8ecf3d8fda9b8ef80e6f665d84b6d6ac9d88",
+    "https://git.kernel.org/stable/c/7015fcf473796e1d2d876f241bd9e0c36f3d4eef",
+    "https://git.kernel.org/stable/c/1bf6974822d1dba86cf11b5f05498581cf3488a2"
+  ],
+  "aliases": [
+    "CVE-2026-45858"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1ecb3bd2-58bb-366d-974d-a15e92adcc79",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <58ddae5d77b1db3a27b891c75a8fa120239ac092"
+    },
+    {
+      "id": "3aa2c68f-8954-31e7-bafe-328a7da13e8a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.6.130"
+    },
+    {
+      "id": "3ee8dfde-110c-391b-9a0d-a62e4a1da32e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d67c8ecf3d8fda9b8ef80e6f665d84b6d6ac9d88"
+    },
+    {
+      "id": "46e6a86b-5e11-39fe-a756-1fecc410f0c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.19.4"
+    },
+    {
+      "id": "5a905b27-e98a-33cd-9d2e-946d561e990e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <7015fcf473796e1d2d876f241bd9e0c36f3d4eef"
+    },
+    {
+      "id": "646d9fab-6041-377f-8111-4392097f867b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.130"
+    },
+    {
+      "id": "693d4ee9-2723-3a7c-b292-4c74a8d4264c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.75"
+    },
+    {
+      "id": "807c3ad3-a342-3e47-a29b-cff1ecfe954c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.75"
+    },
+    {
+      "id": "821e3189-0e6f-35e6-bb08-853a96fa6811",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.14"
+    },
+    {
+      "id": "9ab544d3-31f4-3248-9275-d366e84170ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.14"
+    },
+    {
+      "id": "b3393539-8cfd-3e7e-a2c2-9442c0ddd07f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "b631dea9-61ea-3075-b85b-8dc331f6116f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.19.4"
+    },
+    {
+      "id": "c6a827cb-b2b6-38b2-9c32-22efe14ea9d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <1bf6974822d1dba86cf11b5f05498581cf3488a2"
+    },
+    {
+      "id": "dd892725-fa64-3a0b-8688-60cdc25772a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d17857b4fb9ba5745b59be0ef38fd532991fccbf"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6c98ba1b-3e6e-341b-b027-a87267372b73",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

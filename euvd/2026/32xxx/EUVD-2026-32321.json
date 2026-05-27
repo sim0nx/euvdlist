@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-32321",
+  "enisaUuid": "8522106f-a271-3784-b3f1-0f61437f2301",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nata: libata-scsi: avoid Non-NCQ command starvation\n\nWhen a non-NCQ command is issued while NCQ commands are being executed,\nata_scsi_qc_issue() indicates to the SCSI layer that the command issuing\nshould be deferred by returning SCSI_MLQUEUE_XXX_BUSY.  This command\ndeferring is correct and as mandated by the ACS specifications since\nNCQ and non-NCQ commands cannot be mixed.\n\nHowever, in the case of a host adapter using multiple submission queues,\nwhen the target device is under a constant load of NCQ commands, there\nare no guarantees that requeueing the non-NCQ command will be executed\nlater and it may be deferred again repeatedly as other submission queues\ncan constantly issue NCQ commands from different CPUs ahead of the\nnon-NCQ command. This can lead to very long delays for the execution of\nnon-NCQ commands, and even complete starvation for these commands in the\nworst case scenario.\n\nSince the block layer and the SCSI layer do not distinguish between\nqueueable (NCQ) and non queueable (non-NCQ) commands, libata-scsi SAT\nimplementation must ensure forward progress for non-NCQ commands in the\npresence of NCQ command traffic. This is similar to what SAS HBAs with a\nhardware/firmware based SAT implementation do.\n\nImplement such forward progress guarantee by limiting requeueing of\nnon-NCQ commands from ata_scsi_qc_issue(): when a non-NCQ command is\nreceived and NCQ commands are in-flight, do not force a requeue of the\nnon-NCQ command by returning SCSI_MLQUEUE_XXX_BUSY and instead return 0\nto indicate that the command was accepted but hold on to the qc using\nthe new deferred_qc field of struct ata_port.\n\nThis deferred qc will be issued using the work item deferred_qc_work\nrunning the function ata_scsi_deferred_qc_work() once all in-flight\ncommands complete, which is checked with the port qc_defer() callback\nreturn value indicating that no further delay is necessary. This check\nis done using the helper function ata_scsi_schedule_deferred_qc() which\nis called from ata_scsi_qc_complete(). This thus excludes this mechanism\nfrom all internal non-NCQ commands issued by ATA EH.\n\nWhen a port deferred_qc is non NULL, that is, the port has a command\nwaiting for the device queue to drain, the issuing of all incoming\ncommands (both NCQ and non-NCQ) is deferred using the regular busy\nmechanism. This simplifies the code and also avoids potential denial of\nservice problems if a user issues too many non-NCQ commands.\n\nFinally, whenever ata EH is scheduled, regardless of the reason, a\ndeferred qc is always requeued so that it can be retried once EH\ncompletes. This is done by calling the function\nata_scsi_requeue_deferred_qc() from ata_eh_set_pending(). This avoids\nthe need for any special processing for the deferred qc in case of NCQ\nerror, link or device reset, or device timeout.",
+  "datePublished": "May 27, 2026, 12:15:31 PM",
+  "dateUpdated": "May 27, 2026, 12:15:31 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ce22aaed011206fed9cbd8c9c2d44718607f31ee",
+    "https://git.kernel.org/stable/c/888cd7e40adb2ef4af1b4d3b6e2e83ad409ae8c2",
+    "https://git.kernel.org/stable/c/5d61a38a60e62750526d94663b69b7ac5c7f07a5",
+    "https://git.kernel.org/stable/c/0ea84089dbf62a92dc7889c79e6b18fc89260808"
+  ],
+  "aliases": [
+    "CVE-2026-45855"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "13105b5d-eff4-3baa-891c-b95e9b11538e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.19.4"
+    },
+    {
+      "id": "2b3454ea-9333-34ce-9471-cc91ff55934b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bdb01301f3ea51a59eff252b06643fc1fe843e57 <5d61a38a60e62750526d94663b69b7ac5c7f07a5"
+    },
+    {
+      "id": "2e267461-7f93-3ee6-b478-2cdc4ce7e34d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bdb01301f3ea51a59eff252b06643fc1fe843e57 <ce22aaed011206fed9cbd8c9c2d44718607f31ee"
+    },
+    {
+      "id": "32eb71d7-0b19-3b77-a43f-74a14735689d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bdb01301f3ea51a59eff252b06643fc1fe843e57 <0ea84089dbf62a92dc7889c79e6b18fc89260808"
+    },
+    {
+      "id": "5aacc254-3325-31d2-9857-881b87cb3dc3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9626ab37-02ea-3918-aa70-e8758d6125c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "b245a359-bcf2-3774-ae35-83c616bc398e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.14"
+    },
+    {
+      "id": "d6b32efa-5ba4-3d54-b076-6766cf0fa5db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10"
+    },
+    {
+      "id": "f113ab4a-ec16-329e-aa7e-5c496164c090",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.77"
+    },
+    {
+      "id": "ffec5de6-20a1-39ce-8e0b-547ba4b02a96",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bdb01301f3ea51a59eff252b06643fc1fe843e57 <888cd7e40adb2ef4af1b4d3b6e2e83ad409ae8c2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "42fcd976-ee8a-3682-b704-b3a4bd70123d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
