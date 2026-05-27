@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-32163",
+  "enisaUuid": "4086b051-c30f-3977-9c20-f8bca494699e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix use-after-free in arena_vm_close on fork\n\narena_vm_open() only bumps vml->mmap_count but never registers the\nchild VMA in arena->vma_list. The vml->vma always points at the\nparent VMA, so after parent munmap the pointer dangles. If the child\nthen calls bpf_arena_free_pages(), zap_pages() reads the stale\nvml->vma triggering use-after-free.\n\nFix this by preventing the arena VMA from being inherited across\nfork with VM_DONTCOPY, and preventing VMA splits via the may_split\ncallback.\n\nAlso reject mremap with a .mremap callback returning -EINVAL. A\nsame-size mremap(MREMAP_FIXED) on the full arena VMA reaches\ncopy_vma() through the following path:\n\n  check_prep_vma()       - returns 0 early: new_len == old_len\n                           skips VM_DONTEXPAND check\n  prep_move_vma()        - vm_start == old_addr and\n                           vm_end == old_addr + old_len\n                           so may_split is never called\n  move_vma()\n    copy_vma_and_data()\n      copy_vma()\n        vm_area_dup()    - copies vm_private_data (vml pointer)\n        vm_ops->open()   - bumps vml->mmap_count\n      vm_ops->mremap()   - returns -EINVAL, rollback unmaps new VMA\n\nThe refcount ensures the rollback's arena_vm_close does not free\nthe vml shared with the original VMA.",
+  "datePublished": "May 27, 2026, 9:24:32 AM",
+  "dateUpdated": "May 27, 2026, 9:24:32 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/723b9fa930cc277c15ce6b9ec9feec828cfac9d7",
+    "https://git.kernel.org/stable/c/d18099f19e53250f8ad2801498b88cec29d9107a",
+    "https://git.kernel.org/stable/c/201128fcc7b213d27ab77bc4e89488b41796480f",
+    "https://git.kernel.org/stable/c/4fddde2a732de60bb97e3307d4eb69ac5f1d2b74"
+  ],
+  "aliases": [
+    "CVE-2026-45837"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "08a7bb46-f155-3eff-b0e8-64bbbe6d5795",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "0bcfebe4-7bc6-3574-91d8-d84647758646",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.30"
+    },
+    {
+      "id": "3113770f-5534-30e0-9141-dbab40cb055e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "317460317a02a1af512697e6e964298dedd8a163 <4fddde2a732de60bb97e3307d4eb69ac5f1d2b74"
+    },
+    {
+      "id": "336ea4a5-60fc-335d-a329-8882bb33c3f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "317460317a02a1af512697e6e964298dedd8a163 <d18099f19e53250f8ad2801498b88cec29d9107a"
+    },
+    {
+      "id": "4454d7ce-cf1a-3896-bfe0-136604a792f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1-rc1"
+    },
+    {
+      "id": "8d199e8a-dc76-368c-b725-c7f918a4cb2a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.7"
+    },
+    {
+      "id": "905dbf78-74d8-33a0-8ce1-423b6f2f855b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.88"
+    },
+    {
+      "id": "a7aae362-92df-37fe-9534-118c55b622c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "317460317a02a1af512697e6e964298dedd8a163 <723b9fa930cc277c15ce6b9ec9feec828cfac9d7"
+    },
+    {
+      "id": "d8dcd650-2057-32fb-9106-a5ec502c4232",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "317460317a02a1af512697e6e964298dedd8a163 <201128fcc7b213d27ab77bc4e89488b41796480f"
+    },
+    {
+      "id": "f1d3fd03-b75f-30fd-ba3b-b6e97f9e75c3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ac3788c7-f6ac-3fdc-9a5e-c12d36f5530e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
