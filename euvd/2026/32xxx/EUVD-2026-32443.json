@@ -1,0 +1,159 @@
+{
+  "id": "EUVD-2026-32443",
+  "enisaUuid": "95914ebc-65ed-355f-a33b-47a9df421dfd",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\njbd2: fix deadlock in jbd2_journal_cancel_revoke()\n\nCommit f76d4c28a46a (\"fs/jbd2: use sleeping version of\n__find_get_block()\") changed jbd2_journal_cancel_revoke() to use\n__find_get_block_nonatomic() which holds the folio lock instead of\ni_private_lock. This breaks the lock ordering (folio -> buffer) and\ncauses an ABBA deadlock when the filesystem blocksize < pagesize:\n\n     T1                                T2\next4_mkdir()\n ext4_init_new_dir()\n  ext4_append()\n   ext4_getblk()\n    lock_buffer()    <- A\n                                   sync_blockdev()\n                                    blkdev_writepages()\n                                     writeback_iter()\n                                      writeback_get_folio()\n                                       folio_lock()   <- B\n     ext4_journal_get_create_access()\n      jbd2_journal_cancel_revoke()\n       __find_get_block_nonatomic()\n        folio_lock()  <- B\n                                     block_write_full_folio()\n                                      lock_buffer()   <- A\n\nThis can occasionally cause generic/013 to hang.\n\nFix by only calling __find_get_block_nonatomic() when the passed\nbuffer_head doesn't belong to the bdev, which is the only case that we\nneed to look up its bdev alias. Otherwise, the lookup is redundant since\nthe found buffer_head is equal to the one we passed in.",
+  "datePublished": "May 27, 2026, 12:57:22 PM",
+  "dateUpdated": "May 27, 2026, 12:57:22 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/dff07cc98fdf6af57a7c054dc09b2050a9d5c287",
+    "https://git.kernel.org/stable/c/2b2fee890250ab647a601124471a334bb01a0790",
+    "https://git.kernel.org/stable/c/bbd943d6a2d566428324b516a37f98328dfb802d",
+    "https://git.kernel.org/stable/c/981fcc5674e67158d24d23e841523eccba19d0e7"
+  ],
+  "aliases": [
+    "CVE-2026-46061"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "10adc255-26ec-3d70-9e58-d40f6c6c72d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1bb7a4b6b3d7dd8da6f5a9d0529d42c22a359e71"
+    },
+    {
+      "id": "167862b1-0573-3c80-9402-bedb262eb78e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.15"
+    },
+    {
+      "id": "20117c15-1264-3623-8d05-e13d51111cb7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f76d4c28a46a9260d85e00dafc8f46d369365d33 <981fcc5674e67158d24d23e841523eccba19d0e7"
+    },
+    {
+      "id": "4b77bfc8-acb0-35f2-9fbf-8cfe7fc582a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.14.9 <6.15"
+    },
+    {
+      "id": "59f82d02-3a30-3a91-a54c-8f86907be8d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12.31 <6.12.86"
+    },
+    {
+      "id": "61394ba3-8602-372e-9bb1-f661ba37a5ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.27"
+    },
+    {
+      "id": "7a3901bc-db51-31b8-b43e-8d70144a9ebb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.86"
+    },
+    {
+      "id": "87649528-edfa-338b-895a-9b5ea9590f55",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f76d4c28a46a9260d85e00dafc8f46d369365d33 <2b2fee890250ab647a601124471a334bb01a0790"
+    },
+    {
+      "id": "89ccb684-35a7-3df3-8374-8e552ea3e076",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1-rc1"
+    },
+    {
+      "id": "a76dcb51-dc8a-3916-8c7a-f31beff33cc4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b0407380-18f8-3c76-b3fa-53ca28529bab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f76d4c28a46a9260d85e00dafc8f46d369365d33 <bbd943d6a2d566428324b516a37f98328dfb802d"
+    },
+    {
+      "id": "cd700ed7-652f-3937-9d25-a5f66904ad04",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.4"
+    },
+    {
+      "id": "e918a426-dea8-3e50-bbf7-9277d619712a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f1c5aa614b5c251f93a6a4c8c26001d5e9e53fd6 <dff07cc98fdf6af57a7c054dc09b2050a9d5c287"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6bf69f77-9632-3b5f-94e5-c5433489698a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

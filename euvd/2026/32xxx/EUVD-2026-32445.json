@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-32445",
+  "enisaUuid": "531922b9-f532-37bf-a97d-42014afeca7e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nx86/shstk: Prevent deadlock during shstk sigreturn\n\nDuring sigreturn the shadow stack signal frame is popped. The kernel does\nthis by reading the shadow stack using normal read accesses. When it can't\nassume the memory is shadow stack, it takes extra steps to makes sure it is\nreading actual shadow stack memory and not other normal readable memory. It\ndoes this by holding the mmap read lock while doing the access and checking\nthe flags of the VMA.\n\nUnfortunately that is not safe. If the read of the shadow stack sigframe\nhits a page fault, the fault handler will try to recursively grab another\nmmap read lock. This normally works ok, but if a writer on another CPU is\nalso waiting, the second read lock could fail and cause a deadlock.\n\nFix this by not holding mmap lock during the read access to userspace.\n\nInstead use mmap_lock_speculate_...() to watch for changes between dropping\nmmap lock and the userspace access. Retry if anything grabbed an mmap write\nlock in between and could have changed the VMA.\n\nThese mmap_lock_speculate_...() helpers use mm::mm_lock_seq, which is only\navailable when PER_VMA_LOCK is configured. So make X86_USER_SHADOW_STACK\ndepend on it. On x86, PER_VMA_LOCK is a default configuration for SMP\nkernels. So drop support for the other configs under the assumption that\nthe !SMP shadow stack user base does not exist.\n\nCurrently there is a check that skips the lookup work when the SSP can be\nassumed to be on a shadow stack. While reorganizing the function, remove\nthe optimization to make the tricky code flows more common, such that\nissues like this cannot escape detection for so long.",
+  "datePublished": "May 27, 2026, 12:57:27 PM",
+  "dateUpdated": "May 27, 2026, 12:57:27 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e2c2b044458cbf22da05264fa707308e8d4f86f9",
+    "https://git.kernel.org/stable/c/d042d69b417515959e49021fef008c9b04a99bd5",
+    "https://git.kernel.org/stable/c/4f3374c990fb2adec06d20fd6d780927811c9aa0",
+    "https://git.kernel.org/stable/c/3d29db827502067626062f5c74dd502d14ab15bc",
+    "https://git.kernel.org/stable/c/9874b2917b9fbc30956fee209d3c4aa47201c64e"
+  ],
+  "aliases": [
+    "CVE-2026-46063"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "022e62bc-dfb1-3f80-a67e-0e6c508de694",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7fad2a432cd35bbf104d2d9d426e74902f22aa95 <3d29db827502067626062f5c74dd502d14ab15bc"
+    },
+    {
+      "id": "12ded9b0-0602-3d00-8a30-5004f9c8d4e7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1-rc1"
+    },
+    {
+      "id": "26cac25a-95c2-3d8f-b1cd-0947cc1eb9bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.4"
+    },
+    {
+      "id": "523d5b8a-6c46-3f9a-a15e-0a56fb46a256",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.88"
+    },
+    {
+      "id": "529eb329-a886-3d19-bcce-32ff1cf855b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.27"
+    },
+    {
+      "id": "5dcf65ca-15f9-3844-8fdb-653e891353ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7fad2a432cd35bbf104d2d9d426e74902f22aa95 <d042d69b417515959e49021fef008c9b04a99bd5"
+    },
+    {
+      "id": "72ee7a6e-ee00-3b9e-a26d-906cae14e6bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7fad2a432cd35bbf104d2d9d426e74902f22aa95 <e2c2b044458cbf22da05264fa707308e8d4f86f9"
+    },
+    {
+      "id": "78b30a39-6202-31fe-9cc2-16957b353437",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.140"
+    },
+    {
+      "id": "b0da2818-8dd3-305f-920a-ba4da7048ed0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7fad2a432cd35bbf104d2d9d426e74902f22aa95 <4f3374c990fb2adec06d20fd6d780927811c9aa0"
+    },
+    {
+      "id": "b9d96eb7-7ade-383d-a865-88f34f6e23c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c5cc408a-22d0-335f-9a87-f7ddc4ef5a4a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7fad2a432cd35bbf104d2d9d426e74902f22aa95 <9874b2917b9fbc30956fee209d3c4aa47201c64e"
+    },
+    {
+      "id": "f039a1a7-c0cf-31ab-8712-73ae06a999bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7315de8e-5d7f-3f71-87a9-b3c059610eb7",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

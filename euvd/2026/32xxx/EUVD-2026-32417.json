@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-32417",
+  "enisaUuid": "ce2762cf-1a70-34ab-875b-c317fa7828ab",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvfio/cdx: Serialize VFIO_DEVICE_SET_IRQS with a per-device mutex\n\nvfio_cdx_set_msi_trigger() reads vdev->config_msi and operates on the\nvdev->cdx_irqs array based on its value, but provides no serialization\nagainst concurrent VFIO_DEVICE_SET_IRQS ioctls.  Two callers can race\nsuch that one observes config_msi as set while another clears it and\nfrees cdx_irqs via vfio_cdx_msi_disable(), resulting in a use-after-free\nof the cdx_irqs array.\n\nAdd a cdx_irqs_lock mutex to struct vfio_cdx_device and acquire it in\nvfio_cdx_set_msi_trigger(), which is the single chokepoint through\nwhich all updates to config_msi, cdx_irqs, and msi_count flow, covering\nboth the ioctl path and the close-device cleanup path.  This keeps the\ntest of config_msi atomic with the subsequent enable, disable, or\ntrigger operations.\n\nDrop the pre-call !cdx_irqs test from vfio_cdx_irqs_cleanup() as part\nof this change: the optimization it provided is redundant with the\n!config_msi early-return inside vfio_cdx_msi_disable(), and leaving the\ntest in place would be an unsynchronized read of state the new lock is\nmeant to protect.",
+  "datePublished": "May 27, 2026, 12:56:46 PM",
+  "dateUpdated": "May 27, 2026, 12:56:46 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ddf96e23c366c566283fce8377928851fa7f5e81",
+    "https://git.kernel.org/stable/c/7b436ade16cc81095d79b79f8efa3af0a4f5c5a2",
+    "https://git.kernel.org/stable/c/7530f34ec0ca1438d45a75dcb43183a1cc92eced",
+    "https://git.kernel.org/stable/c/670e8864b1a218d72f08db40d0103adf38fa1d9b"
+  ],
+  "aliases": [
+    "CVE-2026-46036"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "603ac704-f66a-3f0c-bf4c-c3ae436ce79c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1-rc1"
+    },
+    {
+      "id": "7017e79b-cb60-32f0-ab4e-e1ab6a6b6b03",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "848e447e000c41894ff931dc7c004fd42c8840f8 <ddf96e23c366c566283fce8377928851fa7f5e81"
+    },
+    {
+      "id": "730d2f66-5aea-38f1-8077-5461bf703dbd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "848e447e000c41894ff931dc7c004fd42c8840f8 <7b436ade16cc81095d79b79f8efa3af0a4f5c5a2"
+    },
+    {
+      "id": "7e4e305c-3d4e-3b2f-a238-d372307c95e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "848e447e000c41894ff931dc7c004fd42c8840f8 <670e8864b1a218d72f08db40d0103adf38fa1d9b"
+    },
+    {
+      "id": "ad158b39-b08e-378f-8f3a-5cbe6a9ccefa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.86"
+    },
+    {
+      "id": "b9e204bc-4040-36d1-b78e-caa44030e34a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.4"
+    },
+    {
+      "id": "c9245fd6-7761-352e-badb-046dacb3bde3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "caf47551-c2d6-30e0-9064-9f52d7d33270",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.10"
+    },
+    {
+      "id": "dba157fe-d77d-3b24-9dbf-e49b09e697a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "848e447e000c41894ff931dc7c004fd42c8840f8 <7530f34ec0ca1438d45a75dcb43183a1cc92eced"
+    },
+    {
+      "id": "e13f07cc-f206-3dc3-8c4f-5387df416e77",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.27"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7fd4ebaf-5b28-3ebb-8bd8-38ecf836cf9f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
