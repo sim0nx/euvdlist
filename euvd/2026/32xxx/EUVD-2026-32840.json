@@ -1,0 +1,128 @@
+{
+  "id": "EUVD-2026-32840",
+  "enisaUuid": "0cf0087f-6cc1-3882-9032-43bd4b894b42",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: appletb-kbd: fix UAF in inactivity-timer cleanup path\n\nCommit 38224c472a03 (\"HID: appletb-kbd: fix slab use-after-free bug in\nappletb_kbd_probe\") added timer_delete_sync(&kbd->inactivity_timer) to\nboth the probe close_hw error path and appletb_kbd_remove(), but the\nway it was wired in left the inactivity timer reachable during driver\ntear-down via two distinct windows.\n\nWindow A -- put_device() before timer_delete_sync():\n\n\tput_device(&kbd->backlight_dev->dev);\n\ttimer_delete_sync(&kbd->inactivity_timer);\n\nThe inactivity_timer softirq reads kbd->backlight_dev and calls\nbacklight_device_set_brightness() -> mutex_lock(&ops_lock).  If a\nconcurrent hid_appletb_bl unbind drops the last devm reference\nbetween these two calls, the backlight_device is freed and the\nmutex_lock() touches freed memory.\n\nWindow B -- backlight cleanup before hid_hw_stop():\n\n\tif (kbd->backlight_dev) {\n\t\ttimer_delete_sync(...);\n\t\tput_device(...);\n\t}\n\thid_hw_close(hdev);\n\thid_hw_stop(hdev);\n\nEven after Window A is closed, hid_hw_close()/hid_hw_stop() still run\nafterwards, so a late \".event\" callback from the HID core (USB URB\ncompletion on real Apple hardware) can arrive after\ntimer_delete_sync() drained the softirq but before put_device() drops\nthe reference.  That callback reaches reset_inactivity_timer(), which\ncalls mod_timer() and re-arms the timer.  The freshly re-armed timer\ncan then fire on the about-to-be-freed backlight_device.\n\nBoth windows produce the same KASAN slab-use-after-free:\n\n  BUG: KASAN: slab-use-after-free in __mutex_lock+0x1aab/0x21c0\n  Read of size 8 at addr ffff88803ee9a108 by task swapper/0/0\n  Call Trace:\n   <IRQ>\n   __mutex_lock\n   backlight_device_set_brightness\n   appletb_inactivity_timer\n   call_timer_fn\n   run_timer_softirq\n   handle_softirqs\n  Allocated by task N:\n   devm_backlight_device_register\n   appletb_bl_probe\n  Freed by task M:\n   (concurrent hid_appletb_bl unbind path)\n\nClose both windows at once by reworking the tear-down in\nappletb_kbd_remove() and in the probe close_hw error path so that\n\n 1) hid_hw_close()/hid_hw_stop() run before the backlight cleanup,\n    guaranteeing no further .event callback can fire and re-arm the\n    timer, and\n 2) inside the \"if (kbd->backlight_dev)\" block, timer_delete_sync()\n    runs before put_device(), so the softirq is drained before the\n    final reference is dropped.",
+  "datePublished": "May 28, 2026, 9:40:30 AM",
+  "dateUpdated": "May 28, 2026, 9:40:30 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/59a79938ca5541fe55d675304116b7ea684afef0",
+    "https://git.kernel.org/stable/c/93d989e47bc316c793a69c6a332e053c90e29f02",
+    "https://git.kernel.org/stable/c/4db2af929279c799b5653a39eb0795c72baffca4"
+  ],
+  "aliases": [
+    "CVE-2026-46213"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1164d044-23bf-38c2-92f1-199649d89680",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.32"
+    },
+    {
+      "id": "1408e152-6bb2-3bb9-95e6-cc0a4fd3672a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.15.6 <6.16"
+    },
+    {
+      "id": "1b5853e9-45af-3dd1-b00b-936c56219bb5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "38224c472a038fa9ccd4085511dd9f3d6119dbf9 <4db2af929279c799b5653a39eb0795c72baffca4"
+    },
+    {
+      "id": "3362c679-431d-36fd-95a5-b43375ae8c3b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "39a64cc6-b4e4-3ed7-a5e5-83deafff9f49",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "51720dee3a61ebace36c3dcdd0b4a488e0970f29"
+    },
+    {
+      "id": "436dfeb2-66a9-38aa-b7b0-9e79053746e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a2432444-6093-3f37-bf88-192389e22940",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1-rc4"
+    },
+    {
+      "id": "cb27fc0e-2352-30ee-8f78-41ad9683cdf1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "38224c472a038fa9ccd4085511dd9f3d6119dbf9 <93d989e47bc316c793a69c6a332e053c90e29f02"
+    },
+    {
+      "id": "dc6c1e16-506a-38de-be30-5a55072ed282",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.9"
+    },
+    {
+      "id": "f266fcb7-d8f8-30c1-b788-fb3dde079cb9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "38224c472a038fa9ccd4085511dd9f3d6119dbf9 <59a79938ca5541fe55d675304116b7ea684afef0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "50067233-99fe-3692-82a0-798a43f6a669",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,190 @@
+{
+  "id": "EUVD-2026-32813",
+  "enisaUuid": "d1310313-5428-3601-942e-2f26b8543edc",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: virtio_bt: validate rx pkt_type header length\n\nvirtbt_rx_handle() reads the leading pkt_type byte from the RX skb\nand forwards the remainder to hci_recv_frame() for every\nevent/ACL/SCO/ISO type, without checking that the remaining payload\nis at least the fixed HCI header for that type.\n\nAfter the preceding patch bounds the backend-supplied used.len to\n[1, VIRTBT_RX_BUF_SIZE], a one-byte completion still reaches\nhci_recv_frame() with skb->len already pulled to 0. If the byte\nhappened to be HCI_ACLDATA_PKT, the ACL-vs-ISO classification\nfast-path in hci_dev_classify_pkt_type() dereferences\nhci_acl_hdr(skb)->handle whenever the HCI device has an active\nCIS_LINK, BIS_LINK, or PA_LINK connection, reading two bytes of\nuninitialized RX-buffer data. The same hazard exists for every\npacket type the driver accepts because none of the switch cases in\nvirtbt_rx_handle() check skb->len against the per-type minimum HCI\nheader size before handing the frame to the core.\n\nAfter stripping pkt_type, require skb->len to cover the fixed\nheader size for the selected type (event 2, ACL 4, SCO 3, ISO 4)\nbefore calling hci_recv_frame(); drop ratelimited otherwise.\nUnknown pkt_type values still take the original kfree_skb() default\npath.\n\nUse bt_dev_err_ratelimited() because both the length and pkt_type\nvalues come from an untrusted backend that can otherwise flood the\nkernel log.",
+  "datePublished": "May 28, 2026, 9:36:40 AM",
+  "dateUpdated": "May 28, 2026, 9:36:40 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/1e1e509b6fd2a42421745bbcd98bd16daad20904",
+    "https://git.kernel.org/stable/c/2c1143564c71e7497b42d8360a8379ccbb011d3c",
+    "https://git.kernel.org/stable/c/3485c7236c59c8c34a41af1c4b52982437554e79",
+    "https://git.kernel.org/stable/c/f743eab6486965f276c7e3f1700895f014fdc6db",
+    "https://git.kernel.org/stable/c/daf23014e5d975e72ea9c02b5160d3fcf070ea47"
+  ],
+  "aliases": [
+    "CVE-2026-46186"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0a847859-f706-3a8b-85f2-ca67051bcd00",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "160fbcf3bfb93c3c086427f9f4c8bc70f217e9be <3485c7236c59c8c34a41af1c4b52982437554e79"
+    },
+    {
+      "id": "1690c414-17c9-36cd-86d8-2af4e5c9a0df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "22e91638-cb31-3b3e-9e47-3077f4456336",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.30"
+    },
+    {
+      "id": "2e02edcc-fbcb-3e61-81cf-c8e39fe02743",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "160fbcf3bfb93c3c086427f9f4c8bc70f217e9be <2c1143564c71e7497b42d8360a8379ccbb011d3c"
+    },
+    {
+      "id": "325447ad-1a1b-3afd-a107-47fa7c8d2495",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "160fbcf3bfb93c3c086427f9f4c8bc70f217e9be <f743eab6486965f276c7e3f1700895f014fdc6db"
+    },
+    {
+      "id": "5a6356b5-b35c-3b7d-8bce-1e7be9bf89af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.140"
+    },
+    {
+      "id": "5f8a22ed-ca8f-36d4-989c-98cec74dfab1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1-rc3"
+    },
+    {
+      "id": "615ed144-fee7-323f-80d4-f4840b1c0dce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.78 <5.16"
+    },
+    {
+      "id": "65d53880-1209-3662-8a91-80a6bc427945",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.7"
+    },
+    {
+      "id": "70ed1606-736d-34c3-b992-b2158fa863f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.0.8 <6.1"
+    },
+    {
+      "id": "ac12e2cc-2d29-3d89-b847-46ec16fb2c63",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "160fbcf3bfb93c3c086427f9f4c8bc70f217e9be <daf23014e5d975e72ea9c02b5160d3fcf070ea47"
+    },
+    {
+      "id": "ac173832-0a13-3782-8ade-54af132731b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.88"
+    },
+    {
+      "id": "b7da610b-0999-3c4f-8dcf-7df11b2e450c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "160fbcf3bfb93c3c086427f9f4c8bc70f217e9be <1e1e509b6fd2a42421745bbcd98bd16daad20904"
+    },
+    {
+      "id": "c42ada1a-8a5a-3c8b-b4d7-9192ddd16933",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9b67438e315b925a699f0178f4a48baf3d2d6ef4"
+    },
+    {
+      "id": "ce313275-e546-3779-a440-7e4b1434042f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cf2719a21fdb9d4c8e9c834d279163609bef575d"
+    },
+    {
+      "id": "ffcce25a-23dc-37b3-b212-533f6570a3de",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c70a957f-5eb5-39da-86db-ec1c575c40b2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

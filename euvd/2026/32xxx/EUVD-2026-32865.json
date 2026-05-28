@@ -1,0 +1,180 @@
+{
+  "id": "EUVD-2026-32865",
+  "enisaUuid": "5fd07832-6152-3def-9bff-5f9bcda9e331",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\neventfs: Hold eventfs_mutex and SRCU when remount walks events\n\nCommit 340f0c7067a9 (\"eventfs: Update all the eventfs_inodes from the\nevents descriptor\") had eventfs_set_attrs() recurse through ei->children\non remount.  The walk only holds the rcu_read_lock() taken by\ntracefs_apply_options() over tracefs_inodes, which is wrong:\n\n  - list_for_each_entry over ei->children races with the list_del_rcu()\n    in eventfs_remove_rec() -- LIST_POISON1 deref, same shape as\n    d2603279c7d6.\n  - eventfs_inodes are freed via call_srcu(&eventfs_srcu, ...).\n    rcu_read_lock() does not extend an SRCU grace period, so ti->private\n    can be reclaimed under the walk.\n  - The writes to ei->attr race with eventfs_set_attr(), which holds\n    eventfs_mutex.\n\nReproducer:\n\n  while :; do mount -o remount,uid=$((RANDOM%1000)) /sys/kernel/tracing; done &\n  while :; do\n      echo \"p:kp submit_bio\" > /sys/kernel/tracing/kprobe_events\n      echo > /sys/kernel/tracing/kprobe_events\n  done\n\nWrap the events portion of tracefs_apply_options() in\neventfs_remount_lock()/_unlock() that take eventfs_mutex and\nsrcu_read_lock(&eventfs_srcu).  eventfs_set_attrs() doesn't sleep so the\nnested rcu_read_lock() is fine; lockdep_assert_held() pins the contract.\n\nComment in tracefs_drop_inode() said \"RCU cycle\" -- it is SRCU.",
+  "datePublished": "May 28, 2026, 9:35:11 AM",
+  "dateUpdated": "May 28, 2026, 9:35:11 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ae9cd0b46b1890040006a2fc5e905c5d6053fd02",
+    "https://git.kernel.org/stable/c/44e64d8a432837308f4dda3ffe819f1ec092a0ba",
+    "https://git.kernel.org/stable/c/52b109f1b875b912d4ab2c5fdd8c322d47119d9b",
+    "https://git.kernel.org/stable/c/ed2ad73bcb0a7a6cc934097d4853b6d5124c317e",
+    "https://git.kernel.org/stable/c/07004a8c4b572171934390148ee48c4175c77eed"
+  ],
+  "aliases": [
+    "CVE-2026-46106"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0126acfb-8499-363a-a55b-682a5023be21",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "340f0c7067a95281ad13734f8225f49c6cf52067 <52b109f1b875b912d4ab2c5fdd8c322d47119d9b"
+    },
+    {
+      "id": "29f79967-ce97-34d1-88cc-a88bf1e0c191",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "340f0c7067a95281ad13734f8225f49c6cf52067 <07004a8c4b572171934390148ee48c4175c77eed"
+    },
+    {
+      "id": "41920226-49a8-32fa-933e-cfaa86a5ba81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.9.6 <6.10"
+    },
+    {
+      "id": "4667c693-9d8b-3c98-b4f3-bb8de56fac7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.10"
+    },
+    {
+      "id": "50d9433d-b107-3528-8d2b-112a9fc1f921",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "99b86d85f7c73d676c50e8c35748f94dd41389da"
+    },
+    {
+      "id": "62f33785-55d2-3e80-983f-3a68ba8f84f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.30"
+    },
+    {
+      "id": "63c10710-113a-38c8-8b49-5ad1c665ada4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "340f0c7067a95281ad13734f8225f49c6cf52067 <ed2ad73bcb0a7a6cc934097d4853b6d5124c317e"
+    },
+    {
+      "id": "91fc558f-254d-3fea-9cc5-d68ffdbfedb1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a1904ed5-897d-33be-93a0-887997e12ab2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.88"
+    },
+    {
+      "id": "a3ca43b2-fb4a-3eb8-8ec6-84e95b82ae46",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1-rc1"
+    },
+    {
+      "id": "b1bbdac4-4a4b-385e-afe4-3ead1838c1fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.7"
+    },
+    {
+      "id": "c0d1a234-f9a7-3af0-bc78-7b7be1d83043",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.140"
+    },
+    {
+      "id": "c66066cd-748c-3549-856b-d275d3229c8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ec535ed8724d18ae4e714d2277a5b89450659d2 <ae9cd0b46b1890040006a2fc5e905c5d6053fd02"
+    },
+    {
+      "id": "f028a7c3-d0cb-309e-8914-cc0ba654754f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.35 <6.6.140"
+    },
+    {
+      "id": "fdd0a743-d7db-30c9-a6b9-498fd4cfe0c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "340f0c7067a95281ad13734f8225f49c6cf52067 <44e64d8a432837308f4dda3ffe819f1ec092a0ba"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f3e03f5e-af14-3cd9-90b8-846460c49466",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

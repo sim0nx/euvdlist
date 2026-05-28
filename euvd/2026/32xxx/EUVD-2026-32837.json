@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-32837",
+  "enisaUuid": "0770f906-c0b2-32a1-bdab-15b497ab496c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: iris: fix use-after-free of fmt_src during MBPF check\n\nDuring concurrency testing, multiple instances can run in parallel, and\neach instance uses its own inst->lock while the core->lock protects the\nlist of active instances. The race happens because these locks cover\ndifferent scopes, inst->lock protects only the internals of a single\ninstance, while the Macro Blocks Per Frame (MBPF) checker walks the\ncore list under core->lock and reads fields like fmt_src->width and\nfmt_src->height. At the same time, iris_close() may free fmt_src and\nfmt_dst under inst->lock while the instance is still present in the core\nlist. This allows a situation where the MBPF checker, still iterating\nthrough the core list, reaches an instance whose fmt_src was already\nfreed by another thread and ends up dereferencing a dangling pointer,\nresulting in a use-after-free. This happens because the MBPF checker\nassumes that any instance in the core list is fully valid, but the\nfreeing of fmt_src and fmt_dst without removing the instance from the\ncore list is not correct.\n\nThe correct ordering is to defer freeing fmt_src and fmt_dst until after\nthe instance has been removed from the core list and all teardown under\nthe core lock has completed, ensuring that no dangling pointers are ever\nexposed during MBPF checks.",
+  "datePublished": "May 28, 2026, 9:40:27 AM",
+  "dateUpdated": "May 28, 2026, 9:40:27 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/494ffd1712a588e590e6b1e9f876a8c8b24a9180",
+    "https://git.kernel.org/stable/c/3d9593ad1a58c5acc3e5fa2a48222bb7632e6812"
+  ],
+  "aliases": [
+    "CVE-2026-46210"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "041cf211-72ce-3b77-b36c-605eac809c59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ad964ad5656668399f00c76707f0d063b64a4b1 <3d9593ad1a58c5acc3e5fa2a48222bb7632e6812"
+    },
+    {
+      "id": "05758e02-7deb-3402-a5a9-aac9e96c00a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.9"
+    },
+    {
+      "id": "126a5793-a482-37f7-b2f7-72e5fec0b566",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ad964ad5656668399f00c76707f0d063b64a4b1 <494ffd1712a588e590e6b1e9f876a8c8b24a9180"
+    },
+    {
+      "id": "936447e0-6fc0-3399-8643-0306adfeef8e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b5aa156d-3667-3269-babe-b3269bdaedd6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1-rc3"
+    },
+    {
+      "id": "da3db7d2-914e-3ad0-9c30-debe2c533839",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.18"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d3e96fe6-30a3-35cc-85a8-6a8382e101e5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
