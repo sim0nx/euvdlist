@@ -1,0 +1,263 @@
+{
+  "id": "EUVD-2026-34112",
+  "enisaUuid": "22455220-c7e7-3bb4-857e-2cfb9e459887",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nMIPS: Work around LLVM bug when gp is used as global register variable\n\nOn MIPS, __current_thread_info is defined as global register variable\nlocating in $gp, and is simply assigned with new address during kernel\nrelocation.\n\nThis however is broken with LLVM, which always restores $gp if it finds\n$gp is clobbered in any form, including when intentionally through a\nglobal register variable. This is against GCC's documentation[1], which\nrequires a callee-saved register used as global register variable not to\nbe restored if it's clobbered.\n\nAs a result, $gp will continue to point to the unrelocated kernel after\nthe epilog of relocate_kernel(), leading to an early crash in init_idle,\n\n[    0.000000] CPU 0 Unable to handle kernel paging request at virtual address 0000000000000000, epc == ffffffff81afada8, ra == ffffffff81afad90\n[    0.000000] Oops[#1]:\n[    0.000000] CPU: 0 UID: 0 PID: 0 Comm: swapper Tainted: G        W           6.19.0-rc5-00262-gd3eeb99bbc99-dirty #188 VOLUNTARY\n[    0.000000] Tainted: [W]=WARN\n[    0.000000] Hardware name: loongson,loongson64v-4core-virtio\n[    0.000000] $ 0   : 0000000000000000 0000000000000000 0000000000000001 0000000000000000\n[    0.000000] $ 4   : ffffffff80b80ec0 ffffffff80b53d48 0000000000000000 00000000000f4240\n[    0.000000] $ 8   : 0000000000000100 ffffffff81d82f80 ffffffff81d82f80 0000000000000001\n[    0.000000] $12   : 0000000000000000 ffffffff81776f58 00000000000005da 0000000000000002\n[    0.000000] $16   : ffffffff80b80e40 0000000000000000 ffffffff80b81614 9800000005dfbe80\n[    0.000000] $20   : 00000000540000e0 ffffffff81980000 0000000000000000 ffffffff80f81c80\n[    0.000000] $24   : 0000000000000a26 ffffffff8114fb90\n[    0.000000] $28   : ffffffff80b50000 ffffffff80b53d40 0000000000000000 ffffffff81afad90\n[    0.000000] Hi    : 0000000000000000\n[    0.000000] Lo    : 0000000000000000\n[    0.000000] epc   : ffffffff81afada8 init_idle+0x130/0x270\n[    0.000000] ra    : ffffffff81afad90 init_idle+0x118/0x270\n[    0.000000] Status: 540000e2\tKX SX UX KERNEL EXL\n[    0.000000] Cause : 00000008 (ExcCode 02)\n[    0.000000] BadVA : 0000000000000000\n[    0.000000] PrId  : 00006305 (ICT Loongson-3)\n[    0.000000] Process swapper (pid: 0, threadinfo=(____ptrval____), task=(____ptrval____), tls=0000000000000000)\n[    0.000000] Stack : 9800000005dfbf00 ffffffff8178e950 0000000000000000 0000000000000000\n[    0.000000]         0000000000000000 ffffffff81970000 000000000000003f ffffffff810a6528\n[    0.000000]         0000000000000001 9800000005dfbe80 9800000005dfbf00 ffffffff81980000\n[    0.000000]         ffffffff810a6450 ffffffff81afb6c0 0000000000000000 ffffffff810a2258\n[    0.000000]         ffffffff81d82ec8 ffffffff8198d010 ffffffff81b67e80 ffffffff8197dd98\n[    0.000000]         ffffffff81d81c80 ffffffff81930000 0000000000000040 0000000000000000\n[    0.000000]         0000000000000000 0000000000000000 0000000000000000 0000000000000000\n[    0.000000]         0000000000000000 000000000000009e ffffffff9fc01000 0000000000000000\n[    0.000000]         0000000000000000 0000000000000000 0000000000000000 0000000000000000\n[    0.000000]         0000000000000000 ffffffff81ae86dc ffffffff81b3c741 0000000000000002\n[    0.000000]         ...\n[    0.000000] Call Trace:\n[    0.000000] [<ffffffff81afada8>] init_idle+0x130/0x270\n[    0.000000] [<ffffffff81afb6c0>] sched_init+0x5c8/0x6c0\n[    0.000000] [<ffffffff81ae86dc>] start_kernel+0x27c/0x7a8\n\nThis bug has been reported to LLVM[2] and affects version from (at\nleast) 18 to 21. Let's work around this by using inline assembly to\nassign $gp before a fix is widely available.",
+  "datePublished": "Jun 3, 2026, 3:49:46 PM",
+  "dateUpdated": "Jun 3, 2026, 3:49:46 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/05bff9b0ae095b2420cfebb4a96759a09334bec6",
+    "https://git.kernel.org/stable/c/1fe3b402b1e97a1718df3be0a1d3eee20133e735",
+    "https://git.kernel.org/stable/c/4dc65b40fb80c2020efbf139b9a38d30f9a37b92",
+    "https://git.kernel.org/stable/c/c0155dee51b9f5f48aaf5c71cae005eb0e36521f",
+    "https://git.kernel.org/stable/c/e3a6498a63394218561065a9a7a597a204f52f6a",
+    "https://git.kernel.org/stable/c/561834f6d6f52b8a1791331e94b2aac753491d2a",
+    "https://git.kernel.org/stable/c/9bc3b0ae5203aba650297fdf3e1e774125e423f2",
+    "https://git.kernel.org/stable/c/30bfc2d6a1132a89a5f1c3b96c59cf3e4d076ea3"
+  ],
+  "aliases": [
+    "CVE-2026-46250"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0828b168-9fb2-342b-9e6f-dff2754b0d8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "0d9fb7d4-5cc1-389b-ad1b-2983c0df9a77",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <5.15.202"
+    },
+    {
+      "id": "10c40e45-7e14-336a-ba2e-bfb49d06fea3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <05bff9b0ae095b2420cfebb4a96759a09334bec6"
+    },
+    {
+      "id": "140d2b32-e4a1-35bb-8fc0-340b93364d08",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.19.4"
+    },
+    {
+      "id": "18958ebe-a308-316a-a05c-85155a479d3b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.19.4"
+    },
+    {
+      "id": "1aa3453f-5706-38d9-ba4c-6fbba53fa834",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.75"
+    },
+    {
+      "id": "1f8e4f55-be00-3cca-83d8-74c57f72ee7f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.1.165"
+    },
+    {
+      "id": "26f4bea2-9302-3d10-9b9f-fc8f6917b7aa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.75"
+    },
+    {
+      "id": "3b586c37-bf6a-3532-b609-6251d3ae5666",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <561834f6d6f52b8a1791331e94b2aac753491d2a"
+    },
+    {
+      "id": "5b14cf91-7bbc-3957-a426-66baf76424c2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <9bc3b0ae5203aba650297fdf3e1e774125e423f2"
+    },
+    {
+      "id": "6bb9b64a-07a1-3eb8-9f63-2e39fe0a2cfd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.6.128"
+    },
+    {
+      "id": "7b99f12c-0bcf-3d7d-aba6-7a0455ae80af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4dc65b40fb80c2020efbf139b9a38d30f9a37b92"
+    },
+    {
+      "id": "7f2ce520-567b-363b-83c2-e22902cc971e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <5.10.252"
+    },
+    {
+      "id": "90f9336b-e473-3aae-b8c5-a090829a463a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c0155dee51b9f5f48aaf5c71cae005eb0e36521f"
+    },
+    {
+      "id": "95a860d8-f004-3d20-8dc7-eed54d1bf169",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e3a6498a63394218561065a9a7a597a204f52f6a"
+    },
+    {
+      "id": "a9e8b7bd-cec2-348e-95cc-981126c65e4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <1fe3b402b1e97a1718df3be0a1d3eee20133e735"
+    },
+    {
+      "id": "bbcf6fbc-b6ed-35e6-95d3-844aa7143d32",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <30bfc2d6a1132a89a5f1c3b96c59cf3e4d076ea3"
+    },
+    {
+      "id": "c536c914-30aa-384d-978d-9211fffdfa34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.128"
+    },
+    {
+      "id": "c933e252-4ef7-39f2-b55a-6ec1dbd6a06b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.14"
+    },
+    {
+      "id": "ca3e3272-15c8-366e-a930-0d22ef30fb96",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.252"
+    },
+    {
+      "id": "d38a31a9-9d52-3bdd-b708-b5f00c9b6d61",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.165"
+    },
+    {
+      "id": "e7edb580-b77c-3b99-b311-04fbae01dee4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.202"
+    },
+    {
+      "id": "fa8ed238-d799-394d-a060-9f3f5c07ff9d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.14"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2fad712e-2cb5-38b8-9689-0d29185cd585",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
