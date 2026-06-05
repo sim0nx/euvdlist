@@ -1,0 +1,38 @@
+{
+  "id": "EUVD-2026-34854",
+  "enisaUuid": "f181727b-4b00-3934-bb0a-6e7275164db4",
+  "description": "7-Zip is a file archiver with a high compression ratio. Versions 9.21 through 26.00 contain an off-by-one out-of-bounds read vulnerability in the ParseDepedencyExpression function of the UEFI firmware image parser(CPP/7zip/Archive/UefiHandler.cpp). The function validates an attacker-controlled opcode byte using > instead of >= against the element count of the 10-entry kExpressionCommands static array, allowing an opcode value of 10 to read one pointer slot (8 bytes on x64) past the end of the array in .rodata. The out-of-bounds value is then dereferenced as a const char * and passed through strlen and memcpy into the archive's Characts property, which may cause either a denial of service (access violation when the adjacent bytes do not form a valid readable pointer) or a minor information disclosure of an adjacent .rdata string literal into archive metadata. The vulnerability is reached automatically during IInArchive::Open() via the call path OpenFv/OpenCapsule \u2192 ParseVolume \u2192 ParseSections when processing a SECTION_DXE_DEPEX (0x13) or SECTION_PEI_DEPEX (0x1B) section whose first body byte is 0x0A, and the UEFI handler is enabled by default in stock 7z.dll with signature-based detection for both UEFIc and UEFIf formats. The outcome (crash vs. silent leak) is deterministic per build but linker-layout dependent, with no write primitive and no disclosure of heap data, secrets, or ASLR base addresses. Version 26.01 fixes the issue.",
+  "datePublished": "Jun 5, 2026, 4:09:31 PM",
+  "dateUpdated": "Jun 5, 2026, 4:09:31 PM",
+  "baseScore": 4.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:L",
+  "references": [
+    "https://securitylab.github.com/advisories/GHSL-2026-115_GHSL-2026-122_7-zip/"
+  ],
+  "aliases": [
+    "CVE-2026-48111"
+  ],
+  "assigner": "GitHub_M",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "40d10e15-cd7f-3165-b7a7-cefe925f5731",
+      "product": {
+        "name": "7-Zip",
+        "vendor": {
+          "name": "7-Zip"
+        }
+      },
+      "product_version": "9.18, < 26.01"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "419c5a85-2054-3f57-b109-eaabc2ce138d",
+      "vendor": {
+        "name": "mcmilk"
+      }
+    }
+  ]
+}
