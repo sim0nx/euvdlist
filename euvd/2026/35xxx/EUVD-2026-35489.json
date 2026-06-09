@@ -1,0 +1,81 @@
+{
+  "id": "EUVD-2026-35489",
+  "enisaUuid": "59ac6960-82d6-3585-8951-b1dc14800fc7",
+  "description": "Issue summary: When an application drives an AES-OCB context through the\npublic EVP_Cipher() one-shot interface, the application-supplied\ninitialisation vector (IV) is silently discarded.\n\nImpact summary: Every message encrypted under the same key uses the\nsame effective nonce regardless of the IV supplied by the caller,\nresulting in (key, nonce) reuse and loss of confidentiality.  If the\nsame code path is used to compute the authentication tag, the tag\ndepends only on the (key, IV) pair and not on the plaintext or\nciphertext, allowing universal forgery of arbitrary ciphertext from a\nsingle captured message.\n\nOpenSSL provides two ways to drive a cipher: the documented streaming\ninterface (EVP_CipherUpdate / EVP_CipherFinal_ex) and a lower-level\none-shot, EVP_Cipher(), whose documentation explicitly recommends\nagainst use by applications in favour of EVP_CipherUpdate() and\nEVP_CipherFinal_ex().  The OCB provider's streaming handler flushes\nthe application-supplied IV into the OCB context before processing\ndata; the one-shot handler did not.  Every call to EVP_Cipher() on an\nAES-OCB context therefore ran with the all-zero key-derived offset\nstate left by cipher initialisation, regardless of the caller's IV.\n\nIf EVP_EncryptFinal_ex() is subsequently used to obtain the\nauthentication tag, the deferred IV setup runs at that point and\nclears the running checksum that should have been accumulated over the\nplaintext.  The resulting tag is a function of (key, IV) only and\nverifies against any ciphertext produced under the same (key, IV)\npair.\n\nThe OpenSSL SSL/TLS implementation is not affected: AES-OCB is not a\nTLS cipher suite, and libssl does not call EVP_Cipher() in any case.\nApplications that drive AES-OCB through the documented streaming AEAD\nAPI (EVP_CipherUpdate / EVP_CipherFinal_ex) are not affected.  Only\napplications that combine the AES-OCB cipher with the EVP_Cipher()\none-shot API are vulnerable.\n\nThe FIPS modules in 4.0, 3.6, 3.5, 3.4 and 3.0 are not affected by\nthis issue, as AES-OCB is outside the OpenSSL FIPS module boundary.",
+  "datePublished": "Jun 9, 2026, 4:03:31 PM",
+  "dateUpdated": "Jun 9, 2026, 4:03:31 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://openssl-library.org/news/secadv/20260609.txt",
+    "https://github.com/openssl/security/commit/843c9b94ca9c2ed248bb30127bb4f3d7af0d607c",
+    "https://github.com/openssl/security/commit/787a6dfba81b7b09c1e05ab31396c0cd7c36b3f7",
+    "https://github.com/openssl/security/commit/983d54b5cce8d16147548ed1a37892d1720bbab6",
+    "https://github.com/openssl/security/commit/7ac4715234ee72d9f3c93426a2c08554b5b771af",
+    "https://github.com/openssl/security/commit/323f0b6e7d530a4cb4336d50c88cb70f3ac2a451"
+  ],
+  "aliases": [
+    "CVE-2026-45445"
+  ],
+  "assigner": "openssl",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3ae3a037-6620-3870-81b7-a281bcfcbd95",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "3.0.0 <3.0.21"
+    },
+    {
+      "id": "40557c4a-cbc2-3d71-9480-0ad6f5c4f298",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "4.0.0 <4.0.1"
+    },
+    {
+      "id": "6c7f166c-92d7-3e06-9531-f58efb1f8379",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "3.6.0 <3.6.3"
+    },
+    {
+      "id": "734f708e-aee8-3fc4-b1a5-2b0c9d908a5a",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "3.5.0 <3.5.7"
+    },
+    {
+      "id": "9fd4bca3-ef79-388b-8237-d63f11703678",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "3.4.0 <3.4.6"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6ff620e1-479e-322e-99d4-51ac73ef44aa",
+      "vendor": {
+        "name": "OpenSSL"
+      }
+    }
+  ]
+}
