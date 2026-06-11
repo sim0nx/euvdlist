@@ -1,0 +1,40 @@
+{
+  "id": "EUVD-2026-36193",
+  "enisaUuid": "965fefb6-d2a9-3ead-a2d2-0e5494302e38",
+  "description": "Dulwich is a pure-Python implementation of the Git file formats and protocols. Starting in version 0.1.0 and prior to version 1.2.5, a client with push access could push a tiny crafted thin pack (~174 bytes)  whose delta header declares a huge   dest_size. When dulwich ingested it via  add_thin_pack / apply_delta, it would  allocate hundreds of MB of memory based on that attacker-controlled size, with no relationship to the actual bytes received. Operators running a Dulwich-based Git server that exposes git-receive-pack (i.e. accepts pushes) - for example via dulwich.server functionality, the HTTP  smart server, or anything built on ReceivePackHandler - are impacted. The issue is patched in 1.2.5. add_thin_pack now accepts a max_input_size keyword (bytes; 0/None = unlimited, matching git's semantics), and ReceivePackHandler reads receive.maxInputSize from the repository config and passes it through. Wire reads are counted and a PackInputTooLarge exception is raised once the cap is exceeded - equivalent to git index-pack --max-input-size. Users should upgrade to Dulwich 1.2.5 or later and set receive.maxInputSize in their server's repository config to a sane bound for their environment. On unpatched versions, receive.maxInputSize has no effect, so it cannot be used as a workaround. Until upgrading, operators should restrict dulwich-receive-pack (push) access to trusted, authenticated clients only, or disable it entirely on servers that only need to serve fetches and/or run the server under an OS-level memory limit (e.g. ulimit, cgroups/MemoryMax, or a container memory limit) so a malicious push is killed rather than taking down the host.",
+  "datePublished": "Jun 10, 2026, 10:11:02 PM",
+  "dateUpdated": "Jun 10, 2026, 10:11:02 PM",
+  "baseScore": 5.7,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://github.com/jelmer/dulwich/security/advisories/GHSA-xrvj-v92f-53gj",
+    "https://github.com/jelmer/dulwich/releases/tag/dulwich-1.2.5"
+  ],
+  "aliases": [
+    "CVE-2026-47734",
+    "GHSA-xrvj-v92f-53gj"
+  ],
+  "assigner": "GitHub_M",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "5fbb7e3e-6682-3c08-b23a-e0e9af2518ba",
+      "product": {
+        "name": "dulwich",
+        "vendor": {
+          "name": "jelmer"
+        }
+      },
+      "product_version": "0.1.0, < 1.2.5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "cc3a40dd-6ded-3b60-8589-89d93a1ecb3c",
+      "vendor": {
+        "name": "jelmer"
+      }
+    }
+  ]
+}
