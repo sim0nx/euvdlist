@@ -1,0 +1,90 @@
+{
+  "id": "EUVD-2026-36652",
+  "enisaUuid": "34fd3c00-d943-3c18-8ef7-b1f04ab82dd3",
+  "description": "SQL Injection in reports/catalogue_out.pl in Koha Community Koha through 22.11.37, 23.x, 24.x before 24.11.16, 25.05.x before 25.05.11, 25.11.x before 25.11.05, 26.05.x before 26.05.01, and 26.11.x before 26.11.00 allows an authenticated staff user with the Reports module flag to read arbitrary data from the Koha application database via the Filter URL parameter when the Criteria parameter matches /branchcode/.\n\n\n\nThe vulnerable sink in sub calculate concatenates the unmodified Filter request parameter directly into a LIKE clause of the auxiliary $strsth2 statement and executes it via DBI without bound parameters:\n\n\n\nmy $f = @$filters[0];\n$f =~ s/\\*/%/g;\n$strsth2 .= \" AND $column LIKE '$f' \";\n\n\n\nThis enables error-based SQL injection (e.g., via EXTRACTVALUE) and full read access to sensitive tables including borrowers (password hashes, 2FA secrets, PII), borrower_password_recovery, api_keys, and sessions.\n\n\n\nProof of concept (error-based, single request):\n\n\n\nGET /cgi-bin/koha/reports/catalogue_out.pl?do_it=1&output=screen&Limit=10&Criteria=branchcode&Filter=x'+AND+EXTRACTVALUE(1,CONCAT(0x7e,VERSION(),0x7c,USER(),0x7c,DATABASE(),0x7e))--+-\nCookie: CGISESSID=<LIBRARIAN_SESSION>\n\n\n\nThe response body contains the DBI exception leaking the MariaDB version, database user, client IP, and database name, after which arbitrary data can be paged out using LIMIT n,1 / SUBSTRING(...).\n\n\n\nThe vulnerable sink was introduced in commit 6bb77ae3e4 (2008-07-09); CVE-2015-4633 patched the same class in sibling files but did not generalise the fix to reports/catalogue_out.pl. Fixed in Koha 22.11.38, 24.11.16, 25.05.11, 25.11.05, 26.05.01, and 26.11.00 by replacing the raw concatenation with a parameterised placeholder.",
+  "datePublished": "Jun 13, 2026, 4:34:10 PM",
+  "dateUpdated": "Jun 13, 2026, 4:35:56 PM",
+  "baseScore": 5.6,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:L/UI:N/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N/E:P/AU:Y/V:C/U:Amber",
+  "references": [
+    "https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=42361",
+    "https://bugs.koha-community.org/bugzilla3/attachment.cgi?id=199539",
+    "https://koha-community.org/security-releases/"
+  ],
+  "aliases": [
+    "CVE-2026-6428"
+  ],
+  "assigner": "TuranSec",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1bb5a579-cb5c-30a0-8d77-45de7b6407fa",
+      "product": {
+        "name": "Koha",
+        "vendor": {
+          "name": "Koha Community"
+        }
+      },
+      "product_version": "24.05.00 <24.11.16"
+    },
+    {
+      "id": "3d191eec-2fdf-30f0-a50f-020d7a5b48a4",
+      "product": {
+        "name": "Koha",
+        "vendor": {
+          "name": "Koha Community"
+        }
+      },
+      "product_version": "25.11.00 <25.11.05"
+    },
+    {
+      "id": "8e7cbdff-5f25-3f37-a330-2d885acb523f",
+      "product": {
+        "name": "Koha",
+        "vendor": {
+          "name": "Koha Community"
+        }
+      },
+      "product_version": "23.05.00 \u226423.11.15"
+    },
+    {
+      "id": "af82b3da-6327-3f6a-b10a-d5964970200c",
+      "product": {
+        "name": "Koha",
+        "vendor": {
+          "name": "Koha Community"
+        }
+      },
+      "product_version": "26.05.00 <26.05.01"
+    },
+    {
+      "id": "b381d6cf-bfbe-37f4-a4c1-0e114c072b33",
+      "product": {
+        "name": "Koha",
+        "vendor": {
+          "name": "Koha Community"
+        }
+      },
+      "product_version": "0 <22.11.38"
+    },
+    {
+      "id": "ea88d751-e12b-3f86-9fe1-0cf53cef65d8",
+      "product": {
+        "name": "Koha",
+        "vendor": {
+          "name": "Koha Community"
+        }
+      },
+      "product_version": "25.05.00 <25.05.11"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d385001b-eb34-316f-a13f-e55b1cc74a09",
+      "vendor": {
+        "name": "Koha Community"
+      }
+    }
+  ]
+}
