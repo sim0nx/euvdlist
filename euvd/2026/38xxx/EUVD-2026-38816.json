@@ -1,0 +1,263 @@
+{
+  "id": "EUVD-2026-38816",
+  "enisaUuid": "ef03d009-c5ff-381e-810b-8dd764d9910d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ni2c: dev: prevent integer overflow in I2C_TIMEOUT ioctl\n\nWhile fuzzing with Syzkaller, a persistent `schedule_timeout: wrong\ntimeout value` warning was observed, accompanied by SMBus controller\nstate machine corruption.\n\nThe I2C_TIMEOUT ioctl accepts a user-provided timeout in multiples of\n10 ms. The user argument is checked against INT_MAX, but it is\nsubsequently multiplied by 10 before being passed to msecs_to_jiffies().\n\nA malicious user can pass a large value (e.g., 429496729) that passes\nthe `arg > INT_MAX` check but overflows when multiplied by 10. This\nresults in a truncated 32-bit unsigned value that bypasses the\ninternal `(int)m < 0` check in `msecs_to_jiffies()`.\n\nThe truncated value is then assigned to `client->adapter->timeout`\n(a signed 32-bit int), which is reinterpreted as a negative number.\nWhen passed to wait_for_completion_timeout(), this negative value\nundergoes sign extension to a 64-bit unsigned long, triggering the\n`schedule_timeout` warning and causing premature returns. This leaves\nthe SMBus state machine in an unrecoverable state, constituting a\nlocal Denial of Service (DoS).\n\nFix this by bounding the user argument to `INT_MAX / 10`.\n\n[wsa: move the comment as well]",
+  "datePublished": "Jun 24, 2026, 4:26:05 PM",
+  "dateUpdated": "Jun 24, 2026, 4:26:05 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e9ffd5f5050fbb199d270a85614cd27ebed6fbac",
+    "https://git.kernel.org/stable/c/0b88ecfbc9dc33b4db8836c37b50cf174e6c0691",
+    "https://git.kernel.org/stable/c/943e318eedbeaeea08ece3f5dd44c982f4ed2ef5",
+    "https://git.kernel.org/stable/c/aa6ef734016912653a909477fb30aeb66c98b3a2",
+    "https://git.kernel.org/stable/c/ff02add34ffd03449b8115904ebe2ec4fed022d4",
+    "https://git.kernel.org/stable/c/ffbcf31f032eb454ebfd29309f51366fe57f4ac4",
+    "https://git.kernel.org/stable/c/4576621dc6577f21a032acfd16c3ad61907a5ea7",
+    "https://git.kernel.org/stable/c/617eb7c0961a8dfcfc811844a6396e406b2923ea"
+  ],
+  "aliases": [
+    "CVE-2026-52948"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0f0fe832-a178-3f85-a754-a26dc931509e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <7.0.13"
+    },
+    {
+      "id": "0f942e4f-d934-36f8-9e25-6c810c12d4c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.176"
+    },
+    {
+      "id": "1190c3cb-cd23-3f6e-8825-a49195785e22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0b88ecfbc9dc33b4db8836c37b50cf174e6c0691"
+    },
+    {
+      "id": "36c6bfd9-733c-3b4b-a363-7da309b80d4d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <ffbcf31f032eb454ebfd29309f51366fe57f4ac4"
+    },
+    {
+      "id": "3e93a76b-c04c-332b-9173-05cba06a6989",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.6.143"
+    },
+    {
+      "id": "5a0e54d1-ba7a-3ded-98a0-265a11c01e13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "6479b1fa-f19d-34d1-9680-7808eda6d008",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.36"
+    },
+    {
+      "id": "792b01cb-028b-36cc-b022-33b1253bf57e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <943e318eedbeaeea08ece3f5dd44c982f4ed2ef5"
+    },
+    {
+      "id": "875f3e0c-cefc-3004-b1af-6673763f3891",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <aa6ef734016912653a909477fb30aeb66c98b3a2"
+    },
+    {
+      "id": "8f447e7f-8e57-35c7-94b4-d503e999b30b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.1.176"
+    },
+    {
+      "id": "9b5ed0de-8981-3118-8f2c-4c01b6952137",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.143"
+    },
+    {
+      "id": "a964b45a-ac9e-3916-92f3-fb2518ac15d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e9ffd5f5050fbb199d270a85614cd27ebed6fbac"
+    },
+    {
+      "id": "b21c2fa2-b95e-3223-9945-942186f6c688",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <5.15.210"
+    },
+    {
+      "id": "b38162c8-5eff-337b-a9ed-7de52dc288ca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <ff02add34ffd03449b8115904ebe2ec4fed022d4"
+    },
+    {
+      "id": "b5ebaada-8e31-3028-bd5f-40b621fa5b60",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.94"
+    },
+    {
+      "id": "c1f56cd2-80fb-3680-bc64-928dc5d44949",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4576621dc6577f21a032acfd16c3ad61907a5ea7"
+    },
+    {
+      "id": "c45e722e-9198-3626-b3e6-889635dbb8ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.13"
+    },
+    {
+      "id": "c5f1ddc1-7307-354b-9c58-dc7a26c02d2e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <617eb7c0961a8dfcfc811844a6396e406b2923ea"
+    },
+    {
+      "id": "cb7dc7f1-c516-369a-8144-7960dd428d64",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.210"
+    },
+    {
+      "id": "ce68824c-e951-3559-b5de-dc69e9297476",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.36"
+    },
+    {
+      "id": "d700e9ee-51af-3c95-af20-327f95278d49",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.94"
+    },
+    {
+      "id": "ddedd835-7d9e-3e6a-87ac-bfaccf08eb47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <5.10.259"
+    },
+    {
+      "id": "e6d986c9-7dfe-3940-a205-3679611a99d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.259"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "357a13f6-da31-360b-9b0a-918676e9c528",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

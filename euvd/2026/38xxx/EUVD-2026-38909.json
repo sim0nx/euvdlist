@@ -1,0 +1,213 @@
+{
+  "id": "EUVD-2026-38909",
+  "enisaUuid": "4c7b470f-397e-31d1-aad7-b9b8d4bdfc8f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: fix listxattr handling when the buffer is full\n\n[BUG]\nIf an OCFS2 inode has both inline and block-based xattrs, listxattr()\ncan return a size larger than the caller's buffer when the inline names\nconsume that buffer exactly.\n\nkernel BUG at mm/usercopy.c:102!\nOops: invalid opcode: 0000 [#1] SMP KASAN NOPTI\nRIP: 0010:usercopy_abort+0xb7/0xd0 mm/usercopy.c:102\nCall Trace:\n __check_heap_object+0xe3/0x120 mm/slub.c:8243\n check_heap_object mm/usercopy.c:196 [inline]\n __check_object_size mm/usercopy.c:250 [inline]\n __check_object_size+0x5c5/0x780 mm/usercopy.c:215\n check_object_size include/linux/ucopysize.h:22 [inline]\n check_copy_size include/linux/ucopysize.h:59 [inline]\n copy_to_user include/linux/uaccess.h:219 [inline]\n listxattr+0xb0/0x170 fs/xattr.c:926\n filename_listxattr fs/xattr.c:958 [inline]\n path_listxattrat+0x137/0x320 fs/xattr.c:988\n __do_sys_listxattr fs/xattr.c:1001 [inline]\n __se_sys_listxattr fs/xattr.c:998 [inline]\n __x64_sys_listxattr+0x7f/0xd0 fs/xattr.c:998\n ...\n\n[CAUSE]\nCommit 936b8834366e (\"ocfs2: Refactor xattr list and remove\nocfs2_xattr_handler().\") replaced the old per-handler list accounting\nwith ocfs2_xattr_list_entry(), but it kept using size == 0 to detect\nprobe mode.\n\nThat assumption stops being true once ocfs2_listxattr() finishes the\ninline-xattr pass. If the inline names fill the caller buffer exactly,\nthe block-xattr pass runs with a non-NULL buffer and a remaining size of\nzero. ocfs2_xattr_list_entry() then skips the bounds check, keeps\ncounting block names, and returns a positive size larger than the\nsupplied buffer.\n\n[FIX]\nDetect probe mode by testing whether the destination buffer pointer is\nNULL instead of whether the remaining size is zero.\n\nThat restores the pre-refactor behavior and matches the OCFS2 getxattr\nhelpers. Once the remaining buffer reaches zero while more names are\nleft, the block-xattr pass now returns -ERANGE instead of reporting a\nsize larger than the allocated list buffer.",
+  "datePublished": "Jun 24, 2026, 4:29:47 PM",
+  "dateUpdated": "Jun 24, 2026, 4:29:47 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a35a1c2b170b5b578b1b3fecb95694796552af9a",
+    "https://git.kernel.org/stable/c/2323084c17370304f49c84b354fe7b3edbb264fe",
+    "https://git.kernel.org/stable/c/6f702b00b8124c5d3525f19172934544826a114d",
+    "https://git.kernel.org/stable/c/d919b905939eda93393e3572900ff70dbad2b47f",
+    "https://git.kernel.org/stable/c/46e66fefb83811958127bc9ad736983ec629d82b",
+    "https://git.kernel.org/stable/c/2685df8577a38d83b367c8cf52eda9dc286959ff",
+    "https://git.kernel.org/stable/c/50033ec1350fe68abdc63b950ced7ae57364b77a",
+    "https://git.kernel.org/stable/c/d12f558e6200b3f47dbef9331ed6d115d2410e59"
+  ],
+  "aliases": [
+    "CVE-2026-53041"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0deab6d9-70c9-3e89-974f-590b69c1e37d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "30c2f9cd-5dfc-3ee7-92a7-5c75ee054bab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.175"
+    },
+    {
+      "id": "3ae07473-fbbe-3ae7-b55f-0fb389834938",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.91"
+    },
+    {
+      "id": "3ed78fb2-d05f-3e4e-8be4-66a53951af02",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.28"
+    },
+    {
+      "id": "3f503e18-708f-318a-96d5-2b7e8257abe0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.258"
+    },
+    {
+      "id": "40165473-c14f-3aea-8d08-807e52ab320a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "936b8834366ec05f2a6993f73afd8348cac9718e <2685df8577a38d83b367c8cf52eda9dc286959ff"
+    },
+    {
+      "id": "57d859a3-8605-3160-91a2-cabe67060af3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "6bf40b64-7eb1-3751-9b91-51dac58a9f0c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "936b8834366ec05f2a6993f73afd8348cac9718e <6f702b00b8124c5d3525f19172934544826a114d"
+    },
+    {
+      "id": "77e3baca-6887-3cc8-ae03-6bb998fbb00c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "936b8834366ec05f2a6993f73afd8348cac9718e <46e66fefb83811958127bc9ad736983ec629d82b"
+    },
+    {
+      "id": "95da96ec-0d3f-3b7d-9b3c-edd5a625c70b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "936b8834366ec05f2a6993f73afd8348cac9718e <d919b905939eda93393e3572900ff70dbad2b47f"
+    },
+    {
+      "id": "a48f9480-62aa-3692-bb8b-06ed28240aaa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.10"
+    },
+    {
+      "id": "b3734532-d9d7-309f-92c9-3e1809a7f2db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "936b8834366ec05f2a6993f73afd8348cac9718e <d12f558e6200b3f47dbef9331ed6d115d2410e59"
+    },
+    {
+      "id": "be822340-6307-38d7-865d-7e11bd4a76c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.209"
+    },
+    {
+      "id": "c8c816aa-0283-3bb6-9eea-d50d4cc7dd34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.33"
+    },
+    {
+      "id": "d1ed6ea8-9729-3f8b-9ca7-be4e06d2aa34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "936b8834366ec05f2a6993f73afd8348cac9718e <2323084c17370304f49c84b354fe7b3edbb264fe"
+    },
+    {
+      "id": "d5a3081c-97c0-3bb0-a7b4-10fbbfab478d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.141"
+    },
+    {
+      "id": "d9af59b4-2aad-3d04-9ed2-b00519899bc0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "936b8834366ec05f2a6993f73afd8348cac9718e <50033ec1350fe68abdc63b950ced7ae57364b77a"
+    },
+    {
+      "id": "f185eaa5-262f-3385-9cb8-31c6f0155514",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "936b8834366ec05f2a6993f73afd8348cac9718e <a35a1c2b170b5b578b1b3fecb95694796552af9a"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d82fd03d-44e0-3183-b992-5cedcc7f9ff1",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

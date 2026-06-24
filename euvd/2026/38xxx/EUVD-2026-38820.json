@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-38820",
+  "enisaUuid": "72b957a8-ae4d-387e-a32c-e91f5ce36f57",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niommu: Fix WARN_ON in __iommu_group_set_domain_nofail() due to reset\n\nIn __iommu_group_set_domain_internal(), concurrent domain attachments are\nrejected when any device in the group is recovering. This is necessary to\nfence concurrent attachments to a multi-device group where devices might\nshare the same RID due to PCI DMA alias quirks, but triggers the WARN_ON in\n__iommu_group_set_domain_nofail().\n\nOther IOMMU_SET_DOMAIN_MUST_SUCCEED callers in detach/teardown paths, such\nas __iommu_group_set_core_domain and __iommu_release_dma_ownership, should\nnot be rejected, as the domain would be freed anyway in these nofail paths\nwhile group->domain is still pointing to it. So pci_dev_reset_iommu_done()\ncould trigger a UAF when re-attaching group->domain.\n\nHonor the IOMMU_SET_DOMAIN_MUST_SUCCEED flag, allowing the callers through\nthe group->recovery_cnt fence, so as to update the group->domain pointer.\nInstead add a gdev->blocked check in the device iteration loop, to prevent\nany concurrent per-device detachment.",
+  "datePublished": "Jun 24, 2026, 4:28:35 PM",
+  "dateUpdated": "Jun 24, 2026, 4:28:35 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/8fc289e809f3eb7e36cadc4684ab6fad747a5a93",
+    "https://git.kernel.org/stable/c/5474e6e17a262db45c60575c73f70210f5c7001f"
+  ],
+  "aliases": [
+    "CVE-2026-52952"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "4259f163-a889-36a2-ba23-ca3e3915bf81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c279e83953d937470f8a6e69b69f62608714f13f <8fc289e809f3eb7e36cadc4684ab6fad747a5a93"
+    },
+    {
+      "id": "80f5486a-3041-342b-a16f-536fc8732b78",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c279e83953d937470f8a6e69b69f62608714f13f <5474e6e17a262db45c60575c73f70210f5c7001f"
+    },
+    {
+      "id": "93736f00-0518-3254-b5c9-1064a9df6f7a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.10"
+    },
+    {
+      "id": "cbcab0f0-8b36-38f0-bd21-6e3d9620b22d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "f39f7a48-b2ad-3bf4-a459-b6c7c7818555",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.0"
+    },
+    {
+      "id": "fc9e0e2e-36e4-36ce-bbad-cb65a445d50d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "39678496-d3e9-386a-bc20-c8bf9317e314",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

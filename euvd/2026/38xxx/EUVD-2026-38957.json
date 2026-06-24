@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-38957",
+  "enisaUuid": "215b596d-7a32-354b-b89e-85a54ae6c03f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix use-after-free in offloaded map/prog info fill\n\nWhen querying info for an offloaded BPF map or program,\nbpf_map_offload_info_fill_ns() and bpf_prog_offload_info_fill_ns()\nobtain the network namespace with get_net(dev_net(offmap->netdev)).\nHowever, the associated netdev's netns may be racing with teardown\nduring netns destruction. If the netns refcount has already reached 0,\nget_net() performs a refcount_t increment on 0, triggering:\n\n  refcount_t: addition on 0; use-after-free.\n\nAlthough rtnl_lock and bpf_devs_lock ensure the netdev pointer remains\nvalid, they cannot prevent the netns refcount from reaching zero.\n\nFix this by using maybe_get_net() instead of get_net(). maybe_get_net()\nuses refcount_inc_not_zero() and returns NULL if the refcount is already\nzero, which causes ns_get_path_cb() to fail and the caller to return\n-ENOENT -- the correct behavior when the netns is being destroyed.",
+  "datePublished": "Jun 24, 2026, 4:30:28 PM",
+  "dateUpdated": "Jun 24, 2026, 4:30:28 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a51e7fbe94a87e236631a83973d4f558310b2cd2",
+    "https://git.kernel.org/stable/c/a0c584fc18056709c8e047a82a6045d6c209f4ce"
+  ],
+  "aliases": [
+    "CVE-2026-53089"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "358c2cb2-8b72-3afe-83e1-877af8f6307c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "425eb98d-08da-3666-945b-0d936c410a88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7b35d3e1-5f16-3e9a-ab1a-f245351ba702",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "675fc275a3a2d905535207237402c6d8dcb5fa4b <a0c584fc18056709c8e047a82a6045d6c209f4ce"
+    },
+    {
+      "id": "bde40c6d-58c8-32fd-aea4-d8f3d7b09808",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.16"
+    },
+    {
+      "id": "cf0cf016-4fec-3ead-9e41-ea66a87482fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.10"
+    },
+    {
+      "id": "e8216bc2-7093-33ec-ab25-6faa9c577d50",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "675fc275a3a2d905535207237402c6d8dcb5fa4b <a51e7fbe94a87e236631a83973d4f558310b2cd2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d8c29940-9c31-3b31-b8f3-9ef9fe5c2327",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

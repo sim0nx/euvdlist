@@ -1,0 +1,213 @@
+{
+  "id": "EUVD-2026-38908",
+  "enisaUuid": "551131fd-de39-353f-8ecc-7fe97f12e6f3",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: validate bg_bits during freefrag scan\n\n[BUG]\nA crafted filesystem can trigger an out-of-bounds bitmap walk when\nOCFS2_IOC_INFO is issued with OCFS2_INFO_FL_NON_COHERENT.\n\nBUG: KASAN: use-after-free in instrument_atomic_read include/linux/instrumented.h:68 [inline]\nBUG: KASAN: use-after-free in _test_bit include/asm-generic/bitops/instrumented-non-atomic.h:141 [inline]\nBUG: KASAN: use-after-free in test_bit_le include/asm-generic/bitops/le.h:21 [inline]\nBUG: KASAN: use-after-free in ocfs2_info_freefrag_scan_chain fs/ocfs2/ioctl.c:495 [inline]\nBUG: KASAN: use-after-free in ocfs2_info_freefrag_scan_bitmap fs/ocfs2/ioctl.c:588 [inline]\nBUG: KASAN: use-after-free in ocfs2_info_handle_freefrag fs/ocfs2/ioctl.c:662 [inline]\nBUG: KASAN: use-after-free in ocfs2_info_handle_request+0x1c66/0x3370 fs/ocfs2/ioctl.c:754\nRead of size 8 at addr ffff888031bce000 by task syz.0.636/1435\nCall Trace:\n __dump_stack lib/dump_stack.c:94 [inline]\n dump_stack_lvl+0xbe/0x130 lib/dump_stack.c:120\n print_address_description mm/kasan/report.c:378 [inline]\n print_report+0xd1/0x650 mm/kasan/report.c:482\n kasan_report+0xfb/0x140 mm/kasan/report.c:595\n check_region_inline mm/kasan/generic.c:186 [inline]\n kasan_check_range+0x11c/0x200 mm/kasan/generic.c:200\n __kasan_check_read+0x11/0x20 mm/kasan/shadow.c:31\n instrument_atomic_read include/linux/instrumented.h:68 [inline]\n _test_bit include/asm-generic/bitops/instrumented-non-atomic.h:141 [inline]\n test_bit_le include/asm-generic/bitops/le.h:21 [inline]\n ocfs2_info_freefrag_scan_chain fs/ocfs2/ioctl.c:495 [inline]\n ocfs2_info_freefrag_scan_bitmap fs/ocfs2/ioctl.c:588 [inline]\n ocfs2_info_handle_freefrag fs/ocfs2/ioctl.c:662 [inline]\n ocfs2_info_handle_request+0x1c66/0x3370 fs/ocfs2/ioctl.c:754\n ocfs2_info_handle+0x18d/0x2a0 fs/ocfs2/ioctl.c:828\n ocfs2_ioctl+0x632/0x6e0 fs/ocfs2/ioctl.c:913\n vfs_ioctl fs/ioctl.c:51 [inline]\n __do_sys_ioctl fs/ioctl.c:597 [inline]\n __se_sys_ioctl fs/ioctl.c:583 [inline]\n __x64_sys_ioctl+0x197/0x1e0 fs/ioctl.c:583\n ...\n\n[CAUSE]\nocfs2_info_freefrag_scan_chain() uses on-disk bg_bits directly as the\nbitmap scan limit. The coherent path reads group descriptors through\nocfs2_read_group_descriptor(), which validates the descriptor before\nuse. The non-coherent path uses ocfs2_read_blocks_sync() instead and\nskips that validation, so an impossible bg_bits value can drive the\nbitmap walk past the end of the block.\n\n[FIX]\nCompute the bitmap capacity from the filesystem format with\nocfs2_group_bitmap_size(), report descriptors whose bg_bits exceeds\nthat limit, and clamp the scan to the computed capacity. This keeps the\nfreefrag report going while avoiding reads beyond the buffer.",
+  "datePublished": "Jun 24, 2026, 4:29:46 PM",
+  "dateUpdated": "Jun 24, 2026, 4:29:46 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/bb2906a1065ec28de021bac2ed03f2624edd7d07",
+    "https://git.kernel.org/stable/c/3e167e230d19cd273108bab2e4c61800fc335ae8",
+    "https://git.kernel.org/stable/c/0998674eec138c55e9e349b9cbd9dbc5129a9cc8",
+    "https://git.kernel.org/stable/c/bb3c54d1e71578521111f1a1ee7d5f4761a242b8",
+    "https://git.kernel.org/stable/c/05d0cbea41167b6b061c6ba5b70ee5a9a7a24c9e",
+    "https://git.kernel.org/stable/c/4c2d62ddde8928db12f4608950b67a20e67deab2",
+    "https://git.kernel.org/stable/c/e0dcf12665d6dde37facf790803cdad44d5c328c",
+    "https://git.kernel.org/stable/c/8f687eeed3da3012152b0f9473f578869de0cd7b"
+  ],
+  "aliases": [
+    "CVE-2026-53040"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1c15c69e-f02c-3c6c-b7c4-99924e8f5bc6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.175"
+    },
+    {
+      "id": "363f184e-e8c4-3719-ae72-c245d5f80c5e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "36830755-a210-318c-bb6b-ab8bbfef4f75",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d24a10b9f8ed548981696cd36e2b4f16e6f360b1 <e0dcf12665d6dde37facf790803cdad44d5c328c"
+    },
+    {
+      "id": "400eb36a-953b-3bf3-b07e-597a53c83713",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.10"
+    },
+    {
+      "id": "4bde536d-3398-392d-a4c8-d87ad17202d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d24a10b9f8ed548981696cd36e2b4f16e6f360b1 <bb3c54d1e71578521111f1a1ee7d5f4761a242b8"
+    },
+    {
+      "id": "7d75c5db-0da5-39ba-912a-bd45389a32ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.0"
+    },
+    {
+      "id": "8bca78d3-6523-354e-bbb8-88d077a5e6c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.33"
+    },
+    {
+      "id": "9255c495-0977-3f3c-846c-21d2e8b21a15",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "a8ad2e11-dba5-33f6-8f4c-e1015ad389a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.258"
+    },
+    {
+      "id": "ac894c33-8d5c-3166-9158-06e05316036d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.209"
+    },
+    {
+      "id": "b37f6775-5989-3464-8c40-1871402e5849",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d24a10b9f8ed548981696cd36e2b4f16e6f360b1 <8f687eeed3da3012152b0f9473f578869de0cd7b"
+    },
+    {
+      "id": "be222ffe-6f99-3cf4-b6e7-8033318da34a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d24a10b9f8ed548981696cd36e2b4f16e6f360b1 <05d0cbea41167b6b061c6ba5b70ee5a9a7a24c9e"
+    },
+    {
+      "id": "c81a9e0f-eed2-3c10-8876-7c4a0443a851",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d24a10b9f8ed548981696cd36e2b4f16e6f360b1 <0998674eec138c55e9e349b9cbd9dbc5129a9cc8"
+    },
+    {
+      "id": "c8610dab-8b7d-32d1-bb02-61b38198d07e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d24a10b9f8ed548981696cd36e2b4f16e6f360b1 <4c2d62ddde8928db12f4608950b67a20e67deab2"
+    },
+    {
+      "id": "d99f5007-598d-3c64-96aa-a2d3263f941b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d24a10b9f8ed548981696cd36e2b4f16e6f360b1 <bb2906a1065ec28de021bac2ed03f2624edd7d07"
+    },
+    {
+      "id": "e34eb964-5929-3b49-9f69-7be04c06b890",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.141"
+    },
+    {
+      "id": "f2296fde-956e-36b7-b83e-b2ba43108a74",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.91"
+    },
+    {
+      "id": "fc530e8f-5307-38b7-aa09-bdc1a1f3db4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d24a10b9f8ed548981696cd36e2b4f16e6f360b1 <3e167e230d19cd273108bab2e4c61800fc335ae8"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "04c3eedc-2920-378f-8305-4bcf5d0599e5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

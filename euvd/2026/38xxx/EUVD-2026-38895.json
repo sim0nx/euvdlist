@@ -1,0 +1,107 @@
+{
+  "id": "EUVD-2026-38895",
+  "enisaUuid": "7f7ec4c9-af19-359a-9d14-671537f9f09e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs/ntfs3: fix missing run load for vcn0 in attr_data_get_block_locked()\n\nWhen a compressed or sparse attribute has its clusters frame-aligned,\nvcn is rounded down to the frame start using cmask, which can result\nin vcn != vcn0. In this case, vcn and vcn0 may reside in different\nattribute segments.\n\nThe code already handles the case where vcn is in a different segment\nby loading its runs before allocation. However, it fails to load runs\nfor vcn0 when vcn0 resides in a different segment than vcn. This causes\nrun_lookup_entry() to return SPARSE_LCN for vcn0 since its segment was\nnever loaded into the in-memory run list, triggering the WARN_ON(1).\n\nFix this by adding a missing check for vcn0 after the existing vcn\nsegment check. If vcn0 falls outside the current segment range\n[svcn, evcn1), find and load the attribute segment containing vcn0\nbefore performing the run lookup.\n\nThe following scenario triggers the bug:\n  attr_data_get_block_locked()\n    vcn = vcn0 & cmask        <- vcn != vcn0 after frame alignment\n    load runs for vcn segment <- vcn0 segment not loaded!\n    attr_allocate_clusters()  <- allocation succeeds\n    run_lookup_entry(vcn0)    <- vcn0 not in run -> SPARSE_LCN\n    WARN_ON(1)                <- bug fires here!",
+  "datePublished": "Jun 24, 2026, 4:29:35 PM",
+  "dateUpdated": "Jun 24, 2026, 4:29:35 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/2b4ae1ce613ade8a7e118fba4a5a77cd23e97e54",
+    "https://git.kernel.org/stable/c/d7ea8495fd307b58f8867acd81a1b40075b1d3ba"
+  ],
+  "aliases": [
+    "CVE-2026-53027"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "049e1fba-372c-3808-8889-c6797dc338b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.2"
+    },
+    {
+      "id": "22435fc7-607f-31df-8e8f-fdf49a85bddb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "406a037d93b769bca248476bd14bbe548dc1ec35"
+    },
+    {
+      "id": "4a33ef3d-7ded-31d6-8d6e-70738c52696a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c380b52f6c5702cc4bdda5e6d456d6c19a201a0b <d7ea8495fd307b58f8867acd81a1b40075b1d3ba"
+    },
+    {
+      "id": "691c824f-f87a-33f2-b77c-57ebb9a0ba07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.10"
+    },
+    {
+      "id": "755cfdce-afd8-31a6-806d-0a4b44073720",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "7cf32270-00b2-3677-9014-e32bea02a179",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e6f98c4b-e75a-394d-977b-f32512028b3e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.132 <6.2"
+    },
+    {
+      "id": "e92ced41-c99d-3d07-8ae2-46cef4ea3ffd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c380b52f6c5702cc4bdda5e6d456d6c19a201a0b <2b4ae1ce613ade8a7e118fba4a5a77cd23e97e54"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ecb8e0c1-fef5-3fa0-a8ce-d073736c6855",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
