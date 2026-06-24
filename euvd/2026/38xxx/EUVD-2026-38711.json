@@ -1,0 +1,171 @@
+{
+  "id": "EUVD-2026-38711",
+  "enisaUuid": "e5bfb104-af69-322e-ba09-efb0372797fe",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/smc: avoid NULL deref of conn->lnk in smc_msg_event tracepoint\n\nThe smc_msg_event tracepoint class, shared by smc_tx_sendmsg and\nsmc_rx_recvmsg, unconditionally dereferences smc->conn.lnk:\n\n\t__string(name, smc->conn.lnk->ibname)\n\nconn->lnk is only set for SMC-R; for SMC-D it is NULL. Other code on\nthese paths already handles this (e.g. !conn->lnk in\nSMC_STAT_RMB_TX_SIZE_SMALL()). With the tracepoint enabled, the first\nsendmsg()/recvmsg() on an SMC-D socket crashes:\n\n  Oops: general protection fault, probably for non-canonical address\n  KASAN: null-ptr-deref in range [...]\n  RIP: 0010:strlen+0x1e/0xa0\n  Call Trace:\n   trace_event_raw_event_smc_msg_event (net/smc/smc_tracepoint.h:44)\n   smc_rx_recvmsg (net/smc/smc_rx.c:515)\n   smc_recvmsg (net/smc/af_smc.c:2859)\n   __sys_recvfrom (net/socket.c:2315)\n   __x64_sys_recvfrom (net/socket.c:2326)\n   do_syscall_64\n\nThe faulting address 0x3e0 is offsetof(struct smc_link, ibname),\nconfirming the NULL ->lnk deref. Enabling the tracepoint requires\nroot, but the trigger itself is unprivileged: socket(AF_SMC, ...) has\nno capability check, and SMC-D negotiation needs no admin step on\ns390 or on x86 with the loopback ISM device loaded.\n\nLog an empty device name for SMC-D instead of dereferencing NULL.",
+  "datePublished": "Jun 24, 2026, 7:14:29 AM",
+  "dateUpdated": "Jun 24, 2026, 7:14:29 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/68200112534bb2acd1d7117dc2d5c124868d866d",
+    "https://git.kernel.org/stable/c/720c76b930c52cd58f50eb6b10569d03dccc7959",
+    "https://git.kernel.org/stable/c/b706d6d76a2a2793fe5ad0fbc2a75b6a460094ef",
+    "https://git.kernel.org/stable/c/d2ea0b8aef8746e147602eac87ca8538f4bc7e66",
+    "https://git.kernel.org/stable/c/561cf66fa9b6c86dfe4e687d2d1aeaaa6739917f",
+    "https://git.kernel.org/stable/c/7bf563badd37cb796df5477d2b78bb64148a1268"
+  ],
+  "aliases": [
+    "CVE-2026-52941"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "103ec03a-548c-30ef-86b0-cc013eba89b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.142"
+    },
+    {
+      "id": "2c65fee2-5037-3b3a-9048-86f08cf9ecd2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "aff3083f10bff7a37eaa2b4e6bc5fb627ddd5f84 <7bf563badd37cb796df5477d2b78bb64148a1268"
+    },
+    {
+      "id": "3caa371b-43b0-3d02-98d3-511b3770d5e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "aff3083f10bff7a37eaa2b4e6bc5fb627ddd5f84 <d2ea0b8aef8746e147602eac87ca8538f4bc7e66"
+    },
+    {
+      "id": "48beafa8-4086-32ae-a1d7-5f74a463b497",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "aff3083f10bff7a37eaa2b4e6bc5fb627ddd5f84 <561cf66fa9b6c86dfe4e687d2d1aeaaa6739917f"
+    },
+    {
+      "id": "51080629-9eb1-358f-94e2-ad814b91c9c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "638e9885-2c4b-36c2-a992-2ae68b28223d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.34"
+    },
+    {
+      "id": "6be52c1e-9f97-36e5-ac98-b743592ec765",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.92"
+    },
+    {
+      "id": "83551eed-7438-3804-b3d6-dc73746932e5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.175"
+    },
+    {
+      "id": "de7fbc3e-c0e6-3ed6-9ba3-0bb4484cc177",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "aff3083f10bff7a37eaa2b4e6bc5fb627ddd5f84 <b706d6d76a2a2793fe5ad0fbc2a75b6a460094ef"
+    },
+    {
+      "id": "e19370c7-50b1-3ae0-b94a-0035b42607cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.16"
+    },
+    {
+      "id": "e1ea8a94-6338-3781-a146-e657ed34ba03",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "aff3083f10bff7a37eaa2b4e6bc5fb627ddd5f84 <720c76b930c52cd58f50eb6b10569d03dccc7959"
+    },
+    {
+      "id": "ebfa4f9d-4922-3171-8fb2-5687eb98f7d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "f1486117-a0fd-375a-aa13-8ce183f6f791",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.11"
+    },
+    {
+      "id": "fdd9f677-9603-3128-ae26-d8bd7e76d6d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "aff3083f10bff7a37eaa2b4e6bc5fb627ddd5f84 <68200112534bb2acd1d7117dc2d5c124868d866d"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "cbfdedcb-b168-3142-96f0-5f891992abc2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
