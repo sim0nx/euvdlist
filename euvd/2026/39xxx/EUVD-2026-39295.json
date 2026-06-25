@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-39295",
+  "enisaUuid": "8d04eb5c-a522-3089-9b3b-a108159902b5",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfirmware: stratix10-rsu: Fix NULL deref on rsu_send_msg() timeout in probe\n\nrsu_send_msg() can return -ETIMEDOUT when\nwait_for_completion_interruptible_timeout() fires while the SMC call is still\npending. In stratix10_rsu_probe(), the error paths for COMMAND_RSU_DCMF_VERSION,\nCOMMAND_RSU_DCMF_STATUS, COMMAND_RSU_MAX_RETRY and COMMAND_RSU_GET_SPT_TABLE\ncall stratix10_svc_free_channel() - which sets chan->scl to NULL - but then\nfall through and queue the next request on the same channel. The next svc\nkthread that runs will dereference pdata->chan->scl in its receive callback\npath, triggering a NULL pointer dereference identical to the one fixed by\ncommit c45f7263100c (\"firmware: stratix10-rsu: Fix NULL pointer dereference\nwhen RSU is disabled\") for the COMMAND_RSU_STATUS path.\n\nApply the same cleanup pattern to the remaining failure paths: remove the\nasync client, free the channel, and return early so no further messages are\nqueued on a channel whose scl has been cleared.\n\nWhile at it, clean up stratix10_rsu_probe() in two ways without changing\nbehavior:\n\n- Drop redundant zero-initialization of fields already cleared by\n  devm_kzalloc(): client.receive_cb, status.* and spt0/1_address\n  (INVALID_SPT_ADDRESS is 0x0).\n\n- Replace five identical 3-line error-cleanup blocks\n  (stratix10_svc_remove_async_client() + stratix10_svc_free_channel() +\n  return ret) with goto labels (remove_async_client, free_channel),\n  matching the standard kernel resource-unwinding pattern and making it\n  easier to extend the probe sequence without forgetting matching\n  cleanup.\n\nAlso move init_completion() next to mutex_init() so sync-primitive\ninitialization is grouped before anything that could trigger a\ncallback.\n\n---\nv2: Add a minor clean-up of the function stratix10_rsu_probe() to have a\n    centralize exit for all the rsu_send_async_msg() and rsu_send_msg().",
+  "datePublished": "Jun 25, 2026, 8:39:11 AM",
+  "dateUpdated": "Jun 25, 2026, 8:39:11 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6bc249d324241c64118a3018124798c28e2950f7",
+    "https://git.kernel.org/stable/c/bfd2eb9bba548a8f63c3339bb1fb9a2031a42d86"
+  ],
+  "aliases": [
+    "CVE-2026-53204"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "16409e66-e349-3513-b52b-4a118342d60c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "314e7263-d328-3025-a925-ce22cf1d8910",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.13"
+    },
+    {
+      "id": "3e1ba898-0409-3179-8f24-33bafcc30384",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "45fbbc86-0f76-3039-9ed1-cdcf257c84f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "15847537b623f844d9a08da99ff4568315e1d4f8 <bfd2eb9bba548a8f63c3339bb1fb9a2031a42d86"
+    },
+    {
+      "id": "644db82b-69eb-3f58-b25a-6b103dc7371d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    },
+    {
+      "id": "c2c80722-abb5-30da-91b6-95a8acd3b559",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "15847537b623f844d9a08da99ff4568315e1d4f8 <6bc249d324241c64118a3018124798c28e2950f7"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "cf2fc59b-9128-3a24-88f8-f842ebd18ae5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

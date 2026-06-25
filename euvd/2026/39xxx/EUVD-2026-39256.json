@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-39256",
+  "enisaUuid": "25390974-98b4-34a6-8d4c-c6ca8c183239",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niomap: avoid potential null folio->mapping deref during error reporting\n\nWhen a buffered read fails, iomap_finish_folio_read() reports the error\nwith fserror_report_io(folio->mapping->host, ...). This is called after\nifs->read_bytes_pending has been decremented by the bytes attempted to\nbe read.\n\nFor a folio split across multiple read completions, the folio is only\nguaranteed to stay locked while read_bytes_pending > 0. Once\niomap_finish_folio_read() decrements read_bytes_pending, another\nin-flight read can complete and end the read on the folio, which unlocks\nit. This allows truncate logic to run and detach the folio (set\nfolio->mapping to NULL). The error reporting path then can dereference a\nNULL folio->mapping. As reported by Sam Sun, this is the race that can\noccur:\n\nCPU0: failed completion      CPU1: final completion     CPU2: truncate\n-----------------------      ----------------------     --------------\nread_bytes_pending -= len\nfinished = false\n/* preempted before\n   fserror_report_io() */\n\t\t\t     read_bytes_pending -= len\n\t\t\t     finished = true\n\t\t\t     folio_end_read()\n\t\t\t\t\t\t\ttruncate clears\n\t\t\t\t\t\t\tfolio->mapping\nfserror_report_io(\n  folio->mapping->host, ...)\n\t      ^ NULL deref\n\nFix this by reporting the error first before decrementing\nifs->read_bytes_pending.",
+  "datePublished": "Jun 25, 2026, 8:38:45 AM",
+  "dateUpdated": "Jun 25, 2026, 8:38:45 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/1ad453817a4077230d1ba88eb0868f05f824449a",
+    "https://git.kernel.org/stable/c/2eea7f44b9c8b42fd7d3a1a87c06a7cd1b99c327"
+  ],
+  "aliases": [
+    "CVE-2026-53165"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "08728edb-addb-33eb-a44b-345ee220f212",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a9d573ee88af980f14fdadb5c12bbf6a195fb3f1 <1ad453817a4077230d1ba88eb0868f05f824449a"
+    },
+    {
+      "id": "26385417-f100-338b-ad38-6235cb767a61",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.13"
+    },
+    {
+      "id": "4a140b07-4de5-36d5-91f8-77af9d55d47b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "750b80b9-5053-3917-a481-1c838b8b7bac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.0"
+    },
+    {
+      "id": "92471dd0-9be1-31e5-a5cc-6c234fb0207f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c5598270-e5e2-3591-a07c-c7076bd6212a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a9d573ee88af980f14fdadb5c12bbf6a195fb3f1 <2eea7f44b9c8b42fd7d3a1a87c06a7cd1b99c327"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5adbaca1-b332-3a17-9a93-e05d1ba4fa63",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

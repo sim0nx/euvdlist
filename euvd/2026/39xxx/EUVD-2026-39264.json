@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-39264",
+  "enisaUuid": "8f9704dd-af59-3589-bb6e-1573977a6562",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\naccel/ethosu: fix OOB write in ethosu_gem_cmdstream_copy_and_validate()\n\nThe command stream parsing loop increments the index variable a second\ntime when a 64-bit command word is encountered (bit 14 set), but does\nnot re-check the loop bound before writing the second word:\n\n    for (i = 0; i < size / 4; i++) {\n        bocmds[i] = cmds[0];\n        if (cmd & 0x4000) {\n            i++;\n            bocmds[i] = cmds[1];   /* unchecked */\n        }\n    }\n\nThe buffer bocmds is backed by a DMA allocation of exactly size bytes\nfrom drm_gem_dma_create(ddev, size), giving valid indices [0, size/4-1].\n\nWhen i == size/4 - 1 on entry to an iteration and bit 14 of cmds[0] is\nset, bocmds[size/4-1] is written in bounds, i is then incremented to\nsize/4, and bocmds[size/4] writes four bytes past the end of the\nallocation.\n\nUserspace controls both the buffer contents and the size argument via\nthe ioctl, making this a userspace-triggerable heap out-of-bounds write.\n\nFix by checking the incremented index against the buffer bound before\nthe second write and returning -EINVAL if the buffer is too small to\ncontain the extended command.",
+  "datePublished": "Jun 25, 2026, 8:38:50 AM",
+  "dateUpdated": "Jun 25, 2026, 8:38:50 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/db6cb3e35cebf487f9a78ebd4cfa4b83708ff40d",
+    "https://git.kernel.org/stable/c/c0837b9cf6eabbad8b8cbddaff1a46a6d0a2e29d"
+  ],
+  "aliases": [
+    "CVE-2026-53173"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "33e5fa87-01ae-37dd-bc94-7549725251f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "44204e82-3c75-319f-a724-7fb7b9a2d650",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.13"
+    },
+    {
+      "id": "5e1c13a4-8376-31f4-a330-39af7ed74c4f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a5e9c0228e613f0ef2a58b9782d7c0ea8f1e58b <db6cb3e35cebf487f9a78ebd4cfa4b83708ff40d"
+    },
+    {
+      "id": "6e9ee3fb-1fec-35f6-8c9b-970839a7e150",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b555a64f-7287-3ef6-bde7-0e77c8844e7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a5e9c0228e613f0ef2a58b9782d7c0ea8f1e58b <c0837b9cf6eabbad8b8cbddaff1a46a6d0a2e29d"
+    },
+    {
+      "id": "f20d0749-8ae7-3289-b561-85b6143a62e5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "56ffbb70-cf42-376d-a8f0-2895e339616b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

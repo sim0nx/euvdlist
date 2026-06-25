@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-39191",
+  "enisaUuid": "154f9251-cc27-3ed9-ba5b-8357b06eb78a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: iptfs: fix use-after-free on first_skb in __input_process_payload\n\n__input_process_payload() stores first_skb into xtfs->ra_newskb under\ndrop_lock when starting partial reassembly, then unlocks and breaks out\nof the processing loop. The post-loop check reads xtfs->ra_newskb\nwithout the lock to decide whether first_skb is still owned:\n\n    if (first_skb && first_iplen && !defer && first_skb != xtfs->ra_newskb)\n\nBetween spin_unlock and this read, a concurrent CPU running\niptfs_reassem_cont() (or the drop_timer hrtimer) can complete\nreassembly, NULL xtfs->ra_newskb, and free the skb. The check then\nevaluates first_skb != NULL as true, and pskb_trim/ip_summed/consume_skb\noperate on the freed skb \u2014 a use-after-free in skbuff_head_cache.\n\nReplace the unlocked read with a local bool that records whether\nfirst_skb was handed to the reassembly state in the current call. The\nflag is set after the existing spin_unlock, before the break, using the\npointer equality that is stable at that point (first_skb == skb iff\nfirst_skb was stored in ra_newskb).",
+  "datePublished": "Jun 25, 2026, 8:39:35 AM",
+  "dateUpdated": "Jun 25, 2026, 8:39:35 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/8d9a79fbf5172d9c4c0146057af2360913265a11",
+    "https://git.kernel.org/stable/c/ff2ee35b6ce5fa8a8e24ea50b15733d5c8780198",
+    "https://git.kernel.org/stable/c/eb48730bb827d1550401a5d391903f9d90b493c8"
+  ],
+  "aliases": [
+    "CVE-2026-53240"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0a9ab907-c1b6-3387-bf9b-a14ebfd3fa17",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3f3339885fb343b7b42d7c34717108ce07da24ae <eb48730bb827d1550401a5d391903f9d90b493c8"
+    },
+    {
+      "id": "3a7f33d7-ccad-37ce-bf4b-7647844e24e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "3ce24808-5656-3bff-9966-53eed7039867",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.14"
+    },
+    {
+      "id": "41c579c9-8935-3cdd-91a6-d9ed63e4e9d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "474ed53a-aaa9-3c63-947a-9f3a5393a56b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.13"
+    },
+    {
+      "id": "4a48ba61-81a5-312b-989a-a29c1a66d4af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.36"
+    },
+    {
+      "id": "85497774-6263-34c7-b618-6e7f90539d93",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3f3339885fb343b7b42d7c34717108ce07da24ae <ff2ee35b6ce5fa8a8e24ea50b15733d5c8780198"
+    },
+    {
+      "id": "dcd64cda-90d0-38ca-8c66-15b46a33ba9f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3f3339885fb343b7b42d7c34717108ce07da24ae <8d9a79fbf5172d9c4c0146057af2360913265a11"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ba273557-76ec-3727-ac9f-eb54ebc7a144",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
