@@ -1,0 +1,159 @@
+{
+  "id": "EUVD-2026-39893",
+  "enisaUuid": "85652963-37b4-3c89-9c88-2940314f7a52",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\narm64: Reserve an extra page for early kernel mapping\n\nThe final part of [data, end) segment may overflow into the next page of\ninit_pg_end[1] which is the gap page before early_init_stack[2]:\n\n[1]\ncrash_arm64_v9.0.1> vtop ffffffed00601000\nVIRTUAL           PHYSICAL\nffffffed00601000  83401000\n\nPAGE DIRECTORY: ffffffecffd62000\n   PGD: ffffffecffd62da0 => 10000000833fb003\n   PMD: ffffff80033fb018 => 10000000833fe003\n   PTE: ffffff80033fe008 => 68000083401f03\n  PAGE: 83401000\n\n     PTE        PHYSICAL  FLAGS\n68000083401f03  83401000  (VALID|SHARED|AF|NG|PXN|UXN)\n\n      PAGE       PHYSICAL      MAPPING       INDEX CNT FLAGS\nfffffffec00d0040 83401000                0        0  1 4000 reserved\n\n[2]\nffffffed002c8000 (r) __pi__data\nffffffed0054e000 (d) __pi___bss_start\nffffffed005f5000 (b) __pi_init_pg_dir\nffffffed005fe000 (b) __pi_init_pg_end\nffffffed005ff000 (B) early_init_stack\nffffffed00608000 (b) __pi__end\n\nFor 4K pages, the early kernel mapping may use 2MB block entries but the\nkernel segments are only 64KB aligned. Segment boundaries that fall\nwithin a 2MB block therefore require a PTE table so that different\nattributes can be applied on either side of the boundary.\n\nKERNEL_SEGMENT_COUNT still correctly counts the five permanent kernel\nVMAs registered by declare_kernel_vmas(). However, since commit\n5973a62efa34 (\"arm64: map [_text, _stext) virtual address range\nnon-executable+read-only\"), the early mapper also maps [_text, _stext)\nseparately from [_stext, _etext). This adds one more early-only split\nand can require one more page-table page than the existing\nEARLY_SEGMENT_EXTRA_PAGES allowance reserves.\n\nIncrease the 4K-page early mapping allowance by one page to cover that\nadditional split.\n\n[catalin.marinas@arm.com: rewrote part of the commit log]\n[catalin.marinas@arm.com: expanded the code comment]",
+  "datePublished": "Jun 26, 2026, 7:40:48 PM",
+  "dateUpdated": "Jun 26, 2026, 7:40:48 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a4ff33053da0a34b14abb5c96dc5a48379e26fce",
+    "https://git.kernel.org/stable/c/dcb89deed40ba55ff7020061712fdabf098cc2cc",
+    "https://git.kernel.org/stable/c/9fe9e3acaa14921b0cf0d6cc2de5b562499bf721",
+    "https://git.kernel.org/stable/c/4d8e74ad4585672489da6145b3328d415f50db82"
+  ],
+  "aliases": [
+    "CVE-2026-53288"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "04fa7b83-73d9-3f7e-b86b-1c0d55b6aa04",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.10"
+    },
+    {
+      "id": "0a714f17-5cea-3dc1-8876-991353a788dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.18"
+    },
+    {
+      "id": "1850bf04-d753-3421-b1e5-5805fc4e6459",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5973a62efa34c80c9a4e5eac1fca6f6209b902af <4d8e74ad4585672489da6145b3328d415f50db82"
+    },
+    {
+      "id": "48228de1-f273-34ad-bc71-cdeb2a1b8413",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "60ab4383-621e-34fc-8d2e-51b3e9b13634",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.91"
+    },
+    {
+      "id": "61e4f4f6-ddc0-3d13-b8e1-0e5f343a0f31",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12.54 <6.12.91"
+    },
+    {
+      "id": "7e40cca8-3931-39d6-924a-1afce48bf43e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5973a62efa34c80c9a4e5eac1fca6f6209b902af <dcb89deed40ba55ff7020061712fdabf098cc2cc"
+    },
+    {
+      "id": "bcd32858-1b0d-3488-8eaf-6ad541d6a719",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "bdf1b19c-79a9-319c-a61a-01d297acc656",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.17.4 <6.18"
+    },
+    {
+      "id": "c9bf64d6-b27f-31d3-b0c6-65c0ef435f28",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.33"
+    },
+    {
+      "id": "dd7fbad8-9e83-377e-bcd5-c7d42f045a6f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5973a62efa34c80c9a4e5eac1fca6f6209b902af <9fe9e3acaa14921b0cf0d6cc2de5b562499bf721"
+    },
+    {
+      "id": "ece247c3-cf0d-3718-9c18-c37092b0c76c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "88025faf2aa08c7468d68d8cb31a53b55aae6ee0"
+    },
+    {
+      "id": "fafbe983-6e79-376e-9766-a96dd953f112",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fdd380a5950503a07aaaf74536a0c2f223475eb0 <a4ff33053da0a34b14abb5c96dc5a48379e26fce"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d404a23e-968a-3091-9155-7d1b70fd733e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

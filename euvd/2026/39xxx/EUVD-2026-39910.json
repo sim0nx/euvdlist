@@ -1,0 +1,38 @@
+{
+  "id": "EUVD-2026-39910",
+  "enisaUuid": "47b37fb4-8357-38e8-b654-cc1bbda5c4de",
+  "description": "Budibase is an open-source low-code platform. Prior to 3.39.9, `POST /api/pwa/process-zip` at packages/server/src/api/routes/static.ts:24 accepts a builder-uploaded .zip, extracts it with extract-zip@2.0.1 into a temp directory, then for each entry listed in icons.json validates the icon path, opens it, and streams the bytes into MinIO. The resulting object is served back via GET /api/assets/{appId}/pwa/{uuid}.png. extract-zip@2.0.1 preserves absolute symlink targets when restoring symlink entries. The icon-source validator at packages/server/src/api/controllers/static/index.ts:259-268 resolves the icon source string against baseDir (path.resolve), checks resolvedSrc.startsWith(baseDir + path.sep) against that string, and calls fs.existsSync(resolvedSrc) which follows symbolic links to confirm the target exists. None of the three calls reject symbolic-link entries. packages/backend-core/src/objectStore/objectStore.ts:302 then calls (await fsp.open(path)).createReadStream() on the resolved path. fsp.open follows the symlink, the target file's bytes stream into MinIO, and the response of the asset-fetch endpoint returns those bytes verbatim. Result: a workspace-level builder reads any file the server process can open. This vulnerability is fixed in 3.39.9.",
+  "datePublished": "Jun 26, 2026, 8:32:51 PM",
+  "dateUpdated": "Jun 26, 2026, 8:32:51 PM",
+  "baseScore": 9.6,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:N",
+  "references": [
+    "https://github.com/Budibase/budibase/security/advisories/GHSA-w7mq-r738-x278"
+  ],
+  "aliases": [
+    "CVE-2026-54352"
+  ],
+  "assigner": "GitHub_M",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "aedcbf08-26ce-32fa-8f72-deb429b25119",
+      "product": {
+        "name": "budibase",
+        "vendor": {
+          "name": "budibase"
+        }
+      },
+      "product_version": "< 3.39.9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2ffadfc1-e69f-3bc1-90b6-e694f7e07ba2",
+      "vendor": {
+        "name": "budibase"
+      }
+    }
+  ]
+}
