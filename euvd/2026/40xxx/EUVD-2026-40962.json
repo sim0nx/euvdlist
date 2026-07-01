@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-40962",
+  "enisaUuid": "0d97015d-82a1-361f-879b-2bde8b572d5e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsched_ext: Don't warn on NULL cgrp_moving_from in scx_cgroup_move_task()\n\nA WARN fires when systemd's user manager writes \"+cpu +memory +pids\" to\nits own subtree_control while a sched_ext scheduler is loaded:\n\n  WARNING: at kernel/sched/ext.c:3227 scx_cgroup_move_task+0xa8/0xb0\n   scx_cgroup_move_task+0xa8/0xb0\n   sched_move_task+0x134/0x290\n   cpu_cgroup_attach+0x39/0x70\n   cgroup_migrate_execute+0x37d/0x450\n   cgroup_update_dfl_csses+0x1e3/0x270\n   cgroup_subtree_control_write+0x3e7/0x440\n\nscx_cgroup_can_attach() arms cgrp_moving_from only when a task's cpu\ncgroup changes. It can still be NULL when scx_cgroup_move_task() runs,\nthrough this sequence:\n\n  Step                               Result\n  ---------------------------------  ----------------------------------\n  1. cpu enabled on cgroup G         cpu css = A\n  2. cpu toggled off then on for G   A killed, B created (same cgroup)\n  3. an exiting task keeps A alive   migration skips it, A now stale\n  4. +memory migrates G              stale A vs current B pulls cpu in\n  5. cpu attach runs for all tasks   hits a live, cpu-unchanged task\n  6. scx_cgroup_move_task() on it    cgrp_moving_from NULL -> WARN\n\nThe mismatch is that scx_cgroup_can_attach() keys on cgroup identity\nwhile migration drives the move on css identity, so a NULL cgrp_moving_from\nhere is a legitimate css-only migration, not a missing prep.\n\nThe call is already gated on cgrp_moving_from, so just drop the warning.\nops.cgroup_prep_move() and ops.cgroup_move() stay paired.",
+  "datePublished": "Jul 1, 2026, 1:32:14 PM",
+  "dateUpdated": "Jul 1, 2026, 1:32:14 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/cdff2eb97be147d2ce52ac1327841068781f25dc",
+    "https://git.kernel.org/stable/c/0ffcad63b19a1cadb475c9f405a93607fdcd0d7c",
+    "https://git.kernel.org/stable/c/bc75f5951fac4e49d175c4433fc08fb1ec01172f",
+    "https://git.kernel.org/stable/c/02e545c4297a26dbbc41df81b831e7f605bcd306"
+  ],
+  "aliases": [
+    "CVE-2026-53328"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "037ec71a-098d-3fe9-96df-c473552d4b65",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8195136669661fdfe54e9a8923c33b31c92fc1da <bc75f5951fac4e49d175c4433fc08fb1ec01172f"
+    },
+    {
+      "id": "109c8054-7257-3486-91b8-8a2d8b6850b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8195136669661fdfe54e9a8923c33b31c92fc1da <0ffcad63b19a1cadb475c9f405a93607fdcd0d7c"
+    },
+    {
+      "id": "10d46408-e16e-3232-b7cf-1faeda232053",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12"
+    },
+    {
+      "id": "3eba4e13-81ed-3461-98f0-40ebc508542f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "3f036e6e-0a0b-3bbd-b3b4-592e9cc31751",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8195136669661fdfe54e9a8923c33b31c92fc1da <02e545c4297a26dbbc41df81b831e7f605bcd306"
+    },
+    {
+      "id": "44fe7ab4-06cd-3c6f-88cd-4e389e4588ea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "9ba6845b-449f-396e-9ab8-9b5b5b7f56ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.13"
+    },
+    {
+      "id": "a6d8d0d3-aab2-31e9-9b6c-8eb4cdc201c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.94"
+    },
+    {
+      "id": "b0bb1223-d4d4-336e-8d5e-14a21f8cafeb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8195136669661fdfe54e9a8923c33b31c92fc1da <cdff2eb97be147d2ce52ac1327841068781f25dc"
+    },
+    {
+      "id": "c2de8126-aeb5-3108-af9a-8e0a24ecd34b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.36"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "37e6c353-3fa1-3b1e-bc46-40636212b04d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

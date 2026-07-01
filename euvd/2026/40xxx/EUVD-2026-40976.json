@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-40976",
+  "enisaUuid": "b0cdb114-2944-3df0-94b7-38190c7913bf",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\narm64: mm: call pagetable dtor when freeing hot-removed page tables\n\nSince 5e8eb9aeeda3 (\"arm64: mm: always call PTE/PMD ctor in\n__create_pgd_mapping()\") page-table allocation on ARM64 always calls\npagetable_{pte,pmd,pud,p4d}_ctor().  This sets the page_type to\nPGTY_table, increments NR_PAGETABLE and possible allocates a PTL.  However\nthe matching pagetable_dtor() calls were never added.\n\nWith DEBUG_VM enabled on kernel versions prior to v6.17 without\n2dfcd1608f3a9 (\"mm/page_alloc: let page freeing clear any set page type\")\nthis leads to the following warning when freeing these pages due to\npage->page_type sharing page->_mapcount:\n\n  BUG: Bad page state in process ... pfn:284fbb\n  page: refcount:0 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x284fbb\n  flags: 0x17fffc000000000(node=0|zone=2|lastcpupid=0x1ffff)\n  page_type: f2(table)\n  page dumped because: nonzero mapcount\n  Call trace:\n   bad_page+0x13c/0x160\n   __free_frozen_pages+0x6cc/0x860\n   ___free_pages+0xf4/0x180\n   free_pages+0x54/0x80\n   free_hotplug_page_range.part.0+0x58/0x90\n   free_empty_tables+0x438/0x500\n   __remove_pgd_mapping.constprop.0+0x60/0xa8\n   arch_remove_memory+0x48/0x80\n   try_remove_memory+0x158/0x1d8\n   offline_and_remove_memory+0x138/0x180\n\nIt can also lead to leaking the ptl allocation if ALLOC_SPLIT_PTLOCKS is\ndefined and incorrect NR_PAGETABLE stats.  Fix this by calling\npagetable_dtor() in free_hotplug_pgtable_page() prior to freeing the page\nto undo the effects of calling pagetable_*_ctor().",
+  "datePublished": "Jul 1, 2026, 1:32:23 PM",
+  "dateUpdated": "Jul 1, 2026, 1:32:23 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/95f27fcda681021ed3906d3cae7e68b6a57a1d8e",
+    "https://git.kernel.org/stable/c/aaa688ac9f18207f7452c6472e647c1febaea6a3",
+    "https://git.kernel.org/stable/c/c594b83457ccdee76d458416fb3bc9348a37592f"
+  ],
+  "aliases": [
+    "CVE-2026-53342"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0e0ea638-6640-3941-941d-62f1776916a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "205b7f9c-41fa-3968-b6d7-483957ab9a0c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.36"
+    },
+    {
+      "id": "25a40682-4650-3504-9f6d-656c6dc81672",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5e8eb9aeeda3a7aaf48efa1d34ae804e894e307f <aaa688ac9f18207f7452c6472e647c1febaea6a3"
+    },
+    {
+      "id": "3dbb492c-ca4d-3777-8cba-c84c0a1325f5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "5bba6a65-7e68-36f6-b101-c8f9eb0bd837",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.13"
+    },
+    {
+      "id": "a0d49589-a6a4-33e0-b097-0ac3d637b5b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "c68be260-b076-3b0b-a84a-c2c740a1f157",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5e8eb9aeeda3a7aaf48efa1d34ae804e894e307f <95f27fcda681021ed3906d3cae7e68b6a57a1d8e"
+    },
+    {
+      "id": "e931f46f-01c5-3b8e-a59d-f1aeed6c35ed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5e8eb9aeeda3a7aaf48efa1d34ae804e894e307f <c594b83457ccdee76d458416fb3bc9348a37592f"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e4b9e2df-a3d0-37ea-835e-cbe946ad30e0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
