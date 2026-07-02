@@ -1,0 +1,62 @@
+{
+  "id": "EUVD-2026-41414",
+  "enisaUuid": "11119655-80fd-3e27-940d-db17f8642e7f",
+  "description": "Time-of-check Time-of-use (TOCTOU) race condition vulnerability in Erlang/OTP ssl (dtls_packet_demux module) allows an unauthenticated remote attacker to crash all active DTLS sessions on a listener.\n\nA DTLS server listener uses a single shared dtls_packet_demux gen_server process to route incoming UDP datagrams to the correct connection handler. When a DTLS client reconnects rapidly from the same source address and port (sending multiple ClientHello messages in quick succession), a race condition in the demux's internal gb_trees key-value store causes a {key_exists, {old, Client}} crash, terminating the demux process. Because the demux is shared across all DTLS associations on that listener, its crash immediately kills every active DTLS session, not just the attacker's.\n\nThe attack is pre-authentication: the attacker only needs to send UDP datagrams containing valid ClientHello messages from the same source IP and port before the intermediate DOWN monitor message is processed by the gen_server. No credentials, no completed handshake, and no special configuration are required, and the crash can be repeated indefinitely to create a persistent denial of service for all clients of that listener.\n\nThis vulnerability is associated with program file lib/ssl/src/dtls_packet_demux.erl.\n\nThis issue affects OTP from OTP 25.3 before 29.0.3, 28.5.0.3, and 27.3.4.14 corresponding to ssl from 10.9 before 11.7.3, 11.6.0.3, and 11.2.12.10.",
+  "datePublished": "Jul 2, 2026, 4:06:24 PM",
+  "dateUpdated": "Jul 2, 2026, 4:06:24 PM",
+  "baseScore": 8.7,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/erlang/otp/security/advisories/GHSA-hwfc-5hf4-gvr3",
+    "https://cna.erlef.org/cves/CVE-2026-55950.html",
+    "https://osv.dev/vulnerability/EEF-CVE-2026-55950",
+    "https://www.erlang.org/doc/system/versions.html#order-of-versions",
+    "https://github.com/erlang/otp/commit/e44d2bf01c4473ef2ea7f09e3523cf96de6e4a04"
+  ],
+  "aliases": [
+    "CVE-2026-55950"
+  ],
+  "assigner": "EEF",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "638bbc86-6273-3ed0-addf-93986132ccc4",
+      "product": {
+        "name": "otp",
+        "vendor": {
+          "name": "erlang"
+        }
+      },
+      "product_version": "44dcb4c3d900777493ce2a6129f451aa475811f9 <e44d2bf01c4473ef2ea7f09e3523cf96de6e4a04"
+    },
+    {
+      "id": "79cbdfb2-2778-3f99-b0ab-58bb742d6979",
+      "product": {
+        "name": "otp",
+        "vendor": {
+          "name": "erlang"
+        }
+      },
+      "product_version": "10.9 <*"
+    },
+    {
+      "id": "7a6612ee-8585-3764-867e-c22db0c8b088",
+      "product": {
+        "name": "otp",
+        "vendor": {
+          "name": "erlang"
+        }
+      },
+      "product_version": "25.3 <*"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "82f534b6-aa20-34df-af22-8756b33b2046",
+      "vendor": {
+        "name": "erlang"
+      }
+    }
+  ]
+}
