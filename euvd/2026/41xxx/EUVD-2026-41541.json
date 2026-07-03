@@ -1,0 +1,37 @@
+{
+  "id": "EUVD-2026-41541",
+  "enisaUuid": "30bea6ed-d963-3850-9a1f-0350ad97fdf9",
+  "description": "Net::IP::LPM versions through 1.10 for Perl allow a heap out-of-bounds read via an unbounded prefix length.\n\nadd() passes the prefix string to the trie builder addPrefixToTrie() without checking it against the address width.\n\naddPrefixToTrie() then walks the prefix buffer by prefix_length bits, reading prefix[byte] for byte up to prefix_len/8, where prefix is the 4-byte (IPv4) or 16-byte (IPv6) packed address. A prefix length greater than 32 for IPv4 or 128 for IPv6, for example add(\"1.2.3.4/255\", $v) or add(\"2001:db8::/255\", $v), reads past the end of the packed address.\n\nThe out-of-bounds read happens during trie construction and is bounded: the prefix length is stored as an unsigned char, so the bit walk reads at most 32 bytes from the start of the packed address, a short distance past the end of the 4-byte or 16-byte buffer. It is detectable under AddressSanitizer, valgrind, or a hardened allocator, where it can abort the process. Lookups and dump() format only the valid address width, so the out-of-bounds bytes are not exposed through the module's API.",
+  "datePublished": "Jul 3, 2026, 12:56:04 PM",
+  "dateUpdated": "Jul 3, 2026, 12:56:04 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://rt.cpan.org/Ticket/Display.html?id=179856",
+    "https://security.metacpan.org/patches/N/Net-IP-LPM/1.10/CVE-2026-56015-r2.patch"
+  ],
+  "aliases": [
+    "CVE-2026-56015"
+  ],
+  "assigner": "CPANSec",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "becbfb12-2d0e-3851-a659-0042fe576d0a",
+      "product": {
+        "name": "Net::IP::LPM",
+        "vendor": {
+          "name": "TPODER"
+        }
+      },
+      "product_version": "0 \u22641.10"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "8632390c-0d07-37df-a401-a4d9c391bf1c",
+      "vendor": {
+        "name": "TPODER"
+      }
+    }
+  ]
+}
