@@ -1,0 +1,41 @@
+{
+  "id": "EUVD-2026-41676",
+  "enisaUuid": "e8833ff4-7809-381c-952a-f43382e34609",
+  "description": "In Trail of Bits fickling versions up to and including 0.1.11, the UnsafeImportsML analysis pass unconditionally calls AnalysisContext.shorten_code(node) on every import node it inspects, regardless of whether the import is flagged as unsafe. This call registers the shortened code representation in the shared AnalysisContext.reported_shortened_code set. When the MLAllowlist analysis pass subsequently runs, it calls the same shorten_code() method, receives already_reported=True for every import, and executes a continue statement that skips its allowlist check entirely. This renders MLAllowlist dead code for all imports \u2014 it never evaluates whether an import is in the ML allowlist or not. The MLAllowlist pass was designed to catch imports of modules outside the known-safe ML ecosystem (torch, numpy, transformers, etc.) that slip past the UnsafeImports denylist. With MLAllowlist inoperative, any standard library module not in the UNSAFE_IMPORTS denylist can be invoked via pickle deserialization while fickling's check_safety() returns LIKELY_SAFE. The fickling.load() API chains check_safety() into pickle.loads() as an explicit security gate, meaning a LIKELY_SAFE verdict causes the payload to be deserialized and executed. The root cause is shared mutable state between independently-correct analysis passes \u2014 UnsafeImportsML works as designed in isolation, MLAllowlist works as designed in isolation, but the shared reported_shortened_code set causes UnsafeImportsML to poison MLAllowlist's deduplication logic.",
+  "datePublished": "Jul 4, 2026, 1:31:14 PM",
+  "dateUpdated": "Jul 4, 2026, 1:31:14 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://github.com/trailofbits/fickling/security/advisories/GHSA-cffv-grgg-g429",
+    "https://github.com/trailofbits/fickling/pull/278",
+    "https://github.com/trailofbits/fickling/commit/41ce7cb01edd97072994039574a2301ebb3f463d",
+    "https://github.com/trailofbits/fickling/releases/tag/v0.1.12"
+  ],
+  "aliases": [
+    "CVE-2026-14535"
+  ],
+  "assigner": "BombadilSystems",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "265675d3-b95c-356a-944d-509399ad7522",
+      "product": {
+        "name": "fickling",
+        "vendor": {
+          "name": "trailofbits"
+        }
+      },
+      "product_version": "0 \u22640.1.11"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f7f2b8d4-0568-36af-9669-c00e65244635",
+      "vendor": {
+        "name": "trailofbits"
+      }
+    }
+  ]
+}
