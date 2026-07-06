@@ -1,0 +1,46 @@
+{
+  "id": "EUVD-2026-41847",
+  "enisaUuid": "3499a51e-6dcb-3ab0-a4c5-1652f03f43e9",
+  "description": "Improper Authentication, Missing Authentication for Critical Function, Not Failing Securely ('Failing Open') vulnerability in Apache Camel Keycloak Component.\n\nThe KeycloakSecurityPolicy of camel-keycloak guards a route by running KeycloakSecurityProcessor.beforeProcess(), which performs three checks in sequence: it rejects a request that carries no access token, then - only if requiredRoles is non-empty - validates the roles, and - only if requiredPermissions is non-empty - validates the permissions. The actual cryptographic verification of the bearer access token (signature, issuer and expiry for a local JWT, or active-state and issuer for token introspection) is performed exclusively inside those role and permission checks. KeycloakSecurityPolicy defaults requiredRoles and requiredPermissions to empty - which is the documented 'Basic Setup' - so on a route configured that way the role and permission checks are skipped and the access token is therefore never verified. The token-presence check still rejects a missing token, but an invalid token is accepted: any non-null value in the Authorization: Bearer header - including an arbitrary string or a forged, unsigned JWT - passes the policy and the request reaches the protected route, with no signature, issuer or expiry check and no request to Keycloak. The token is read from the inbound request header because allowTokenFromHeader defaults to true. Because the normal reason to place a route behind this policy is that the route performs server-side work, the bypass results in unauthenticated access to that work; where the protected route forwards to a code-execution-capable producer, it can result in unauthenticated remote code execution. This defect is independent of CVE-2026-23552: that issue concerned the issuer claim and was fixed by adding a check inside the verification routine, but here the verification routine is not reached at all in the default configuration, so the defect remains.\nThis issue affects Apache Camel: from 4.15.0 before 4.18.3, from 4.19.0 before 4.21.0.\n\nUsers are recommended to upgrade to version 4.21.0, which fixes the issue. If users are on the 4.18.x releases stream, then they are suggested to upgrade to 4.18.3. For deployments that cannot upgrade immediately, configure a non-empty requiredRoles or requiredPermissions on every KeycloakSecurityPolicy so that the token-verification path is exercised, set allowTokenFromHeader to false where the token is not expected from the request header, or perform token verification at the framework layer ahead of the policy.",
+  "datePublished": "Jul 6, 2026, 8:12:32 AM",
+  "dateUpdated": "Jul 6, 2026, 8:12:32 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://camel.apache.org/security/CVE-2026-53913.html"
+  ],
+  "aliases": [
+    "CVE-2026-53913"
+  ],
+  "assigner": "apache",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "20c3a7ff-670a-3499-983c-8be737fe384b",
+      "product": {
+        "name": "Apache Camel Keycloak",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.19.0 <4.21.0"
+    },
+    {
+      "id": "9989c028-4489-3c60-8f06-718a8bc3988d",
+      "product": {
+        "name": "Apache Camel Keycloak",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.15.0 <4.18.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3a7dfeae-539f-3bb7-a03d-1b59769228d8",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}

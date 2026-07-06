@@ -1,0 +1,56 @@
+{
+  "id": "EUVD-2026-41828",
+  "enisaUuid": "b9ad99c4-f79c-34ff-b9dc-e9bc06aea595",
+  "description": "Improper Input Validation vulnerability in Apache Camel Cometd Component.\n\nThe camel-cometd component maps inbound Bayeux (CometD) message headers into the Camel Exchange without applying a HeaderFilterStrategy. CometdBinding.populateExchangeFromMessage copies the entire ext.CamelHeaders map supplied by the CometD client directly onto the Camel message (message.setHeaders), so any header name - including Camel-internal control headers such as CamelHttpUri, CamelFileName or CamelJmsDestinationName - is accepted unmodified. Because a CometdComponent installs no Bayeux SecurityPolicy by default, any client that can complete the Bayeux handshake against the CometD endpoint can publish such a message without authentication. An attacker can therefore inject arbitrary Camel control headers that influence the behaviour of downstream producers in the route (for example redirecting an HTTP producer, changing a file name, or overriding a JMS destination); the injected headers also persist across internal direct, seda and vm hops. The concrete downstream impact depends on which producers the route uses.\nThis issue affects Apache Camel: from 4.0.0 before 4.14.8, from 4.15.0 before 4.18.3, from 4.19.0 before 4.21.0.\n\nUsers are recommended to upgrade to version 4.21.0, which fixes the issue. If users are on the 4.14.x LTS releases stream, then they are suggested to upgrade to 4.14.8. If users are on the 4.18.x releases stream, then they are suggested to upgrade to 4.18.3. The fix implements a HeaderFilterStrategy in the camel-cometd binding (a long-standing TODO in the code) that filters the Camel header namespace case-insensitively on inbound mapping, so client-supplied Camel* / camel* headers are no longer copied into the Exchange. For deployments that cannot upgrade immediately, strip the Camel control headers from inbound CometD messages before they reach any downstream producer (for example removeHeaders('Camel*') and removeHeaders('camel*') at the start of the route), and install an explicit Bayeux SecurityPolicy on the CometdComponent so that only authenticated clients can publish.",
+  "datePublished": "Jul 6, 2026, 7:56:14 AM",
+  "dateUpdated": "Jul 6, 2026, 7:56:14 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://camel.apache.org/security/CVE-2026-46454.html"
+  ],
+  "aliases": [
+    "CVE-2026-46454"
+  ],
+  "assigner": "apache",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "737a88f5-760f-3807-8d4d-4c89f21bb8b0",
+      "product": {
+        "name": "Apache Camel",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.0.0 <4.14.8"
+    },
+    {
+      "id": "881e3c0e-c7ba-3c0a-9ec0-eabe676107af",
+      "product": {
+        "name": "Apache Camel",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.19.0 <4.21.0"
+    },
+    {
+      "id": "fc91c84d-cfef-31aa-9458-a1ae274d53ef",
+      "product": {
+        "name": "Apache Camel",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.15.0 <4.18.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "8d4e7666-93f1-3e58-bce5-aa6ef90c52b4",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "id": "EUVD-2026-41840",
+  "enisaUuid": "6e6472e5-01e4-30c0-9a89-66800e9dec25",
+  "description": "Improper Input Validation, Server-Side Request Forgery (SSRF) vulnerability in Apache Camel DNS component.\n\nThe camel-dns producers read DNS operation parameters - the resolver to query, the name or domain to look up, the record type and class, and the search term - from Exchange message headers whose constant values (DnsConstants.DNS_SERVER, DNS_NAME, DNS_DOMAIN, DNS_TYPE, DNS_CLASS, TERM) were the plain strings dns.server, dns.name, dns.domain, dns.type, dns.class and term. Because these names do not start with the Camel / camel prefix, HttpHeaderFilterStrategy - which blocks only the Camel header namespace on the HTTP boundary - let them pass from an inbound HTTP request straight into the Exchange. In a route that bridges an HTTP consumer (for example platform-http) into a dns: producer, any HTTP client could therefore set the dns.server header to make the dig producer build a SimpleResolver pointing at an attacker-controlled DNS server - a server-side request forgery via DNS, through which the attacker observes the queried name and can return poisoned responses - and set the dns.name / dns.domain headers to resolve arbitrary internal hostnames, disclosing whether they exist (internal network reconnaissance). No credentials are required when the bridging consumer is unauthenticated.\nThis issue affects Apache Camel: from 4.0.0 before 4.14.8, from 4.15.0 before 4.18.3, from 4.19.0 before 4.21.0.\n\nUsers are recommended to upgrade to version 4.21.0, which fixes the issue. If users are on the 4.14.x LTS releases stream, then they are suggested to upgrade to 4.14.8. If users are on the 4.18.x releases stream, then they are suggested to upgrade to 4.18.3. After upgrading, routes that drive DNS operations via the raw header names must use CamelDnsServer / CamelDnsName / CamelDnsDomain / CamelDnsType / CamelDnsClass / CamelDnsTerm instead of the dns.* / term names. For deployments that cannot upgrade immediately, strip the dns.* and term headers from any untrusted ingress before the dns: producer, and set the DNS server and lookup parameters from a trusted source in the route.",
+  "datePublished": "Jul 6, 2026, 8:08:19 AM",
+  "dateUpdated": "Jul 6, 2026, 8:08:19 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://camel.apache.org/security/CVE-2026-48205.html"
+  ],
+  "aliases": [
+    "CVE-2026-48205"
+  ],
+  "assigner": "apache",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "06e3c3f7-1cd7-30d9-b664-5f1c228a3696",
+      "product": {
+        "name": "Apache Camel DNS",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.0.0 <4.14.8"
+    },
+    {
+      "id": "3d64fb09-a10b-3b8c-a46b-6bcb55a57257",
+      "product": {
+        "name": "Apache Camel DNS",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.15.0 <4.18.3"
+    },
+    {
+      "id": "ea55c604-67ad-3e31-ae63-b4a358a132f5",
+      "product": {
+        "name": "Apache Camel DNS",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.19.0 <4.21.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "11afb533-6a9c-38ff-aeff-f43b39275d98",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}

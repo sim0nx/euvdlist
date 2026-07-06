@@ -1,0 +1,56 @@
+{
+  "id": "EUVD-2026-41830",
+  "enisaUuid": "243bd601-e1ec-32ad-bfdc-5cd34f9e40f4",
+  "description": "Improper Input Validation vulnerability in Apache Camel AWS2-SQS Component.\n\n\nThe camel-aws2-sqs component map inbound message attributes into the Camel Exchange through a component-specific HeaderFilterStrategy. Sqs2HeaderFilterStrategy configured only an outbound filter (setOutFilterPattern, which blocks Camel*, breadcrumbId and org.apache.camel.* headers being written to the broker) but did not configure an inbound filter. As a result, when Sqs2Consumer copies each SQS MessageAttribute into the Exchange via HeaderFilterStrategy.applyFilterToExternalHeaders, DefaultHeaderFilterStrategy applied no inbound rule and treated every header name as not filtered - including Camel-internal control headers such as CamelHttpUri, CamelFileName or CamelSqlQuery - copying them unmodified onto the Camel message. Any principal able to send messages to the consumed SQS queue (for example a cross-account sender or a lower-privileged in-account component holding sqs:SendMessage) could therefore set arbitrary Camel control headers that influence the behaviour of downstream producers in the route (for example redirecting an HTTP producer, changing a file name, or overriding a query); the injected headers also persist across internal direct, seda and vm hops. The concrete downstream impact depends on which producers the route uses.\n\n\nThis issue affects Apache Camel: from 4.0.0 before 4.14.8, from 4.15.0 before 4.18.3, from 4.19.0 before 4.21.0.\n\nUsers are recommended to upgrade to version 4.21.0, which fixes the issue. If users are on the 4.14.x LTS releases stream, then they are suggested to upgrade to 4.14.8. If users are on the 4.18.x releases stream, then they are suggested to upgrade to 4.18.3. The fix adds an inbound HeaderFilterStrategy rule to Sqs2HeaderFilterStrategy that filters the Camel header namespace case-insensitively on inbound mapping, so sender-supplied Camel* / camel* headers are no longer copied into the Exchange. For deployments that cannot upgrade immediately, strip the Camel control headers from inbound messages before they reach any downstream producer (for example removeHeaders('Camel*') and removeHeaders('camel*') at the start of the route), and restrict who may send to the consumed SQS queue by applying least-privilege sqs:SendMessage permissions on the queue resource policy.",
+  "datePublished": "Jul 6, 2026, 7:56:51 AM",
+  "dateUpdated": "Jul 6, 2026, 7:56:51 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://camel.apache.org/security/CVE-2026-46456.html"
+  ],
+  "aliases": [
+    "CVE-2026-46456"
+  ],
+  "assigner": "apache",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "46743034-a9c4-3271-838e-6a9c2a11fe03",
+      "product": {
+        "name": "Apache Camel",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.0.0 <4.14.8"
+    },
+    {
+      "id": "7640db68-1a81-38cf-854e-af6c2250d8d0",
+      "product": {
+        "name": "Apache Camel",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.19.0 <4.21.0"
+    },
+    {
+      "id": "8cb9b28d-1251-32d9-a9e4-03ea8bac9194",
+      "product": {
+        "name": "Apache Camel",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.15.0 <4.18.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "65b9997a-e65a-3ff9-9b2d-7031784276a8",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "id": "EUVD-2026-41841",
+  "enisaUuid": "ab15a250-a5f8-3b10-8936-30935d39638b",
+  "description": "Improper Input Validation, Authorization Bypass Through User-Controlled Key vulnerability in Apache Camel JIRA component.\n\nThe camel-jira producers read their operation parameters - the issue key, project key, transition id, summary, type, assignee, components, watchers, link type, work-log minutes and others - from Exchange message headers. The header constants defined in JiraConstants (for example ISSUE_KEY = IssueKey, ISSUE_PROJECT_KEY = ProjectKey, ISSUE_TRANSITION_ID = IssueTransitionId, LINK_TYPE = linkType) used plain, non-Camel-prefixed values. Because these names do not start with the Camel / camel prefix, HttpHeaderFilterStrategy - which blocks only the Camel header namespace on the HTTP boundary - let them pass from an inbound HTTP request straight into the Exchange. In a route that bridges an HTTP consumer (for example platform-http) into a jira: producer, any HTTP client could therefore supply these headers and override the values the route intended, driving JIRA operations against the configured JIRA instance with the endpoint's configured service-account credentials - for example deleting or transitioning an arbitrary issue (via IssueKey / IssueTransitionId), creating an issue in a different project (via ProjectKey), modifying issue fields, adding or removing watchers, or logging work. The operations are bounded by what the configured service account is permitted to do. No credentials are required from the attacker when the bridging consumer is unauthenticated.\nThis issue affects Apache Camel: from 4.0.0 before 4.14.8, from 4.15.0 before 4.18.3, from 4.19.0 before 4.21.0.\n\nUsers are recommended to upgrade to version 4.21.0, which fixes the issue. If users are on the 4.14.x LTS releases stream, then they are suggested to upgrade to 4.14.8. If users are on the 4.18.x releases stream, then they are suggested to upgrade to 4.18.3. After upgrading, routes that drive JIRA operations via the raw header names must use the CamelJira* names (for example CamelJiraIssueKey) instead of the old values. For deployments that cannot upgrade immediately, strip the camel-jira control headers from any untrusted ingress before the jira: producer (for example removing the IssueKey, ProjectKey, IssueTransitionId and related headers at the start of the route), and set the required JIRA operation parameters from a trusted source.",
+  "datePublished": "Jul 6, 2026, 8:09:09 AM",
+  "dateUpdated": "Jul 6, 2026, 8:09:09 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://camel.apache.org/security/CVE-2026-48206.html"
+  ],
+  "aliases": [
+    "CVE-2026-48206"
+  ],
+  "assigner": "apache",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "448c327e-d457-3a92-a287-bc8fdc2f5cfe",
+      "product": {
+        "name": "Apache Camel JIRA",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.15.0 <4.18.3"
+    },
+    {
+      "id": "747cc2ee-d778-308a-9942-a923347fd38d",
+      "product": {
+        "name": "Apache Camel JIRA",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.0.0 <4.14.8"
+    },
+    {
+      "id": "ea576cad-d345-3b46-a566-396afa3439cd",
+      "product": {
+        "name": "Apache Camel JIRA",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.19.0 <4.21.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d3e241c1-926a-3315-a070-1f64e895ddc4",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}

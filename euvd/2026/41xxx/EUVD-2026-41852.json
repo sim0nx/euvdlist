@@ -1,0 +1,56 @@
+{
+  "id": "EUVD-2026-41852",
+  "enisaUuid": "9e9ece63-afc5-3330-81a6-229336bb7619",
+  "description": "Improper Input Validation vulnerability in Apache Camel AWS SNS component.\n\n\nThe camel-aws2-sns component filters Camel headers through a component-specific HeaderFilterStrategy, Sns2HeaderFilterStrategy. Like the sibling Sqs2HeaderFilterStrategy, it originally configured only an outbound filter (setOutFilterPattern, which blocks Camel*, breadcrumbId and org.apache.camel.* headers from being written out) and did not configure an inbound filter rule. For the related camel-aws2-sqs component this inbound gap was exploitable, because the Sqs2Consumer maps inbound SQS message attributes into the Camel Exchange via HeaderFilterStrategy.applyFilterToExternalHeaders, allowing a message sender to inject Camel control headers (tracked as CVE-2026-46456). camel-aws2-sns, by contrast, is producer-only: Sns2Endpoint does not support consumers (createConsumer throws UnsupportedOperationException, 'You cannot receive messages from this endpoint'), so no externally-supplied message attributes are ever mapped inbound into a Camel Exchange through SNS, and the missing inbound filter rule on Sns2HeaderFilterStrategy was therefore not reachable by an attacker. As part of the same fix (CAMEL-23506), an inbound filter rule (setInFilterStartsWith for the Camel namespace) was added to Sns2HeaderFilterStrategy so that its configuration matches the corrected Sqs2HeaderFilterStrategy and the other sibling strategies. This is a defense-in-depth alignment with no known exploit path in camel-aws2-sns.\n\n\nThis issue affects Apache Camel: from 4.0.0 before 4.14.8, from 4.15.0 before 4.18.3, from 4.19.0 before 4.21.0.\n\nThis is a defense-in-depth hardening change with no known exploit path in camel-aws2-sns, which is producer-only, so no urgent action or workaround is required. Users who want the aligned behaviour can upgrade to version 4.21.0, or to 4.14.8 on the 4.14.x LTS releases stream, or to 4.18.3 on the 4.18.x releases stream, which contain the change. As a general best practice, operators should continue to apply least-privilege IAM permissions on their SNS topics.",
+  "datePublished": "Jul 6, 2026, 8:16:00 AM",
+  "dateUpdated": "Jul 6, 2026, 8:16:00 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://camel.apache.org/security/CVE-2026-56140.html"
+  ],
+  "aliases": [
+    "CVE-2026-56140"
+  ],
+  "assigner": "apache",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3333501b-5f23-3ddf-8a7f-f188763fb7b9",
+      "product": {
+        "name": "Apache Camel AWS2 SNS",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.0.0 <4.14.8"
+    },
+    {
+      "id": "3efb3a91-88c9-3d8d-8cab-5485e3938325",
+      "product": {
+        "name": "Apache Camel AWS2 SNS",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.19.0 <4.21.0"
+    },
+    {
+      "id": "f3554f72-1ceb-36e6-8277-16520155eb66",
+      "product": {
+        "name": "Apache Camel AWS2 SNS",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "4.15.0 <4.18.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "08f123b3-8e87-3632-8462-2919b8e3647e",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}
