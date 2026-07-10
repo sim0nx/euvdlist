@@ -1,0 +1,51 @@
+{
+  "id": "EUVD-2026-42867",
+  "enisaUuid": "44e66460-5548-3414-9ae6-ca5c46340b05",
+  "description": "SQL Injection vulnerability in elixir-ecto postgrex allows an attacker who can influence a LISTEN channel name to inject SQL into the reconnect replay query, causing a denial of service of the notification connection.\n\nPostgrex.Notifications sanitizes channel names with quote_channel/1, which doubles double quotes so the name is safe inside a double-quoted identifier. This protects the single-statement LISTEN and UNLISTEN paths. On every (re)connect, however, handle_connect/1 replays all registered channels at once by concatenating their LISTEN statements and wrapping them in a dollar-quoted anonymous code block (DO $$BEGIN ... END$$). quote_channel/1 does not escape the $$ dollar-quote delimiter that opens and closes this block.\n\nThe listen/3 guards only reject null bytes and names longer than 63 bytes, so a channel name containing $$ passes validation unchanged. Once such a name is embedded, its $$ prematurely terminates the outer dollar-quoted string and PostgreSQL parses the remainder as additional top-level statements. Because handle_connect/1 runs on every (re)connect, the malformed replay query is rejected each time and the notification connection never re-establishes its subscriptions, silently dropping notifications for every channel sharing that connection.\n\nAn application is affected when it passes untrusted input (for example a tenant or user identifier) as a channel name to Postgrex.Notifications.listen/3. The double-quote doubling prevents forming a fully valid injected statement, so arbitrary SQL execution is not possible, but the corrupted query reliably breaks the shared notification connection for all tenants, resulting in denial of service.\n\nThis issue affects postgrex: from 0.16.0 before 0.22.3.",
+  "datePublished": "Jul 10, 2026, 10:51:46 AM",
+  "dateUpdated": "Jul 10, 2026, 11:47:16 AM",
+  "baseScore": 2.1,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:L/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/elixir-ecto/ecto/security/advisories/GHSA-4mw9-4qgj-m97w",
+    "https://cna.erlef.org/cves/CVE-2026-58225.html",
+    "https://osv.dev/vulnerability/EEF-CVE-2026-58225",
+    "https://github.com/elixir-ecto/postgrex/commit/795c6062f62c4394272ff4b89170688857b4f841"
+  ],
+  "aliases": [
+    "CVE-2026-58225"
+  ],
+  "assigner": "EEF",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "15c838e7-f678-37db-813c-c86d64f2ae63",
+      "product": {
+        "name": "postgrex",
+        "vendor": {
+          "name": "elixir-ecto"
+        }
+      },
+      "product_version": "0.16.0 <0.22.3"
+    },
+    {
+      "id": "d87a0ec9-3d18-3701-bce8-20e1bffddf05",
+      "product": {
+        "name": "postgrex",
+        "vendor": {
+          "name": "elixir-ecto"
+        }
+      },
+      "product_version": "266b530faf9bde094e31e0e4ab851f933fadc0f5 <795c6062f62c4394272ff4b89170688857b4f841"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f97a7ff0-ac50-3d92-ae3e-4fc5bca02ca9",
+      "vendor": {
+        "name": "elixir-ecto"
+      }
+    }
+  ]
+}
