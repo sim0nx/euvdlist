@@ -1,0 +1,51 @@
+{
+  "id": "EUVD-2026-43642",
+  "enisaUuid": "ddae2bce-0d8e-3427-8159-7fdbd92c9f18",
+  "description": "Allocation of resources without limits vulnerability in elixir-mint mint allows a remote HTTP server to exhaust memory on the client host and cause a denial of service.\n\nThe Mint.HTTP1.decode_headers/5 and Mint.HTTP1.decode_trailer_headers/4 functions in lib/mint/http1.ex accumulate every parsed response header and chunked-trailer field into a per-request list that persists across incoming TCP segments as request.headers_buffer, and only clear it when the terminating blank line is received. The section has no cap on the number of headers or on total bytes, and the underlying :erlang.decode_packet(:httph_bin, binary, []) parser is invoked with an empty option list so its per-line and per-packet size limits also default to unlimited.\n\nA malicious HTTP server (reachable directly, via an attacker-controlled redirect, via SSRF, or via a man-in-the-middle) can stream complete header lines (or, after a chunked body, complete trailer lines) indefinitely without ever emitting the terminating blank line. The connection state grows without bound until the BEAM node is killed by the operating system's out-of-memory handler, taking down the entire application that uses Mint as an HTTP client.\n\nThis issue affects mint: from 0.1.0 before 1.9.2.",
+  "datePublished": "Jul 14, 2026, 8:36:54 AM",
+  "dateUpdated": "Jul 14, 2026, 8:36:54 AM",
+  "baseScore": 8.2,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/elixir-mint/mint/security/advisories/GHSA-qrfr-wh4c-3qhw",
+    "https://cna.erlef.org/cves/CVE-2026-58229.html",
+    "https://osv.dev/vulnerability/EEF-CVE-2026-58229",
+    "https://github.com/elixir-mint/mint/commit/566d702e6f29105f77522ca7aabb9f64f2f4e333"
+  ],
+  "aliases": [
+    "CVE-2026-58229"
+  ],
+  "assigner": "EEF",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "102d4c7d-caa7-36c8-97c6-99bead6beb78",
+      "product": {
+        "name": "Mint",
+        "vendor": {
+          "name": "LinuxMint"
+        }
+      },
+      "product_version": "0.1.0 <1.9.2"
+    },
+    {
+      "id": "91144156-e526-383d-836c-88f9e83c9d86",
+      "product": {
+        "name": "Mint",
+        "vendor": {
+          "name": "LinuxMint"
+        }
+      },
+      "product_version": "3e6de4bac4821b0eb4d6109e8b1f3fb6458792c8 <566d702e6f29105f77522ca7aabb9f64f2f4e333"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "063a64eb-fe42-33f2-88db-a1f4fd45c361",
+      "vendor": {
+        "name": "elixir-mint"
+      }
+    }
+  ]
+}
