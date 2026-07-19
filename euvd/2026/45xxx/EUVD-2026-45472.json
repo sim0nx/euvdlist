@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2026-45472",
+  "enisaUuid": "0a06ceb1-e23f-30de-867b-c1dbb16e72f3",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: Replace guest-triggerable BUG_ON() in ioeventfd datamatch with get_unaligned()\n\nDrop a BUG_ON() that has been reachable since it was first added, way back\nin 2009, and instead use get_unaligned() to perform potentially-unaligned\naccesses.\n\nFor a given store, KVM x86's emulator tracks the entire value in the\ndestination operand, x86_emulate_ctxt.dst.  If the destination is memory,\nand the target splits multiple pages and/or is emulated MMIO, then KVM\nhandles each fragment independently.  E.g. on a page split starting at page\noffset 0xffc, KVM writes 4 bytes to the first page, then the remaining\nbytes to the second page, using ctxt->dst as the source for both (with\nappropriate offsets).\n\nIf the destination splits a page *and* hits emulated MMIO on the second\npage, then KVM will complete the write to the first page, then emulate the\nMMIO access to the second page.  If there is a datamatch-enabled ioeventfd\nat offset 0 of the second page, then KVM will process the remainder of the\nstore as a potential ioeventfd signal.\n\nPutting it all together, if the guest emits a store that splits a page\nstarting at page offset N, and the second page has a datamatch-enabled\nioeventfd at offset 0, then KVM will check for datamatch using\n&dst.valptr[N] as the source.  Due to dst (and thus dst.valptr) being\n32-byte aligned, if N is not aligned to @len, the BUG_ON() fires.\n\nE.g. with a 16-byte store at page offset 0xffc, to an ioeventfd of len 8,\nall initial checks in ioeventfd_in_range() will succeed, and the BUG_ON()\nfires due to @val being 4-byte aligned, but not 8-byte aligned.\n\n  ------------[ cut here ]------------\n  kernel BUG at arch/x86/kvm/../../../virt/kvm/eventfd.c:783!\n  Oops: invalid opcode: 0000 [#1] SMP\n  CPU: 0 UID: 1000 PID: 615 Comm: repro Not tainted 7.1.0-rc2-ff238429d1ea #365 PREEMPT\n  Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 0.0.0 02/06/2015\n  RIP: 0010:ioeventfd_write+0x6c/0x70 [kvm]\n  Call Trace:\n   <TASK>\n   __kvm_io_bus_write+0x85/0xb0 [kvm]\n   kvm_io_bus_write+0x53/0x80 [kvm]\n   vcpu_mmio_write+0x66/0xf0 [kvm]\n   emulator_read_write_onepage+0x12a/0x540 [kvm]\n   emulator_read_write+0x109/0x2b0 [kvm]\n   x86_emulate_insn+0x4f8/0xfb0 [kvm]\n   x86_emulate_instruction+0x181/0x790 [kvm]\n   kvm_mmu_page_fault+0x313/0x630 [kvm]\n   vmx_handle_exit+0x18a/0x590 [kvm_intel]\n   kvm_arch_vcpu_ioctl_run+0xc81/0x1c90 [kvm]\n   kvm_vcpu_ioctl+0x2d5/0x970 [kvm]\n   __x64_sys_ioctl+0x8a/0xd0\n   do_syscall_64+0xb7/0x890\n   entry_SYSCALL_64_after_hwframe+0x4b/0x53\n  RIP: 0033:0x7f19c931a9bf\n   </TASK>\n  Modules linked in: kvm_intel kvm irqbypass\n  ---[ end trace 0000000000000000 ]---\n\nIn a perfect world, the fix would be to simply delete the BUG_ON(), as KVM\nx86 doesn't perform alignment checks on \"normal\" memory accesses at CPL0.\nSadly, C99 ruins all the fun; while the x86 architecture plays nice,\ndereferencing an unaligned pointer directly is undefined behavior in C,\ne.g. triggers splats when running with CONFIG_UBSAN_ALIGNMENT=y.",
+  "datePublished": "Jul 19, 2026, 12:02:10 PM",
+  "dateUpdated": "Jul 19, 2026, 12:02:10 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/bf89e3738480d33cd515b4a18900e8443d40cd2e",
+    "https://git.kernel.org/stable/c/5da9b1a87ec7cc3489c27016313524769f12d9e0",
+    "https://git.kernel.org/stable/c/5c87b47374682f69686068ad0a7779365a527b1c",
+    "https://git.kernel.org/stable/c/f1edbed787ba67988ed34e0132ca128b052b6ce8"
+  ],
+  "aliases": [
+    "GHSA-3rc6-xmr7-v8j2",
+    "CVE-2026-63806"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "159d76f1-7eaf-3e79-aabd-bdf15e898007",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.95"
+    },
+    {
+      "id": "38cd5e12-da11-3ee3-956c-8a9622ff9a7f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d34e6b175e61821026893ec5298cc8e7558df43a <5c87b47374682f69686068ad0a7779365a527b1c"
+    },
+    {
+      "id": "4409fdc8-c8bc-3633-91c1-1575a671fc03",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.38"
+    },
+    {
+      "id": "484355fb-324e-32de-a240-f2c73cdb4a91",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d34e6b175e61821026893ec5298cc8e7558df43a <f1edbed787ba67988ed34e0132ca128b052b6ce8"
+    },
+    {
+      "id": "5e5676c5-a415-348f-830a-ebefc9a0b7f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.3"
+    },
+    {
+      "id": "78816c22-057b-387b-ab46-e195b9f3fcf3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.32"
+    },
+    {
+      "id": "8556d33a-aab9-3b94-87c0-5e973965406b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "a3bad2ba-0a96-3a2d-b73e-70197b4e7d4b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e3d119c6-f11e-3280-8ac1-930f90644ad4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d34e6b175e61821026893ec5298cc8e7558df43a <5da9b1a87ec7cc3489c27016313524769f12d9e0"
+    },
+    {
+      "id": "f8da09f0-8577-3674-8bf3-84c8542cd2f5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d34e6b175e61821026893ec5298cc8e7558df43a <bf89e3738480d33cd515b4a18900e8443d40cd2e"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a8bd18bd-346a-3c7a-8d2d-88d5f9657a16",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

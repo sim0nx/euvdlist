@@ -1,0 +1,109 @@
+{
+  "id": "EUVD-2026-45491",
+  "enisaUuid": "ca7d4a93-e06b-3337-9156-b3d3bd4f1459",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngcov: use atomic counter updates to fix concurrent access crashes\n\nGCC's GCOV instrumentation can merge global branch counters with loop\ninduction variables as an optimization.  In inflate_fast(), the inner copy\nloops get transformed so that the GCOV counter value is loaded multiple\ntimes to compute the loop base address, start index, and end bound.  Since\nGCOV counters are global (not per-CPU), concurrent execution on different\nCPUs causes the counter to change between loads, producing inconsistent\nvalues and out-of-bounds memory writes.\n\nThe crash manifests during IPComp (IP Payload Compression) processing when\ninflate_fast() runs concurrently on multiple CPUs:\n\n  BUG: unable to handle page fault for address: ffffd0a3c0902ffa\n  RIP: inflate_fast+1431\n  Call Trace:\n   zlib_inflate\n   __deflate_decompress\n   crypto_comp_decompress\n   ipcomp_decompress [xfrm_ipcomp]\n   ipcomp_input [xfrm_ipcomp]\n   xfrm_input\n\nAt the crash point, the compiler generated three loads from the same\nglobal GCOV counter (__gcov0.inflate_fast+216) to compute base, start, and\nend for an indexed loop.  Another CPU modified the counter between loads,\nmaking the values inconsistent - the write went 3.4 MB past a 65 KB\nbuffer.\n\nAdd -fprofile-update=prefer-atomic to CFLAGS_GCOV at the global level in\nthe top-level Makefile, guarded by a try-run compile test.  The test\ncompiles a minimal program with and without -fprofile-update=prefer-atomic\nusing the full KBUILD_CFLAGS, then compares undefined symbols in the\nresulting object files.  If prefer-atomic introduces new undefined\nreferences (such as __atomic_fetch_add_8 on i386 or __aarch64_ldadd8_relax\non arm64 with outline-atomics), the flag is not added -- the kernel does\nnot link against libatomic.\n\nOn architectures where GCC inlines 64-bit atomic counter updates (x86_64,\ns390, ...) the test passes and the flag is enabled, preventing the\ncompiler from merging counters with loop induction variables and fixing\nthe observed concurrent-access crash.\n\nOn architectures where the flag would introduce libatomic dependencies, it\nis silently omitted and behaviour is no worse than before this patch.\n\nMove the CFLAGS_GCOV block from its original position (before the arch\nMakefile include) to after the core KBUILD_CFLAGS assignments but before\nthe scripts/Makefile.gcc-plugins include.  This placement ensures the\ntry-run test sees arch-specific flags (-m32, -march=,\n-mno-outline-atomics) while avoiding GCC plugin flags (-fplugin=) that\nwould break the test on clean builds when plugin shared objects do not yet\nexist.",
+  "datePublished": "Jul 19, 2026, 12:02:20 PM",
+  "dateUpdated": "Jul 19, 2026, 12:02:20 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/49d893b9cbcfc5802a32e53a64c6c6956670d65b",
+    "https://git.kernel.org/stable/c/5b959c1dbb4522b9e3ac4e26ad638b8784869841",
+    "https://git.kernel.org/stable/c/56cb9b7d96b28a1173a510ab25354b6599ad3a33"
+  ],
+  "aliases": [
+    "CVE-2026-63825",
+    "GHSA-xc4c-7263-hq9r"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1cd22ae7-262f-34d3-8f54-44af09dc54d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.38"
+    },
+    {
+      "id": "31904aa1-dea8-324f-b2d7-b1e7f4a4e2da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.3"
+    },
+    {
+      "id": "40907e54-1a67-336a-bbb3-516eb37c907f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <5b959c1dbb4522b9e3ac4e26ad638b8784869841"
+    },
+    {
+      "id": "4964156d-80d7-3a1f-b8c3-9944143da66d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <56cb9b7d96b28a1173a510ab25354b6599ad3a33"
+    },
+    {
+      "id": "7114a214-368a-32b1-81ee-1f068cee841b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "87fd9429-cff9-3d4c-b0b8-83a745db60c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <49d893b9cbcfc5802a32e53a64c6c6956670d65b"
+    },
+    {
+      "id": "e7b07025-aad4-35e3-96fe-4dc763b1f116",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <7.1.3"
+    },
+    {
+      "id": "f3f548be-e2ed-3480-8946-82c67ab34332",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.38"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e1c5efb9-83c7-3bb2-b747-5d3f111ffac6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
