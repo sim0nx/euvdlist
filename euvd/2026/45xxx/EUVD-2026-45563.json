@@ -1,0 +1,192 @@
+{
+  "id": "EUVD-2026-45563",
+  "enisaUuid": "807000ea-aa9f-3dcb-ac0b-7398050b5d89",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbonding: refuse to enslave CAN devices\n\nsyzbot reported a kernel paging request crash in\ncan_rx_unregister() inside net/can/af_can.c. The crash occurs\nbecause a virtual CAN device (vxcan) is being enslaved to a\nbonding master.\n\nDuring the enslavement process, the bonding driver mutates\nand modifies the network device states to fit an Ethernet-like\naggregation model. However, CAN devices operate on a completely\ndifferent Layer 2 architecture, relying on the CAN mid-layer\nprivate data structure (can_ml_priv) instead of standard\nEthernet structures. Since bonding does not initialize or\nmaintain these CAN structures, subsequent operations on the\nhalf-enslaved interface (such as closing associated sockets\nvia isotp_release) lead to a null-pointer dereference when\naccessing the CAN receiver lists.\n\nBonding CAN interfaces is architecturally invalid as CAN lacks\nMAC addresses, ARP capabilities, and standard Ethernet\nlink-layer mechanisms. While generic loopback devices are\nblocked globally in net/core/dev.c, virtual CAN devices\nbypass this check because they do not carry the IFF_LOOPBACK\nflag, despite acting as local software-loopbacks.\n\nFix this by explicitly blocking network devices of type\nARPHRD_CAN from being enslaved at the very beginning of\nbond_enslave(). This prevents illegal state mutations,\neliminates the resulting KASAN crashes, and avoids potential\nmemory leaks from incomplete socket cleanups.\n\nAs the CAN support has been added a long time after bonding\nthe Fixes-tag points to the introduction of ARPHRD_CAN that\nwould have needed a specific handling in bonding_main.c.",
+  "datePublished": "Jul 19, 2026, 2:56:11 PM",
+  "dateUpdated": "Jul 19, 2026, 2:56:11 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/69b78b5f3033272e53a2dc2dad675962654a5b38",
+    "https://git.kernel.org/stable/c/41e8478c4cd896d3abbe33d41afc90c84ac66602",
+    "https://git.kernel.org/stable/c/f4d78a81f57df82e9d82a2c07471fed1a1235893",
+    "https://git.kernel.org/stable/c/02f1c87ded33b43d48b4a1d665da15f2157b30d8",
+    "https://git.kernel.org/stable/c/9ea8a648d9120f7652bcde1ce2c4ad66871af707",
+    "https://git.kernel.org/stable/c/563090e5d450c665f70d955a39f9587afc7842eb",
+    "https://git.kernel.org/stable/c/8ba68464e4787b6a7ec938826e16124df20fd23d"
+  ],
+  "aliases": [
+    "CVE-2026-63990"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0b725850-8201-3f48-a16b-99839faf770e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cd05acfe65ed2cf2db683fa9a6adb8d35635263b <563090e5d450c665f70d955a39f9587afc7842eb"
+    },
+    {
+      "id": "1bfc6b67-6bd9-3cd2-a5d0-6d87a667d4d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.93"
+    },
+    {
+      "id": "2b0a714d-185d-36b1-887c-55bbfb5c44a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.176"
+    },
+    {
+      "id": "46f5e3d9-e9e5-3664-b1f4-a1573a169bfc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cd05acfe65ed2cf2db683fa9a6adb8d35635263b <8ba68464e4787b6a7ec938826e16124df20fd23d"
+    },
+    {
+      "id": "515e261c-c520-3225-bb35-b3eaa30b9fbb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.25"
+    },
+    {
+      "id": "64f5e7ee-141f-35aa-96af-329c02925f4b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "72c21251-621a-3f08-8cfa-7195ae037d5b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cd05acfe65ed2cf2db683fa9a6adb8d35635263b <02f1c87ded33b43d48b4a1d665da15f2157b30d8"
+    },
+    {
+      "id": "75e73f27-3d25-317d-8845-806c192d5db6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.143"
+    },
+    {
+      "id": "7f24c138-407d-3820-af47-a8abc0b6c097",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cd05acfe65ed2cf2db683fa9a6adb8d35635263b <41e8478c4cd896d3abbe33d41afc90c84ac66602"
+    },
+    {
+      "id": "8eb735a3-3661-356e-97e2-64f3443c35d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.35"
+    },
+    {
+      "id": "939f6490-a10d-359a-9a8d-316d3d5f1575",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cd05acfe65ed2cf2db683fa9a6adb8d35635263b <f4d78a81f57df82e9d82a2c07471fed1a1235893"
+    },
+    {
+      "id": "a06f91fc-4f10-37fb-aa19-e8e3d8e9fa82",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b069cde5-0cd3-3b90-9ee3-fce657d20ebc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cd05acfe65ed2cf2db683fa9a6adb8d35635263b <9ea8a648d9120f7652bcde1ce2c4ad66871af707"
+    },
+    {
+      "id": "b0e1dc5a-f483-356e-8a8f-1d7aa3bbf165",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.210"
+    },
+    {
+      "id": "b1244dd5-4a4d-3339-901a-fe519a51703a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cd05acfe65ed2cf2db683fa9a6adb8d35635263b <69b78b5f3033272e53a2dc2dad675962654a5b38"
+    },
+    {
+      "id": "c556af25-0040-3164-9452-8770837ee5a8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.12"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "18ef7867-d1fd-3d33-b204-352e815196a1",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

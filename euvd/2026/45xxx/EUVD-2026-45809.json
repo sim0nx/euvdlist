@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-45809",
+  "enisaUuid": "941de326-3340-3b70-9de1-2a669bbce738",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: devmem: reject dma-buf bind with non-page-aligned size or SG length\n\nnet_devmem_bind_dmabuf() trusts dmabuf->size and sg_dma_len() to be\nPAGE_SIZE multiples without checking:\n\n  - tx_vec is sized dmabuf->size / PAGE_SIZE, and\n    net_devmem_get_niov_at() only bounds-checks virt_addr < dmabuf->size\n    before indexing tx_vec[virt_addr / PAGE_SIZE]. With size =\n    N*PAGE_SIZE + r (1 <= r < PAGE_SIZE), sendmsg() at iov_base =\n    N*PAGE_SIZE passes the bound check and reads tx_vec[N] -- one past.\n\n  - owner->area.num_niovs = len / PAGE_SIZE while gen_pool_add_owner()\n    covers the full byte len, so a non-page-multiple non-final sg\n    desyncs num_niovs from the gen_pool region for every later sg, on\n    both RX and TX.\n\ndma-buf does not require page-aligned sizes, so the bind path has to\nenforce what its own indexing assumes. Reject both with -EINVAL.\n\nThe size check is TX-only (only tx_vec is sized off dmabuf->size); the\nSG-length check covers both directions.",
+  "datePublished": "Jul 19, 2026, 3:40:21 PM",
+  "dateUpdated": "Jul 19, 2026, 3:40:21 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/134c517dfa63203287b2aad6558017f42435a02e",
+    "https://git.kernel.org/stable/c/d5008e4e4ee6b739256b796702a7d1aae1b5c3b4",
+    "https://git.kernel.org/stable/c/4eb82ba543421e9e38cc14e4e82058b78850df50"
+  ],
+  "aliases": [
+    "CVE-2026-64124"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3b7e039c-0b8d-3689-8b50-2a31fc23cd0e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.35"
+    },
+    {
+      "id": "5121184f-f893-3649-a0db-2090630c5f22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bd61848900bff597764238f3a8ec67c815cd316e <4eb82ba543421e9e38cc14e4e82058b78850df50"
+    },
+    {
+      "id": "71d45c2d-602a-35df-bb88-d4196c47c3fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "75b1a9ed-2fd9-333b-9e41-eb1f49a927c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bd61848900bff597764238f3a8ec67c815cd316e <d5008e4e4ee6b739256b796702a7d1aae1b5c3b4"
+    },
+    {
+      "id": "93a45f66-b4c8-379b-83b1-bcabf484afc3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bd61848900bff597764238f3a8ec67c815cd316e <134c517dfa63203287b2aad6558017f42435a02e"
+    },
+    {
+      "id": "bfefa07e-6c65-32d4-a652-be7c01b44230",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "f6d06566-b162-3f49-acd8-42ac830b1c7a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "fca83474-4d59-3e73-a291-30cb65c3b19e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.11"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "534d2e9b-9042-3cb3-970b-80fc3c64f475",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

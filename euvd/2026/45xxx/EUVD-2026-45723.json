@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-45723",
+  "enisaUuid": "7c91e73a-0f77-3a7e-8a6c-f4876e183294",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/rmap: initialize nr_pages to 1 at loop start in try_to_unmap_one\n\nInitialize nr_pages to 1 at the start of each loop iteration, like\nfolio_referenced_one() does.\n\nWithout this, nr_pages computed by a previous folio_unmap_pte_batch() call\ncan be reused on a later iteration that does not run\nfolio_unmap_pte_batch() again.\n\nmmap a 64K large folio with MAP_ANONYMOUS | MAP_DROPPABLE, then call\nmadvise(MADV_FREE), then make the last page device-exclusive via\nHMM_DMIRROR_EXCLUSIVE.\n\nTrigger node reclaim through sysfs.  Now, in try_to_unmap_one(), we will\nfirst clear the first 15 out of 16 entries mapping the lazyfree folio. \nThis will set nr_pages to 15.  In the next pvmw walk, this nr_pages gets\nreused on a device-exclusive pte, thus potentially corrupting folio\nrefcount/mapcount.\n\nAt the moment, I have a userspace program which can make the kernel spit\nout a trace, but the blow up is in folio_referenced_one(), because there\nare existing bugs in the interaction between device-private and rmap\n(which too I am investigating).  I did a one liner kernel change to avoid\ngoing into folio_referenced_one(), and the kernel blows up at\nfolio_remove_rmap_ptes in try_to_unmap_one which is what I wanted.\n\nNote that the bug is there not since file folio batching but lazyfree\nfolio batching, since device-exclusive only works for anonymous folios.\n\nUserspace visible effect is simply kernel crashing somewhere due to\nrefcount/mapcount corruption.",
+  "datePublished": "Jul 19, 2026, 2:55:43 PM",
+  "dateUpdated": "Jul 19, 2026, 2:55:43 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0fcc34d0d8fefca4fea349e45c10e3a3d90350eb",
+    "https://git.kernel.org/stable/c/f611db9b771b2b6775357555d2517af044fca4f0",
+    "https://git.kernel.org/stable/c/3f8968e9cbf95d5d87d32218906cab0b9b9eddbe"
+  ],
+  "aliases": [
+    "CVE-2026-63950"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "01f0de2b-7d32-339b-ad07-aac59df23848",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "354dffd29575cdf13154e8fb787322354aa9efc4 <f611db9b771b2b6775357555d2517af044fca4f0"
+    },
+    {
+      "id": "0c1e44f1-af0b-3ad6-9fa0-e0da720e9173",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "15831333-3245-3a05-87d1-237033c2fc15",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "17638f0a-16c9-39db-9d26-dcd8e7b686ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.12"
+    },
+    {
+      "id": "3765ae2b-e38a-3579-bd65-ece006efde2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.35"
+    },
+    {
+      "id": "3ea722c1-d22e-34b5-b352-1ebb86beeb53",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "354dffd29575cdf13154e8fb787322354aa9efc4 <3f8968e9cbf95d5d87d32218906cab0b9b9eddbe"
+    },
+    {
+      "id": "5445720d-0796-3fea-ba42-36e3b91374b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.15"
+    },
+    {
+      "id": "a7b14816-0310-39e9-8fc5-c6f516daf0e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "354dffd29575cdf13154e8fb787322354aa9efc4 <0fcc34d0d8fefca4fea349e45c10e3a3d90350eb"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "8b49c640-1807-3189-a820-45f8f8252e11",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

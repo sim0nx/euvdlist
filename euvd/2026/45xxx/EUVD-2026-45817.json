@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-45817",
+  "enisaUuid": "b1cac236-a38f-3be6-9b87-7b4888d151d5",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipv6: ioam: refresh hdr pointer before ioam6_event()\n\nReported by Sashiko:\n\nIn ipv6_hop_ioam(), the hdr pointer is initialized to point into the\nskb's linear data buffer. Later, the code calls skb_ensure_writable(),\nwhich might reallocate the buffer:\n\n\tif (skb_ensure_writable(skb, optoff + 2 + hdr->opt_len))\n\t\tgoto drop;\n\n\t/* Trace pointer may have changed */\n\ttrace = (struct ioam6_trace_hdr *)(skb_network_header(skb)\n\t\t\t\t\t   + optoff + sizeof(*hdr));\n\n\tioam6_fill_trace_data(skb, ns, trace, true);\n\n\tioam6_event(IOAM6_EVENT_TRACE, dev_net(skb->dev),\n\t\t    GFP_ATOMIC, (void *)trace, hdr->opt_len - 2);\n\nIf the skb is cloned or lacks sufficient linear headroom,\nskb_ensure_writable() will invoke pskb_expand_head(), which reallocates\nthe skb's data buffer and frees the old one, invalidating pointers to\nit. While the code recalculates the trace pointer immediately after the\ncall to skb_ensure_writable(), it fails to recalculate the hdr pointer.\n\nThis patch fixes the above by recalculating the hdr pointer before\npassing hdr->opt_len to ioam6_event(), so that we avoid any UaF.",
+  "datePublished": "Jul 19, 2026, 3:40:27 PM",
+  "dateUpdated": "Jul 19, 2026, 3:40:27 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/769723124b7c3b2bfea4cf68ad292698b87c8d01",
+    "https://git.kernel.org/stable/c/24de676da63c1122d2c13b0d546238b66d1b4e62",
+    "https://git.kernel.org/stable/c/5af905aa8e91ff8d94572a1e089558f21dcf24ed",
+    "https://git.kernel.org/stable/c/e46e6bc97fb1f339730ff1ba74267fbf48e7a422"
+  ],
+  "aliases": [
+    "CVE-2026-64132"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1f6ad7de-5451-358f-bed0-43e533b3f3f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.11"
+    },
+    {
+      "id": "22ac15cd-0eec-3bcc-9571-0261a3294905",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f655c78d6225f585ef60a9d93ffb79d507ff3ad3 <e46e6bc97fb1f339730ff1ba74267fbf48e7a422"
+    },
+    {
+      "id": "306a95fe-d145-3142-bea9-302a9ea6ed84",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f655c78d6225f585ef60a9d93ffb79d507ff3ad3 <5af905aa8e91ff8d94572a1e089558f21dcf24ed"
+    },
+    {
+      "id": "558dc069-cc05-3f8e-b467-fe64170a7262",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f655c78d6225f585ef60a9d93ffb79d507ff3ad3 <769723124b7c3b2bfea4cf68ad292698b87c8d01"
+    },
+    {
+      "id": "7431d2e5-664a-395c-9819-fe49bcb7ff51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7b6894e1-eecb-3820-99f3-446256402a50",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.34"
+    },
+    {
+      "id": "86a93d40-cdd4-3686-8509-fbd5a6381a43",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.9"
+    },
+    {
+      "id": "aab8128b-478d-3f93-b57f-2a947e29777f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f655c78d6225f585ef60a9d93ffb79d507ff3ad3 <24de676da63c1122d2c13b0d546238b66d1b4e62"
+    },
+    {
+      "id": "cfb69752-d8c0-30fa-86c2-b394c21ebd5d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.92"
+    },
+    {
+      "id": "f8b70fec-ba4c-3db4-bb1c-8a08c3c1be97",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d1213f6b-a0e8-3900-9809-c65007d0a023",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

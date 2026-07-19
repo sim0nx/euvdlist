@@ -1,0 +1,171 @@
+{
+  "id": "EUVD-2026-45722",
+  "enisaUuid": "b5921178-a70c-3bed-83e8-c6520ebc39a2",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nauxdisplay: line-display: fix OOB read on zero-length message_store()\n\nlinedisp_display() unconditionally reads msg[count - 1] before\nchecking whether count is zero, so a write of zero bytes to the\nmessage sysfs attribute hits msg[-1]:\n\n\twrite(fd, \"\", 0);\n\n\t-> message_store(..., buf, count=0)\n\t   -> linedisp_display(linedisp, buf, count=0)\n\t      -> msg[count - 1] == '\\n'  ; OOB read\n\nThe kernfs write buffer for that store is a 1-byte allocation\n(kernfs_fop_write_iter() does kmalloc(len + 1) with len == 0),\nso msg[-1] is a 1-byte read before the slab object. On a\nKASAN-enabled kernel this trips an out-of-bounds report and\npanics; on stock kernels it silently reads adjacent slab data\nand, if that byte happens to be '\\n', the following count--\nwraps ssize_t 0 to -1 and is then passed to kmemdup_nul().\n\nlinedisp_display() is reached from the message_store() sysfs\ncallback (drivers/auxdisplay/line-display.c message attribute,\nmode 0644) and from the in-tree initial-message setup with\ncount == -1, so the OOB path is only userspace-triggerable via\nzero-byte writes; vfs_write() does not short-circuit on\ncount == 0 and kernfs_fop_write_iter() dispatches the store\ncallback regardless.\n\nGuard the trailing-newline trim with a count check. The\nexisting if (!count) block then takes the clear-display path\nunchanged.\n\nAffects every auxdisplay driver that registers via\nlinedisp_register() / linedisp_attach(): ht16k33, max6959,\nimg-ascii-lcd, seg-led-gpio.",
+  "datePublished": "Jul 19, 2026, 2:55:42 PM",
+  "dateUpdated": "Jul 19, 2026, 2:55:42 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ca5b0781946d5083ceafa752141f47f085853620",
+    "https://git.kernel.org/stable/c/8776032fe989a9b5fc77f2de5e03e4adb44c630e",
+    "https://git.kernel.org/stable/c/3859960daeb9b7b39b9847b5b0113bc6081eb735",
+    "https://git.kernel.org/stable/c/197476b126010bac1b3199833c6966cd6f54c2a9",
+    "https://git.kernel.org/stable/c/6ad4f75ef9f3372fce8cad494e789ac6a5507bef",
+    "https://git.kernel.org/stable/c/a7511dcd9dd4bc55d123f9b800c8a4ed2662e5c6"
+  ],
+  "aliases": [
+    "CVE-2026-63949"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0bfe262a-ba3f-3d3a-964b-501b43393ed6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.143"
+    },
+    {
+      "id": "18da51b6-7b84-3aec-9fca-fc1e78da2cc3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.12"
+    },
+    {
+      "id": "19b4dc2a-40d6-344f-84a3-96460b7f6791",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "2ebc3519-b32f-3ec8-842f-82f0f6911178",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7e76aece6f036cb7ada4858d6aa73825bfe22983 <6ad4f75ef9f3372fce8cad494e789ac6a5507bef"
+    },
+    {
+      "id": "3277db00-3880-33ee-a38b-fe536750cba8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7e76aece6f036cb7ada4858d6aa73825bfe22983 <197476b126010bac1b3199833c6966cd6f54c2a9"
+    },
+    {
+      "id": "4fe9951b-5d0a-3f61-9eb9-c3c1649a04a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.35"
+    },
+    {
+      "id": "6d96c66a-aa6d-3b9c-8525-eb8b447d2eba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7e76aece6f036cb7ada4858d6aa73825bfe22983 <8776032fe989a9b5fc77f2de5e03e4adb44c630e"
+    },
+    {
+      "id": "7324d8d9-1cf9-3aee-8e89-bdf067274435",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.176"
+    },
+    {
+      "id": "a767d620-39c6-3d0e-8b71-3e0a013934f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "aba77956-2fa8-35e0-a399-b4b80690464a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7e76aece6f036cb7ada4858d6aa73825bfe22983 <ca5b0781946d5083ceafa752141f47f085853620"
+    },
+    {
+      "id": "c3d7b44a-439d-3796-8a4a-68a06226613e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.16"
+    },
+    {
+      "id": "e8a2a0b1-c618-3061-aad3-164912d0e94a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7e76aece6f036cb7ada4858d6aa73825bfe22983 <a7511dcd9dd4bc55d123f9b800c8a4ed2662e5c6"
+    },
+    {
+      "id": "f631e514-709b-3c7b-b09e-3d9dd64025c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.93"
+    },
+    {
+      "id": "ffc11f86-471e-3bc1-b572-a4563c01090e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7e76aece6f036cb7ada4858d6aa73825bfe22983 <3859960daeb9b7b39b9847b5b0113bc6081eb735"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "eee35493-4114-35b5-8fe2-f9f4ce0a7aef",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-45581",
+  "enisaUuid": "1af23165-f5b5-39f3-8566-67c24cd95de1",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\naccel/rocket: fix UAF via dangling GEM handle in create_bo\n\nrocket_ioctl_create_bo() inserts a GEM handle into the file's IDR via\ndrm_gem_handle_create() early on, then performs several operations that\ncan fail (sgt allocation, drm_mm insert, iommu_map). If any fail after\nthe handle is live, the error path calls drm_gem_shmem_object_free()\nwhich kfree's the object without removing the handle from the IDR.\n\nThis leaves a dangling handle pointing to freed slab memory. Any\nsubsequent ioctl using that handle (PREP_BO, FINI_BO, SUBMIT) calls\ndrm_gem_object_lookup() and dereferences freed memory (UAF).\n\nFix by moving drm_gem_handle_create() to after all fallible operations\nsucceed, matching the pattern used by panfrost, lima, and etnaviv.\n\nAlso fix drm_mm_insert_node_generic() whose return value was silently\noverwritten by iommu_map_sgtable() on the next line. Add the missing\nerror check.\n\n[tomeu: Move handle creation to the very end]",
+  "datePublished": "Jul 19, 2026, 2:56:23 PM",
+  "dateUpdated": "Jul 19, 2026, 2:56:23 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/18abd88d19ea195e2e1547fca0970c2f91d77a42",
+    "https://git.kernel.org/stable/c/451f1ccbbdb7b65021646704b15902655f8d228a",
+    "https://git.kernel.org/stable/c/f706e6a4ce75585af979aec3dcbdce68bc76306b"
+  ],
+  "aliases": [
+    "CVE-2026-64008"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "16160ae2-e115-3cc7-bb78-0371b4678d84",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.18"
+    },
+    {
+      "id": "2e5dedaa-c9bd-3fd4-80af-49ec9191eccb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.12"
+    },
+    {
+      "id": "5b803335-a497-3853-9cfb-cd327b8dccd8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "658ebeac33517bd3169d4b65ed801e9065d0211a <f706e6a4ce75585af979aec3dcbdce68bc76306b"
+    },
+    {
+      "id": "6331f588-74f4-3f88-a044-fa4ca54be492",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.35"
+    },
+    {
+      "id": "85b85274-41d9-3d08-947a-ffb8e55cc2b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "658ebeac33517bd3169d4b65ed801e9065d0211a <18abd88d19ea195e2e1547fca0970c2f91d77a42"
+    },
+    {
+      "id": "a5f67d42-98b4-3e63-9e4d-009175f4add2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "658ebeac33517bd3169d4b65ed801e9065d0211a <451f1ccbbdb7b65021646704b15902655f8d228a"
+    },
+    {
+      "id": "f5231b47-9ad1-39e4-b1ea-4516eb0baa74",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "f61ebaf8-c6b3-3c78-87d3-3b8501080229",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "81708a51-2b7f-3f06-8273-257173e4e4e2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

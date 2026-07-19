@@ -1,0 +1,192 @@
+{
+  "id": "EUVD-2026-45668",
+  "enisaUuid": "8853ad62-53a5-3931-8df2-d54abb4595c6",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: f_fs: copy only received bytes on short ep0 read\n\nffs_ep0_read() allocates its control-OUT data buffer with\nkmalloc() (not kzalloc) at the Length value from the Setup\npacket, then copies that full len to userspace regardless of\nhow many bytes were actually received:\n\n    data = kmalloc(len, GFP_KERNEL);\n    ...\n    ret = __ffs_ep0_queue_wait(ffs, data, len);\n    if ((ret > 0) && (copy_to_user(buf, data, len)))\n            ret = -EFAULT;\n\n__ffs_ep0_queue_wait() returns req->actual, which on a short\ncontrol OUT transfer is strictly less than len.  The\ncopy_to_user() call still copies len bytes, so on a short OUT\nthe last (len - ret) bytes of the kmalloc() buffer --\nuninitialised slab residue -- are delivered to the FunctionFS\ndaemon.\n\nShort ep0 OUT completions are specified USB control-transfer\nbehavior and are produced by in-tree UDCs:\n\n  * dwc2 continues on req->actual < req->length for ep0 DATA OUT\n    (short-not-ok is the only ep0-OUT stall path).\n  * aspeed_udc ends ep0 OUT on rx_len < ep->ep.maxpacket.\n  * renesas_usbf logs \"ep0 short packet\" and completes the\n    request.\n  * dwc3 stalls on short IN but not on short OUT.\n\nA short ep0 OUT is therefore not evidence of a broken UDC; it is\na normal condition f_fs has to cope with.  The sibling gadgetfs\nimplementation in drivers/usb/gadget/legacy/inode.c already does\nthis correctly via min(len, dev->req->actual) before\ncopy_to_user().  This patch brings f_fs.c to the same safe\npattern rather than trimming at a defensive layer.\n\nThe bug is reached from the FunctionFS device node, which in\nreal deployments is owned by the privileged gadget daemon\n(adbd, UMS, composite gadget services, etc.); it is not\nreachable from unprivileged userspace.  Linux host stacks\nnormally reject short-wLength control OUTs before they reach\nthe gadget, so reproducing this required a build that\nbypasses that host-side check.  With the bypass in place, a\n1-byte payload on a 64-byte Setup produces 63 bytes of\nnon-canary slab residue in the daemon's read buffer.\n\nFix by copying only ret (actually received) bytes to\nuserspace.",
+  "datePublished": "Jul 19, 2026, 2:55:05 PM",
+  "dateUpdated": "Jul 19, 2026, 2:55:05 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/90ccf5fb63243fae1b4b3200f3310500500ecf2e",
+    "https://git.kernel.org/stable/c/af32dbb2ca0b3d09271ab718d13857a457fa16f2",
+    "https://git.kernel.org/stable/c/e835bf9a055f71874065a40780ca5560b7df8b33",
+    "https://git.kernel.org/stable/c/88874a19b2b093bfaaa1c0090fa536c44da8c08b",
+    "https://git.kernel.org/stable/c/607730a414773a7cbe3037a64a6c64e72689ff5e",
+    "https://git.kernel.org/stable/c/23c1f7deb9dd8447ecde749850676302aa1e2bd3",
+    "https://git.kernel.org/stable/c/4e036c10e7f4df5d951c69cc3697bc8e209c6d02"
+  ],
+  "aliases": [
+    "CVE-2026-63895"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "048d9518-6429-359f-aa40-08580e507b48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.35"
+    },
+    {
+      "id": "056240fd-1854-3ea5-9804-c109b8e1bd92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.12"
+    },
+    {
+      "id": "066a3c42-a5f3-3612-b4d6-3dd503cb9095",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.143"
+    },
+    {
+      "id": "0f0ca325-cb81-34df-93ff-e11433a3ae0d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ddf8abd2599491cbad959c700b90ba72a5dce8d0 <4e036c10e7f4df5d951c69cc3697bc8e209c6d02"
+    },
+    {
+      "id": "1db9928e-7a51-3b77-ad28-13bed377ebdb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ddf8abd2599491cbad959c700b90ba72a5dce8d0 <23c1f7deb9dd8447ecde749850676302aa1e2bd3"
+    },
+    {
+      "id": "2c811a4f-c46a-307e-aa35-c5dc6be0dcc5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ddf8abd2599491cbad959c700b90ba72a5dce8d0 <607730a414773a7cbe3037a64a6c64e72689ff5e"
+    },
+    {
+      "id": "4f22bb63-ee48-3b76-81ca-704289df9f60",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ddf8abd2599491cbad959c700b90ba72a5dce8d0 <90ccf5fb63243fae1b4b3200f3310500500ecf2e"
+    },
+    {
+      "id": "73a8e131-1004-32b5-87f2-7e741c7c9283",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.93"
+    },
+    {
+      "id": "794f8faa-e1ab-31f1-b962-d206f1a2b89f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "821b69c5-3488-314d-af1f-81220a746494",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ddf8abd2599491cbad959c700b90ba72a5dce8d0 <e835bf9a055f71874065a40780ca5560b7df8b33"
+    },
+    {
+      "id": "c86bb6f0-ff31-3c26-ba11-32e01c3a9ee7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.35"
+    },
+    {
+      "id": "d3e1214e-9236-3c0b-aa11-68db5c6481c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e4480798-86b0-31e8-8f19-d2948fa49b56",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ddf8abd2599491cbad959c700b90ba72a5dce8d0 <88874a19b2b093bfaaa1c0090fa536c44da8c08b"
+    },
+    {
+      "id": "eb5b4972-2e54-3a50-8181-5d81270615db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ddf8abd2599491cbad959c700b90ba72a5dce8d0 <af32dbb2ca0b3d09271ab718d13857a457fa16f2"
+    },
+    {
+      "id": "f96dd232-583e-3889-bb99-bb169a1547b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.176"
+    },
+    {
+      "id": "fee2f8aa-6e5f-305c-aa18-e91977ce3fa1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.210"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "1ab3d025-60f7-3345-960d-9b3cf7e1120e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

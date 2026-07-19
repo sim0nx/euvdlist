@@ -1,0 +1,213 @@
+{
+  "id": "EUVD-2026-45658",
+  "enisaUuid": "d9d3836e-51cd-3aee-b08f-22bf80a0e57b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nhwmon: (pmbus/adm1266) bounce blackbox records through a protocol-sized buffer\n\nadm1266_pmbus_block_xfer() copies the device-supplied block payload\ninto the caller-provided buffer using the device-supplied length:\n\n\tmemcpy(data_r, &msgs[1].buf[1], msgs[1].buf[0]);\n\nThe helper does not know how large data_r is and trusts the device to\nreturn at most one record's worth of bytes.  adm1266_nvmem_read_blackbox()\nviolates that contract: it advances read_buff inside data->dev_mem in\nADM1266_BLACKBOX_SIZE (64-byte) strides while the helper is willing to\nwrite up to ADM1266_PMBUS_BLOCK_MAX (255) bytes.  A device that returns\nmore than 64 bytes on the trailing record (read_buff offset 1984 in\nthe 2048-byte dev_mem allocation) overflows dev_mem by up to 191 bytes\nbefore the post-call\n\n\tif (ret != ADM1266_BLACKBOX_SIZE)\n\t\treturn -EIO;\n\ncan reject the response.\n\nContain the fix in the caller without changing the helper signature:\nread each record into a 255-byte local bounce buffer that matches the\nhelper's maximum output, validate the returned length, and only then\ncopy exactly ADM1266_BLACKBOX_SIZE bytes into the dev_mem slot.",
+  "datePublished": "Jul 19, 2026, 3:39:56 PM",
+  "dateUpdated": "Jul 19, 2026, 3:39:56 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/7896d87cbb05e097efc113243d4e38f9f8cea16c",
+    "https://git.kernel.org/stable/c/9d5309500b4607b7198e19f0a3fa13eb864cd5fb",
+    "https://git.kernel.org/stable/c/6098634cfa711f11a8d65368dc51ec8f7c8241ba",
+    "https://git.kernel.org/stable/c/60c4b9fe1a3dd012014b1f561a6928a0b5db1126",
+    "https://git.kernel.org/stable/c/83e039f0a43e0708515b0479cb7690fb93faaaa0",
+    "https://git.kernel.org/stable/c/97a9cf2a8217ca1cdaf48cb9ab26e471632c7e7f",
+    "https://git.kernel.org/stable/c/dd47b8c4a0a8ced442da3f008db28fbbd31feaf0",
+    "https://git.kernel.org/stable/c/43cae21424ff8e33894a0f86c6b80b840c049fd7"
+  ],
+  "aliases": [
+    "CVE-2026-64085"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "03fe8f34-c923-3f05-b31c-994460e94d38",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "407dc802a9c0809ca6a48de4b4c63305eb84ef56 <9d5309500b4607b7198e19f0a3fa13eb864cd5fb"
+    },
+    {
+      "id": "0a3d5fea-f51f-3236-a4b3-ce69bc181c1f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "407dc802a9c0809ca6a48de4b4c63305eb84ef56 <43cae21424ff8e33894a0f86c6b80b840c049fd7"
+    },
+    {
+      "id": "0a6a385f-d0f6-3ac2-ae84-5935b206d9a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "407dc802a9c0809ca6a48de4b4c63305eb84ef56 <7896d87cbb05e097efc113243d4e38f9f8cea16c"
+    },
+    {
+      "id": "1201808a-585d-3bfa-8051-355b3a6d09f5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "407dc802a9c0809ca6a48de4b4c63305eb84ef56 <6098634cfa711f11a8d65368dc51ec8f7c8241ba"
+    },
+    {
+      "id": "2e65e79e-29f0-3198-9857-6af0dd4a5682",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "3082dff0-7645-355f-a24d-a9650992aa2f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "407dc802a9c0809ca6a48de4b4c63305eb84ef56 <97a9cf2a8217ca1cdaf48cb9ab26e471632c7e7f"
+    },
+    {
+      "id": "431f31f9-06ff-3503-822e-9c9d315da4d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "407dc802a9c0809ca6a48de4b4c63305eb84ef56 <60c4b9fe1a3dd012014b1f561a6928a0b5db1126"
+    },
+    {
+      "id": "478d7e16-bbd3-3536-9773-5a9c3b9311b0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.209"
+    },
+    {
+      "id": "6b8ad75a-ea8b-3e9e-bb93-f0480a47c07a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.258"
+    },
+    {
+      "id": "7aff3866-7f8c-345a-8742-c4bab182f2f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.34"
+    },
+    {
+      "id": "8cfd8cbf-650c-34fc-b730-9e69b8d90d04",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "944d13de-fff3-3ead-9152-089b5e30cc0e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.11"
+    },
+    {
+      "id": "9c82c847-a46c-3ae7-8ae7-8a7000d0f56e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "407dc802a9c0809ca6a48de4b4c63305eb84ef56 <83e039f0a43e0708515b0479cb7690fb93faaaa0"
+    },
+    {
+      "id": "9f01b7ff-353c-37ee-8f05-e73618376d45",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.175"
+    },
+    {
+      "id": "bf9a2943-ea3b-3561-b228-dd11d3966740",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.142"
+    },
+    {
+      "id": "c90359b0-7baf-3e4d-98bb-97c67115acd4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.92"
+    },
+    {
+      "id": "d55f0c23-9ae0-3d85-93d7-6837b01b42f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10"
+    },
+    {
+      "id": "e9c45e85-3853-3136-95d7-5f784e50614a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "407dc802a9c0809ca6a48de4b4c63305eb84ef56 <dd47b8c4a0a8ced442da3f008db28fbbd31feaf0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "707c1cda-4f32-3072-bc63-31914e1cdb31",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

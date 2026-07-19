@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-45866",
+  "enisaUuid": "2abe442b-20b9-30a4-9848-bffec7576955",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm: fix __vm_normal_page() to handle missing support for pmd_special()/pud_special()\n\nOn x86 32-bit with THP enabled, zap_huge_pmd() is seen to generate a\n\"WARNING: mm/memory.c:735 at __vm_normal_page+0x6a/0x7d\", from the\nVM_WARN_ON_ONCE(is_zero_pfn(pfn) || is_huge_zero_pfn(pfn)); followed by\n\"BUG: Bad rss-counter state\"s, then later \"BUG: Bad page state\"s when\nreclaim gets to call shrink_huge_zero_folio_scan().\n\nIt's as if the _PAGE_SPECIAL bit never got set in the huge_zero pmd: and\nindeed, whereas pte_special() and pte_mkspecial() are subject to a\ndedicated CONFIG_ARCH_HAS_PTE_SPECIAL, pmd_special() and pmd_mkspecial()\nare subject to CONFIG_ARCH_SUPPORTS_PMD_PFNMAP, which is never enabled on\nany 32-bit architecture.\n\nWhile the problem was exposed through commit d80a9cb1a64a\n(\"mm/huge_memory: add and use normal_or_softleaf_folio_pmd()\"), it was an\noversight in commit af38538801c6 (\"mm/memory: factor out common code from\nvm_normal_page_*()\") and would result in other problems:\n* huge zero folio accounted in smaps, pagemap (PAGE_IS_FILE) and\n  numamaps as file-backed THP\n* folio_walk_start() returning the folio even without FW_ZEROPAGE set.\n  Callers seem to tolerate that, though.\n\n... and triggering the VM_WARN_ON_ONE(), although never reported so far.\n\nTo fix it, teach vm_normal_page_pmd()/vm_normal_page_pud() to consider\nwhether pmd_special/pud_special is actually implemented.",
+  "datePublished": "Jul 19, 2026, 3:41:04 PM",
+  "dateUpdated": "Jul 19, 2026, 3:41:04 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/62153767e8fc3889bc6508e9ffe927aaf64c4334",
+    "https://git.kernel.org/stable/c/9052ea2ee2233be5d4786b8909151ca2bfbedf99",
+    "https://git.kernel.org/stable/c/c0c6ccd9828c3a1950623b546fa57292a77b5c73"
+  ],
+  "aliases": [
+    "CVE-2026-64181"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3d4e3c17-a8e0-3952-89c7-0bce9ee3ad01",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.18"
+    },
+    {
+      "id": "4ad99b90-714f-38d9-8e88-edb6e956ce04",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af38538801c6a97565b44700ee6695d7d60ad779 <9052ea2ee2233be5d4786b8909151ca2bfbedf99"
+    },
+    {
+      "id": "7b4f4749-3f5a-3fda-a547-e951c123c583",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "85be545e-2eb4-30b8-8208-794ddf79afa7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af38538801c6a97565b44700ee6695d7d60ad779 <62153767e8fc3889bc6508e9ffe927aaf64c4334"
+    },
+    {
+      "id": "8e3f394e-4f0d-356b-864a-aaae6a4e239f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.34"
+    },
+    {
+      "id": "c8ae639a-f453-3c6d-9e73-6738df0ab974",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "da57e5bf-87ef-3fd9-b20b-b263c630f1ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af38538801c6a97565b44700ee6695d7d60ad779 <c0c6ccd9828c3a1950623b546fa57292a77b5c73"
+    },
+    {
+      "id": "ecf30cdf-d759-341a-a0d4-ea8fc2a41254",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.11"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "29dea7e0-940c-349f-8312-65e8710596ee",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

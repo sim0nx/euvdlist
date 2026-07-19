@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-45728",
+  "enisaUuid": "75b48614-fdba-33b8-bb2f-1e7a519d1479",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/vmalloc: do not trigger BUG() on BH disabled context\n\n__get_vm_area_node() currently triggers a BUG() if in_interrupt() returns\ntrue.  However, in_interrupt() also reports true when BH are disabled.\n\nThe bridge code can call rhashtable_lookup_insert_fast() with bottom\nhalves disabled:\n\n__vlan_add()\n -> br_fdb_add_local()\n  spin_lock_bh(&br->hash_lock); <-- Disable BH\n   -> fdb_add_local()\n    -> fdb_create()\n     -> rhashtable_lookup_insert_fast()\n      -> kvmalloc()\n       -> vmalloc()\n        -> __get_vm_area_node()\n         -> BUG_ON(in_interrupt())\n  spin_unlock_bh(&br->hash_lock)\n\nthis triggers the BUG() despite the caller not being in NMI or\nhard IRQ context.\n\nReplace the in_interrupt() check with in_nmi() || in_hardirq().",
+  "datePublished": "Jul 19, 2026, 2:55:46 PM",
+  "dateUpdated": "Jul 19, 2026, 2:55:46 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ad7eff07b625f53c3fb513b30d7a8c5a79fbc7ce",
+    "https://git.kernel.org/stable/c/04aa71da5f35aacdc9ae9cb5150947daa624f641"
+  ],
+  "aliases": [
+    "CVE-2026-63955"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3467e0e3-84bc-3dc8-80f0-a13b2f12344c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "505cb397-e2ea-3764-8a08-7ca62294041b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "87fa36e9-13e4-38b2-bc02-fcb259ef3b9c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c6307674ed82c0c57d6e1e3408e84ac449ab8e94 <04aa71da5f35aacdc9ae9cb5150947daa624f641"
+    },
+    {
+      "id": "931510ec-f87b-3c0a-a56d-4c9ead676c45",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.12"
+    },
+    {
+      "id": "b9a35936-4d7c-3086-861d-6d698f54210b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    },
+    {
+      "id": "c7a85152-ba59-39f6-b67b-fa3d00e06fdc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c6307674ed82c0c57d6e1e3408e84ac449ab8e94 <ad7eff07b625f53c3fb513b30d7a8c5a79fbc7ce"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "1802286a-05ac-369f-ad57-789e85f33da8",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
