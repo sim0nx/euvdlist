@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-45446",
+  "enisaUuid": "eb3d5b99-c541-3034-be52-60b95846893f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/vma: do not try to unmap a VMA if mmap_prepare() invoked from mmap()\n\nThe mmap_prepare hook functionality includes the ability to invoke\nmmap_prepare() from the mmap() hook of existing 'stacked' drivers, that is\nones which are capable of calling the mmap hooks of other drivers/file\nsystems (e.g.  overlayfs, shm).\n\nAs part of the mmap_prepare action functionality, we deal with errors by\nunmapping the VMA should one arise.  This works in the usual mmap_prepare\ncase, as we invoke this action at the last moment, when the VMA is\nestablished in the maple tree.\n\nHowever, the mmap() hook passes a not-fully-established VMA pointer to the\ncaller (which is the motivation behind the mmap_prepare() work), which is\ndetached.\n\nSo attempting to unmap a VMA in this state will be problematic, with the\nmost obvious symptom being a warning in vma_mark_detached(), because the\nVMA is already detached.\n\nIt's also unncessary - the mmap() handler will clean up the VMA on error.\n\nSo to fix this issue, this patch propagates whether or not an mmap action\nis being completed via the compatibility layer or directly.\n\nIf the former, then we do not attempt VMA cleanup, if the latter, then we\ndo.\n\nThis patch also updates the userland VMA tests to reflect the change.",
+  "datePublished": "Jul 19, 2026, 10:01:57 AM",
+  "dateUpdated": "Jul 19, 2026, 10:01:57 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/5394bcb746503f2ae4b206212416dccea78e3773",
+    "https://git.kernel.org/stable/c/619eab23e1ce7c97e54bfc5a417306d94b3f6f13"
+  ],
+  "aliases": [
+    "CVE-2026-53373"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "016baeeb-9cd1-3c5d-9117-425a967b92fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    },
+    {
+      "id": "29784bd3-3e91-302b-9498-68a6df5cf21c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ac0a3fc9c07df79dc8a4ce9d274df00afc7bf12d <5394bcb746503f2ae4b206212416dccea78e3773"
+    },
+    {
+      "id": "382723fb-93ba-3471-99e0-b870ade16825",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "4bb62362-c83b-34d4-b129-4f6a5f195c21",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "94ba9c7a-ee9a-37da-a45c-5406b1ebbdcb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ac0a3fc9c07df79dc8a4ce9d274df00afc7bf12d <619eab23e1ce7c97e54bfc5a417306d94b3f6f13"
+    },
+    {
+      "id": "97924c05-1513-3375-a896-63903dab74f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "829f349d-8926-345a-b16a-191c975b50ab",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
