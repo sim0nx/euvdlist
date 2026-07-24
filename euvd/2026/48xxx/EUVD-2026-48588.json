@@ -1,0 +1,39 @@
+{
+  "id": "EUVD-2026-48588",
+  "enisaUuid": "bcfd5958-b67b-3a06-96c6-44709f94fc53",
+  "description": "The Zephyr ext2 file system validates the on-disk superblock in ext2_verify_disk_superblock() (subsys/fs/ext2/ext2_impl.c) before completing a mount. The validator checked the magic number, block size, revision and feature flags, but did not verify that the on-disk fields s_blocks_per_group and s_inodes_per_group are non-zero. Both fields are read directly from the image and are later used as divisors during mount-time initialization.\n\nDuring mount, get_ngroups() divides and modulos s_blocks_count by s_blocks_per_group (reached via ext2_fetch_block_group() from ext2_init_fs()), and get_itable_entry() divides (ino - 1) by s_inodes_per_group when fetching the root inode (both in subsys/fs/ext2/ext2_diskops.c). A superblock with either field set to zero therefore causes an integer division by zero during the mount sequence.\n\nAn attacker who can present a crafted ext2 image to a device that mounts ext2 \u2014 removable media such as an SD card or a USB mass-storage device \u2014 can trigger this. On ARMv7-M / ARMv8-M-mainline Cortex-M targets, divide-by-zero trapping is enabled (SCB_CCR_DIV_0_TRP), so the division raises a UsageFault that Zephyr treats as a fatal error, producing a denial of service. The impact is limited to availability; the malformed value is consumed only as a divisor.\n\nThe fix rejects a zero s_blocks_per_group or s_inodes_per_group in the superblock validator, returning -EINVAL so the mount fails before any block-group or inode I/O occurs.",
+  "datePublished": "Jul 24, 2026, 1:48:24 PM",
+  "dateUpdated": "Jul 24, 2026, 3:04:01 PM",
+  "baseScore": 4.6,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:P/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/babc0900ed40e6c023ccc26aa1a321f9388b66af",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-wrf2-79mm-cvw5"
+  ],
+  "aliases": [
+    "CVE-2026-7007"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0b3817f0-adb6-35e0-87e4-c34065da5c1e",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "3.5.0 <4.5.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "831d3f6e-15b8-3992-83fd-bdfb1fc36478",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}
