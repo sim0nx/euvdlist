@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-48642",
+  "enisaUuid": "58c6848e-ee16-381f-859d-1aa7c04f74fe",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: uvc: hold opts->lock across XU walks in uvc_function_bind\n\nuvc_function_bind() walks &opts->extension_units twice without holding\nopts->lock:\n\n  - directly, for the iExtension string-descriptor fixup loop;\n  - indirectly, four times via uvc_copy_descriptors() (once per speed),\n    where the helper iterates uvc->desc.extension_units (which aliases\n    &opts->extension_units) to size and emit XU descriptors.\n\nThe configfs side (uvcg_extension_make / uvcg_extension_drop, in\ndrivers/usb/gadget/function/uvc_configfs.c) takes opts->lock around its\nlist_add_tail / list_del operations.  A privileged userspace process\nthat holds the configfs subtree open and writes the gadget UDC name\nto bind the function while concurrently rmdir()'ing an extensions\nsubdir can race uvcg_extension_drop() against the bind-time list walks\nand dereference a freed struct uvcg_extension.\n\nHold opts->lock from the start of the XU string-descriptor fixup\nthrough the last uvc_copy_descriptors() call, releasing on the\ndescriptor-error path via a new error_unlock label that drops the\nlock before falling through to the existing error label.  This\nmatches the locking discipline of the configfs callbacks and removes\nthe only remaining unsynchronised reader of the XU list during bind.\n\nReachability: only privileged processes that can mount configfs and\nwrite to gadget UDC files can trigger the race, so this is a\ncorrectness fix rather than a security boundary.",
+  "datePublished": "Jul 24, 2026, 3:27:39 PM",
+  "dateUpdated": "Jul 24, 2026, 3:27:39 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e15c414092b3c24610cc771e481a723b0f645eca",
+    "https://git.kernel.org/stable/c/2c9e0905ef7e69f7b814cd709613f6b3b5b98805",
+    "https://git.kernel.org/stable/c/caec0145e5974e85fe5192fc6a6f5aa1a98f82a6",
+    "https://git.kernel.org/stable/c/5f1b9cff88982e2a2053d8b1fd983f7ccb9f03cc",
+    "https://git.kernel.org/stable/c/68aa70648b625fa684bc0b71bbfd905f4943ca20"
+  ],
+  "aliases": [
+    "CVE-2026-64233"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0bcafaa0-1b2c-35e3-91fc-5b162f4d3a4a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0525210c9840229e42c6b68e886c72a75a67cf8e <caec0145e5974e85fe5192fc6a6f5aa1a98f82a6"
+    },
+    {
+      "id": "15b6f865-4fed-3b52-9501-97aceb2e519f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "24770232-37c2-30f0-bfb6-8a66829b49f5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.93"
+    },
+    {
+      "id": "388d3544-b7a7-3cfd-a0ab-f57537c40a1a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0525210c9840229e42c6b68e886c72a75a67cf8e <2c9e0905ef7e69f7b814cd709613f6b3b5b98805"
+    },
+    {
+      "id": "3ca4f24e-3843-3d72-9a4b-b41769f88350",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0525210c9840229e42c6b68e886c72a75a67cf8e <68aa70648b625fa684bc0b71bbfd905f4943ca20"
+    },
+    {
+      "id": "4ec15494-59d3-3a23-a195-3d0ff8cdaf4f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0525210c9840229e42c6b68e886c72a75a67cf8e <e15c414092b3c24610cc771e481a723b0f645eca"
+    },
+    {
+      "id": "74ea528b-09dc-36f2-ace1-8657dd05b6ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.143"
+    },
+    {
+      "id": "9a98ed81-09fb-3e09-9533-3dfedb088b0c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.12"
+    },
+    {
+      "id": "a0b10bdb-b205-3270-ab2a-ae026bce6e6d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.3"
+    },
+    {
+      "id": "ab875631-5276-3e09-a558-210bdaf7c8b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.35"
+    },
+    {
+      "id": "d550f498-46e7-38e1-9f92-1f52e9ebdd06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0525210c9840229e42c6b68e886c72a75a67cf8e <5f1b9cff88982e2a2053d8b1fd983f7ccb9f03cc"
+    },
+    {
+      "id": "f8f3f06e-e2d4-323d-8cf6-42550289dc7a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4d0c2f45-99db-38cd-96b7-f044ca0277fa",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
