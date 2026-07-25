@@ -1,0 +1,139 @@
+{
+  "id": "EUVD-2026-49022",
+  "enisaUuid": "578af0de-e7b4-3d42-b497-a0834b2b0f07",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncrypto: ccp - Do not initialize SNP for SEV ioctls\n\nSashiko notes:\n\n> if SEV initialization fails and KVM is actively running normal VMs, could a\n> userspace process trigger this code path via /dev/sev ioctls (e.g.,\n> SEV_PDH_GEN) and zero out MSR_VM_HSAVE_PA globally? Would the next VMRUN\n> execution for an active VM trigger a general protection fault and crash the\n> host?\n\nsev_move_to_init_state() is called for ioctls requiring only SEV firmware:\nSEV_PEK_GEN, SEV_PDH_GEN, SEV_PEK_CSR, SEV_PEK_CERT_IMPORT, and\nSEV_PDH_CERT_EXPORT. After the firmware command, it does SEV_SHUTDOWN on\nthe SEV firmware. Since these commands do not require SNP to be\ninitialized, skip it by calling __sev_platform_init_locked() which only\ninitializes the SEV firmware. This way SNP is not Initialized at all, and\nHSAVE_PA is not cleared.\n\nThe previous code saved any SEV initialization firmware error to\ninit_args.error and then threw it away and hardcoded the return value of\nINVALID_PLATFORM_STATE regardless of the real firmware error. This patch\nchanges it to surface the underlying error, which is hopefully both more\nuseful and doesn't cause any problems.\n\nNote that it is still safe to call __sev_firmware_shutdown() directly: it\ncalls __sev_snp_shutdown_locked(), which skips SNP shutdown if SNP was not\ninitialized.",
+  "datePublished": "Jul 25, 2026, 8:49:42 AM",
+  "dateUpdated": "Jul 25, 2026, 8:49:42 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/5181e88da99c3d1d41e25db3472a62b8d4b42cdd",
+    "https://git.kernel.org/stable/c/9e983d0a74a6a2348e4ce61647ec8a4dfbe198ac",
+    "https://git.kernel.org/stable/c/d51207735e7c224cf591fa260c557a451a69a5cf",
+    "https://git.kernel.org/stable/c/fb1758e74b8061aacfbce7bbb7a7cc650537e167"
+  ],
+  "aliases": [
+    "CVE-2026-64310"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0713e379-1a1b-3384-b512-617c0d3e61d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "54c0f4dc-e798-3e02-b2c6-2dd143559d7e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "6714bb98-dbfa-33f5-92c3-f792b40724fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ceac7fb89e8da465aec3ac3c20477f912f5c3a6c <d51207735e7c224cf591fa260c557a451a69a5cf"
+    },
+    {
+      "id": "74c84028-b213-3a99-9eee-0543f9c2f172",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "9a3b6739-5d2e-3f5b-8acc-9830a6c27fcf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1c3506ea8599a3ad1b9aae5cbd573134f8d18db7 <5181e88da99c3d1d41e25db3472a62b8d4b42cdd"
+    },
+    {
+      "id": "b375f57c-c11d-3731-bdf8-880dcc06c326",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.96"
+    },
+    {
+      "id": "cb7dcb34-9748-3dc4-8c40-94ab322274f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12.75 <6.12.96"
+    },
+    {
+      "id": "d2ff045e-35d6-3afe-9c00-1c47ec4b5a4f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "d7c79d52-3dba-3ac4-8174-f8066258cbf1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ceac7fb89e8da465aec3ac3c20477f912f5c3a6c <fb1758e74b8061aacfbce7bbb7a7cc650537e167"
+    },
+    {
+      "id": "e4470730-9280-3982-a2bc-5f804d3465ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ceac7fb89e8da465aec3ac3c20477f912f5c3a6c <9e983d0a74a6a2348e4ce61647ec8a4dfbe198ac"
+    },
+    {
+      "id": "f8b428b9-9cf0-3461-bdc9-f810feb356f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "131bcbc2-948c-3849-9111-7ab6b9caa659",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

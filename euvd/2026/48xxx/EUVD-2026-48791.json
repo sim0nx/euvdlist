@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-48791",
+  "enisaUuid": "5d94b67a-9cc7-3450-aa3e-14b536015cf5",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nstaging: media: ipu7: fix double-free and use-after-free in error paths\n\nIn both ipu7_isys_init() and ipu7_psys_init(), pdata is allocated and\nthen passed to ipu7_bus_initialize_device(), which stores it in\nadev->pdata. The ipu7_bus_release() function frees adev->pdata when the\ndevice's reference count drops to zero.\n\nTwo error paths incorrectly call kfree(pdata) after the device teardown\nhas already freed it:\n\n1. When ipu7_mmu_init() fails: put_device() is called, which drops the\n   reference count to zero and triggers ipu7_bus_release() ->\n   kfree(pdata). The subsequent kfree(pdata) is a double-free.\n\n2. When ipu7_bus_add_device() fails: it calls auxiliary_device_uninit()\n   internally, which calls put_device() -> ipu7_bus_release() ->\n   kfree(pdata). The subsequent kfree(pdata) is again a double-free.\n\nNote that the kfree(pdata) when ipu7_bus_initialize_device() itself\nfails is correct, because in that case auxiliary_device_init() failed\nand the release function was never set up, so pdata must be freed\nmanually.\n\nAdditionally, the error code was not saved before calling put_device(),\ncausing ERR_CAST() to dereference the already-freed adev pointer when\nconstructing the return value. Fix this by saving the error from\ndev_err_probe() before put_device() and returning ERR_PTR() instead.\n\nRemove the redundant kfree(pdata) calls and fix the use-after-free in\nthe return values of the two affected error paths.",
+  "datePublished": "Jul 25, 2026, 8:51:18 AM",
+  "dateUpdated": "Jul 25, 2026, 8:51:18 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/b5ddc7257bee71f5b8cf9083e2b0ac0427e9fbb3",
+    "https://git.kernel.org/stable/c/837c1f9655421055f751ed34745e820a54a27642",
+    "https://git.kernel.org/stable/c/d3a9a8cf2d7fd61a2f63df61f6cbc0a9bb007cc0"
+  ],
+  "aliases": [
+    "CVE-2026-64447"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "116f0d84-b03d-3913-9007-657070fcc697",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b7fe4c0019b12d60ece3e99eeb0ccfd5a1d103e5 <837c1f9655421055f751ed34745e820a54a27642"
+    },
+    {
+      "id": "29fd68b0-dde3-3c28-b0a8-8f8a507dc782",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "3268ee49-24ba-3aa3-8b39-725af1f358de",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b7fe4c0019b12d60ece3e99eeb0ccfd5a1d103e5 <d3a9a8cf2d7fd61a2f63df61f6cbc0a9bb007cc0"
+    },
+    {
+      "id": "4733480c-5eaf-35a9-84d0-d3694c4afc48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "8f8ab9f5-987b-3cd7-82a4-0da9ab4b568a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.17"
+    },
+    {
+      "id": "9a18f890-2e1f-3314-8c76-71bc9724b15c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "abfbc70a-7f10-33e9-8fda-922d7d52e672",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b7fe4c0019b12d60ece3e99eeb0ccfd5a1d103e5 <b5ddc7257bee71f5b8cf9083e2b0ac0427e9fbb3"
+    },
+    {
+      "id": "fba8434a-fbd6-337a-b640-4c4b100f3242",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e7a1003e-8f4d-3ca0-a0a8-004c2134170d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

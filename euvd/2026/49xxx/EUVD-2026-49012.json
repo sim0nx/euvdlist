@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-49012",
+  "enisaUuid": "ef3224d3-aada-35af-bfc5-2eed34abd42f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nperf/aux: Fix page UAF in map_range()\n\nmap_range() reads rb->aux_pages[], rb->aux_nr_pages and rb->aux_pgoff via\nperf_mmap_to_page() while holding only event->mmap_mutex. Those fields are\nserialized by rb->aux_mutex, and mmap_mutex is per event.\n\nThus, two events sharing one rb via PERF_EVENT_IOC_SET_OUTPUT can race\nrb_alloc_aux() with map_range(), leading to a page-UAF scenario as follows:\n\n  CPU 0                           CPU 1\n  =====                           =====\n  rb_alloc_aux()                  map_range()\n  [1]: allocate rb->aux_pages[0]\n  [2]: rb->aux_nr_pages++\n                                  [3]: perf_mmap_to_page()\n                                         returns rb->aux_pages[0]\n                                  [4]: map it as VM_PFNMAP\n  [5]: rb->aux_pgoff = 1\n\n  munmap the page\n  [6]: free rb->aux_pages[0]\n\nPages mapped as VM_PFNMAP have no refcount protection, so CPU 1 holds a\nmapping to a freed physical frame.\n\nFix this by taking rb->aux_mutex across the page walk in map_range().",
+  "datePublished": "Jul 25, 2026, 8:49:36 AM",
+  "dateUpdated": "Jul 25, 2026, 8:49:36 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/c8b7e113f7b61eef2f017e6329c27c2331058c5a",
+    "https://git.kernel.org/stable/c/0cff05bd2186020f8706233e261016d149cc24db",
+    "https://git.kernel.org/stable/c/5948aaf64f81f217a25dcc2bf6c0779bca19566c"
+  ],
+  "aliases": [
+    "CVE-2026-64300"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "210abedb-8ffb-3fa6-9845-d960e76ad5a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "226b9240-10ac-30a3-8b34-db9f85cf9d28",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b709eb872e19a19607bbb6d2975bc264d59735cf <c8b7e113f7b61eef2f017e6329c27c2331058c5a"
+    },
+    {
+      "id": "2d8e4bb0-c10d-3695-a7e8-55410135a2a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b709eb872e19a19607bbb6d2975bc264d59735cf <0cff05bd2186020f8706233e261016d149cc24db"
+    },
+    {
+      "id": "56e081ae-21e3-3042-a829-5be7c4687e3a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b709eb872e19a19607bbb6d2975bc264d59735cf <5948aaf64f81f217a25dcc2bf6c0779bca19566c"
+    },
+    {
+      "id": "98ef93d1-a04a-37b7-bbfa-4c13f0c5d343",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c1f9c00c-5b77-3806-a2b6-0bae53f74b07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "c4b127ee-67f9-327b-8e92-1eaaec4bbaba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc3"
+    },
+    {
+      "id": "f0cbc856-4c1f-37b3-b463-82a97316734f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.14"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "397b5948-671d-3ff6-9184-e27e39809ec2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

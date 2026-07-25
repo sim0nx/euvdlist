@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-48974",
+  "enisaUuid": "5ea644ac-c036-3299-b769-7cbb18025a52",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfuse-uring: end fuse_req on io-uring cancel task work\n\nWhen io_uring delivers task work with tw.cancel set (PF_EXITING,\nPF_KTHREAD fallback, or percpu_ref_is_dying on the ring context),\nfuse_uring_send_in_task() takes the cancel branch, assigns\n-ECANCELED, and falls through to fuse_uring_send(). That path only\nflips the entry to FRRS_USERSPACE and completes the io_uring cmd;\nit never discharges the ring entry's owning reference to the\nfuse_req that fuse_uring_add_req_to_ring_ent() handed it at\ndispatch time.\n\n    fuse_uring_send_in_task()\n      tw.cancel == true\n        err = -ECANCELED\n      fuse_uring_send(ent, cmd, err, issue_flags)\n        ent->state = FRRS_USERSPACE\n        list_move(&ent->list, &queue->ent_in_userspace)\n        ent->cmd = NULL\n        io_uring_cmd_done(-ECANCELED)\n        /* ent->fuse_req still set, req still hashed */\n\nThe fuse_req stays linked on fpq->processing[hash] and\nfuse_request_end() is never invoked. The originating syscall\nthread blocks in D-state in request_wait_answer() until\nfuse_abort_conn() runs, which can be the entire connection\nlifetime. For FR_BACKGROUND requests fc->num_background is never\ndecremented either, so repeated cancels inflate the counter until\nmax_background is hit and all later background ops stall. tw.cancel does\nnot imply a connection abort (e.g. a single io_uring worker thread exits\nwhile the fuse connection stays up), so this cannot be left for\nfuse_abort_conn() to clean up.\n\nEnding the req but still routing the entry through fuse_uring_send()\nis not enough: that leaves a req-less entry on ent_in_userspace, and\nent_list_request_expired() dereferences ent->fuse_req unconditionally\non the head of that list, which would then NULL-deref.\n\nFix the cancel branch to release the entry directly. Remove it from the\nqueue, complete the io_uring cmd, end the fuse_req, free the entry, and\ndrop its queue_refs (waking the teardown waiter if it was the last).",
+  "datePublished": "Jul 25, 2026, 8:49:12 AM",
+  "dateUpdated": "Jul 25, 2026, 8:49:12 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/bb476ef8e1027a9d509fbaaf81f5061a07e9e5a7",
+    "https://git.kernel.org/stable/c/4f45f276d5b4412eade6f74f2e37f3adba0473ed",
+    "https://git.kernel.org/stable/c/bea4fe98204b6ce7eb8e29f7bf867dd7619b3ddd"
+  ],
+  "aliases": [
+    "CVE-2026-64262"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1be407c0-d7be-3953-85c4-33e5e6fefcea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c2c9af9a0b13261c36909036057a116f2edb5e1a <bb476ef8e1027a9d509fbaaf81f5061a07e9e5a7"
+    },
+    {
+      "id": "2a98560d-bffb-388d-a7c6-6e5f7c7c09df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c2c9af9a0b13261c36909036057a116f2edb5e1a <bea4fe98204b6ce7eb8e29f7bf867dd7619b3ddd"
+    },
+    {
+      "id": "3680104c-9887-3f18-82b4-2bdffd219012",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "3aae7892-73d3-3593-b984-4bd3cfd2764a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "44c3c009-0d57-3322-984d-c5b521d79bb2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.14"
+    },
+    {
+      "id": "52afc5fc-e469-336a-8501-ab18ec5069c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c2c9af9a0b13261c36909036057a116f2edb5e1a <4f45f276d5b4412eade6f74f2e37f3adba0473ed"
+    },
+    {
+      "id": "8b1a2f07-2772-3d71-b7b2-edc68e674f6e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "8f61f23d-9d05-3943-9422-c985f9a6d5f2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0a68b2ef-72ed-3988-b260-dc235d2ed305",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

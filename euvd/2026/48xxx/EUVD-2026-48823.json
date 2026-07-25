@@ -1,0 +1,172 @@
+{
+  "id": "EUVD-2026-48823",
+  "enisaUuid": "98236075-526d-3f7d-ac91-f74ed38ba9aa",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: seq: Fix uninitialised heap leak in snd_seq_event_dup()\n\nsnd_seq_event_dup() copies an incoming event into a pool cell and, in\nthe UMP-enabled build, clears the trailing cell->ump.raw.extra word that\nthe memcpy() did not cover.  The guard deciding whether to clear it\ncompares the copied size against sizeof(cell->event):\n\n\tmemcpy(&cell->ump, event, size);\n\tif (size < sizeof(cell->event))\n\t\tcell->ump.raw.extra = 0;\n\nFor a legacy (non-UMP) event, size == sizeof(struct snd_seq_event) ==\nsizeof(cell->event), so the condition is false and the extra word keeps\nstale data.  The cell pool is allocated with kvmalloc() (not zeroed) and\ncells are reused via a free list, so that word holds uninitialised heap\nor leftover event data.\n\nWhen such a cell is delivered to a UMP client (client->midi_version > 0)\nthat set SNDRV_SEQ_FILTER_NO_CONVERT -- so the legacy event reaches it\nunconverted -- snd_seq_read() reads it out as the larger struct\nsnd_seq_ump_event and copies the stale word to user space, a 4-byte\nkernel heap infoleak to an unprivileged /dev/snd/seq client.\n\nCompare against sizeof(cell->ump) instead, so the trailing word is zeroed\nfor every event shorter than the UMP cell.",
+  "datePublished": "Jul 25, 2026, 8:51:41 AM",
+  "dateUpdated": "Jul 25, 2026, 8:51:41 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d7649aa11089a93ea2285c210397aa67e5800766",
+    "https://git.kernel.org/stable/c/a224c84e5d3d35708c082c84ad12d81d90762195",
+    "https://git.kernel.org/stable/c/ea672a9f6cc38f06fe69dd2c257ef8a3d4db179a",
+    "https://git.kernel.org/stable/c/fb1aa5082847b98f44f9c6272aee9d0dca9244f0",
+    "https://git.kernel.org/stable/c/651ba82fe2a144bc7356d940bfd235c3810b0549",
+    "https://git.kernel.org/stable/c/6ded42615fa1f4949925afd0a8a9e1ab3bf96202",
+    "https://git.kernel.org/stable/c/435990e25bf1f4af3e6df12a6fbfd1f7ba4a97d4"
+  ],
+  "aliases": [
+    "CVE-2026-64479"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "07916e94-d1fa-3e11-9d8a-3142e133761f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "46397622a3fa8372b8fda0f04b33d16923b03b1b <6ded42615fa1f4949925afd0a8a9e1ab3bf96202"
+    },
+    {
+      "id": "1052a2d6-eb4f-390a-8fce-17bd03254843",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "23e1be76-c126-30df-b352-54f9127f6c86",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "46397622a3fa8372b8fda0f04b33d16923b03b1b <ea672a9f6cc38f06fe69dd2c257ef8a3d4db179a"
+    },
+    {
+      "id": "34ea3937-29b9-3dcd-9b4f-e153531b66f5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d7e2ce72833bb23a82b4201fbed7214cc04a4a8c <a224c84e5d3d35708c082c84ad12d81d90762195"
+    },
+    {
+      "id": "46e46170-2964-3dd4-be89-fdaa597fae0d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "46397622a3fa8372b8fda0f04b33d16923b03b1b <435990e25bf1f4af3e6df12a6fbfd1f7ba4a97d4"
+    },
+    {
+      "id": "4ebb4134-a7d9-38f4-91f5-1fddb8b78706",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "62cdc254-05ec-3329-9171-b9bdca7a5f7b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "703697c8-e0db-3d91-86bf-cda3d4f897ea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.96"
+    },
+    {
+      "id": "aa12ece7-a43d-37d9-a146-0209cfe56fea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "46397622a3fa8372b8fda0f04b33d16923b03b1b <fb1aa5082847b98f44f9c6272aee9d0dca9244f0"
+    },
+    {
+      "id": "b1235ca8-e249-3d86-b647-ab6e1e2448c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "bfeb5874-5416-3e96-8bbd-2c8a85a783d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "46397622a3fa8372b8fda0f04b33d16923b03b1b <651ba82fe2a144bc7356d940bfd235c3810b0549"
+    },
+    {
+      "id": "c2ed59f8-c879-3586-ba9c-f427264024ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6389f2c135311c4ce7c08c3b29145c8f95aacf1f <d7649aa11089a93ea2285c210397aa67e5800766"
+    },
+    {
+      "id": "c78b7843-59b1-31bc-9cd0-3c64c2057299",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.5"
+    },
+    {
+      "id": "d97ab7c2-aad4-3768-99e4-b2a83cd2e9bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9aa31c82-2623-3038-b76c-d1466d9ea097",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

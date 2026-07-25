@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-48845",
+  "enisaUuid": "cb44681d-9cdf-3228-a97f-6949fed69f5d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niio: adc: ad_sigma_delta: fix CS held asserted and state leaks\n\nIn ad_sigma_delta_single_conversion(), set_mode(AD_SD_MODE_IDLE) and\ndisable_one() were called from the out: block while keep_cs_asserted\nwas still true. This caused any SPI transfer issued by those callbacks\nto carry cs_change=1, leaving CS permanently asserted after the\nconversion. Fix by moving both calls into the out_unlock: block, after\nkeep_cs_asserted is cleared, matching the pattern already used in\nad_sd_calibrate().\n\nIn the error path of ad_sd_buffer_postenable(), if an operation fails\nafter set_mode(AD_SD_MODE_CONTINUOUS) has already succeeded (e.g.\nspi_offload_trigger_enable()), the device is left in continuous\nconversion mode with CS physically asserted. Additionally,\nbus_locked remaining true after spi_bus_unlock() causes subsequent\nSPI operations to call spi_sync_locked() without the bus lock actually\nheld, allowing concurrent SPI access.\n\nFix the error path by clearing keep_cs_asserted first, then calling\nset_mode(AD_SD_MODE_IDLE) to revert the device mode and deassert CS,\nthen clearing bus_locked before releasing the bus.\n\nFor devices that implement neither set_mode nor disable_one (such as\nMAX11205, which has no physical CS pin), no SPI transfer is issued\nduring cleanup and the cs_change flag has no effect on any physical\nline.",
+  "datePublished": "Jul 25, 2026, 8:51:56 AM",
+  "dateUpdated": "Jul 25, 2026, 8:51:56 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/c313bb7c38855e94ceef939d152dd75e5a904b5f",
+    "https://git.kernel.org/stable/c/f1de829ee87a1198d3465493ce430d36c5fa029c",
+    "https://git.kernel.org/stable/c/c72da0688575e5ef39c36bb44fed53aa18f8ae65"
+  ],
+  "aliases": [
+    "CVE-2026-64501"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "142a227c-b3a8-3927-9b93-788d2f747e0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "3eafd6d8-c7a1-3a6c-ad7e-95e8a6f7c988",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.14"
+    },
+    {
+      "id": "414bead3-5ec3-3774-bcaf-11c58d6092f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "132d44dc6966c1cf841ffe0f6f048165687e870b <f1de829ee87a1198d3465493ce430d36c5fa029c"
+    },
+    {
+      "id": "9bbab537-a818-388d-b88f-bb72e2108f00",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "132d44dc6966c1cf841ffe0f6f048165687e870b <c72da0688575e5ef39c36bb44fed53aa18f8ae65"
+    },
+    {
+      "id": "abbd2204-8bce-369d-8e36-6a627ab65219",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "132d44dc6966c1cf841ffe0f6f048165687e870b <c313bb7c38855e94ceef939d152dd75e5a904b5f"
+    },
+    {
+      "id": "d24d2318-0d68-3de5-88ec-c6bf7622b0e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "eddcb17a-093f-3189-93fe-3f7b76726968",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "ff4a09dc-26d9-3ff0-aec2-c5b30d25218a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "82f26a63-b65f-329b-8030-4d62fac1b77e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

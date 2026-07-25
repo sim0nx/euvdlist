@@ -1,0 +1,232 @@
+{
+  "id": "EUVD-2026-48890",
+  "enisaUuid": "4287869f-08f0-3675-861b-635c8b396519",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: udc: Fix use-after-free in gadget_match_driver\n\nThe udc structure acts as the management structure for the gadget,\nbut their lifecycles are decoupled. A race condition exists where\nusb_del_gadget() frees the udc memory (e.g., via mode-switch work)\nwhile gadget_match_driver() concurrently accesses the freed udc memory\n(e.g., via configfs), causing a Use-After-Free (UAF) that triggers a\nNULL pointer dereference when the freed memory is zeroed:\n\n[39430.908615][ T1171] Unable to handle kernel NULL pointer dereference at virtual address 0000000000000000\n[39430.911397][ T1171] pc : __pi_strcmp+0x20/0x140\n[39430.911441][ T1171] lr : gadget_match_driver+0x34/0x60\n...\n[39430.911890][ T1171]  usb_gadget_register_driver_owner+0x50/0xf8\n[39430.911910][ T1171]  gadget_dev_desc_UDC_store+0xf4/0x140\n[39430.931308][ T1171]  configfs_write_iter+0xec/0x134\n\n[39430.957058][ T1171] Workqueue: events_freezable __dwc3_set_mode\n[39430.957287][ T1171]  dwc3_gadget_exit+0x34/0x8c\n[39430.957304][ T1171]  __dwc3_set_mode+0xc0/0x664\n\nFix this by ensuring the udc structure remains allocated until the\ngadget is released. To achieve this, introduce a new\nusb_gadget_release() routine to the core. When the gadget is added,\nusb_add_gadget() stores the gadget's release routine in the udc\nstructure and takes a reference to the udc. When the gadget is\nreleased, usb_gadget_release() drops the reference to the udc and\nthen calls the gadget's release routine.",
+  "datePublished": "Jul 25, 2026, 8:50:07 AM",
+  "dateUpdated": "Jul 25, 2026, 8:50:07 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f845852a5a8914277031f47d8de0f350fef52405",
+    "https://git.kernel.org/stable/c/50eeb8e8a4f389efc91b93cff14a683e714ec194",
+    "https://git.kernel.org/stable/c/7a5214dae906d9f58e07bc4995e8181ee74439f4",
+    "https://git.kernel.org/stable/c/d026f71df141c9b064ff32a78af5391a31ef75c2",
+    "https://git.kernel.org/stable/c/b52476a83d9e12df00765359d728a875b128bef1",
+    "https://git.kernel.org/stable/c/54fa390aae393eb130f307a85562e3001cc39a52",
+    "https://git.kernel.org/stable/c/67e511d2989eb1c8c588b599ce2fcc6bb8e6f7ea"
+  ],
+  "aliases": [
+    "CVE-2026-64346"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "044e3364-112e-39ce-bbe7-53aa8683511b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.6.145"
+    },
+    {
+      "id": "0ee3fba5-7042-3b3d-b30b-ba4ef4b8c45d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <7.1.4"
+    },
+    {
+      "id": "1881ca13-654a-3d8d-bb03-2143245677d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <50eeb8e8a4f389efc91b93cff14a683e714ec194"
+    },
+    {
+      "id": "380bdc5a-3e38-3b6e-ba1a-8d37b67e4a16",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <7a5214dae906d9f58e07bc4995e8181ee74439f4"
+    },
+    {
+      "id": "5b00c10f-34e1-3b10-8948-2eba984f3dbd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.1.178"
+    },
+    {
+      "id": "5ca5dbe6-b4da-3182-94fc-c9cee483ba56",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <54fa390aae393eb130f307a85562e3001cc39a52"
+    },
+    {
+      "id": "64683c52-fae6-3c25-9cf1-0c43c309f24e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <67e511d2989eb1c8c588b599ce2fcc6bb8e6f7ea"
+    },
+    {
+      "id": "724c4068-d583-39ae-bc75-3849bc80dd4b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.96"
+    },
+    {
+      "id": "7689f894-9694-3abf-82a1-b59efc9acca7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "7ad02377-4f52-388b-828c-43b9210910d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "7ea8d9d2-2a15-334b-9f59-fba7d23bc547",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d026f71df141c9b064ff32a78af5391a31ef75c2"
+    },
+    {
+      "id": "9e163157-3993-3e15-bd94-25a0a4bb1dc1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b52476a83d9e12df00765359d728a875b128bef1"
+    },
+    {
+      "id": "a058140b-af63-3695-be7c-25d07e3eb9f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.96"
+    },
+    {
+      "id": "a18b5b7c-bf5f-314c-b902-7cbaffb5bf2e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.39"
+    },
+    {
+      "id": "a227ca55-e401-33af-8c40-a9393d909b55",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f845852a5a8914277031f47d8de0f350fef52405"
+    },
+    {
+      "id": "b6b6bc25-88e3-351e-8aa2-c3c21d83e20b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "bad763c8-19ef-320c-b6ca-b6a521048cd8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.212"
+    },
+    {
+      "id": "e01429a8-7f05-3e92-85e0-1516e8fbdd9c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.178"
+    },
+    {
+      "id": "e4ed2609-2dc9-3acd-9977-e8a2fa5ee265",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc3"
+    },
+    {
+      "id": "fefeb25e-6009-3cdf-8c8e-da23293da385",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <5.15.212"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "1eaa51a2-fad2-3ba5-90b8-4e84f9dc7f5c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

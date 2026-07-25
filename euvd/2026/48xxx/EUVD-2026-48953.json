@@ -1,0 +1,171 @@
+{
+  "id": "EUVD-2026-48953",
+  "enisaUuid": "b611da1a-f828-351d-88f3-7c7ce4fa8d1b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: btmtksdio: fix infinite loop in btmtksdio_txrx_work()\n\nEvery once in a while we see a hung btmtksdio_flush() task:\n\n INFO: task kworker/u17:0:189 blocked for more than 122 seconds.\n __cancel_work_timer+0x3f4/0x460\n cancel_work_sync+0x1c/0x2c\n btmtksdio_flush+0x2c/0x40\n hci_dev_open_sync+0x10c4/0x2190\n [..]\n\nIt all boils down to incorrect time_is_before_jiffies() usage in\nbtmtksdio_txrx_work().  The btmtksdio_txrx_work() loop is expected\nto be terminated if running for longer than 5*HZ.  However the\ntimeout check is twisted:  time_is_before_jiffies(old_jiffies + 5*HZ)\nevaluates to true when old_jiffies + 5*HZ is in the past i.e. when a\ntimeout has occurred.  Using OR with time_is_before_jiffies(txrx_timeout)\nmeans that:\n- before the 5-second timeout: the condition is `int_status || false`,\n  so it loops as long as there are pending interrupts.\n- after the 5-second timeout: the condition becomes `int_status || true`,\n  which is always true.\n\nWhen the loop becomes infinite btmtksdio_txrx_work() loop never\nterminates and never releases the SDIO host.\n\nFix loop termination condition to actually enforce a 5*HZ timeout.",
+  "datePublished": "Jul 25, 2026, 8:50:50 AM",
+  "dateUpdated": "Jul 25, 2026, 8:50:50 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f6682c23b6fac4780d297ae4662053d17e58fd52",
+    "https://git.kernel.org/stable/c/466540e045d01fcacf383a5beb8a2dad2fc53a26",
+    "https://git.kernel.org/stable/c/7b429d611060e87752e848851815537963726493",
+    "https://git.kernel.org/stable/c/0039bdde36b23ccf1196635f1d52c5490481544d",
+    "https://git.kernel.org/stable/c/0f0a83e26a9c7fd4b243c315ce07161d2496d83d",
+    "https://git.kernel.org/stable/c/a257407e2bbbb099ed427719a50563f67fa366d8"
+  ],
+  "aliases": [
+    "CVE-2026-64409"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "024234dd-7b43-3ac3-a773-80b3a295fb9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "0634442d-4cf3-322f-9693-bdf803f4ee65",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.96"
+    },
+    {
+      "id": "47fb36f6-e5c0-3e4f-9ff0-233e35f13efe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.17"
+    },
+    {
+      "id": "4abc8d2a-41f0-3984-9fc4-26cef9cf56a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "26270bc189ea4b5a8356ec99561357fc87f00b32 <a257407e2bbbb099ed427719a50563f67fa366d8"
+    },
+    {
+      "id": "69c5e36b-1726-3da6-b164-8ba7584ccbc9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "6f0bc83d-ca93-3eba-8d77-37aaf7947159",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "26270bc189ea4b5a8356ec99561357fc87f00b32 <7b429d611060e87752e848851815537963726493"
+    },
+    {
+      "id": "7e718d06-2245-37bf-bd68-72d0e35cd6cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "26270bc189ea4b5a8356ec99561357fc87f00b32 <466540e045d01fcacf383a5beb8a2dad2fc53a26"
+    },
+    {
+      "id": "bf4b92ed-35e3-3272-a1a6-a8d290b4dd8a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c486fe27-24bd-36a9-8606-feb79f2212b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "26270bc189ea4b5a8356ec99561357fc87f00b32 <0f0a83e26a9c7fd4b243c315ce07161d2496d83d"
+    },
+    {
+      "id": "ce5a239a-e037-3704-a567-1e3def0a5251",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "f19fcf1d-a013-3937-847c-623e833f7619",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "26270bc189ea4b5a8356ec99561357fc87f00b32 <f6682c23b6fac4780d297ae4662053d17e58fd52"
+    },
+    {
+      "id": "f38b71b0-1d13-391b-bdc7-f6300b8a2a9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.178"
+    },
+    {
+      "id": "f68409ec-f66e-3621-b83d-b533a769c990",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "f708c2bc-f80b-31c0-848b-5cc8e27eb9ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "26270bc189ea4b5a8356ec99561357fc87f00b32 <0039bdde36b23ccf1196635f1d52c5490481544d"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "45cce5b0-d0ab-313a-aaa9-47b28ba28c47",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

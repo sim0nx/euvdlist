@@ -1,0 +1,231 @@
+{
+  "id": "EUVD-2026-48781",
+  "enisaUuid": "bdb4369d-b04f-32c6-af2c-d036f361d748",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: fix use-after-free of a deferred file_lock on SMB2_CLOSE then SMB2_CANCEL\n\nCommit f580d27e8928 (\"ksmbd: fix use-after-free of a deferred file_lock on\ndouble SMB2_CANCEL\") made smb2_cancel() skip a work whose state is\nKSMBD_WORK_CANCELLED, so its cancel_fn cannot be fired a second time. But\nKSMBD_WORK has three states (ACTIVE, CANCELLED, CLOSED), and the same\nfreeing producer path is reached for CLOSED too:\n\n  SMB2_CLOSE on the locking handle -> set_close_state_blocked_works() sets\n  the deferred work's state to KSMBD_WORK_CLOSED and wakes the smb2_lock()\n  worker. The worker takes the non-ACTIVE early-exit, locks_free_lock()s\n  the file_lock and, because the state is not KSMBD_WORK_CANCELLED, takes\n  the STATUS_RANGE_NOT_LOCKED branch with \"goto out2\" -- which, like the\n  cancelled branch, skips release_async_work(). The work stays on\n  conn->async_requests with a live cancel_fn = smb2_remove_blocked_lock\n  pointing at the freed file_lock.\n\nA subsequent SMB2_CANCEL for the same AsyncId then passes the\nKSMBD_WORK_CANCELLED-only guard (its state is KSMBD_WORK_CLOSED), so\nsmb2_cancel() fires cancel_fn again over the freed file_lock -- the same\nuse-after-free fixed, via SMB2_CLOSE instead of a first SMB2_CANCEL:\n\n  BUG: KASAN: slab-use-after-free in __locks_delete_block\n    __locks_delete_block\n    locks_delete_block\n    ksmbd_vfs_posix_lock_unblock\n    smb2_remove_blocked_lock\n    smb2_cancel                 <- 2nd SMB2_CANCEL fires cancel_fn\n    handle_ksmbd_work\n  Allocated by ...: locks_alloc_lock <- smb2_lock\n  Freed by ...:     locks_free_lock  <- smb2_lock (non-ACTIVE early-exit)\n  ... cache file_lock_cache of size 192\n\nReproduced on mainline 7.1-rc7 (which already contains f580d27e8928) with\nKASAN by an authenticated SMB client; the double-SMB2_CANCEL control is\nsilent on that kernel, so the splat is attributable to the CLOSE trigger.\n\nOnly an ACTIVE deferred work may have its cancel_fn fired: both terminal\nstates (CANCELLED and CLOSED) reach the smb2_lock() early-exit that frees\nthe file_lock and skips release_async_work(). Guard on KSMBD_WORK_ACTIVE\nso any non-active work is skipped.",
+  "datePublished": "Jul 25, 2026, 8:51:11 AM",
+  "dateUpdated": "Jul 25, 2026, 8:51:11 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a796ba4e61d5e14e07b79a359faac69f8f9b22a3",
+    "https://git.kernel.org/stable/c/b8e274e69ab09222c7a552c7c0c1eef9ce627fc1",
+    "https://git.kernel.org/stable/c/ddb9239828336b36d8a3ef5943fdffb2f55b6508",
+    "https://git.kernel.org/stable/c/94083db751930b1540ddff2b54d4677549c57f81",
+    "https://git.kernel.org/stable/c/12c36c99655f325befe50c26842f7deca414c381",
+    "https://git.kernel.org/stable/c/10f293a07f9e10e988b0ae44e2e99c631f5a68e0"
+  ],
+  "aliases": [
+    "CVE-2026-64437"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0f2196f2-2be9-310b-86b0-9a2a17554fd3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.18.36 <6.18.39"
+    },
+    {
+      "id": "2bdaa7b4-7f6d-3fe3-b5be-6af0bfc5ebf0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "4147857a-ed02-3e53-ad2e-bf0fbdca25c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.143 <6.6.145"
+    },
+    {
+      "id": "46b6e438-54b3-3c23-96a9-b92809fd197d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b7063c7426ea5a4d15e01b60538718765392f49d <a796ba4e61d5e14e07b79a359faac69f8f9b22a3"
+    },
+    {
+      "id": "48044dec-fec3-381e-b318-9a9693ed5390",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.0.13 <7.1"
+    },
+    {
+      "id": "50eddff8-6244-3b6d-a820-158c308b4689",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "544cb0a8-b4f2-3e70-a4bc-df68a32664e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.96"
+    },
+    {
+      "id": "5cdc11fd-baf0-3d3d-9d4e-0c927a67aadf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12.94 <6.12.96"
+    },
+    {
+      "id": "5cdf95f7-835d-3289-bc0d-3d8f20464edb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f580d27e8928828693df44ba2db0fffdbe11dfea <10f293a07f9e10e988b0ae44e2e99c631f5a68e0"
+    },
+    {
+      "id": "5d6b7601-8f38-3e77-80d8-7d9724eb23f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "6b95723f-7e3f-3028-95f8-45fce5e95681",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "b11d7693-99f0-3a25-9184-876e481278a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.176 <6.1.178"
+    },
+    {
+      "id": "b1eee60d-1480-3f42-9134-ad537aa92325",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2b2eda2821cff1d1b5a423b6ee7d8fc6fbc8e694"
+    },
+    {
+      "id": "b2eafc81-4339-3df0-9a75-f4c2e5af65e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0da2e073f9cbf4985a0fd9acb71bc5ff599f8afd <b8e274e69ab09222c7a552c7c0c1eef9ce627fc1"
+    },
+    {
+      "id": "cbe8b1be-5ed3-3239-a33f-ba12858db9c3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d40438fd-e001-32f6-b3e5-c495a21d0abf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "89ae9df09d2c1fb4a4eb495c113a7ce1dca34147 <ddb9239828336b36d8a3ef5943fdffb2f55b6508"
+    },
+    {
+      "id": "dc7a0da4-4ffc-3f7c-9382-79f665184514",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "14d2eee0193ac3cd1bf3d014373449f0b8d35d6d <94083db751930b1540ddff2b54d4677549c57f81"
+    },
+    {
+      "id": "e6b1e7eb-7360-3354-8493-11dba4c7cfca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f580d27e8928828693df44ba2db0fffdbe11dfea <12c36c99655f325befe50c26842f7deca414c381"
+    },
+    {
+      "id": "ec1b4004-d4a3-3e68-89b6-00a59bbb74d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.178"
+    },
+    {
+      "id": "f456833d-4ed0-38e2-8a10-66c0774407d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "1b6dc14d-1d64-3f66-a240-e634e3d5afec",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

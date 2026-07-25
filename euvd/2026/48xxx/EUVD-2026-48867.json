@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-48867",
+  "enisaUuid": "d032d422-7979-315a-a665-83940c8c858b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/handshake: Take a long-lived file reference at submit\n\nhandshake_nl_accept_doit() needs the file pointer backing\nreq->hr_sk->sk_socket to survive the window between\nhandshake_req_next() and the subsequent FD_PREPARE() and get_file().\nThe submit-side sock_hold() does not provide that.  sk_refcnt keeps\nstruct sock alive, but struct socket is owned by sock->file: when\nthe consumer fputs the last file reference, sock_release() tears\nthe socket down regardless of any sock_hold.\n\nAdd an hr_file pointer to struct handshake_req and acquire an\nexplicit reference on sock->file during handshake_req_submit().\nhandshake_complete() and handshake_req_cancel() release the\nreference on the completion-bit-winning path.\n\nThe submit error path must also release the file reference, but\nafter rhashtable insertion a concurrent handshake_req_cancel() can\ndiscover the request and race the error path.  Gate the error-path\ncleanup -- sk_destruct restoration, fput, and request destruction\n-- with test_and_set_bit(HANDSHAKE_F_REQ_COMPLETED), the same\nserialization handshake_complete() and handshake_req_cancel()\nalready use.  When cancel has already claimed ownership, the submit\nerror path returns without touching the request; socket teardown\nhandles final destruction.\n\nThe accept-side dereferences are not yet retargeted; that change\ncomes in the next patch.",
+  "datePublished": "Jul 25, 2026, 9:20:47 AM",
+  "dateUpdated": "Jul 25, 2026, 9:20:47 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/685b10dd0e32c7782cead16c8cf055c609678583",
+    "https://git.kernel.org/stable/c/16eaba5aa89c04eea125905bb8f988c1897f4f29",
+    "https://git.kernel.org/stable/c/09dba37eee70d0596e26645015f1aa95a9848e9d"
+  ],
+  "aliases": [
+    "CVE-2026-64523"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0ec827c7-3679-34a4-9cc7-d22e3937656e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.93"
+    },
+    {
+      "id": "19d3409e-52b9-31fa-8b3f-c8c168c906cf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <16eaba5aa89c04eea125905bb8f988c1897f4f29"
+    },
+    {
+      "id": "1bff024a-69e1-30ce-8864-55d19223437f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "335a2dfd-2132-3d36-9aca-3e4ef1567ac1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.12"
+    },
+    {
+      "id": "785c2dfb-1cd6-35e9-9e33-577b2a511bae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <7.0.12"
+    },
+    {
+      "id": "974c46ce-5ecd-3cc5-8832-39cc47e89867",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <09dba37eee70d0596e26645015f1aa95a9848e9d"
+    },
+    {
+      "id": "980c381a-9504-3e97-8a67-3a58d952e6c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <685b10dd0e32c7782cead16c8cf055c609678583"
+    },
+    {
+      "id": "a16a3d95-34d0-3d7a-b6f2-9842c3b57aa0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.93"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b0db7f72-6999-3ad7-8638-695f97e6bc74",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

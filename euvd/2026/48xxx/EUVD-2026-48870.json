@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-48870",
+  "enisaUuid": "cd9ab3b0-51c1-3ff4-95a1-793e492cf5b9",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nblock: skip sync_blockdev() on surprise removal in bdev_mark_dead()\n\nbdev_mark_dead()'s @surprise == true means the device is already gone.\nThe filesystem callback fs_bdev_mark_dead() honours this and skips\nsync_filesystem(), but the bare block device path (no ->mark_dead op)\nlost its !surprise guard when the holder ->mark_dead callback was wired\nup (see Fixes), and now calls sync_blockdev() unconditionally, which can\nhang forever waiting on writeback that can no longer complete.\n\nsyzkaller hit this via nvme_reset_work()'s \"I/O queues lost\" path:\nnvme_mark_namespaces_dead() -> blk_mark_disk_dead() ->\nbdev_mark_dead(bdev, true) -> sync_blockdev() blocks in\nfolio_wait_writeback(), wedging the reset worker and every task waiting\non it.\n\nSkip the sync on surprise removal, matching fs_bdev_mark_dead();\ninvalidate_bdev() still runs. Orderly removal (surprise == false) is\nunchanged.\n\nFound by FuzzNvme(Syzkaller with FEMU fuzzing framework).",
+  "datePublished": "Jul 25, 2026, 8:49:54 AM",
+  "dateUpdated": "Jul 25, 2026, 8:49:54 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d6998ddd507c81e3829489a6ead23f17f5acb7fe",
+    "https://git.kernel.org/stable/c/f41cf35ee2a1e31374b3f54e7579c55153506e70",
+    "https://git.kernel.org/stable/c/9818bcae3c0ca1dde4b9a334125c46676e0a9b29",
+    "https://git.kernel.org/stable/c/aa4c4a9315764b2b7a7182e72cc5ea87520436b4",
+    "https://git.kernel.org/stable/c/49f06cff50a4ccf3b7a1a662ceb892b3b21a527a"
+  ],
+  "aliases": [
+    "CVE-2026-64326"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "015f14c2-d649-39df-95f7-e9b9f8ce8635",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "2d366b46-7b06-37f1-aae5-2df05582806a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "3a715c65-10e5-3d39-9fa6-9bafb8279e50",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d8530de5a6e82be0ce17a5fdf727a394bcf6444c <49f06cff50a4ccf3b7a1a662ceb892b3b21a527a"
+    },
+    {
+      "id": "4a8766c7-ae04-36a4-9840-95fe9c442828",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "4fbd98f9-835b-35f8-86f9-45b04e941392",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d8530de5a6e82be0ce17a5fdf727a394bcf6444c <9818bcae3c0ca1dde4b9a334125c46676e0a9b29"
+    },
+    {
+      "id": "8bfb5bf9-b39f-3231-8dfa-8e43d51776fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d8530de5a6e82be0ce17a5fdf727a394bcf6444c <aa4c4a9315764b2b7a7182e72cc5ea87520436b4"
+    },
+    {
+      "id": "9490b861-0acc-3325-91e5-0359763162d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "a10b55a2-3570-39a0-ac93-1c3a4ffd5c2a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d8530de5a6e82be0ce17a5fdf727a394bcf6444c <f41cf35ee2a1e31374b3f54e7579c55153506e70"
+    },
+    {
+      "id": "b75d05e6-db90-30ee-a28c-71e66dc9be61",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d8530de5a6e82be0ce17a5fdf727a394bcf6444c <d6998ddd507c81e3829489a6ead23f17f5acb7fe"
+    },
+    {
+      "id": "c21499d8-e62b-32f1-a030-b8dc273dc1fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.96"
+    },
+    {
+      "id": "da3fae76-aec5-3389-b106-eb5789124dde",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "f2308852-b391-3948-a770-59f4fc27d801",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "dc079848-0de0-3b3e-b179-e32255f76316",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

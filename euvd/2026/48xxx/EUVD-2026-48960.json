@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-48960",
+  "enisaUuid": "c2732c1a-2e3d-3d52-9915-ef4c33a3aaf9",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm: swap_cgroup: fix NULL deref in lookup_swap_cgroup_id on swapless host\n\nlookup_swap_cgroup_id() passes swap_cgroup_ctrl[type].map to\n__swap_cgroup_id_lookup() without checking that the type was ever\nregistered via swap_cgroup_swapon().  On a swapless host every ctrl->map\nis NULL, so __swap_cgroup_id_lookup() dereferences NULL + a scaled\nswp_offset().\n\nSince commit bea67dcc5eea (\"mm: attempt to batch free swap entries for\nzap_pte_range()\"), zap_pte_range() -> swap_pte_batch() calls\nlookup_swap_cgroup_id() on any non-present, non-none PTE that decodes as a\nreal swap entry, without first validating it against swap_info[].  A\nsingle PTE corrupted into a type-0 swap entry takes the host down at\nprocess exit.\n\nWe hit this in production on a swapless 6.12.58 host: ~1s of\n\"get_swap_device: Bad swap file entry 3f800204222bb\" (do_swap_page() being\ncorrectly defensive about the same entry) followed by\n\n  BUG: unable to handle page fault for address: 000003f800204220\n  RIP: 0010:lookup_swap_cgroup_id+0x2b/0x60\n  Call Trace:\n   swap_pte_batch+0xbf/0x230\n   zap_pte_range+0x4c8/0x780\n   unmap_page_range+0x190/0x3e0\n   exit_mmap+0xd9/0x3c0\n   do_exit+0x20c/0x4b0\n\nsyzbot has reported the identical stack.\n\nThe source of the PTE corruption is a separate bug; this change makes the\nteardown path as robust as the fault path already is.  Every other caller\nof lookup_swap_cgroup_id() is downstream of a get_swap_device() that has\nalready validated the entry, so the new branch is cold.",
+  "datePublished": "Jul 25, 2026, 8:50:55 AM",
+  "dateUpdated": "Jul 25, 2026, 8:50:55 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/818416fef38759f23210de449663cd9d7e293d39",
+    "https://git.kernel.org/stable/c/b415c00bf23df577a4a95673d00ae76687bcc1d4",
+    "https://git.kernel.org/stable/c/6a4196d19f477524d2f92adca90fc1fbe9a0420a",
+    "https://git.kernel.org/stable/c/63b02a9409cb5180398491b093e48bcb5315f5fb"
+  ],
+  "aliases": [
+    "CVE-2026-64416"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "11f057e3-e9b0-3a9a-baf4-5f2927c0452c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bea67dcc5eea0f6a213897a59b9e644977cd07e6 <63b02a9409cb5180398491b093e48bcb5315f5fb"
+    },
+    {
+      "id": "2d261d3d-a380-366a-b1e0-5fb8df8d4df9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "55e16f1c-5740-3c69-8a7d-146d4ed1c8da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "7b2e6805-156c-3fea-8dbc-9ca1578f1693",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bea67dcc5eea0f6a213897a59b9e644977cd07e6 <6a4196d19f477524d2f92adca90fc1fbe9a0420a"
+    },
+    {
+      "id": "84517c76-5ae7-30af-8b6c-25d8508a47c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12"
+    },
+    {
+      "id": "c022a8a2-f77c-3b5a-829b-fdf4d676d77c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bea67dcc5eea0f6a213897a59b9e644977cd07e6 <b415c00bf23df577a4a95673d00ae76687bcc1d4"
+    },
+    {
+      "id": "c69ee7f2-be40-302f-b722-3189d5d5ae94",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "cd997c1b-e651-3773-aa6e-06a38faa4544",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.97"
+    },
+    {
+      "id": "e3c933e1-e264-38fb-b1c3-8670a3a74104",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bea67dcc5eea0f6a213897a59b9e644977cd07e6 <818416fef38759f23210de449663cd9d7e293d39"
+    },
+    {
+      "id": "e97ba49d-a864-38f6-9dff-4204ba66c266",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6bd8a701-121a-3da0-8ccf-1dbac1dc40c7",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
