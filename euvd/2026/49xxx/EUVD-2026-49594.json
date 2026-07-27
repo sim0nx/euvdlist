@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-49594",
+  "enisaUuid": "4db50af3-c6bd-3d99-b873-99e01ac42081",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntipc: fix use-after-free of the discoverer in tipc_disc_rcv()\n\nbearer_disable() frees b->disc with tipc_disc_delete()'s plain kfree(),\nbut tipc_disc_rcv() still dereferences b->disc in RX softirq under\nrcu_read_lock() (tipc_udp_recv -> tipc_rcv -> tipc_disc_rcv).\n\nL2 bearers are safe thanks to the synchronize_net() in\ntipc_disable_l2_media(), but the UDP bearer defers that call to the\ncleanup_bearer() workqueue, so the discoverer is freed with no grace\nperiod:\n\n BUG: KASAN: slab-use-after-free in tipc_disc_rcv (net/tipc/discover.c:149)\n Read of size 8 at addr ffff88802348b728 by task poc_tipc/184\n <IRQ>\n  tipc_disc_rcv (net/tipc/discover.c:149)\n  tipc_rcv (net/tipc/node.c:2126)\n  tipc_udp_recv (net/tipc/udp_media.c:391)\n  udp_rcv (net/ipv4/udp.c:2643)\n  ip_local_deliver_finish (net/ipv4/ip_input.c:241)\n </IRQ>\n Freed by task 181:\n  kfree (mm/slub.c:6565)\n  bearer_disable (net/tipc/bearer.c:418)\n  tipc_nl_bearer_disable (net/tipc/bearer.c:1001)\n\nThe bearer is freed with kfree_rcu(); free the discoverer the same way.\nAdd an rcu_head to struct tipc_discoverer and free it and its skb from an\nRCU callback.\n\nBecause the RCU callback (tipc_disc_free_rcu) lives in module text, a\ncall_rcu() that is still pending when the tipc module is unloaded would\ninvoke a freed function. Add an rcu_barrier() to tipc_exit() after the\nbearer subsystem has been torn down, so all pending discoverer callbacks\nhave run before the module text goes away.\n\nReachable from an unprivileged user namespace: the TIPCv2 genl family is\nnetnsok and its bearer commands have no GENL_ADMIN_PERM. Needs CONFIG_TIPC\nand CONFIG_TIPC_MEDIA_UDP.",
+  "datePublished": "Jul 27, 2026, 8:10:35 PM",
+  "dateUpdated": "Jul 27, 2026, 8:10:35 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/5e215bf1c47fdddf8203a0fe80a0ed594065f101",
+    "https://git.kernel.org/stable/c/ec7d54d8cc1723921d671e3272b427c96366506f",
+    "https://git.kernel.org/stable/c/a0c5fdeb5fa257f8c6d469af266bc087cb5de6a2",
+    "https://git.kernel.org/stable/c/b65289e1c3f352a9f92c6e19713ddd647e033253",
+    "https://git.kernel.org/stable/c/1579342d71133da7f00daa02c75cebec7372097b"
+  ],
+  "aliases": [
+    "CVE-2026-64543"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "11980ac5-7663-34a5-a6b7-b334296de9da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "25b0b9c4e835ffaa65b61c3efe2e28acf84d0259 <5e215bf1c47fdddf8203a0fe80a0ed594065f101"
+    },
+    {
+      "id": "369f65cf-d27c-3d73-bc36-71742f0ec8b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.17"
+    },
+    {
+      "id": "4455a065-cec0-3f25-ae24-56254c3b45f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "54f89072-4f27-3992-b8e7-f0f8fad958d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "68ca8427-06a5-3da1-a1a1-09d8cde01ac4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "25b0b9c4e835ffaa65b61c3efe2e28acf84d0259 <b65289e1c3f352a9f92c6e19713ddd647e033253"
+    },
+    {
+      "id": "99572ee6-46b9-35c6-809b-1c4d2ca5436b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "a125b9f5-a3f7-3d73-99a9-8932acba3175",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "25b0b9c4e835ffaa65b61c3efe2e28acf84d0259 <1579342d71133da7f00daa02c75cebec7372097b"
+    },
+    {
+      "id": "b4024159-0fe5-3a90-a41b-4bbf082202f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.97"
+    },
+    {
+      "id": "b5a0d638-c7df-39f7-b9b3-95df494fb0b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "25b0b9c4e835ffaa65b61c3efe2e28acf84d0259 <ec7d54d8cc1723921d671e3272b427c96366506f"
+    },
+    {
+      "id": "c0220865-d6b4-30da-8078-345d237e035a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "e57df37a-e68b-3aee-b2c0-9eea3d377c39",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "f2025a00-d4e7-3017-92d6-4a244f3343df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "25b0b9c4e835ffaa65b61c3efe2e28acf84d0259 <a0c5fdeb5fa257f8c6d469af266bc087cb5de6a2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e4bc4789-3a14-33f1-bba2-e3a9f7de98f2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
