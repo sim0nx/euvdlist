@@ -1,0 +1,38 @@
+{
+  "id": "EUVD-2026-51246",
+  "enisaUuid": "f4070af9-7a17-359f-a04a-017288d2a4be",
+  "description": "Banks generates meaningful LLM prompts using a simple template language. In versions prior to 2.4.3, banks parses Tool JSON objects from the rendered body of {% completion %} blocks and later resolves their import_path field through importlib.import_module(...) + getattr(...) to obtain the callable that handles a tool call. There is no allowlist or sanitization on import_path, so any importable Python attribute (e.g. os.system, subprocess.getoutput) can be selected. When the LLM emits a tool_calls entry whose function.name matches the attacker-supplied tool name, the resolved callable is invoked with kwargs decoded from tool_call.function.arguments, yielding arbitrary code execution in the banks-hosting process. This is distinct from GHSA-gphh-9q3h-jgpp / CVE-2026-44209. That advisory was fixed in 2.4.2 by switching src/banks/env.py from Environment to SandboxedEnvironment. The fix does not touch src/banks/extensions/completion.py, and the unsafe import + getattr chain still executes on 2.4.2. The malicious Tool JSON is plain text in the rendered template body \u2014 it requires no Jinja attribute access, so the sandbox is irrelevant. This issue has been fixed in version 2.4.3.",
+  "datePublished": "Jul 30, 2026, 4:50:01 PM",
+  "dateUpdated": "Jul 30, 2026, 4:50:01 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://github.com/masci/banks/security/advisories/GHSA-64vx-6h2c-rjh7"
+  ],
+  "aliases": [
+    "CVE-2026-61536"
+  ],
+  "assigner": "GitHub_M",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "6c692341-110e-353d-b001-47ce1f198d7d",
+      "product": {
+        "name": "banks",
+        "vendor": {
+          "name": "masci"
+        }
+      },
+      "product_version": "< 2.4.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f7f3a51e-ba86-3af9-9352-e40b0803ca1d",
+      "vendor": {
+        "name": "masci"
+      }
+    }
+  ]
+}
