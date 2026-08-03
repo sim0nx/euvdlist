@@ -1,0 +1,38 @@
+{
+  "id": "EUVD-2026-52325",
+  "enisaUuid": "14969a60-b548-336d-97ba-e8c2a8461276",
+  "description": "XML::Sig versions from 0.29 before 0.72 for Perl allow signature verification bypass because verify returns true when every signature was skipped before any cryptographic check.\n\nverify in lib/XML/Sig.pm counts the `//dsig:Signature` elements into `$numsigs` and iterates over them, but two paths reach `next` before any digest or key check runs: a `SignedInfo/Reference/@URI` that resolves to no element while `$numsigs` is greater than 1, and, when `id_attr` is set, a reference that does not match the requested ID. The loop records nothing about what it checked, so when every signature takes one of those paths control reaches the unconditional `return 1` that ends verify. Two `Signature` elements whose Reference URI names an ID that no element carries is enough, as is one such element combined with `id_attr`.\n\nAny caller that passes untrusted XML to verify can receive a true return for a document in which no digest and no signature value was checked; a `cert` or `cert_text` trust anchor does not change this, because no key check runs. Versions up to 0.28 use an XML::XPath based verify that has no such skip and are not affected.",
+  "datePublished": "Aug 3, 2026, 2:38:52 PM",
+  "dateUpdated": "Aug 3, 2026, 2:38:52 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://github.com/perl-net-saml2/perl-XML-Sig/commit/ef22cfed1ac0f29b316d17eb79cf6480e03ae16a.patch",
+    "https://metacpan.org/release/TIMLEGGE/XML-Sig-0.72/changes",
+    "https://www.cve.org/CVERecord?id=CVE-2025-40934"
+  ],
+  "aliases": [
+    "CVE-2026-18568"
+  ],
+  "assigner": "CPANSec",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "58892722-1b21-344c-be5d-2c65be2df6f9",
+      "product": {
+        "name": "XML::Sig",
+        "vendor": {
+          "name": "TIMLEGGE"
+        }
+      },
+      "product_version": "0.29 <0.72"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "967b09a5-3324-35c6-82e5-0e3049469f0e",
+      "vendor": {
+        "name": "TIMLEGGE"
+      }
+    }
+  ]
+}
