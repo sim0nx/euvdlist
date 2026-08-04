@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-52606",
+  "enisaUuid": "31cb4106-a443-34c3-985b-194afc7ff0a1",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nInput: ims-pcu - fix heap-buffer-overflow in ims_pcu_process_data()\n\nThe `ims_pcu_process_data()` processes incoming URB data byte by byte.\nHowever, it fails to check if the `read_pos` index exceeds\nIMS_PCU_BUF_SIZE.\n\nIf a malicious USB device sends a packet larger than IMS_PCU_BUF_SIZE,\n`read_pos` will increment indefinitely. Moreover, since `read_pos` is\nlocated immediately after `read_buf`, the attacker can overwrite\n`read_pos` itself to arbitrarily control the index.\n\nThis manipulated `read_pos` is subsequently used in\n`ims_pcu_handle_response()` to copy data into `cmd_buf`, leading to a\nheap buffer overflow.\n\nSpecifically, an attacker can overwrite the `cmd_done.wait.head` located\nat offset 136 relative to `cmd_buf` in the `ims_pcu_handle_response()`.\nConsequently, when the driver calls `complete(&pcu->cmd_done)`, it\ntriggers a control flow hijack by using the manipulated pointer.\n\nFix this by adding a bounds check for `read_pos` before writing to\n`read_buf`. If the packet is too long, discard it, log a warning,\nand reset the parser state.\n\n[dtor: factor out resetting packet state, reset checksum as well]",
+  "datePublished": "Aug 4, 2026, 6:23:24 AM",
+  "dateUpdated": "Aug 4, 2026, 6:23:24 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/40bbbf2e91fd60715525bf0405c67876af817edf",
+    "https://git.kernel.org/stable/c/ca9f8c09845fb8c51b6d447f6428eecd1b8b0a49",
+    "https://git.kernel.org/stable/c/d03a740e087de7dcb2a26dc1123377bd3d1d84ca",
+    "https://git.kernel.org/stable/c/875115b82c295277b81b6dfee7debc725f44e854"
+  ],
+  "aliases": [
+    "CVE-2026-64565"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "333b4502-2a92-3503-8a1b-afd7f0d17425",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "7132e84a-e6cc-3c50-bb59-7c472589ff28",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "628329d52474323938a03826941e166bc7c8eff4 <ca9f8c09845fb8c51b6d447f6428eecd1b8b0a49"
+    },
+    {
+      "id": "80f950b4-1d0a-3609-83f1-a6876bdc577e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "628329d52474323938a03826941e166bc7c8eff4 <875115b82c295277b81b6dfee7debc725f44e854"
+    },
+    {
+      "id": "88628eaa-dbc9-3b76-969d-834ee9b9ba4a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "628329d52474323938a03826941e166bc7c8eff4 <d03a740e087de7dcb2a26dc1123377bd3d1d84ca"
+    },
+    {
+      "id": "8a98918c-34bb-30a8-8cec-974d7e1e2cc7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "8dde16e9-83e2-318b-bd04-ab57e212ace3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "628329d52474323938a03826941e166bc7c8eff4 <40bbbf2e91fd60715525bf0405c67876af817edf"
+    },
+    {
+      "id": "a0dd80cc-6626-3739-9ddf-b40cd394617e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "af76940d-80ee-3b2a-a501-69a6d2d6816f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.10"
+    },
+    {
+      "id": "d31a3035-6a34-3971-88f0-f6f33adf89c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "dbe68e8e-3156-3d67-ba8f-6f9e19592ff2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "502574e5-2816-33c1-a332-564f83f4f51d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
