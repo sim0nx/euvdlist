@@ -1,0 +1,84 @@
+{
+  "id": "EUVD-2026-52703",
+  "enisaUuid": "c4e25147-0cec-3316-9ce8-d34b043a6122",
+  "description": "The fix released in jackson-core 2.18.6 and 2.21.1 for CVE-2026-18401 (GHSA-72hv-8253-57qq, number length constraint bypass in the non-blocking parser) is incomplete. This record covers the remaining bypass.\n\n\n\nThe earlier fix wired validateIntegerLength() into a new _setIntLength() helper and invoked it wherever the integer portion of a number is decided: a terminator byte arrives, a . or e/E is seen, or input ends inside a fully buffered value. It was not invoked on the attacker-relevant path where the parser runs out of input while still inside the MINOR_NUMBER_INTEGER_DIGITS minor state and returns NOT_AVAILABLE to the caller.\n\n\n\nAs a result, an attacker who streams JSON to a non-blocking parser in many small chunks, without ever sending a terminator byte, keeps the parser inside MINOR_NUMBER_INTEGER_DIGITS indefinitely. _textBuffer.expandCurrentSegment() grows the accumulator on every chunk while validateIntegerLength() is never called. The accumulator is bounded only by maxStringLength (20 MiB by default) rather than by maxNumberLength (1000 by default), an amplification of roughly 20,000x over the documented limit. Because Java char values occupy two bytes, a single connection can be driven to approximately 40 MiB of heap before the validator finally fires when the value completes.\n\n\n\nThe equivalent fraction-path code is correct: _finishFloatFraction() calls _setFractLength() before its NOT_AVAILABLE return. The missing call affects the integer-digit paths in _startPositiveNumber(), _startNegativeNumber() and _finishNumberIntegralPart() in NonBlockingUtf8JsonParserBase.\n\n\n\nImpact: reactive frameworks such as Spring WebFlux/Reactor, Quarkus, Helidon and Vert.x feed inbound HTTP or gRPC bytes to the async parser as they arrive, which is precisely the chunked-feed shape required. Operators who set StreamReadConstraints.maxNumberLength expecting it to cap memory per number value do not get that guarantee; memory accumulates per concurrent connection and attacker-controlled concurrency can exhaust the JVM heap. The synchronous parsers (UTF8StreamJsonParser, ReaderBasedJsonParser) and the async parser operating on complete input are not affected.\n\n\n\nExploitation requires only the ability to stream data to a parsing endpoint; no privileges or user interaction are needed.\n\n\n\nThis issue affects com.fasterxml.jackson.core:jackson-core from version 2.15.0 through 2.18.7, from 2.19.0 through 2.21.3, and from 2.22.0 through 2.22.0, and tools.jackson.core:jackson-core from 3.0.0 through 3.1.3 and from 3.2.0 through 3.2.0. Versions prior to 2.15.0 are not affected, because StreamReadConstraints -- which defines the maxNumberLength setting -- was first introduced in jackson-core 2.15.0, so no such constraint exists to be bypassed in earlier releases. Note that GHSA-r7wm-3cxj-wff9 states the affected 2.x range without a lower bound.",
+  "datePublished": "Aug 4, 2026, 2:39:14 PM",
+  "dateUpdated": "Aug 4, 2026, 2:39:14 PM",
+  "baseScore": 8.7,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/FasterXML/jackson-core/security/advisories/GHSA-r7wm-3cxj-wff9",
+    "https://github.com/FasterXML/jackson-core/pull/1611",
+    "https://github.com/FasterXML/jackson-core/commit/050b429804dce2a7e08f0be1b0b4c3d040fdb9cd",
+    "https://github.com/FasterXML/jackson-core/commit/4cdd529749da396cc7edf6d4a2aad41d47902641",
+    "https://github.com/FasterXML/jackson-core/commit/c5941e5aae7fd5aeac55d66933cfb82b9aabeef8",
+    "https://www.cve.org/CVERecord?id=CVE-2026-18401",
+    "https://github.com/advisories/GHSA-72hv-8253-57qq"
+  ],
+  "aliases": [
+    "CVE-2026-68494"
+  ],
+  "assigner": "HeroDevs",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "24bffcc6-ed76-3f05-9a6d-577b01cf92c6",
+      "product": {
+        "name": "jackson-core",
+        "vendor": {
+          "name": "FasterXML"
+        }
+      },
+      "product_version": "2.15.0 <2.18.8"
+    },
+    {
+      "id": "4957a8aa-3e54-34fe-8032-d9eedbb6d863",
+      "product": {
+        "name": "jackson-core",
+        "vendor": {
+          "name": "FasterXML"
+        }
+      },
+      "product_version": "2.22.0 <2.22.1"
+    },
+    {
+      "id": "5556c0ef-0541-33ef-ba41-ccc0af062412",
+      "product": {
+        "name": "jackson-core",
+        "vendor": {
+          "name": "FasterXML"
+        }
+      },
+      "product_version": "3.2.0 <3.2.1"
+    },
+    {
+      "id": "9a24e158-ed26-39ec-81c5-c3a55ef88178",
+      "product": {
+        "name": "jackson-core",
+        "vendor": {
+          "name": "FasterXML"
+        }
+      },
+      "product_version": "2.19.0 <2.21.4"
+    },
+    {
+      "id": "f6841823-dbce-3827-8867-3bfaba0d9279",
+      "product": {
+        "name": "jackson-core",
+        "vendor": {
+          "name": "FasterXML"
+        }
+      },
+      "product_version": "3.0.0 <3.1.4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "46dad912-8ea1-3973-988e-c2d537295df9",
+      "vendor": {
+        "name": "FasterXML"
+      }
+    }
+  ]
+}
