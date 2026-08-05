@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-53273",
+  "enisaUuid": "7b206924-8b70-31c2-b785-cf5911ec0e4d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: policy: preallocate inexact bins before xfrm_hash_rebuild reinsert\n\nxfrm_hash_rebuild()'s first loop preallocates the bins/chains the reinsert\nloop needs, so the reinsert (after hlist_del_rcu()) cannot allocate or\nfail. But its guard is inverted: it skips policies with prefixlen <\nthreshold and preallocates for the rest.\n\nprefixlen < threshold is exactly when policy_hash_bysel() returns NULL and\nthe reinsert takes the allocating xfrm_policy_inexact_insert() path. So the\nloop preallocates for the exact policies (which never allocate) and skips\nthe inexact ones, whose bin/node is then allocated GFP_ATOMIC during\nreinsert. On failure the error path only WARN_ONCE()s and continues,\nleaving a poisoned bydst node; the next rebuild's hlist_del_rcu()\ndereferences LIST_POISON2 and takes a GPF. Reachable under memory pressure,\ndeterministic via failslab.\n\nInvert the guard so preallocation covers exactly the reinserted policies;\nthe reinsert then allocates nothing and cannot fail.\n\nCrash:\n  Oops: general protection fault, probably for non-canonical address\n  0xfbd59c0000000024: 0000 [#1] SMP KASAN NOPTI\n  KASAN: maybe wild-memory-access in range [0xdead...]\n  ...\n  Workqueue: events xfrm_hash_rebuild\n  RIP: 0010:xfrm_hash_rebuild+0x5b3/0x1190\n  RAX: dead000000000122   (LIST_POISON2 + offset)\n  ...\n  Call Trace:\n   hlist_del_rcu (include/linux/rculist.h:599)\n   xfrm_hash_rebuild (net/xfrm/xfrm_policy.c:1365)\n   process_one_work (kernel/workqueue.c:3322)\n   worker_thread (kernel/workqueue.c:3486)\n   kthread (kernel/kthread.c:436)\n   ret_from_fork (arch/x86/kernel/process.c:158)\n   ret_from_fork_asm (arch/x86/entry/entry_64.S:245)\n   ...\n  Kernel panic - not syncing: Fatal exception in interrupt",
+  "datePublished": "Aug 5, 2026, 8:09:34 AM",
+  "dateUpdated": "Aug 5, 2026, 8:09:34 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d9d9cc21cc90014724a14c447e3d587be9447107",
+    "https://git.kernel.org/stable/c/94c00391a5117530188334f740ce26d3f1256190",
+    "https://git.kernel.org/stable/c/7acc5ed2f33608a3d83b64f50a5766843b6e2485",
+    "https://git.kernel.org/stable/c/6aa3796d18a9fda953ad76a62b57bf6c145cb9ef",
+    "https://git.kernel.org/stable/c/f38f8cce2f7e79775b3db7e8a5eacda04ac908e4"
+  ],
+  "aliases": [
+    "CVE-2026-64579"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "089c6be0-0767-3311-a558-6967f388553f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "0e1b2008-eb55-320f-977d-576d6818aa21",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "24969facd704a5f0dd8e08da86bf32a9ce972bee <6aa3796d18a9fda953ad76a62b57bf6c145cb9ef"
+    },
+    {
+      "id": "227b6216-c4ff-3b22-9b7c-ed7d59c5c079",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "2c8a2f43-17b4-3ee7-823f-f5daedfb7884",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "24969facd704a5f0dd8e08da86bf32a9ce972bee <f38f8cce2f7e79775b3db7e8a5eacda04ac908e4"
+    },
+    {
+      "id": "68654ca0-4bd6-30fc-8450-f070b69b79e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "824bac43-395a-3dc0-a0bf-3e7018efe3ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "24969facd704a5f0dd8e08da86bf32a9ce972bee <d9d9cc21cc90014724a14c447e3d587be9447107"
+    },
+    {
+      "id": "895c8027-865e-332a-b1ab-73ac3fec663d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "8ec29210-2545-3065-8c98-bada653e495d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "24969facd704a5f0dd8e08da86bf32a9ce972bee <94c00391a5117530188334f740ce26d3f1256190"
+    },
+    {
+      "id": "9b7b5959-cf8f-3877-9930-e56d4895a080",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "24969facd704a5f0dd8e08da86bf32a9ce972bee <7acc5ed2f33608a3d83b64f50a5766843b6e2485"
+    },
+    {
+      "id": "a3404295-07a5-3b09-b938-f9d9d117d6a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc4"
+    },
+    {
+      "id": "a36bef96-b0ea-3929-8df0-f185b8f10adf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d227b6de-3b36-39b3-bd09-836022f3e378",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "983aee12-f8d5-3b34-992a-3fc7011ba452",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
