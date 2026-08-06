@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-53770",
+  "enisaUuid": "04b1b126-2a03-38e7-8687-6e7ab7dd1ede",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: udc: bdc: free IRQ and drain func_wake_notify before teardown\n\nThe Broadcom BDC UDC driver registers its IRQ handler with\ndevm_request_irq() in bdc_udc_init(), so the IRQ is released by devm\nonly after bdc_remove() returns.  devm releases resources in reverse\nLIFO order, but bdc_remove() runs bdc_udc_exit() and bdc_hw_exit() ->\nbdc_mem_free() manually before returning: bdc_udc_exit() tears down\nindividual endpoint objects via bdc_free_ep(), while bdc_hw_exit() ->\nbdc_mem_free() frees and NULLs the DMA-coherent status-report ring\n(bdc->srr.sr_bds) and kfree()s bdc->bdc_ep_array.  Both happen while\nthe IRQ handler (bdc_udc_interrupt, requested with IRQF_SHARED)\nremains deliverable in the window up to the post-remove devm\nfree_irq().\n\nOn receipt of a shared interrupt in that window, bdc_udc_interrupt()\ndereferences bdc->srr.sr_bds[bdc->srr.dqp_index] (NULL or freed DMA)\nand dispatches sr_handler callbacks that index into bdc_ep_array,\ncausing a NULL-deref or use-after-free.\n\nThe same window affects the delayed_work bdc->func_wake_notify, which is\narmed from the IRQ handler via bdc_sr_uspc() -> handle_link_state_change()\n-> schedule_delayed_work() and may self-rearm from its own callback\nbdc_func_wake_timer().  No cancel exists anywhere in the driver, so a\nqueued work item that fires after bdc_remove() returns and the bdc\nstructure is devm-freed dereferences freed memory.\n\nReplace devm_request_irq() with request_irq() and add an explicit\nfree_irq(bdc->irq, bdc) in bdc_remove().  Clear BDC_GIE before\nfree_irq() to stop the device from asserting interrupts, then\nfree_irq() drains any in-flight handler, then cancel_delayed_work_sync()\ndrains the func_wake_notify delayed work.  This ordering ensures the\nIRQ handler and delayed work cannot interfere with the subsequent\nendpoint and DMA teardown in bdc_udc_exit() and bdc_hw_exit().  Wire the\nmatching free_irq() into the bdc_udc_init() error path so the IRQ is\nreleased on probe failure, and route the bdc_init_ep() failure through\nerr0 instead of returning directly.\n\nThis issue was found by an in-house static analysis tool.",
+  "datePublished": "Aug 6, 2026, 7:06:25 AM",
+  "dateUpdated": "Aug 6, 2026, 7:06:25 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/1a1d7158420df6b8fa1efc0cdd6ab704801a4fc8",
+    "https://git.kernel.org/stable/c/f6fc21ec7ccd83726ba766d73d0b8cc03e726475",
+    "https://git.kernel.org/stable/c/dcf3e2f164435b5844706cb8eefef29ebee0eedb",
+    "https://git.kernel.org/stable/c/d4964a74717107697999f48bcb4e80a9c0679a27",
+    "https://git.kernel.org/stable/c/0583f2fbf8f86ae3a0ce054f96783dd83e65d9bb"
+  ],
+  "aliases": [
+    "CVE-2026-64583"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1f40d88a-d626-3e73-9711-13b71e30c841",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "efed421a94e62a7ddbc76acba4312b70e4be958f <1a1d7158420df6b8fa1efc0cdd6ab704801a4fc8"
+    },
+    {
+      "id": "41afb663-2bc8-39b7-ba5e-6895635be44b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "efed421a94e62a7ddbc76acba4312b70e4be958f <f6fc21ec7ccd83726ba766d73d0b8cc03e726475"
+    },
+    {
+      "id": "5a3acddd-dac7-367e-b3a7-432aef954457",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "5a47ddb5-abd6-359f-a250-9b96c24391d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "efed421a94e62a7ddbc76acba4312b70e4be958f <dcf3e2f164435b5844706cb8eefef29ebee0eedb"
+    },
+    {
+      "id": "5dd954a3-086a-3799-9cff-cff0fb3007b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "824f0ad3-c1fe-3046-bd58-a1a4fd060d19",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "efed421a94e62a7ddbc76acba4312b70e4be958f <d4964a74717107697999f48bcb4e80a9c0679a27"
+    },
+    {
+      "id": "82612790-6e39-3077-8f55-c6f5b43ae081",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc5"
+    },
+    {
+      "id": "8307db5f-8306-3cd9-9fbe-06b90c49dc26",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "efed421a94e62a7ddbc76acba4312b70e4be958f <0583f2fbf8f86ae3a0ce054f96783dd83e65d9bb"
+    },
+    {
+      "id": "85ee6bf5-5c2f-3024-9056-f47c1bd2b860",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.19"
+    },
+    {
+      "id": "b787cd7b-3aa8-302f-b951-bf1fbf7b6915",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "f1d006e1-6ec1-305e-9902-a45c44a9e3fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "f2450e2d-cc90-3ea2-afdd-5549121a9aa1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4744b8e0-6577-3c04-8738-46d114884562",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

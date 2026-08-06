@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-53782",
+  "enisaUuid": "bd287417-b3c1-35ef-8a48-29d57330c79d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: hid-lenovo-go: cancel cfg_setup work in hid_go_cfg_remove()\n\nhid_go_cfg_probe() initialises drvdata.go_cfg_setup and schedules it\nto run 2 ms later:\n\n    INIT_DELAYED_WORK(&drvdata.go_cfg_setup, &cfg_setup);\n    schedule_delayed_work(&drvdata.go_cfg_setup, msecs_to_jiffies(2));\n\ncfg_setup() dereferences drvdata.hdev to issue MCU command requests.\nhid_go_cfg_remove() tears down sysfs and stops the HID device, but\nnever drains the delayed work.  If the device is unbound within the\n2 ms scheduling delay (a probe failure rolling back via remove, or a\nfast rmmod after probe), the work fires after hid_destroy_device()\nhas dropped its reference and released the underlying hdev struct,\nleaving cfg_setup() with a stale drvdata.hdev pointer.\n\nMirror the sibling driver hid-lenovo-go-s.c, whose hid_gos_cfg_remove()\nalready calls cancel_delayed_work_sync() on its analogous work, and\ndrain go_cfg_setup at the top of hid_go_cfg_remove().  The cancel\nmust come before guard(mutex)(&drvdata.cfg_mutex) because cfg_setup()\nacquires that mutex; reversing the order would deadlock.",
+  "datePublished": "Aug 6, 2026, 7:13:50 AM",
+  "dateUpdated": "Aug 6, 2026, 7:13:50 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/3e7761f7bf9f0187bb18cf52b5119bdf4940e686",
+    "https://git.kernel.org/stable/c/73fde0cbff7d9d618591774a12c23434232752c1"
+  ],
+  "aliases": [
+    "CVE-2026-64595"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "44065f76-9a6e-373f-a425-919128f36806",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "64441f2e-4314-3bba-89e6-4c2764ea9de7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d69ccfcbc9551988190895bc125a8bf709aa5931 <73fde0cbff7d9d618591774a12c23434232752c1"
+    },
+    {
+      "id": "7e7dcae6-3779-3d72-962f-35f568da4000",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "ab372cfe-9f72-3b2b-b9a3-5551525c0fad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "eeeaeed0-2cda-3f49-ae80-2ae201bf774d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d69ccfcbc9551988190895bc125a8bf709aa5931 <3e7761f7bf9f0187bb18cf52b5119bdf4940e686"
+    },
+    {
+      "id": "ff7511c0-ace6-3757-81c1-630ce79656db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "fcdfd4c1-d884-308a-9064-47bb23a584f0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
