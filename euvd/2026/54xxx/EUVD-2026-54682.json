@@ -1,0 +1,39 @@
+{
+  "id": "EUVD-2026-54682",
+  "enisaUuid": "b733407b-5242-3007-8e63-d13bdd74a028",
+  "description": "The SF32LB MPI QSPI NOR flash driver (drivers/flash/flash_sf32lb_mpi_qspi_nor.c) validated the flash offset and length on its read and write paths with the test (offset + size) > data->size. Because offset is a signed off_t while size is unsigned, a negative offset is converted to a large unsigned value and the addition can wrap to a small result that passes the check. The read path then performs memcpy(dst, (void *)(data->base + offset), size) and the write path programs flash at offset and cache-invalidates data->base + offset, in both cases accessing memory outside the mapped flash window. The driver's erase path already rejected negative offsets, but read and write did not.\n\nIn builds with CONFIG_USERSPACE, flash_read and flash_write are syscalls whose verifiers validate the device object and the caller's buffer but deliberately delegate offset bounds checking to the driver. An unprivileged thread that has been granted access to this flash device can therefore call the syscall with a crafted negative offset and a buffer valid in its own memory domain, and reach the unchecked access.\n\nThe most direct impact is on the read path: by choosing a negative offset and matching size, an attacker slides the memcpy source below the flash base and copies arbitrary CPU-addressable memory into its own buffer, disclosing memory it is not authorized to read. The write path additionally allows programming flash at an out-of-range address and invalidating an attacker-chosen cache range, affecting integrity and availability. Reachability requires userspace to be enabled and the raw flash device object to be granted to an untrusted thread.\n\nThe fix replaces the check with qspi_nor_range_is_valid(), which rejects negative offsets and performs the bound comparison in overflow-safe 64-bit arithmetic on both paths, and additionally adds an SRAM DMA bounce buffer plus source/destination overlap rejection to prevent a separate DMA bus-hang condition.",
+  "datePublished": "Aug 7, 2026, 9:10:23 PM",
+  "dateUpdated": "Aug 7, 2026, 9:10:23 PM",
+  "baseScore": 6.6,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:L/A:L",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/909eb568750304d68ea481d1b56a489ae670bdae",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-c6wh-gwg4-fj5j"
+  ],
+  "aliases": [
+    "CVE-2026-11743"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "d86f7e27-7fa8-3a32-b516-f0bb006b65c1",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.3.0 <4.4.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2e77daba-24fd-344a-b2ca-85496b0c83c8",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}
