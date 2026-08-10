@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-55471",
+  "enisaUuid": "75c2de2e-4737-389d-bdd4-4c35a41a30d9",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: dummy_hcd: prevent fifo_req reuse during giveback\n\ndummy_hcd embeds a single shared usb_request (dum->fifo_req) that the\n\"emulated single-request FIFO\" fast-path in dummy_queue() reuses for\nsmall IN transfers: it copies the caller's request into it\n(req->req = *_req) and queues it, treating list_empty(&fifo_req.queue)\nas \"the slot is free\".\n\nThe completion side (dummy_timer/transfer/nuke/dummy_dequeue) follows\nthe standard pattern: list_del_init(&req->queue) unlinks the request,\nthen the lock is dropped and usb_gadget_giveback_request() invokes\nreq->complete().  But list_del_init() makes fifo_req.queue look empty\n*before* the completion callback returns, so a concurrent dummy_queue()\non another CPU sees the slot as free, reuses fifo_req and runs\nreq->req = *_req -- overwriting req->complete while dummy_timer is\nmid-calling it.  The indirect call then jumps to a clobbered pointer,\ncausing a general protection fault / page fault in dummy_timer\n(syzkaller extid faf3a6cf579fc65591ca).  The clobbering write is an\nin-bounds memcpy on a live shared object, so KASAN cannot flag it.\n\nAdd a fifo_req_busy bit covering the shared request's whole lifetime:\nset it in dummy_queue() when the FIFO fast-path takes fifo_req (making\nit the fast-path guard, replacing the list_empty(&fifo_req.queue)\ntest), and clear it after the completion callback has returned, via a\ndummy_giveback() helper used at all four gadget-request giveback\nsites.  The shared slot can no longer be reused until its completion\ncallback has finished.",
+  "datePublished": "Aug 10, 2026, 12:03:48 PM",
+  "dateUpdated": "Aug 10, 2026, 12:03:48 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e2b2740f1242bc70b5b46da2cdbbaa419f490e59",
+    "https://git.kernel.org/stable/c/67b589d09a96882d56842dced5698ed8dd06ce45",
+    "https://git.kernel.org/stable/c/e239ea91b48180ed48a86ac25643832a02c88456",
+    "https://git.kernel.org/stable/c/e24b33618231034bf01dfaff4fd3409d4b4d5b2e",
+    "https://git.kernel.org/stable/c/d5e5cd3654d2b5359a12ea6586120f05b28634ee"
+  ],
+  "aliases": [
+    "CVE-2026-68370"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1fd2b2d7-b5bc-366a-802e-1e7a8a37e236",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d5e5cd3654d2b5359a12ea6586120f05b28634ee"
+    },
+    {
+      "id": "3bd11f3e-ad4f-3513-a63a-428d5ec4e3b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "43d6fcbf-5ba9-3436-adaa-fcfdb7781b77",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc5"
+    },
+    {
+      "id": "539d5418-465b-3c53-9e8f-a15e1f9ec939",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <67b589d09a96882d56842dced5698ed8dd06ce45"
+    },
+    {
+      "id": "65f59413-2fa2-350b-8fcb-fed191722681",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "925fa4ad-0a4b-334e-a0ea-57a45b547b76",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "a4b41268-5742-3f0b-ba59-11f269d5c04e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a8d7a695-df36-3005-b7fe-db7f5086caf3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e239ea91b48180ed48a86ac25643832a02c88456"
+    },
+    {
+      "id": "b39cbc48-d258-3062-96a3-fe8156b3a997",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "cf9be528-c9eb-3bca-bb8a-2a231d369434",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e24b33618231034bf01dfaff4fd3409d4b4d5b2e"
+    },
+    {
+      "id": "d734a2d4-f470-32bc-9b82-011ed066a370",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e2b2740f1242bc70b5b46da2cdbbaa419f490e59"
+    },
+    {
+      "id": "da4857dd-e087-3e32-8edb-0d7359ce3378",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4a3b3b25-9f28-33d5-a433-7f505f85fc21",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

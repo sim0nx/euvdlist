@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-55557",
+  "enisaUuid": "3cba7265-c034-3051-a4ba-f5ee2fcbf046",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\narm64: syscall: Ensure saved x0 is kept in-sync with tracer updates\n\nWhen seccomp support was originally added to arm64 in a1ae65b21941\n(\"arm64: add seccomp support\"), seccomp was erroneously called _before_\nthe ptrace syscall-enter-stop and therefore the tracer could trivially\nmanipulate the syscall register state after the seccomp check had\npassed. This was subsequently fixed in a5cd110cb836 (\"arm64/ptrace: run\nseccomp after ptrace\") by moving the seccomp check after the tracer has\nrun. Unfortunately, a decade later, that fix has been reported to be\nincomplete.\n\nOn arm64, both the first argument to a syscall and its eventual return\nvalue are allocated to register x0. In order to facilitate syscall\nrestarting and querying of syscall arguments on the syscall exit path,\nthe original value of x0 is stashed in 'struct pt_regs::orig_x0' early\nduring the syscall entry path and is returned for the first argument by\nsyscall_get_arguments(). Unlike 32-bit Arm, this stashed value is not\ndirectly exposed via ptrace() and so changes to register x0 made by the\ntracer on a syscall-enter-stop are not reflected in 'orig_x0'. This\nmeans that seccomp, syscall tracepoints and audit can observe a stale\nvalue for the register compared to the argument that will be observed by\nthe actual syscall.\n\nRe-sync 'orig_x0' from x0 on the syscall entry path following a\npotential ptrace stop (i.e. PTRACE_EVENTMSG_SYSCALL_ENTRY or\nSECCOMP_RET_TRACE). This behaviour is limited to native tasks (because\ncompat tasks expose 'orig_r0' to ptrace) where the syscall is not being\nskipped (because x0 is updated to hold the return value of -ENOSYS in\nthat case).",
+  "datePublished": "Aug 10, 2026, 11:59:40 AM",
+  "dateUpdated": "Aug 10, 2026, 11:59:40 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/8000a5f4d1d192f5bb3e4f29e7606a9460d376df",
+    "https://git.kernel.org/stable/c/b7afd2a80593dde3f4a68c9a9f73752f9c340e85",
+    "https://git.kernel.org/stable/c/64ab0964c7db949abbd3c56268a220e2b77f7b9e",
+    "https://git.kernel.org/stable/c/e59c2476ef755221da31f4e26f6b89712ecf50f1",
+    "https://git.kernel.org/stable/c/e057b94772328221405b067c3a85fe479b915dc8"
+  ],
+  "aliases": [
+    "CVE-2026-68171"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "15254cf5-6feb-387d-9f4d-b5ab55d339df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc5"
+    },
+    {
+      "id": "1651f882-e314-3800-9390-283939c919e7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a5cd110cb8369d6b37ef5ccfe56b3fa1338c9615 <e59c2476ef755221da31f4e26f6b89712ecf50f1"
+    },
+    {
+      "id": "25eb7ad2-de88-330a-a8eb-a44e64a5a9c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "337da47d-7f62-3492-a4e7-b8ae0b94c8ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "4827731d-1117-3003-b8e8-d239b9c5d8cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a5cd110cb8369d6b37ef5ccfe56b3fa1338c9615 <e057b94772328221405b067c3a85fe479b915dc8"
+    },
+    {
+      "id": "48675359-30ab-3f15-b61e-7a3415c3ee32",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "5792609c-9cff-36b5-93e7-a81a35119d50",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a5cd110cb8369d6b37ef5ccfe56b3fa1338c9615 <64ab0964c7db949abbd3c56268a220e2b77f7b9e"
+    },
+    {
+      "id": "5f5ebfd9-221a-3262-b3c6-180f5c11ee41",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "8e3930dd-0fc9-3f3c-b288-830d413bb7b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a5cd110cb8369d6b37ef5ccfe56b3fa1338c9615 <8000a5f4d1d192f5bb3e4f29e7606a9460d376df"
+    },
+    {
+      "id": "bbf4b197-193e-31a4-ba33-d7af871f6312",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a5cd110cb8369d6b37ef5ccfe56b3fa1338c9615 <b7afd2a80593dde3f4a68c9a9f73752f9c340e85"
+    },
+    {
+      "id": "c08e7c57-67a4-3ba6-b9f0-c84b96c2375a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "c535e91e-bd7f-3887-b811-292e23042ff7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.8"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "81554b36-428c-3b41-a04e-2a72f3a80c5d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

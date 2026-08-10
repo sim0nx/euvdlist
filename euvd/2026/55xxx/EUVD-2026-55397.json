@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-55397",
+  "enisaUuid": "27d9e1a6-54bd-39cb-9601-2dd6e4caa999",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: gre: fix lltx regression for GRE tunnels with SEQ/CSUM\n\nBefore commit 00d066a4d4ed (\"netdev_features: convert NETIF_F_LLTX to\ndev->lltx\"), NETIF_F_LLTX was set unconditionally in both\n__gre_tunnel_init() and ip6gre_tnl_init_features() alongside\nGRE_FEATURES:\n\n    dev->features |= GRE_FEATURES | NETIF_F_LLTX;\n\nWhen that commit converted NETIF_F_LLTX to the dev->lltx flag, it\nplaced 'dev->lltx = true' after the SEQ/CSUM early returns instead\nof before them. This causes GRE/GRETAP/ip6gre tunnels with SEQ or\nCSUM+encap to lose lockless TX, reintroducing _xmit_lock acquisition\naround their ndo_start_xmit. Since GRE xmit re-enters the stack via\nip_tunnel_xmit(), holding _xmit_lock risks ABBA deadlock with the\nunderlay device.\n\n  CPU0                        CPU1\n  ----                        ----\n  lock(&qdisc_xmit_lock_key#6);\n                              lock(&qdisc_xmit_lock_key#3);\n                              lock(&qdisc_xmit_lock_key#6);\n  lock(&qdisc_xmit_lock_key#3);\n\nFix by moving dev->lltx = true before the early returns in both\nfunctions, restoring the original unconditional behavior.",
+  "datePublished": "Aug 10, 2026, 12:02:29 PM",
+  "dateUpdated": "Aug 10, 2026, 12:02:29 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/9f948e9aede9678f4103457daf2bc9dd54c65a06",
+    "https://git.kernel.org/stable/c/15a1c5f2ed2eeb3daad8d5766fd506aeda4710f3",
+    "https://git.kernel.org/stable/c/2bffe379023512d280337c70faeb6a8cc435db5e",
+    "https://git.kernel.org/stable/c/675ed582c1aa4d919dd535490de08c015005c653"
+  ],
+  "aliases": [
+    "CVE-2026-68296"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "04c33f0d-43df-3003-813c-b1da65ad1185",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "08299cd9-d1b1-326d-8ae3-ee93df4741b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "00d066a4d4edbe559ba6c35153da71d4b2b8a383 <15a1c5f2ed2eeb3daad8d5766fd506aeda4710f3"
+    },
+    {
+      "id": "0e33b282-9081-3bbd-b06c-99c03b3bde02",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "00d066a4d4edbe559ba6c35153da71d4b2b8a383 <675ed582c1aa4d919dd535490de08c015005c653"
+    },
+    {
+      "id": "4269ac52-68ee-309f-9f66-4e716522bf27",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "00d066a4d4edbe559ba6c35153da71d4b2b8a383 <2bffe379023512d280337c70faeb6a8cc435db5e"
+    },
+    {
+      "id": "4c5afed5-f2c3-30c4-b534-9615c7805369",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "512698f0-aa6c-35be-b3bb-7cf25e1b0121",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12"
+    },
+    {
+      "id": "805c72dd-ed9e-327d-86f3-87461b4a14d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "b1e54437-9e57-360c-bd66-c5408fcaca0e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "de601683-1239-36dc-a445-c128046e15d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc5"
+    },
+    {
+      "id": "f3827230-c272-319a-8228-f49180058659",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "00d066a4d4edbe559ba6c35153da71d4b2b8a383 <9f948e9aede9678f4103457daf2bc9dd54c65a06"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "34d9ffdf-1c91-3cd8-b56a-dc78c0e6a533",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

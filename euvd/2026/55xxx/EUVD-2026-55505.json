@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-55505",
+  "enisaUuid": "ddfd97ed-f66f-362a-bd54-657aed00ad15",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmctp: serial: handle zero-length frames to prevent rx buffer overflow\n\nThe MCTP serial receive state machine reads a frame length byte in\nmctp_serial_push_header() case 2 and validates it upper-bound-only:\n\n\tif (c > MCTP_SERIAL_FRAME_MTU) {\n\t\tdev->rxstate = STATE_ERR;\n\t} else {\n\t\tdev->rxlen = c;\n\t\tdev->rxpos = 0;\n\t\tdev->rxstate = STATE_DATA;\n\t\t...\n\t}\n\nA length of zero passes this check, so rxlen is set to 0 and the state\nmachine advances to STATE_DATA. In mctp_serial_push() STATE_DATA, the\nincoming byte is stored and rxpos incremented before the terminator is\n\n\tdev->rxbuf[dev->rxpos] = c;\n\tdev->rxpos++;\n\tdev->rxstate = STATE_DATA;\n\tif (dev->rxpos == dev->rxlen) {\n\t\tdev->rxpos = 0;\n\t\tdev->rxstate = STATE_TRAILER;\n\t}\n\nWith rxlen == 0 the \"rxpos == rxlen\" terminator can never fire (rxpos is\nalready 1 on the first data byte), so subsequent bytes are written past\nthe end of the fixed 74-byte rxbuf, which is the last member of the\nnetdev private area. Every following data byte is an attacker-controlled\n1-byte out-of-bounds heap write, and the overflow continues until a\nframe (0x7e) or escape byte resets the parser -- effectively unbounded.\n\nReaching this requires CAP_NET_ADMIN to attach the N_MCTP line\ndiscipline and bring the resulting mctpserialN netdev up, after which\nthe bytes arrive via the tty receive path.\n\nRoute a zero-length frame straight to STATE_TRAILER instead of\nSTATE_DATA. The trailer/framing bytes are still consumed, and the frame\nresolves to a zero-length skb that the MCTP core rejects; the parser\nnever enters STATE_DATA with rxlen == 0, so the out-of-bounds write can\nno longer occur.\n\nKASAN, on a frame of 0x7e 0x01 0x00 followed by data bytes (before this\nchange):\n\n  UBSAN: array-index-out-of-bounds in drivers/net/mctp/mctp-serial.c:370\n  index 74 is out of range for type 'u8 [74]'\n  BUG: KASAN: slab-out-of-bounds in mctp_serial_tty_receive_buf\n  Write of size 1 at addr ... by task kworker/u16:0\n   mctp_serial_tty_receive_buf\n   tty_ldisc_receive_buf\n   flush_to_ldisc\n  Allocated by task 152:\n   alloc_netdev_mqs\n   mctp_serial_open\n\nv2: route zero-length frames to STATE_TRAILER instead of STATE_ERR so\n    the trailer/framing bytes are still consumed (Jeremy Kerr).\n\nFound by 0sec automated security-research tooling (https://0sec.ai).",
+  "datePublished": "Aug 10, 2026, 11:58:44 AM",
+  "dateUpdated": "Aug 10, 2026, 11:58:44 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/36dc6d6964a3b90411cc7944cd9b8b6f67b9807b",
+    "https://git.kernel.org/stable/c/68819427bc07eca7963a9e8be19e5272cc29186c",
+    "https://git.kernel.org/stable/c/f80ba170d7b3a44e3d244a2c8e06031d61bf3b23",
+    "https://git.kernel.org/stable/c/06a6b606129c8a25cd457760f5370f3ff01fe05d",
+    "https://git.kernel.org/stable/c/793b9b729f1e8de57be8c8daf1a9838be96cabed"
+  ],
+  "aliases": [
+    "CVE-2026-68124"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "251dc081-d651-38d5-a849-872552502eee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "2c720fd3-f4b9-3da4-8f63-dbabf47f44ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "5d839f93-833f-39be-a2a6-6ff445d50a0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7dbd39a6-67e1-3092-930d-a7524fae8547",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a0c2ccd9b5ad0a9e838158404e041b5a8ff762dd <68819427bc07eca7963a9e8be19e5272cc29186c"
+    },
+    {
+      "id": "8296709a-c14b-38d4-a865-db3c68977f41",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "865649ea-334a-3677-b695-a636d5053dd2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a0c2ccd9b5ad0a9e838158404e041b5a8ff762dd <06a6b606129c8a25cd457760f5370f3ff01fe05d"
+    },
+    {
+      "id": "99119fe3-d69c-3793-89e2-22a1a80f6b9f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.17"
+    },
+    {
+      "id": "b7505228-e1f0-3ba1-a448-e5cd90d08339",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a0c2ccd9b5ad0a9e838158404e041b5a8ff762dd <793b9b729f1e8de57be8c8daf1a9838be96cabed"
+    },
+    {
+      "id": "c52c4dd4-c800-33f2-baf5-6fbf175b822d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a0c2ccd9b5ad0a9e838158404e041b5a8ff762dd <f80ba170d7b3a44e3d244a2c8e06031d61bf3b23"
+    },
+    {
+      "id": "c8ede3c0-12d7-3467-b117-603dd80c760f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "dadb4de8-7396-3718-a847-20b60e57f4de",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a0c2ccd9b5ad0a9e838158404e041b5a8ff762dd <36dc6d6964a3b90411cc7944cd9b8b6f67b9807b"
+    },
+    {
+      "id": "ef8a425e-ee09-3da3-8aca-782dac46a533",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "265c44cc-885b-3c24-a077-a5dac0d6e931",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

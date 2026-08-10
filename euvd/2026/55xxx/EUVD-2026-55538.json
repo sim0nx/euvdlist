@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-55538",
+  "enisaUuid": "2c1493d3-611d-3475-a331-2bf96e544777",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\namt: fix use-after-free in AMT delayed works\n\nWhen an AMT device is removed, pending delayed works can still access\nthe freed amt_dev structure, which may result in kernel crashes or\nmemory corruption.\n\namt_dev_stop() cancels req_wq and discovery_wq with\ncancel_delayed_work_sync(), but these works can be scheduled again\nfrom event_wq after the cancellation. This allows delayed works to\naccess the freed amt_dev structure after the netdev has been released.\n\nThe following is a simple race scenario:\n\nCPU0                         CPU1\n\namt_dev_stop()\ncancel_delayed_work_sync()\n                             amt_event_work()\n                             mod_delayed_work(req_wq)\nfree netdev\n                             req_wq accesses freed amt_dev\n\nUse disable_delayed_work_sync() in amt_dev_stop() to prevent req_wq and\ndiscovery_wq from being queued again and wait for running work items\nto complete.\n\nThe delayed works are disabled after initialization in\namt_newlink() and enabled only when the device is successfully opened.\nThis keeps the delayed work lifecycle synchronized with the lifetime\nof the AMT device.",
+  "datePublished": "Aug 10, 2026, 11:59:18 AM",
+  "dateUpdated": "Aug 10, 2026, 11:59:18 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a46bfa01e01df0f6f6dc4b0be18db002d6d2dbd2",
+    "https://git.kernel.org/stable/c/1a644db2cf59f164cdf3c75995bab5aadc097528",
+    "https://git.kernel.org/stable/c/006340cf06881b6ff49767d8b6f3c4f7b892670c",
+    "https://git.kernel.org/stable/c/ea20c44935d6142daecfa9b39d635033a7553e1b"
+  ],
+  "aliases": [
+    "CVE-2026-68152"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "064a88f6-fd43-3544-9ac4-978cfa50055a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.16"
+    },
+    {
+      "id": "0ef915d2-86c3-3305-a5be-d252ccf2b9d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cbc21dc1cfe949e37b2a54c71511579f1899e8d4 <a46bfa01e01df0f6f6dc4b0be18db002d6d2dbd2"
+    },
+    {
+      "id": "56c516c3-c092-3321-8b45-5f5055b708d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "669c991c-8796-3651-860e-30463986d8ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc5"
+    },
+    {
+      "id": "8bdfb0c7-f01f-35e6-bb37-263289c65ab3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "8e25ff8a-b8e2-3616-a5b9-07830f26c67a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cbc21dc1cfe949e37b2a54c71511579f1899e8d4 <ea20c44935d6142daecfa9b39d635033a7553e1b"
+    },
+    {
+      "id": "989107a0-58f7-34a3-b1b0-28ac52fc7c04",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cbc21dc1cfe949e37b2a54c71511579f1899e8d4 <006340cf06881b6ff49767d8b6f3c4f7b892670c"
+    },
+    {
+      "id": "d280cb77-a429-3816-a9e7-ec95225d356b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cbc21dc1cfe949e37b2a54c71511579f1899e8d4 <1a644db2cf59f164cdf3c75995bab5aadc097528"
+    },
+    {
+      "id": "eea12598-2aca-311e-ba33-e2a8739d9e13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "fdacd90f-7387-3c45-ac19-d6651ce98fb7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2e179f07-5e76-3ad4-bd5a-9405d4d3f8c2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

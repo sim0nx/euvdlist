@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-55558",
+  "enisaUuid": "62764cd5-d016-3a57-ab47-44085832105c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\narm64: make huge_ptep_get handled unaligned addresses\n\nhuge_ptep_get() can be handed a virtual address pointing to the middle\nof a contpmd/contpte mapped hugetlb folio (examples of callers are\npagemap_hugetlb_range, page_mapped_in_vma).\n\nThe arm64 helper rewalks the pgtables in find_num_contig to answer\nwhether the huge pte we have maps a contpmd or a contpte hugetlb folio,\nand returns CONT_PMDS or CONT_PTES, so that it can collect a/d bits over\nthe contiguous ptes. We can falsely return CONT_PTES instead of\nCONT_PMDS if the addr is not aligned. On systems where CONT_PTES !=\nCONT_PMDS (meaning page size is 16K), we could collect excess A/D bit\nstate, meaning extra work for the kernel. Even worse, we may iterate\nbeyond the PTE table and dereference a garbage ptep pointer to access\nphysical memory we don't own. Since the ptep pointer is a linear map\naddress, we may run off the end of the linear map or into a hole,\ndereference a VA not mapped into the kernel pgtables and cause kernel\npanic.\n\nFix this by aligning the pmdp pointer down to a contpmd base before\nchecking equality with the passed huge pte pointer, to correctly answer\nwhether the huge pte is the base of a contpmd block.",
+  "datePublished": "Aug 10, 2026, 11:59:41 AM",
+  "dateUpdated": "Aug 10, 2026, 11:59:41 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/9cd4b1a52eff330798d668c1775f8bc450776280",
+    "https://git.kernel.org/stable/c/f3530aec26563f4d483ff31402392961362e9bc6",
+    "https://git.kernel.org/stable/c/f73a8edc2ccc6ec72c37d5c578e7592d2e1f9922"
+  ],
+  "aliases": [
+    "CVE-2026-68172"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1dcdca8d-c217-3fd2-99b1-cb0b772e0a6a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "33203a80-ba7b-3731-b204-d0d31377ec88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "29cb80519689706387bde47000dbb2ed91143063 <f73a8edc2ccc6ec72c37d5c578e7592d2e1f9922"
+    },
+    {
+      "id": "631bdc02-1f85-323c-987a-c14606a4e5ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "888aa84f-4f1c-3d42-a326-27b94be32641",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "b39170a0-b329-3610-987e-93bf40e0b421",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "29cb80519689706387bde47000dbb2ed91143063 <9cd4b1a52eff330798d668c1775f8bc450776280"
+    },
+    {
+      "id": "bf833c73-52ed-3b66-a360-a9365cf53718",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "cf01502c-e499-3eb0-836e-78386c5d7cee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc5"
+    },
+    {
+      "id": "dab67c5c-b916-342a-a02c-4c376144a55d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "29cb80519689706387bde47000dbb2ed91143063 <f3530aec26563f4d483ff31402392961362e9bc6"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4df0a175-9921-3fc7-9382-87baba64166a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

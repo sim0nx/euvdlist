@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-55503",
+  "enisaUuid": "f0757ca7-4433-3157-8144-cdb0c16fe171",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\novpn: fix peer refcount leak in TCP error paths\n\nWhen either the TCP RX or TX error path calls ovpn_peer_hold() followed\nby schedule_work(&peer->tcp.defer_del_work), and the work item is already\npending from the other path, schedule_work() returns false and the work\nruns only once. Since ovpn_tcp_peer_del_work() calls ovpn_peer_put()\nexactly once, the extra reference taken by the losing path is never\ndropped, leaking the peer object.\n\nThe race window:\n\n  CPU0 (strparser/RX error):       CPU1 (tcp_tx_work/TX error):\n  ovpn_peer_hold()   <- refcnt+1   ovpn_peer_hold()   <- refcnt+2\n  schedule_work()    <- queued      schedule_work()    <- NO-OP\n                                    (work already pending)\n  ovpn_tcp_peer_del_work runs:\n    ovpn_peer_del()\n    ovpn_peer_put()  <- refcnt+1\n                                   <- peer never freed\n\nFix by checking the return value of schedule_work() in both paths and\ncalling ovpn_peer_put() to drop the extra reference if the work was\nalready pending. ovpn_peer_hold() is kept unconditional in the TX path\nas it cannot fail at that point.",
+  "datePublished": "Aug 10, 2026, 11:58:42 AM",
+  "dateUpdated": "Aug 10, 2026, 11:58:42 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/b08526bf0bbf84ceebd29033783e8e0c9f451286",
+    "https://git.kernel.org/stable/c/f08f39c1f43f3980d46b06af8ed99ffe84ac294a",
+    "https://git.kernel.org/stable/c/63bbe18fc03062f483c627838a566a707b62da79"
+  ],
+  "aliases": [
+    "CVE-2026-68122"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "10ee59a3-2e7a-3ba3-94c0-ba54099f4aa3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a6a5e87b3ee4cbf9c69a776565378c9b6a91dbfb <63bbe18fc03062f483c627838a566a707b62da79"
+    },
+    {
+      "id": "13769bb1-b429-3744-bd6a-053a4144a239",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "440c91be-0240-3f4b-b139-7cda263c2dc0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "5def3fcb-dbd5-3f5b-af57-21b56e857db7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "6db60f81-96d1-37ea-b47e-06b1e8ae474c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc5"
+    },
+    {
+      "id": "7ea90e63-b744-3202-aa81-47fc2025ca61",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "cd4e16c4-b472-3802-8207-2dc8df85b65f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a6a5e87b3ee4cbf9c69a776565378c9b6a91dbfb <b08526bf0bbf84ceebd29033783e8e0c9f451286"
+    },
+    {
+      "id": "dcd9c9cc-a025-3c70-b8a3-cf00833d04d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a6a5e87b3ee4cbf9c69a776565378c9b6a91dbfb <f08f39c1f43f3980d46b06af8ed99ffe84ac294a"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "03024d90-628a-353e-9992-21c98faf800f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

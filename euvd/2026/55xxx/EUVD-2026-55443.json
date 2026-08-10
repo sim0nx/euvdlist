@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-55443",
+  "enisaUuid": "63c94165-f851-35ca-9b12-a0b22025c372",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\novpn: avoid putting unrelated P2P peer on socket release\n\novpn_peer_release_p2p() is called when an OVPN UDP socket is being\ndestroyed. It checks the currently published P2P peer and releases it only\nif that peer still uses the socket being destroyed.\n\nA peer replacement can publish a new peer before the old UDP socket is\ndestroyed. When the old socket destruction path runs afterwards,\novpn_peer_release_p2p() observes the new peer through ovpn->peer. Since the\nnew peer uses a different socket, the function takes the socket mismatch\nbranch.\n\nThat branch still calls ovpn_peer_put(peer). At this point, however, peer\nis the currently published replacement peer, not the peer associated with\nthe socket being destroyed. Dropping its reference can free it while\novpn->peer still points to it, leading to later use-after-free accesses\nfrom the peer and socket cleanup paths.\n\nKASAN reports this as a slab-use-after-free on the kmalloc-1k ovpn_peer\nobject. In the reproducer, the object is allocated from ovpn_peer_new() via\novpn_nl_peer_new_doit(), and freed through ovpn_peer_release_rcu() from RCU\ncallback processing. Observed access sites include ovpn_peer_remove(),\novpn_socket_release(), ovpn_nl_peer_del_notify(), and unlock_ovpn().\n\nFix this by returning from the socket mismatch branch without putting the\npeer.",
+  "datePublished": "Aug 10, 2026, 12:03:18 PM",
+  "dateUpdated": "Aug 10, 2026, 12:03:18 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/c5bf6b39be235ef578af4d39872f0c68cda3b937",
+    "https://git.kernel.org/stable/c/016a50379d17b886d12a4efa5211a418e035fe70",
+    "https://git.kernel.org/stable/c/b52c5103f64ee825996ca1ab8df7283cde8c5f86"
+  ],
+  "aliases": [
+    "CVE-2026-68342"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "03aae889-22ad-3fb7-a280-564388c4db36",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f6226ae7a0cd47aaa9175aca6a1e19600f884cbf <c5bf6b39be235ef578af4d39872f0c68cda3b937"
+    },
+    {
+      "id": "29f7368c-e049-393f-b6c5-3cdf923c72ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "5f7038a7-f77e-3d63-bb36-3c8e99c2b972",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "8cebc55b-e1a1-3004-bc25-5c2e34237ebe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f6226ae7a0cd47aaa9175aca6a1e19600f884cbf <b52c5103f64ee825996ca1ab8df7283cde8c5f86"
+    },
+    {
+      "id": "8fb027c9-3a42-3509-94a3-169f37a8fee4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc5"
+    },
+    {
+      "id": "ae0ea43a-2e33-33d2-885a-0cac80d34a45",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "d81e7878-76be-32b1-8513-48e1227e493a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f6226ae7a0cd47aaa9175aca6a1e19600f884cbf <016a50379d17b886d12a4efa5211a418e035fe70"
+    },
+    {
+      "id": "efc82e46-c92e-3135-94f2-f5685d812a7b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "de98f4ed-3eee-379e-8bf7-db7d9eb56620",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

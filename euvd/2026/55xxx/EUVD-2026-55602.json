@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-55602",
+  "enisaUuid": "2c795050-2ded-367d-9404-74516fcc09eb",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmtd: fix double free and WARN_ON in add_mtd_device() error paths\n\nWhen device_register() or mtd_nvmem_add() fails inside\nadd_mtd_device() for a partition, the error handling triggers\nmtd_release() via put_device() or device_unregister(). mtd_release()\ncalls release_mtd_partition() which frees the mtd_info structure.\nHowever, callers such as mtd_add_partition() and add_mtd_partitions()\nalso call free_partition() in their error paths, resulting in a double\nfree.\n\nAdditionally, release_mtd_partition() hits WARN_ON(!list_empty(\n&mtd->part.node)) because the partition node is still linked in the\nparent's partitions list when the release callback fires from the\nadd_mtd_device() error path.\n\nFix this by overriding dev->type and dev->release before put_device()\nin the error paths, so that device_release() invokes a no-op function\ninstead of mtd_release(). For the mtd_nvmem_add() failure case,\ndevice_unregister() is replaced with device_del() to separate the\ndevice removal from the final kobject reference drop, allowing the\noverride to take effect before put_device() is called.\n\nThe callers' error paths (list_del + free_partition) remain the sole\nowners of mtd_info lifetime on add_mtd_device() failure, which is the\nexpected contract.\n\nThe normal partition teardown path is not affected: del_mtd_device()\ngoes through kref_put() -> mtd_device_release() -> device_unregister()\nwith dev->type still set to &mtd_devtype, so mtd_release() ->\nrelease_mtd_partition() continues to work correctly for the regular\nremoval case.",
+  "datePublished": "Aug 10, 2026, 12:04:36 PM",
+  "dateUpdated": "Aug 10, 2026, 12:04:36 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ffe21a3545b439e7b11578a701c22a847c149561",
+    "https://git.kernel.org/stable/c/e1e96aca1bdf391e2f49531c270ffc134e5b49a5",
+    "https://git.kernel.org/stable/c/f98ae09c727dcf34f745c875661c64b642e4abfa",
+    "https://git.kernel.org/stable/c/820f983d641937a787e841ee4b93501f69f5683e",
+    "https://git.kernel.org/stable/c/9d4af746af8ce27eefc2338b2feaa1e01f28b6c3"
+  ],
+  "aliases": [
+    "CVE-2026-68416"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1bda2e43-b62c-32a7-a55a-46b4c15d4d67",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "1dbd48f8-9923-366f-9829-3aa166489016",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "19bfa9ebebb5ec0695def57eb1d80de7e9cab369 <e1e96aca1bdf391e2f49531c270ffc134e5b49a5"
+    },
+    {
+      "id": "202c01d7-4e06-34ca-bc72-739d08f23144",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "19bfa9ebebb5ec0695def57eb1d80de7e9cab369 <ffe21a3545b439e7b11578a701c22a847c149561"
+    },
+    {
+      "id": "2dfacabc-7d5f-3910-9405-1236cab7c75a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "19bfa9ebebb5ec0695def57eb1d80de7e9cab369 <9d4af746af8ce27eefc2338b2feaa1e01f28b6c3"
+    },
+    {
+      "id": "2e9b0d49-5362-3daa-9b57-38c2f06990f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "19bfa9ebebb5ec0695def57eb1d80de7e9cab369 <820f983d641937a787e841ee4b93501f69f5683e"
+    },
+    {
+      "id": "36dc1985-be04-3076-919a-27360dc766d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "4368f6cd-97d0-3a2b-8500-4062fb74d1b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "602a0f77-41d9-34c5-8f50-64ebc3108fe6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "a2c2937d-cef2-375f-9b94-0e1a47c307d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "b68d9c07-cbba-354f-a023-366312fef391",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6"
+    },
+    {
+      "id": "ce4825a1-226b-3781-9ff5-779cb66de059",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc4"
+    },
+    {
+      "id": "e6b2c4fa-df6c-31b0-9c08-be23eba0d316",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "19bfa9ebebb5ec0695def57eb1d80de7e9cab369 <f98ae09c727dcf34f745c875661c64b642e4abfa"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a1295a57-f23a-3c82-8223-17d9f41bdab5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

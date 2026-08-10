@@ -1,0 +1,200 @@
+{
+  "id": "EUVD-2026-55555",
+  "enisaUuid": "fff796eb-de51-33a5-adb8-a33dca04a7ba",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmptcp: pm: userspace: fix use-after-free in get_local_id\n\nIn mptcp_pm_userspace_get_local_id(), the address entry is looked up under\nspinlock, but its id is read after dropping the lock. A concurrent deletion\ncan free the entry between the unlock and the read, leading to UAF.\n\nThe race window is narrow. It was reproduced only with a locally\nconstructed stress test that repeatedly overlaps an MP_JOIN SYN with a\nMPTCP_PM_CMD_SUBFLOW_DESTROY request.\n\nHowever, the KASAN report below confirms that the race is reachable:\n\n  [  666.319376] BUG: KASAN: slab-use-after-free in mptcp_userspace_pm_get_local_id+0x1dc/0x1f0\n  [  666.319386] Read of size 1 at addr ffff888124845610 by task swapper/0/0\n  ...\n  [  666.319401] Call Trace:\n  [  666.319405]  <IRQ>\n  [  666.319408]  dump_stack_lvl+0x53/0x70\n  [  666.319412]  print_address_description.constprop.0+0x2c/0x3b0\n  [  666.319418]  print_report+0xbe/0x2b0\n  [  666.319421]  ? mptcp_userspace_pm_get_local_id+0x1dc/0x1f0\n  [  666.319423]  kasan_report+0xce/0x100\n  [  666.319426]  ? mptcp_userspace_pm_get_local_id+0x1dc/0x1f0\n  [  666.319429]  mptcp_userspace_pm_get_local_id+0x1dc/0x1f0\n  [  666.319433]  mptcp_pm_get_local_id+0x371/0x440\n  ...\n  [  666.319821] Allocated by task 45539:\n  [  666.319844]  kasan_save_stack+0x33/0x60\n  [  666.319855]  kasan_save_track+0x14/0x30\n  [  666.319858]  __kasan_kmalloc+0x8f/0xa0\n  [  666.319863]  __kmalloc_noprof+0x1e7/0x520\n  [  666.319867]  sock_kmalloc+0xdf/0x130\n  [  666.319885]  sock_kmemdup+0x1b/0x40\n  [  666.319888]  mptcp_userspace_pm_append_new_local_addr+0x261/0x500\n  [  666.319910]  mptcp_pm_nl_announce_doit+0x16a/0x610\n  ...\n  [  666.319967] Freed by task 45560:\n  [  666.319988]  kasan_save_stack+0x33/0x60\n  [  666.319991]  kasan_save_track+0x14/0x30\n  [  666.319994]  kasan_save_free_info+0x3b/0x60\n  [  666.319998]  __kasan_slab_free+0x43/0x70\n  [  666.320000]  kfree+0x166/0x440\n  [  666.320003]  sock_kfree_s+0x1d/0x50\n  [  666.320007]  mptcp_userspace_pm_delete_local_addr.isra.0+0x157/0x200\n  [  666.320011]  mptcp_pm_nl_subflow_destroy_doit+0x51d/0xea0\n\nFix by copying the id into a local variable while still holding the lock,\nand use -1 as a \"not found\" sentinel.",
+  "datePublished": "Aug 10, 2026, 11:59:38 AM",
+  "dateUpdated": "Aug 10, 2026, 11:59:38 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d2c3760b45f2f481a4dd4c5adef4a29dfabd948f",
+    "https://git.kernel.org/stable/c/31ce5af66891f79998fb2e8b8df08e3c98fd72e3",
+    "https://git.kernel.org/stable/c/d64f6c02495f3fad674038cfa7ec049671b59e7b",
+    "https://git.kernel.org/stable/c/40dde4b5d98279471a70e5c8bb713182738c00d9",
+    "https://git.kernel.org/stable/c/9bc6d5e4ca9f3cbb41d43400b3a31cb0403796c9"
+  ],
+  "aliases": [
+    "CVE-2026-68169"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "018fa226-d02e-3633-a66f-079a6270ceca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ed34dfa19ddbd1e4c85a73636f8cba0211025ea4 <d2c3760b45f2f481a4dd4c5adef4a29dfabd948f"
+    },
+    {
+      "id": "05ec916c-1aaa-324c-a10f-46b1b91dabb8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f012d796a6de662692159c539689e47e662853a8 <40dde4b5d98279471a70e5c8bb713182738c00d9"
+    },
+    {
+      "id": "09ae0c4d-be83-3423-a3fd-60320cd29dab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.18 <6.6.151"
+    },
+    {
+      "id": "11d05119-5908-3fa3-94e0-cdd3e88a7273",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e373bfc8ec3d6496ec7e11dd7f4d087a44b1009a"
+    },
+    {
+      "id": "1ac74929-ed1a-3ebb-9eca-8a16805296aa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f012d796a6de662692159c539689e47e662853a8 <31ce5af66891f79998fb2e8b8df08e3c98fd72e3"
+    },
+    {
+      "id": "273fa151-cba8-358d-95e1-d5a191473d11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "005a3ad289eb604216dcaa03646de36cb08624a0"
+    },
+    {
+      "id": "2f36e3f8-5c81-32f3-81c7-d76e7504f48c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.79 <6.2"
+    },
+    {
+      "id": "42512e90-69f6-3898-a12f-daa469ab3d2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f012d796a6de662692159c539689e47e662853a8 <9bc6d5e4ca9f3cbb41d43400b3a31cb0403796c9"
+    },
+    {
+      "id": "4ac5dc9a-d008-3bd2-be14-6c8006440f2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc5"
+    },
+    {
+      "id": "6ab24ee9-8b83-31e1-b5af-0241278898a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f012d796a6de662692159c539689e47e662853a8 <d64f6c02495f3fad674038cfa7ec049671b59e7b"
+    },
+    {
+      "id": "787ce7db-2dc5-38cc-a185-4050e522235f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.103"
+    },
+    {
+      "id": "88c5c085-b3b8-3716-a50f-0ee72b1db401",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "c731362c-ca06-3dc5-87c5-7cf597d54a64",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "dad503ac-222e-3ec8-a715-997af767c440",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.151"
+    },
+    {
+      "id": "ec06fbf9-cb01-340b-817b-9942d94f33ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.8"
+    },
+    {
+      "id": "f8d50222-8146-3c6c-a83e-1d3284e37a47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.7.6 <6.8"
+    },
+    {
+      "id": "ff62b85e-9100-3295-a087-9f0b13bedf24",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9fac3df2-d1bf-3929-bb5f-9f57db93bcb6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-55393",
+  "enisaUuid": "fee08383-0c94-37e5-8de6-4ec57c22b719",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nice: prevent tstamp ring allocation for non-PF VSI types\n\nThe pf->txtime_txqs bitmap tracks which Tx queues have ETF (Earliest\nTxTime First) offload enabled. This bitmap is indexed by queue number\nand is set by ice_offload_txtime(), which only operates on PF VSI\nqueues.\n\nHowever, ice_is_txtime_ena() does not check the VSI type before\nconsulting the bitmap. When ETF offload is enabled on PF Tx queue 0,\nbit 0 is set in pf->txtime_txqs. During a subsequent PCI reset\nrebuild, the CTRL VSI's Tx queue 0 is reconfigured and\nice_is_txtime_ena() is called for that ring. Since it only checks\npf->txtime_txqs by queue index without distinguishing VSI type, it\nfinds bit 0 set and returns true, matching the PF VSI's ETF queue,\nnot the CTRL VSI's. This causes ice_vsi_cfg_txq() to spuriously\nallocate a tstamp_ring for the CTRL VSI ring.\n\nSince CTRL VSI rings have no associated netdev, ice_clean_tx_ring()\ntakes an early return at the !netdev check before reaching\nice_free_tx_tstamp_ring(), leaking the allocation. Each PCI reset\nleaks one 64-byte tstamp_ring.\n\nFix this by restricting ice_is_txtime_ena() to return true only for\nPF VSI rings, since txtime_txqs is only meaningful for PF VSI queues.",
+  "datePublished": "Aug 10, 2026, 12:02:25 PM",
+  "dateUpdated": "Aug 10, 2026, 12:02:25 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/684d4d0bda95a3fb21b3e29ff0f668f657707b54",
+    "https://git.kernel.org/stable/c/d0a21604c6abfa4956f3a511a1de174cec77a812",
+    "https://git.kernel.org/stable/c/144539bbfd3cea1ab0fb6f5216d6004c1f4f029b"
+  ],
+  "aliases": [
+    "CVE-2026-68292"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "121fc1b9-8601-3f22-9d50-4e867fa53b79",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "16e28ec3-0095-3c32-bd9c-05459340a98f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "2ec153a2-b15f-3ae5-bc28-f3c095df7c6f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ccde82e909467abdf098a8ee6f63e1ecf9a47ce5 <144539bbfd3cea1ab0fb6f5216d6004c1f4f029b"
+    },
+    {
+      "id": "83c3408a-411b-3ddb-a380-6e3cfa2f5f3b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ccde82e909467abdf098a8ee6f63e1ecf9a47ce5 <684d4d0bda95a3fb21b3e29ff0f668f657707b54"
+    },
+    {
+      "id": "9da12c8a-f441-33ea-88cf-76959dd19722",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.42"
+    },
+    {
+      "id": "b87e9358-4925-3dab-9c89-0f2c2bf1d273",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.18"
+    },
+    {
+      "id": "df555d0f-6888-3670-8168-c044fb5cff88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ccde82e909467abdf098a8ee6f63e1ecf9a47ce5 <d0a21604c6abfa4956f3a511a1de174cec77a812"
+    },
+    {
+      "id": "f72b29c7-1970-34fd-a6f6-2ee23d9ce102",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2a253054-8c5e-3194-83a2-e35fc23fba52",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
