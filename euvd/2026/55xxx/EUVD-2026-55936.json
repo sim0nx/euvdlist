@@ -1,0 +1,39 @@
+{
+  "id": "EUVD-2026-55936",
+  "enisaUuid": "717775d8-2d8f-3db0-9727-7cbb412b035b",
+  "description": "On the Zephyr ARM port, enabling the hardware FPU (CONFIG_FPU) forces the \"Floating point ABI\" choice, which defaults to CONFIG_FP_HARDABI. Both FP_HARDABI and FP_SOFTABI permit the compiler to emit hardware FP instructions in any function, even code that never uses floating-point types. However, the callee-saved FP registers (s16-s31 / d8-d15) are only saved and restored across a context switch when CONFIG_FPU_SHARING is enabled (arch/arm/core/cortex_m/swap_helper.S and arch/arm/core/cortex_a_r/swap_helper.S), and prior to this fix selecting an ABI did not enable FPU register sharing, which defaults off.\n\nIn a build that enables the FPU with the default ABI but leaves CONFIG_FPU_SHARING disabled, the kernel preserves no callee-saved FP register state across thread switches. The documented precondition for this \"unshared\" mode \u2014 that only a single thread ever executes FP instructions \u2014 is silently violated because the compiler may generate FP instructions in every thread.\n\nUnder CONFIG_USERSPACE, where threads are mutually isolated, this becomes an information-disclosure boundary crossing: a victim thread can leave secret-derived values in s16-s31, and a co-resident unprivileged thread can read those registers directly (FP register access is not privilege-gated), recovering data left behind by another thread. Without userspace the same defect causes cross-thread FP state corruption (a correctness fault). The leak is bounded to the 16 callee-saved single-precision registers and is opportunistic, so impact is low.\n\nThe fix makes FP_HARDABI and FP_SOFTABI select CONFIG_FPU_SHARING and tags every thread with K_FP_REGS at creation, so callee-saved FP state is always preserved across context switches whenever the compiler may emit FP instructions.",
+  "datePublished": "Aug 11, 2026, 4:56:59 AM",
+  "dateUpdated": "Aug 11, 2026, 4:56:59 AM",
+  "baseScore": 3.6,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:N",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/3d405326a7653cba6860280e45c8734f8d3fc423",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-qxr9-wh3c-hvgv"
+  ],
+  "aliases": [
+    "CVE-2026-11985"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "f925ff92-2516-3168-869d-ccf5dd39baaa",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "1.13.0 \u22644.4.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "18c4d3ab-05e3-3f6a-b63e-6de73002695d",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}

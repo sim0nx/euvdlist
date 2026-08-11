@@ -1,0 +1,39 @@
+{
+  "id": "EUVD-2026-55937",
+  "enisaUuid": "7cbffaf4-8208-3b9e-8ae0-daa17b6aaa94",
+  "description": "The Realtek BEE Bluetooth HCI driver's send callback, bt_hci_bee_send() in drivers/bluetooth/hci/hci_bee.c, violated the bt_hci_driver_api buffer-ownership contract. That contract requires the driver to consume (unref) the transmit net_buf only on success; on an error return the host caller retains ownership and unrefs the buffer itself. The pre-fix code routed all error paths through a shared cleanup label that unconditionally called net_buf_unref(buf) before returning the error code.\n\nBecause the host TX paths (in subsys/bluetooth/host/hci_core.c) unref the buffer again after send() returns an error, the buffer is freed twice: the driver returns it to its net_buf pool and the host then unrefs the already-freed buffer, corrupting the shared pool / underflowing the reference count (CWE-415). The same error branch additionally dereferenced buf->len inside a LOG_ERR call after the buffer had already been unref'd, a read of freed memory (CWE-416) that is compiled in at the default error log level.\n\nThe failing edges are reached when the controller's host-to-controller buffer allocation fails or the controller send fails (resource-exhaustion / IO conditions). A remote Bluetooth peer can push the device toward these conditions indirectly by driving heavy host transmit activity, at which point the double-free corrupts the host net_buf pool and most likely crashes the device, with residual potential for further memory corruption. The impact is confined to builds using this specific Realtek BEE HCI driver.\n\nThe fix returns early from each error path without unreffing and unrefs the buffer only on the success path, restoring the ownership contract and eliminating both the double-free and the use-after-free read.",
+  "datePublished": "Aug 11, 2026, 5:08:51 AM",
+  "dateUpdated": "Aug 11, 2026, 5:08:51 AM",
+  "baseScore": 5.9,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:H",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/9a684b5c314fb1d8670b01f7b6c4450a9353906c",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-v9mj-h2m6-v9c6"
+  ],
+  "aliases": [
+    "CVE-2026-11894"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "c9a4c0ec-0c8a-32d3-926a-8f84ea58555a",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.4.0 <4.4.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "396f46d0-5d25-335a-b354-4f02a4387a52",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}
