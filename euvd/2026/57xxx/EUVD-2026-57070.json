@@ -1,0 +1,39 @@
+{
+  "id": "EUVD-2026-57070",
+  "enisaUuid": "c521f451-fa21-3228-bb37-ca177e5f1b66",
+  "description": "The Linkable Loadable Extensions (llext) subsystem mis-handles PLT/RELA relocation entries when linking a relocatable (partially-linked) ELF extension. In llext_link_plt() (subsys/llext/llext_link.c), the relocatable branch (tgt != NULL, the path used for Xtensa relocatable objects) computed the patch address as ext->mem[LLEXT_MEM_TEXT] - text.sh_offset + rela.r_offset + tgt->sh_offset and then performed the relocation write there without validating rela.r_offset. Its sibling shared/dynamic branch already rejected out-of-range offsets via llext_file_offset().\n\nrela.r_offset is read directly from the ELF's RELA table, so a crafted entry with an offset larger than the target section makes the write land arbitrarily far outside the extension's text buffer. The result is an attacker-influenced out-of-bounds write (the location via r_offset, the written value being the resolved symbol address) performed in supervisor context at link time, before any extension code runs.\n\nThe path is reached from llext_load() whenever an application loads an attacker-influenced ELF extension on Xtensa with writable storage; llext is documented to accept extensions of untrusted origin. Impact is supervisor-context memory corruption (integrity and availability loss, and a sandbox-boundary escape for user-mode extensions). Exploitation is gated by the Xtensa relocatable PLT path and writable storage, and turning the out-of-range write into a useful primitive is non-trivial.\n\nThe fix adds a bound check rejecting any RELA entry whose r_offset >= tgt->sh_size, mirroring the existing validation in the shared branch.",
+  "datePublished": "Aug 12, 2026, 4:55:15 AM",
+  "dateUpdated": "Aug 12, 2026, 4:55:15 AM",
+  "baseScore": 6.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:H/A:H",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/106540afbd22087ad40b90f53fb22657754a719e",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-xv9q-6mrf-8j49"
+  ],
+  "aliases": [
+    "CVE-2026-12235"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "76d2b623-551e-3312-bb47-d39d68e727ba",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "3.7.0 <4.4.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6153f3aa-e9cd-3dc5-99c6-f50498744d92",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}
