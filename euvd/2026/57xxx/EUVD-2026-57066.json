@@ -1,0 +1,39 @@
+{
+  "id": "EUVD-2026-57066",
+  "enisaUuid": "4bf01c0e-bce8-358b-89bc-815fd87b6da2",
+  "description": "The Intel ALH digital-audio-interface driver function dai_alh_get_properties() in drivers/dai/intel/alh/alh.c used a caller-supplied int stream_id with no range validation. The value indexes the fixed-size static const uint8_t alh_handshake_map[64] array and scales a FIFO register address, so an out-of-range stream_id produces an out-of-bounds read of one byte at an attacker-chosen signed offset from the array. That byte is written into prop->dma_hs_id and the resulting struct dai_properties is copied back to the caller, leaking it.\n\ndai_get_properties_copy() is a Zephyr __syscall, and its verifier z_vrfy_dai_get_properties_copy() (drivers/dai/dai_handlers.c) validates only the device-object permission and the destination buffer, not stream_id. A user-mode thread that has been granted access to the ALH DAI device object can therefore call the syscall with an arbitrary stream_id, crossing the userspace/kernel sandbox boundary.\n\nThe impact is a one-byte-per-call arbitrary-offset kernel information disclosure (and leakage of a computed kernel address via fifo_address); a stream_id that resolves to an unmapped page faults in kernel context, giving a local denial of service. Exploitation requires CONFIG_USERSPACE and device access, making this a local, moderate-severity issue. The fix rejects negative and too-large stream_id values up front and returns NULL, which the copy wrapper maps to -ENOENT.",
+  "datePublished": "Aug 12, 2026, 3:34:14 AM",
+  "dateUpdated": "Aug 12, 2026, 3:34:14 AM",
+  "baseScore": 6.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:L",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/b470bfce689809621cc5cd8c04a4eca93795827a",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-3557-j848-pv24"
+  ],
+  "aliases": [
+    "CVE-2026-12232"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "d693cce0-1975-3bb0-8b95-2325def2651d",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.4.0 <4.5.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f6bac2c9-ba9a-3e8f-ac7c-e6c09db33eac",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}
