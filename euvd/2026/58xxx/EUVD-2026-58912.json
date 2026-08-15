@@ -1,0 +1,110 @@
+{
+  "id": "EUVD-2026-58912",
+  "enisaUuid": "61851a48-cb5d-3ccb-9490-1ce7660ca050",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nopenrisc: Fix jump_label smp syncing\n\nThe original commit 8c30b0018f9d (\"openrisc: Add jump label support\")\ncopies from arm64 and does not properly consider how icache invalidation\non remote cores works in OpenRISC.  On OpenRISC remote icaches need to\nbe invalidated otherwise static key's may remain state after updating.\n\nFix SMP cache syncing by:\n\n 1. Properly invalidate remote core icaches on SMP systems by using\n    icache_all_inv.  The old code uses kick_all_cpus_sync() which runs a\n    no-op IPI function call on remote CPU's which does execute a lot of\n    code and flushes many cache lines in the process, but does not flush\n    all and it's not correct on OpenRISC.\n 2. For architectures that do not have WRITETHROUGH caches be sure\n    to flush the dcache after patching.\n\nTo test this I first reproduced the issue using a custom test module\n[0].  The test confirmed that some icache lines maintained stale\nstatic_key code sequences after calling static_branch_enable().  After\nthis patch there are no longer jump_label coherency issues.\n\n[0] https://github.com/stffrdhrn/or1k-utils/tree/master/tests/smp_static_key_test",
+  "datePublished": "Aug 15, 2026, 6:32:14 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:14 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/3fac46068fe4cea22ed373432b9173a915e8e60d",
+    "https://git.kernel.org/stable/c/57740658042daf591c57d6e700d9a304d5972552",
+    "https://git.kernel.org/stable/c/aca063c9024522e4e5b9a9d1927433f6a01785a3",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72154"
+  ],
+  "aliases": [
+    "CVE-2026-72154",
+    "GHSA-w2g7-86j7-x792"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "00a6cb2b-1d00-3a09-b729-5d5fbe041654",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "08ca0aaa-9110-366f-b8cd-869f497a6178",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8c30b0018f9d93391573e091960d257fd9de120a <3fac46068fe4cea22ed373432b9173a915e8e60d"
+    },
+    {
+      "id": "19370596-84fd-3c8c-8fe5-a61687e1c6f2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "8e74adea-74ec-3629-b577-22263775295b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8c30b0018f9d93391573e091960d257fd9de120a <aca063c9024522e4e5b9a9d1927433f6a01785a3"
+    },
+    {
+      "id": "9d1f96f8-57b2-320f-b228-f39e5f71ac59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.18"
+    },
+    {
+      "id": "a6ebf24e-eaf1-350a-a8c3-b22c2fb858e7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8c30b0018f9d93391573e091960d257fd9de120a <57740658042daf591c57d6e700d9a304d5972552"
+    },
+    {
+      "id": "bece611f-73cf-39a4-a3d8-7fa9b73a7fcc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "cbcc5f75-cfc7-3878-83b6-5e3b0cf676ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a0c51721-f555-3cbc-a288-1b7188b85eda",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

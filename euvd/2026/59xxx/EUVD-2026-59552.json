@@ -1,0 +1,110 @@
+{
+  "id": "EUVD-2026-59552",
+  "enisaUuid": "6920c32c-c9d9-3ffb-8edb-0ba5fc63d68d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nOPP: Fix race between OPP addition and lookup\n\nA race exists between dev_pm_opp_add_dynamic() and\ndev_pm_opp_find_freq_exact():\n\n  CPU0 (add)                          CPU1 (lookup)\n  -------------------------------     ------------------------------\n  _opp_add()\n    mutex_lock()\n    list_add(&new_opp->node, head)\n    mutex_unlock()                    _opp_table_find_key()\n                                        mutex_lock()\n                                        dev_pm_opp_get(opp)\n                                          kref_get()\n                                        mutex_unlock()\n    kref_init(&new_opp->kref)\n                                      dev_pm_opp_put()\n                                        kref_put_mutex()\n\nThe newly added OPP is inserted into the list before its kref is\ninitialized. A concurrent lookup can find this OPP and increment its\nreference count while it is still uninitialized, leading to refcount\ncorruption and a potential premature free.\n\nFix this by initializing ->kref and ->opp_table before making the OPP\nvisible via list_add(). This ensures any concurrent lookup observes a\nfully initialized object.\n\n[ Viresh: Updated commit log ]",
+  "datePublished": "Aug 15, 2026, 6:32:32 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:32 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/46696b0b2123475d7f95909435c09808fc5ffd23",
+    "https://git.kernel.org/stable/c/bb75bd7d9ae7672034f73ce67a57e6ac89bb39e5",
+    "https://git.kernel.org/stable/c/f5e1cc9a284bff2510981643a5bca4bc4c21b81a",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-74405"
+  ],
+  "aliases": [
+    "GHSA-5fpw-5c2c-j4pp",
+    "CVE-2026-74405"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3aac01c7-75ac-394f-85ae-8a9e18be53fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "5ab2039c-864c-3986-b915-79e9c53f5cbe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7034764a1e4a6edbb60914e89aad8384e3fe5d17 <46696b0b2123475d7f95909435c09808fc5ffd23"
+    },
+    {
+      "id": "7a69f368-2305-3c2a-8d3f-87fc16acb5b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "9331ed4e-112d-31ab-bd2d-aa8f17855dbc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "b10be7ae-f83e-3dca-86fd-5dc01cf452a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b165a005-37b3-37ac-a76c-a095cd719a95",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7034764a1e4a6edbb60914e89aad8384e3fe5d17 <bb75bd7d9ae7672034f73ce67a57e6ac89bb39e5"
+    },
+    {
+      "id": "b3649f25-6df7-3aff-a5cc-6290d15328ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7034764a1e4a6edbb60914e89aad8384e3fe5d17 <f5e1cc9a284bff2510981643a5bca4bc4c21b81a"
+    },
+    {
+      "id": "f53d6fb4-a6a6-3f53-a870-1549ca7d3233",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.11"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2a040c45-087f-3e8f-a4e9-ae74f4e63f19",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

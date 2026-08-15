@@ -1,0 +1,89 @@
+{
+  "id": "EUVD-2026-59306",
+  "enisaUuid": "f652f4e5-c23b-3095-92ff-7b1f7a893411",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngeneve: validate inner network offset in geneve_gro_complete()\n\nEven with both paths gated on gs->gro_hint, geneve_gro_complete()\nre-derives the inner dispatch type and length from the packet and the\ncurrent gs->gro_hint, independently of geneve_gro_receive(). The two can\ndisagree if gs->gro_hint flips under a concurrent geneve_quiesce()/\ngeneve_unquiesce() (sk_user_data is NULL across a synchronize_net()), or if\nthe re-read option bytes differ from the ones receive parsed.\n\ngeneve_gro_receive() already records the inner network header position in\nNAPI_GRO_CB()->inner_network_offset. Have geneve_gro_complete() compute the\noffset it is about to dispatch at, adding ETH_HLEN in the ETH_P_TEB case\nwhere eth_gro_complete() steps over the inner MAC header, and bail out if\nit lands past inner_network_offset.\n\nUse a lower bound rather than exact equality: between gh_len and the inner\nL3 header, geneve_gro_receive() may also have pulled an inner VLAN tag\n(vlan_gro_receive() advances the recorded offset past it), which only moves\ninner_network_offset further out. A valid frame therefore always satisfies\ninner_nh <= inner_network_offset, while a gh_len inflated by a hint\ngro_receive() did not honour dispatches past the validated inner header,\ni.e. the out-of-bounds completion. Only the latter is rejected.",
+  "datePublished": "Aug 15, 2026, 6:32:23 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:23 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e2087447f562692ff0cd08a0554d8d4ad083aa5c",
+    "https://git.kernel.org/stable/c/cbb0d30a1ad6fc9439b1dc9b4f5a7a9140d3b11f",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72407"
+  ],
+  "aliases": [
+    "CVE-2026-72407",
+    "GHSA-gp9v-9c23-fw32"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1c81191c-7c99-3872-93be-cee4505795dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.0"
+    },
+    {
+      "id": "27f03f75-70d4-3163-8c86-32c35a2f46bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fd0dd796576e1a560e1441e665810129f0a82be0 <cbb0d30a1ad6fc9439b1dc9b4f5a7a9140d3b11f"
+    },
+    {
+      "id": "54d17fcb-f8cd-362b-b3b3-41555cfc6e11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "b5b9cd0f-de1b-34d6-976d-db86c7c65e8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "b6133969-8f99-3f56-9fc5-84d37826b858",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fd0dd796576e1a560e1441e665810129f0a82be0 <e2087447f562692ff0cd08a0554d8d4ad083aa5c"
+    },
+    {
+      "id": "f3fab84a-97e7-3f64-9dac-5e2439ef59f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ee5f9911-6e0d-30da-8d3d-f4ed5bfc54dc",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

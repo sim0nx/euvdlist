@@ -1,0 +1,89 @@
+{
+  "id": "EUVD-2026-59257",
+  "enisaUuid": "1fa0b070-aeb2-3dfa-8473-844a3cfa5524",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/xe/pt: prevent invalid cursor access for purged BOs\n\nDuring a page table walk for binding, xe_pt_stage_bind() explicitly\nskips initializing the xe_res_cursor for purged BOs, treating them\nsimilarly to NULL VMAs by only setting the cursor size.\n\nHowever, xe_pt_hugepte_possible() and xe_pt_scan_64K() did not check\nif the BO was purged before attempting to walk the cursor using\nxe_res_dma() and xe_res_next(). Because the cursor was left\nuninitialized for purged BOs, this falls through and triggers\nwarnings like:\n\n  WARNING: drivers/gpu/drm/xe/xe_res_cursor.h:274 at xe_res_next\n\nFix this by explicitly checking if the BO is purged in both\nxe_pt_hugepte_possible() and xe_pt_scan_64K(), returning early just\nas we do for NULL VMAs, avoiding the invalid cursor accesses entirely.\n\nAs a precaution, also zero-initialize the cursor in xe_pt_stage_bind()\nto ensure we don't pass garbage data into the page table walkers\nif we ever hit a similar edge case in the future.\n\n(cherry picked from commit 4c7b9c6ece32440e5a435a92076d049450cd2d2e)",
+  "datePublished": "Aug 15, 2026, 6:32:21 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:21 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/2b6b3f98d0e93856bee38699b783c71cb0e9d67f",
+    "https://git.kernel.org/stable/c/8a0fb57675be578c4db19deb4298ed08a70f0f1a",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72358"
+  ],
+  "aliases": [
+    "CVE-2026-72358",
+    "GHSA-p58g-v37m-9wmc"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "28a9d553-ebcf-3203-8373-4e5a8a204522",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "502442da-db4d-3786-9857-db2cfec6110b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6c967f7b-53ad-3574-bce0-034be2f73411",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ad9843aac91a1eda12912a4922042ea04cfc29dc <2b6b3f98d0e93856bee38699b783c71cb0e9d67f"
+    },
+    {
+      "id": "9698cefb-dab8-3f81-80fa-3040c1f5ee9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc2"
+    },
+    {
+      "id": "9b8417f9-3d88-3cad-b7e4-2cd81a149149",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "d356491b-c52a-3202-9f57-8893d50bb760",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ad9843aac91a1eda12912a4922042ea04cfc29dc <8a0fb57675be578c4db19deb4298ed08a70f0f1a"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2400f2a1-c03b-326b-82c9-dfcb22a3aace",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

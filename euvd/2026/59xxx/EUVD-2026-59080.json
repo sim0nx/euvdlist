@@ -1,0 +1,110 @@
+{
+  "id": "EUVD-2026-59080",
+  "enisaUuid": "61a059c0-a3e3-3be2-9c43-43ddb283a1f4",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbinder: cache secctx size before release zeroes it\n\nbinder_transaction() bounds the scatter-gather buffer area with\nsg_buf_end_offset and subtracts the aligned LSM context size because\nthe secctx is written at the tail of that area.  The subtraction reads\nlsmctx.len, but that field has already been cleared by the time the\nline runs:\n\n    security_secid_to_secctx(secid, &lsmctx)   /* lsmctx.len set */\n    lsmctx_aligned_size = ALIGN(lsmctx.len, sizeof(u64))\n    extra_buffers_size += lsmctx_aligned_size\n    ...\n    security_release_secctx(&lsmctx)            /* memset zeroes len */\n    ...\n    sg_buf_end_offset = sg_buf_offset + extra_buffers_size\n                        - ALIGN(lsmctx.len, sizeof(u64)) /* ALIGN(0,8) */\n\nsecurity_release_secctx() does memset(cp, 0, sizeof(*cp)), so lsmctx.len\nreads back as 0 and the subtraction contributes nothing, leaving\nsg_buf_end_offset too large by the aligned secctx size on every\ntransaction to a txn_security_ctx node.\n\nEach BINDER_TYPE_PTR object then derives buf_left = sg_buf_end_offset -\nsg_buf_offset as the sole upper bound on its copy, so the inflated end\noffset lets the copy run into the bytes that already hold the secctx.\n\nThe aligned size must therefore be cached before release rather than\nre-read from the now-cleared field.  Fix by caching it in\nlsmctx_aligned_size at function scope when it is first computed and\nsubtracting lsmctx_aligned_size instead of re-reading lsmctx.len after\nrelease.  Reuse the same value for the earlier buf_offset computation.",
+  "datePublished": "Aug 15, 2026, 6:32:06 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:06 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/1228926e1e4d605cc74d9e675558982a6f2cf446",
+    "https://git.kernel.org/stable/c/4257f45ee1fddd0558e77b62af8bb63fd87b2162",
+    "https://git.kernel.org/stable/c/b34826e55aad3520ec813f1f367c11b24b29dc9f",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-68458"
+  ],
+  "aliases": [
+    "GHSA-h3w9-f79p-226g",
+    "CVE-2026-68458"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "20cd67fc-4eec-33be-b388-adff0ed8f1a3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6fba89813ccf333d2bc4d5caea04cd5f3c39eb50 <1228926e1e4d605cc74d9e675558982a6f2cf446"
+    },
+    {
+      "id": "4b847097-1263-3b3e-bb45-489a601efea5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6fba89813ccf333d2bc4d5caea04cd5f3c39eb50 <b34826e55aad3520ec813f1f367c11b24b29dc9f"
+    },
+    {
+      "id": "5804e730-acc6-30cb-a105-64c1c5c1aa2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6fba89813ccf333d2bc4d5caea04cd5f3c39eb50 <4257f45ee1fddd0558e77b62af8bb63fd87b2162"
+    },
+    {
+      "id": "6deb6321-6c8b-32bb-814a-e5feb1c7dad6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "b359a501-f04f-3631-bf9e-bf82992baea5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "bb65cd79-adb3-364d-9053-c32312eb371c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc3"
+    },
+    {
+      "id": "c4068e9b-7ac2-3d91-8395-c4e3ba5b039e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d02b90d2-4437-3058-a97b-a03f3708a89f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.14"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3bc0ebcd-d778-3f84-bfe7-a5ea84a3a35d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

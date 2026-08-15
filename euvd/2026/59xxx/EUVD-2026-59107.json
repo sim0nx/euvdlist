@@ -1,0 +1,89 @@
+{
+  "id": "EUVD-2026-59107",
+  "enisaUuid": "4f588f9d-2d25-3a47-946c-b3ec8bd016b8",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npmdomain: mediatek: Fix possible nullptr KP in HWV cleanup/on-check\n\nShould probe fail for HW_VOTER type power domains, this driver was\nunconditionally trying to perform cleanup for DIRECT_CTL domains,\nbut only after checking if the target domain is powered on... with\nthe DIRECT_CTL scpsys_domain_is_on() code again.\n\nAnd there's more: the scpsys_domain_is_on() function is also being\nunconditionally used in the probe path, for any power domain that\nhas flag MTK_SCPD_KEEP_DEFAULT_OFF!\n\nThis bug was never experienced by anyone because the HWV domains\nnever failed probe, and because none of those is declared with the\naforementioned flag - but it's still something critical.\n\nIn order to fix this, add a check for MTCMOS Type and, based on\nthat, call the correct functions for an \"is on\" check, and also\ndo the same for the cleanup path, calling the correct functions\nfor the \"power off\" action.\n\nFor the latter, since there's a call to pm_genpd_remove() right\nbefore calling power_off, be cautious and add a variation of the\npower off functions (with a _internal suffix) for those to get a\npointer to scpsys_domain instead of one to generic_pm_domain as,\neven if that's still working, this is way too much fragile and\nwould break at some point.",
+  "datePublished": "Aug 15, 2026, 6:32:08 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:09 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/36c2d7728540252474752172027f0113028ab00c",
+    "https://git.kernel.org/stable/c/a4876f11aa1d076802676e23f8af500706e780e3",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72008"
+  ],
+  "aliases": [
+    "CVE-2026-72008",
+    "GHSA-crr9-wcjh-36g7"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "08c49847-91e1-3317-8df1-646f91ef1a2a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "88914db077b6c2920b29a3ec76109a2fd3cf8d38 <36c2d7728540252474752172027f0113028ab00c"
+    },
+    {
+      "id": "26b0707a-30ca-3b00-bed1-d7b9bed5fbab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9198daf6-aad8-30a0-a81a-1778de2ffe09",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    },
+    {
+      "id": "9f36cc92-cc49-3a9a-bacd-a0c346ef47ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "a8541c5f-ee71-3e07-ad06-ba49489021d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc4"
+    },
+    {
+      "id": "e3c186bb-4471-3ad1-98c7-3b738bd3af19",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "88914db077b6c2920b29a3ec76109a2fd3cf8d38 <a4876f11aa1d076802676e23f8af500706e780e3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ee9ce1da-632d-3311-90cd-404e0560550b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,215 @@
+{
+  "id": "EUVD-2026-59423",
+  "enisaUuid": "085d1fad-8891-3a7c-9626-7aaf21bdda5b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nspi: xilinx: use FIFO occupancy register to determine buffer size\n\nThe method the driver uses to determine the size of the FIFO has a\nproblem. What it currently does is this:\nIt stops the SPI hardware and writes to the TX FIFO register until TX\nFIFO FULL asserts in the status register. But the hardware does not only\nhave the FIFO, it also has a shift register which can hold a byte. This\ncan be seen, when writing a byte to the FIFO (while the SPI hardware is\nstopped,) the TX FIFO EMPTY is still empty. So, if we have a FIFO size\nof 16 for example, the current method returns a 17.\nThis is a problem, at least when using the driver in irq mode. The same\nsize determined for the TX FIFO is also assumed for the RX FIFO. When a\nSPI transaction wants to write the amount of the FIFO size or more\nbytes, the following happens, for example with 16 bytes FIFO size:\nThe driver stops the SPI hardware and writes 17 bytes to the TX FIFO and\nstarts the SPI hardware and goes sleep.\nThe hardware then shifts out 17 bytes (FIFO + shift register) and\nsimultaneously reads bytes into the RX FIFO, but it only has 16 places,\nso it looses one byte. Then TX FIFO empty asserts, wakes the driver\nagain, which has a fast path and reads 16 bytes from the RX FIFO, but\nbefore reading the last 17th byte (which is lost) it does this:\n\n\tsr = xspi->read_fn(xspi->regs + XSPI_SR_OFFSET);\n\tif (!(sr & XSPI_SR_RX_EMPTY_MASK)) {\n\t\txilinx_spi_rx(xspi);\n\t\trx_words--;\n\t}\n\nIt reads the status register and checks if the RX FIFO is not empty.\nBut it is empty in our case. So this check spins in a while loop\nforever locking the driver.\n\nThis patch fixes the logic to determine the FIFO size.",
+  "datePublished": "Aug 15, 2026, 6:32:27 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:27 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/4ee65558a7fda463222f5edc631b6d7862218725",
+    "https://git.kernel.org/stable/c/e98f589d54068dfcc7da42d9b730e47b84e2991a",
+    "https://git.kernel.org/stable/c/1fc6a6c0cc7796b0c1cf4eec3f0720f422f09273",
+    "https://git.kernel.org/stable/c/dfab0d4698a642bab9b895e2e6d240838cfe2cc6",
+    "https://git.kernel.org/stable/c/d7ccd8736b67550eca746ed7fa39a36016ff114b",
+    "https://git.kernel.org/stable/c/1c9246a199e19b2fd36e94feed60e55f27103a4f",
+    "https://git.kernel.org/stable/c/d1944b71c18e7494756bff1a6f80c25be99eaecb",
+    "https://git.kernel.org/stable/c/47f3b5365536e8c38f264824ab15fdb74454e066",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-74276"
+  ],
+  "aliases": [
+    "GHSA-h2g9-c4gr-qg58",
+    "CVE-2026-74276"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1fe2c9f9-f3c4-3538-8d4b-78d338038512",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.212"
+    },
+    {
+      "id": "30678203-7eae-3f8c-96d9-cc6d89d26220",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c9a761402d780b86b9b068aba4ef8e29ed15e99 <1fc6a6c0cc7796b0c1cf4eec3f0720f422f09273"
+    },
+    {
+      "id": "33823943-d17f-3d29-b6f1-24cb11852f20",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.97"
+    },
+    {
+      "id": "4470c6b4-e314-300c-a8c0-4a2e38bb0b39",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.0"
+    },
+    {
+      "id": "66945c32-6436-3197-8c81-7163df760024",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c9a761402d780b86b9b068aba4ef8e29ed15e99 <e98f589d54068dfcc7da42d9b730e47b84e2991a"
+    },
+    {
+      "id": "808913a5-ee78-3ffe-827b-72219fe83dd8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "876842a0-9335-3df1-b3a9-74e6095de405",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "998bdf10-97d3-31b1-8d19-4b186432e1e1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "a250820c-cbdb-3dc3-9cd0-0b5e61982b34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c9a761402d780b86b9b068aba4ef8e29ed15e99 <1c9246a199e19b2fd36e94feed60e55f27103a4f"
+    },
+    {
+      "id": "a68f3ee3-d166-3254-bdce-ee0a3b41e8f2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c9a761402d780b86b9b068aba4ef8e29ed15e99 <d1944b71c18e7494756bff1a6f80c25be99eaecb"
+    },
+    {
+      "id": "b184b194-8ef0-30d0-af3f-35e5ece04658",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "ba9c237f-110b-3af7-8e8c-c134492f4bed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c1d716e5-0df4-3f84-837a-ddf5a289b3aa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c9a761402d780b86b9b068aba4ef8e29ed15e99 <4ee65558a7fda463222f5edc631b6d7862218725"
+    },
+    {
+      "id": "ca82acf8-943e-34d1-bea4-7dc1daedfbdd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c9a761402d780b86b9b068aba4ef8e29ed15e99 <47f3b5365536e8c38f264824ab15fdb74454e066"
+    },
+    {
+      "id": "d383e9b2-64f0-3716-8bc4-a7ecf37ac5ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.261"
+    },
+    {
+      "id": "e1770d6a-d75f-3b4f-98d4-b574fbc4f6a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c9a761402d780b86b9b068aba4ef8e29ed15e99 <dfab0d4698a642bab9b895e2e6d240838cfe2cc6"
+    },
+    {
+      "id": "efe32e2f-1985-391d-a564-4106829dec4a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c9a761402d780b86b9b068aba4ef8e29ed15e99 <d7ccd8736b67550eca746ed7fa39a36016ff114b"
+    },
+    {
+      "id": "f2af32d8-c161-31d0-a73a-c9d9a19ada00",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.178"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2e4850a8-af13-3556-8ccd-ca54ec7a9c24",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

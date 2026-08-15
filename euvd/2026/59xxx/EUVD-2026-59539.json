@@ -1,0 +1,89 @@
+{
+  "id": "EUVD-2026-59539",
+  "enisaUuid": "4ec680e6-f190-323e-a4b0-e40a7feab07b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndm: limit target bio polling to one shot\n\ndm_poll_bio() is the ->poll_bio() callback for a stacked dm device.\nThe caller only knows about the dm queue, so it may decide to do a\nspinning poll if it thinks a single queue is being polled. Passing those\nflags unchanged to the mapped clone lets blk_mq_poll() spin on a target\nqueue from inside dm_poll_bio().\n\nWith io_uring IOPOLL on a dm-stripe target this can keep a task in\n\n  dm_poll_bio() -> bio_poll() -> blk_mq_poll()\n\nlong enough to trigger an RCU CPU stall, before io_uring gets back to\nio_iopoll_check() and its need_resched() check.\n\nKeep dm's ->poll_bio() bounded by forcing one-shot polling for target\nbios. The caller can invoke dm_poll_bio() again if it wants to keep\npolling, and it also gets a chance to reap completions or reschedule\nbetween passes.",
+  "datePublished": "Aug 15, 2026, 6:32:32 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:32 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6c4ede3b771adbb3bf21ad4e8b8f2f6f6120c4f7",
+    "https://git.kernel.org/stable/c/5aa0f9231cbacade065cedd8e9b5ebd067231171",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-74392"
+  ],
+  "aliases": [
+    "CVE-2026-74392",
+    "GHSA-mp22-m63x-2wq5"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1cec97b8-37eb-3702-b999-df8baf5d2d54",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "33883a4f-fc0d-3422-a0c8-80314d939434",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f22ecf9c14c12918e30f2179ef516e99eb8b2e49 <5aa0f9231cbacade065cedd8e9b5ebd067231171"
+    },
+    {
+      "id": "54049a47-db58-35bb-9b26-9e29defcba5d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "62a2c26b-b548-3e7d-ab04-f021e2f08f89",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    },
+    {
+      "id": "7d91f537-7f96-3e03-bccf-6b95a18eadd0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f22ecf9c14c12918e30f2179ef516e99eb8b2e49 <6c4ede3b771adbb3bf21ad4e8b8f2f6f6120c4f7"
+    },
+    {
+      "id": "a0006b5b-875c-3043-90dc-9fc07e32c4c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3188ffc9-878f-3b94-8850-ee6c3617582d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

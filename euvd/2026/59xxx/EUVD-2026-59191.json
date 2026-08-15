@@ -1,0 +1,89 @@
+{
+  "id": "EUVD-2026-59191",
+  "enisaUuid": "e7b67bf1-b5f5-3926-90e9-4e2871205d47",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: s390: Initialize KVM_S390_GET_CMMA_BITS memory\n\nkvm_s390_get_cmma_bits() allocates its output buffer with vmalloc(),\nwhich does not zero the returned pages:\n\n\tvalues = vmalloc(args->count);\n\nIn the non-peek (migration) path, dat_get_cmma() reports a byte count\nspanning from the first to the last dirty page, but __dat_get_cmma_pte()\nwrites values[gfn - start] only for pages whose CMMA dirty bit is set.\nThe walk uses DAT_WALK_IGN_HOLES, so clean and unmapped pages that lie\nbetween two dirty pages within the reported span are visited but never\nstore their byte.  Those gaps (up to KVM_S390_MAX_BIT_DISTANCE pages\neach) stay uninitialized yet fall inside [0, count) and are copied out\nby copy_to_user(), disclosing stale kernel memory to user space.\n\nBefore the switch to the new gmap implementation the buffer was fully\npopulated for every gfn in the span, so no uninitialized bytes were\nexposed; the dirty-only walk introduced the leak.\n\nUse vzalloc() so the gaps read back as zero.",
+  "datePublished": "Aug 15, 2026, 6:32:18 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:18 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a4a19941ccb2164edc3491faa5ac5df82e94b363",
+    "https://git.kernel.org/stable/c/c7dda3d0f869dc97223448a06c9a2e5235928e48",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72292"
+  ],
+  "aliases": [
+    "GHSA-g39r-65h4-wx32",
+    "CVE-2026-72292"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3edd66e3-b03f-3a3f-8b30-076ffc567244",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "510e616e-24ff-3dba-b495-53fb3409db0f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "7f43dccb-240f-355b-a37e-9db3d3f6485e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e38c884df92119d96f652d51f82661dd2fc0b885 <c7dda3d0f869dc97223448a06c9a2e5235928e48"
+    },
+    {
+      "id": "85dfc44e-7a3a-3988-b719-281dbbec0655",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.0"
+    },
+    {
+      "id": "a616224b-b435-3945-bb9a-75ebea5c449d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "fb93be7e-72b4-3274-9c41-ced5363509be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e38c884df92119d96f652d51f82661dd2fc0b885 <a4a19941ccb2164edc3491faa5ac5df82e94b363"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f703874b-760d-3ad8-9e68-093e305518a1",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

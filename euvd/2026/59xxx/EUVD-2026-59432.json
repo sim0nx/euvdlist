@@ -1,0 +1,89 @@
+{
+  "id": "EUVD-2026-59432",
+  "enisaUuid": "dc1dcdd6-58a9-341e-af76-f04e2b4fd138",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: Stop leased rxq before uninstalling its memory provider\n\nnetif_rxq_cleanup_unlease() tears down the memory provider that was\ninstalled on a physical RX queue through a netkit queue lease. It\ncurrently revokes the provider's DMA mappings before stopping the\nphysical queue:\n\n  __netif_mp_uninstall_rxq(virt_rxq, p);            /* DMA unmap */\n  __netif_mp_close_rxq(phys_rxq->dev, rxq_idx, p);  /* queue stop */\n\nThis inverts the ordering used by the regular teardown paths (normal\ndevice unregister and the io_uring zcrx close path), which stop the\nqueue before revoking the provider's mappings.\n\nWith the physical queue still live, its NAPI can keep consuming\nnet_iov entries from the page_pool alloc cache after the\n__netif_mp_uninstall_rxq() has already cleared their dma_addr,\nopening a window for the device to DMA to a stale or zero address.\n\nFix it by swapping the two calls so the queue is stopped (and its\nNAPI quiesced) before the provider is uninstalled. No functional\nregression was observed across repeated runs of the nk_qlease.py\nHW selftest, which exercises the lease teardown path; this was\ntested against fbnic QEMU emulation.",
+  "datePublished": "Aug 15, 2026, 6:32:28 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:28 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/03f4c6ed3cffbfce0b85a3a0193d08a46692a9f8",
+    "https://git.kernel.org/stable/c/37314c9dbe95b4d924c7b61aaf563cec4f4e4133",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-74285"
+  ],
+  "aliases": [
+    "CVE-2026-74285",
+    "GHSA-v8cx-r8w6-r2xr"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1924f8ed-9f2f-3e63-80fe-f4ad80b327dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5602ad61ebee99c83081fba1aaf5814736edc3e7 <03f4c6ed3cffbfce0b85a3a0193d08a46692a9f8"
+    },
+    {
+      "id": "2420e347-b665-3dd6-8b04-be3b5b2f7c11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "504b3da6-bd4f-3606-8c85-f6cee341f869",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "9f23277c-25a5-3cb0-b55d-5e9b42fb5d0f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5602ad61ebee99c83081fba1aaf5814736edc3e7 <37314c9dbe95b4d924c7b61aaf563cec4f4e4133"
+    },
+    {
+      "id": "acc20e7a-9c01-37b7-85d7-ed834cb1e71f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "d8f59cc3-3756-3661-8827-0b1bc8df135e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e4a5e085-6f4d-3362-807b-66f1a3f817ac",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

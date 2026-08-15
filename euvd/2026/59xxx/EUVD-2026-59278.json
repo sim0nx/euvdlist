@@ -1,0 +1,152 @@
+{
+  "id": "EUVD-2026-59278",
+  "enisaUuid": "3dd7e651-9ad8-33bd-8f77-c6921920073b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs: refuse O_TMPFILE creation with an unmapped fsuid or fsgid\n\nvfs_tmpfile() never checked that the caller's fsuid and fsgid map into\nthe filesystem.  On an idmapped mount whose idmapping does not cover the\ncaller's fs{u,g}id, the ->tmpfile() instance initializes the new inode\nthrough inode_init_owner(), where mapped_fsuid()/mapped_fsgid() return\nINVALID_UID/INVALID_GID, and the tmpfile ends up owned by (uid_t)-1.\n\nEvery other creation path already refuses this: may_o_create() (O_CREAT)\nand may_create_dentry() (mkdir, mknod, symlink, link) bail out with\n-EOVERFLOW via fsuidgid_has_mapping() precisely so that an object cannot\nbe created with an owner the filesystem cannot represent.  An O_TMPFILE\nis no exception: it is created I_LINKABLE and linkat(2) can splice it\ninto the namespace afterwards, so the same guarantee must hold.\n\nAdd the missing fsuidgid_has_mapping() check to vfs_tmpfile().  On a\nnon-idmapped mount the caller's fs{u,g}id always map in the superblock's\nuser namespace, so this is a no-op there and only takes effect on an\nidmapped mount that does not map the caller.  It applies to every\nfilesystem that sets FS_ALLOW_IDMAP and implements ->tmpfile() (tmpfs,\next4, btrfs, xfs, f2fs, ...), and to overlayfs, whose upper-layer\ntmpfile creation funnels through vfs_tmpfile() via backing_tmpfile_open().",
+  "datePublished": "Aug 15, 2026, 6:32:22 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:22 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/bac8fb0d60254846f3b56957435dcd870ae12948",
+    "https://git.kernel.org/stable/c/503d0568a525b168d9aa5ca046ec72fc5477df84",
+    "https://git.kernel.org/stable/c/a2038514e69371eb493083a6a897ed20fcbb8acb",
+    "https://git.kernel.org/stable/c/47e434da476b5a8bcd1e6e52ab03c5ee7764ee78",
+    "https://git.kernel.org/stable/c/539dce1144651f7976fa418e618b0b574bf15eeb",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72379"
+  ],
+  "aliases": [
+    "CVE-2026-72379",
+    "GHSA-xpvr-4r6x-x86m"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "12374498-2ce7-3195-9af3-8a7e66c23c46",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.97"
+    },
+    {
+      "id": "2786e4dd-7379-32d3-9b05-0ed123f741f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e5389132ab429604c1a2459b52f0c849a71cc61 <a2038514e69371eb493083a6a897ed20fcbb8acb"
+    },
+    {
+      "id": "318cad2d-373a-3ad5-9cc9-15f5b3546993",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "537a1632-8b8f-3fbf-af8e-45eed5653091",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e5389132ab429604c1a2459b52f0c849a71cc61 <503d0568a525b168d9aa5ca046ec72fc5477df84"
+    },
+    {
+      "id": "787140ba-9075-370a-8730-b5a4a13780cf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc2"
+    },
+    {
+      "id": "83ebbf20-6ef7-30db-95bf-2a2c6275ec89",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e5389132ab429604c1a2459b52f0c849a71cc61 <47e434da476b5a8bcd1e6e52ab03c5ee7764ee78"
+    },
+    {
+      "id": "9be47a9a-ca68-3f9e-818f-baafa24cd845",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "a5b8c9d8-0095-3f51-80ff-49686d46f4c3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "a9240d51-5cf3-3ffd-bf83-8eae4cf00964",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e5389132ab429604c1a2459b52f0c849a71cc61 <539dce1144651f7976fa418e618b0b574bf15eeb"
+    },
+    {
+      "id": "bdb0b35c-2ff6-3bab-a0f2-d1a036169adf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.13"
+    },
+    {
+      "id": "d00ed868-ab49-387b-80a1-7dd5273c7bb8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e5389132ab429604c1a2459b52f0c849a71cc61 <bac8fb0d60254846f3b56957435dcd870ae12948"
+    },
+    {
+      "id": "fbfdcf74-57dd-37c1-b803-48c9efa49eff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "dd19af6e-ba87-3588-a942-83fd04f6eab2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

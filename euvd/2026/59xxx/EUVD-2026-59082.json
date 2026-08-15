@@ -1,0 +1,265 @@
+{
+  "id": "EUVD-2026-59082",
+  "enisaUuid": "1fee059e-dc01-3068-9ae0-32e47cec16bb",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nf2fs: fix potential deadlock in f2fs_balance_fs()\n\nWhen the f2fs filesystem space is nearly exhausted, we encounter deadlock\nissues as below:\n\nINFO: task A:1890 blocked for more than 120 seconds.\n      Tainted: G           O       6.12.41-g3fe07ddf05ab #1\n\"echo 0 > /proc/sys/kernel/hung_task_timeout_secs\" disables this message.\ntask:A    state:D stack:0     pid:1890  tgid:1626  ppid:1153   flags:0x00000204\nCall trace:\n __switch_to+0xf4/0x158\n __schedule+0x27c/0x908\n schedule+0x3c/0x118\n io_schedule+0x44/0x68\n folio_wait_bit_common+0x174/0x370\n folio_wait_bit+0x20/0x38\n folio_wait_writeback+0x54/0xc8\n truncate_inode_partial_folio+0x70/0x1e0\n truncate_inode_pages_range+0x1b0/0x450\n truncate_pagecache+0x54/0x88\n f2fs_file_write_iter+0x3e8/0xb80\n do_iter_readv_writev+0xf0/0x1e0\n vfs_writev+0x138/0x2c8\n do_writev+0x88/0x130\n __arm64_sys_writev+0x28/0x40\n invoke_syscall+0x50/0x120\n el0_svc_common.constprop.0+0xc8/0xf0\n do_el0_svc+0x24/0x38\n el0_svc+0x30/0xf8\n el0t_64_sync_handler+0x120/0x130\n el0t_64_sync+0x190/0x198\n\nINFO: task kworker/u8:11:2680853 blocked for more than 120 seconds.\n      Tainted: G           O       6.12.41-g3fe07ddf05ab #1\n\"echo 0 > /proc/sys/kernel/hung_task_timeout_secs\" disables this message.\ntask:kworker/u8:11   state:D stack:0     pid:2680853 tgid:2680853 ppid:2      flags:0x00000208\nWorkqueue: writeback wb_workfn (flush-254:0)\nCall trace:\n __switch_to+0xf4/0x158\n __schedule+0x27c/0x908\n schedule+0x3c/0x118\n io_schedule+0x44/0x68\n folio_wait_bit_common+0x174/0x370\n __filemap_get_folio+0x214/0x348\n pagecache_get_page+0x20/0x70\n f2fs_get_read_data_page+0x150/0x3e8\n f2fs_get_lock_data_page+0x2c/0x160\n move_data_page+0x50/0x478\n do_garbage_collect+0xd38/0x1528\n f2fs_gc+0x240/0x7e0\n f2fs_balance_fs+0x1a0/0x208\n f2fs_write_single_data_page+0x6e4/0x730\n f2fs_write_cache_pages+0x378/0x9b0\n f2fs_write_data_pages+0x2e4/0x388\n do_writepages+0x8c/0x2c8\n __writeback_single_inode+0x4c/0x498\n writeback_sb_inodes+0x234/0x4a8\n __writeback_inodes_wb+0x58/0x118\n wb_writeback+0x2f8/0x3c0\n wb_workfn+0x2c4/0x508\n process_one_work+0x180/0x408\n worker_thread+0x258/0x368\n kthread+0x118/0x128\n ret_from_fork+0x10/0x200\n\nINFO: task kworker/u8:8:2641297 blocked for more than 120 seconds.\n      Tainted: G           O       6.12.41-g3fe07ddf05ab #1\n\"echo 0 > /proc/sys/kernel/hung_task_timeout_secs\" disables this message.\ntask:kworker/u8:8    state:D stack:0     pid:2641297 tgid:2641297 ppid:2      flags:0x00000208\nWorkqueue: writeback wb_workfn (flush-254:0)\nCall trace:\n __switch_to+0xf4/0x158\n __schedule+0x27c/0x908\n rt_mutex_schedule+0x30/0x60\n __rt_mutex_slowlock_locked.constprop.0+0x460/0x8a8\n rwbase_write_lock+0x24c/0x378\n down_write+0x1c/0x30\n f2fs_balance_fs+0x184/0x208\n f2fs_write_inode+0xf4/0x328\n __writeback_single_inode+0x370/0x498\n writeback_sb_inodes+0x234/0x4a8\n __writeback_inodes_wb+0x58/0x118\n wb_writeback+0x2f8/0x3c0\n wb_workfn+0x2c4/0x508\n process_one_work+0x180/0x408\n worker_thread+0x258/0x368\n kthread+0x118/0x128\n ret_from_fork+0x10/0x20\n\nINFO: task B:1902 blocked for more than 120 seconds.\n      Tainted: G           O       6.12.41-g3fe07ddf05ab #1\n\"echo 0 > /proc/sys/kernel/hung_task_timeout_secs\" disables this message.\ntask:B     state:D stack:0     pid:1902  tgid:1626  ppid:1153   flags:0x0000020c\nCall trace:\n __switch_to+0xf4/0x158\n __schedule+0x27c/0x908\n rt_mutex_schedule+0x30/0x60\n __rt_mutex_slowlock_locked.constprop.0+0x460/0x8a8\n rwbase_write_lock+0x24c/0x378\n down_write+0x1c/0x30\n f2fs_balance_fs+0x184/0x208\n f2fs_map_blocks+0x94c/0x1110\n f2fs_file_write_iter+0x228/0xb80\n do_iter_readv_writev+0xf0/0x1e0\n vfs_writev+0x138/0x2c8\n do_writev+0x88/0x130\n __arm64_sys_writev+0x28/0x40\n invoke_syscall+0x50/0x120\n el0_svc_common.constprop.0+0xc8/0xf0\n do_el0_svc+0x24/0x38\n el0_svc+0x30/0xf8\n el0t_64_sync_handler+0x120/0x130\n el0t_64_sync+0x190/0x198\n\nINFO: task sync:2769849 blocked for more than 120 seconds.\n      Tainted: G     \n---truncated---",
+  "datePublished": "Aug 15, 2026, 6:32:07 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:07 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/162d57d8eb8440ad2d90469bf2c116abb04a9d33",
+    "https://git.kernel.org/stable/c/f51db99287b5acf81513ece82a0c95eb5db008e3",
+    "https://git.kernel.org/stable/c/e273116fbb6dfd7f027c0623e7c5109241be1919",
+    "https://git.kernel.org/stable/c/345c1d1ff751104ebdc32c145be80de566c5150f",
+    "https://git.kernel.org/stable/c/44480f7e3f8369671452c0d262831c51aa5a9c20",
+    "https://git.kernel.org/stable/c/998536c96b6ad9d99cd85dea11452ab83dc7c88d",
+    "https://git.kernel.org/stable/c/cf8b5937b7b258927ccca267995e13e76a07b38e",
+    "https://git.kernel.org/stable/c/dd3114870771562036fdcf5abe813956f36d224d",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-68460"
+  ],
+  "aliases": [
+    "GHSA-55pq-fq6f-gfm8",
+    "CVE-2026-68460"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "09d62a06-8d7f-3a9b-978e-a03dde6fcaed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.1.178"
+    },
+    {
+      "id": "0a2b628f-6433-3dad-8ad2-b761e00fdc0f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.39"
+    },
+    {
+      "id": "0e5b23bb-c57f-359f-ae9d-685889176cde",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.178"
+    },
+    {
+      "id": "117893e8-41c6-3801-810e-6966f95430b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <cf8b5937b7b258927ccca267995e13e76a07b38e"
+    },
+    {
+      "id": "151a7424-38f4-36fa-ab0e-b1978d473dd1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <7.1.5"
+    },
+    {
+      "id": "1ac467f3-9d78-3a39-bcbe-b65f0d4338af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "28abb467-80cd-3ccd-9edb-37726bfcb788",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f51db99287b5acf81513ece82a0c95eb5db008e3"
+    },
+    {
+      "id": "3a864c4f-6625-307e-aa34-8deca36b771e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.96"
+    },
+    {
+      "id": "40ffe5e2-0e05-363e-aa4b-7c4c92514507",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <998536c96b6ad9d99cd85dea11452ab83dc7c88d"
+    },
+    {
+      "id": "4762dbb9-e8b2-3130-83de-b30354eb52bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.96"
+    },
+    {
+      "id": "49d15f00-3ba0-3c50-9e37-6b075e85d65b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.261"
+    },
+    {
+      "id": "51769257-284e-3624-a437-916e5b9f8cc1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "65b46d39-15c2-3b3e-8b42-dbcc004e27bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.6.145"
+    },
+    {
+      "id": "67a6dc6c-472c-3ebf-b59e-a0646db6b14d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e273116fbb6dfd7f027c0623e7c5109241be1919"
+    },
+    {
+      "id": "689f7f93-5b09-3bf4-a683-23fb6f6a75c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <dd3114870771562036fdcf5abe813956f36d224d"
+    },
+    {
+      "id": "91a2396d-ef4c-36c6-9fc8-a3b3e19c23cb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "b915b20b-7d82-3650-b753-2c2bb99587d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.212"
+    },
+    {
+      "id": "bb834c2d-6764-3470-8a52-406f907404fa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <5.10.261"
+    },
+    {
+      "id": "d99262f0-88f0-31a0-b80c-0817c40ec72c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "dd54472d-eef8-38a4-b1ec-4eb3d97ddbb8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <5.15.212"
+    },
+    {
+      "id": "df7413b8-2070-31d8-a294-e7b854b4fb45",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <44480f7e3f8369671452c0d262831c51aa5a9c20"
+    },
+    {
+      "id": "ee2d8403-d48a-37a0-88ee-8d4f6d1d700e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <162d57d8eb8440ad2d90469bf2c116abb04a9d33"
+    },
+    {
+      "id": "fe0cc7e8-b91e-3d4f-93df-32c8952f0285",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <345c1d1ff751104ebdc32c145be80de566c5150f"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e7ceadc4-a0af-3f28-b6cc-c5d8c90ecc22",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

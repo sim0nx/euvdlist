@@ -1,0 +1,194 @@
+{
+  "id": "EUVD-2026-59044",
+  "enisaUuid": "6566ec0e-92fa-3d69-aa1f-7cc270d31146",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: xen: scsiback: Free the command tag on the TMR submit-failure path\n\nscsiback_device_action() obtains a command tag in\nscsiback_get_pend_req() and submits a task-management request with\ntarget_submit_tmr(). When target_submit_tmr() fails it returns < 0 and\nscsiback jumps to the err: label, which sends a response but frees\nnothing, leaking the tag.\n\nImpact: a pvSCSI guest can leak the command tags of a LUN's session,\nstopping the LUN, by issuing VSCSIIF_ACT_SCSI_ABORT or RESET requests\nwhenever target_submit_tmr() fails.\n\ntransport_generic_free_cmd() cannot be used here. By the time\ntarget_submit_tmr() returns an error it has already run\n__target_init_cmd() (so se_cmd->cmd_kref is one, not zero), and on its\ntarget_get_sess_cmd() error path it has freed se_cmd->se_tmr_req via\ncore_tmr_release_req() while leaving SCF_SCSI_TMR_CDB set and the\npointer dangling. Letting the command release run target_free_cmd_mem()\nwould then double-free se_tmr_req.\n\nUse the same helper, which returns just the tag, on this path too.",
+  "datePublished": "Aug 15, 2026, 6:32:11 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:11 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/4567ce79fe2f84c3dcc3a91b22a377cf482d33ad",
+    "https://git.kernel.org/stable/c/6c01f0439098f00a64b246dc27479602201382f7",
+    "https://git.kernel.org/stable/c/18d4f86816592586b38513543b5e1f9553bc271f",
+    "https://git.kernel.org/stable/c/fbc1bdede66d0f2cde83b75d6524ce1a815bb69f",
+    "https://git.kernel.org/stable/c/255fb7b0cdc947b1c01929c7f133281342a3a6b5",
+    "https://git.kernel.org/stable/c/1357fb32d42ad8da193e6da285f09e6452feabda",
+    "https://git.kernel.org/stable/c/66aefc277ebb796ec285d550305535dc3fc0179f",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72086"
+  ],
+  "aliases": [
+    "CVE-2026-72086",
+    "GHSA-mxg2-v7p6-pg5g"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "192fbbda-2097-3baa-8d01-0f5d1f29c6a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2dbcdf33dbf61f44b29adb52338282c3d7840d0e <fbc1bdede66d0f2cde83b75d6524ce1a815bb69f"
+    },
+    {
+      "id": "24d76cfa-b90f-3c3a-bb62-3b2f3a1f2551",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2dbcdf33dbf61f44b29adb52338282c3d7840d0e <18d4f86816592586b38513543b5e1f9553bc271f"
+    },
+    {
+      "id": "2bdc55d8-5d49-3de0-9bf8-3f5f1d71cb73",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.97"
+    },
+    {
+      "id": "46337cd2-1dc4-38fe-add5-7154c2baed79",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc4"
+    },
+    {
+      "id": "499b3080-695a-3d77-b5df-27044e17c296",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2dbcdf33dbf61f44b29adb52338282c3d7840d0e <6c01f0439098f00a64b246dc27479602201382f7"
+    },
+    {
+      "id": "58e3045e-de03-3e58-b317-9b3acde8775a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "5961e4bf-73ec-3226-b345-37af9bb741e4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "6d3862ac-9fbd-3e16-85a6-5906d23fa9fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.212"
+    },
+    {
+      "id": "88c097a2-544d-38e1-ac21-8492a0ef3884",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "9563ea31-e9da-3d7b-a83e-6444d964c95b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.6"
+    },
+    {
+      "id": "b486a295-c94f-3bce-8d24-eaf01abf72d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.178"
+    },
+    {
+      "id": "cd4b4437-4339-3582-96be-439a73036b94",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2dbcdf33dbf61f44b29adb52338282c3d7840d0e <66aefc277ebb796ec285d550305535dc3fc0179f"
+    },
+    {
+      "id": "d0658b1e-081b-3bfc-9348-49a14acb5cca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2dbcdf33dbf61f44b29adb52338282c3d7840d0e <1357fb32d42ad8da193e6da285f09e6452feabda"
+    },
+    {
+      "id": "d43372c8-3abc-36da-a76c-39c05added98",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2dbcdf33dbf61f44b29adb52338282c3d7840d0e <255fb7b0cdc947b1c01929c7f133281342a3a6b5"
+    },
+    {
+      "id": "d921f883-1d91-3730-b4cc-120bfa6f83d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2dbcdf33dbf61f44b29adb52338282c3d7840d0e <4567ce79fe2f84c3dcc3a91b22a377cf482d33ad"
+    },
+    {
+      "id": "f16b4c25-13d7-3362-9c8b-9398f73c680d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9ecfd3df-0904-3aac-97fe-8ac37973bd9d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

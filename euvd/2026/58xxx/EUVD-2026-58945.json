@@ -1,0 +1,89 @@
+{
+  "id": "EUVD-2026-58945",
+  "enisaUuid": "f157d6b6-9a99-3dcc-ab4f-90a17529783f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nntfs: avoid self-deadlock during inode eviction\n\nAn attribute-list update performed while allocating clusters can drop the\nlast reference to the temporary attribute inode. Evicting that inode\ndrops its reference to the base inode and can invoke ntfs_drop_big_inode()\nfor the base inode from within the base inode's own writeback path.\n\nIf the base inode is unlinked, ntfs_drop_big_inode() calls\ntruncate_setsize(), which waits for the inode's folio writeback to\ncomplete. The same writeback worker is responsible for completing that\nwriteback, so it waits for itself indefinitely.\n\nPrevent this self-deadlock by grabbing a reference to the base inode at the\nbeginning of ntfs_writepages() and releasing it at the end of the function.\nThis defers eviction until all bios have been submitted, allowing the wait\nfor folio writeback to complete safely.",
+  "datePublished": "Aug 15, 2026, 6:32:15 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:15 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/5a5f877c5df7605e9bae524a25ec0df9b9cb8ea8",
+    "https://git.kernel.org/stable/c/77dc384207d5fa63ba97c3bf3285fe1215a1cbf6",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72187"
+  ],
+  "aliases": [
+    "GHSA-f35h-7767-j6v8",
+    "CVE-2026-72187"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "367fee06-d231-3da9-804b-1b0953bcc3ca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b041ca562526b3c4a71b41b80ba5e520eac636ad <5a5f877c5df7605e9bae524a25ec0df9b9cb8ea8"
+    },
+    {
+      "id": "6ca66d8c-d5a7-3f54-8197-2bdc9ccc8b05",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "814f1b67-dce4-37e3-833b-9cdc9bf5cbf4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "92ef93fc-799e-34d3-8786-0c6b43b633fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b041ca562526b3c4a71b41b80ba5e520eac636ad <77dc384207d5fa63ba97c3bf3285fe1215a1cbf6"
+    },
+    {
+      "id": "cbcd2e27-528b-3e35-ab98-d2e42f09c6b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "f5de4edc-1aa8-3ae9-8b54-48e90c928fa8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a5ff627c-b3d1-3ca9-91e4-d9c8bffb799b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

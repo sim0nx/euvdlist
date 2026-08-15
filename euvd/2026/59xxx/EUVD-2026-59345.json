@@ -1,0 +1,110 @@
+{
+  "id": "EUVD-2026-59345",
+  "enisaUuid": "c0bd1325-6aca-37ca-b3a2-d8f0af670266",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: usb-audio: qcom: reject stream disable with no active interface\n\nhandle_uaudio_stream_req() resolves an interface index with\ninfo_idx_from_ifnum(), which returns -EINVAL when no interface matches.\nThe enable branch and the response: cleanup label both guard against a\nnegative index, but the disable branch does not: it forms\ninfo = &uadev[pcm_card_num].info[info_idx] and dereferences it.\n\nuadev[].info is a pointer allocated only when a stream is first enabled,\nso a negative info_idx on the disable path is unsafe in two ways:\n\n - If the card was never enabled, .info is NULL and &info[-EINVAL] is a\n   wild pointer; reading info->data_ep_pipe faults (kernel oops).\n\n - If the card was enabled at least once (.info allocated) and the\n   disable names an interface that does not match, &info[-EINVAL] points\n   before the allocation; info->data_ep_pipe / info->sync_ep_pipe are an\n   out-of-bounds slab read and, when non-zero, an out-of-bounds 4-byte\n   write (both pipe fields are cleared to 0). That is memory corruption,\n   not just a NULL dereference.\n\nThe request is reachable from unprivileged local userspace over\nAF_QIPCRTR. Reject a disable request with no resolved interface, matching\nthe guard the enable path already has.",
+  "datePublished": "Aug 15, 2026, 6:32:24 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:24 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/25a867aa5e67a84333fa6e5c21292c5bcff86b90",
+    "https://git.kernel.org/stable/c/a22356d1f731553e99aa2707dbd38c659bdd28d8",
+    "https://git.kernel.org/stable/c/bdb640be82e645e2828731648f485224d0c2587b",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72446"
+  ],
+  "aliases": [
+    "GHSA-xg4f-mwxf-g67f",
+    "CVE-2026-72446"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "02f27cf5-9e0c-336d-bc56-ef3f714ec524",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "405229f2-8dfd-3640-b003-a197ef933220",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "4bbd767b-d50e-3bdd-943f-898e52c7e0e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "571d0291-9d13-3836-a898-3ff6adf4e626",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "9119c8d2-5be6-3fe6-ab27-9102bbc4e747",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "95e92e16-3e66-3b96-8cdd-edb6c2899b6a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "326bbc348298ab0946c5560defe024a5f6ef28bb <25a867aa5e67a84333fa6e5c21292c5bcff86b90"
+    },
+    {
+      "id": "de2d3a45-915d-373d-a476-5f37cca58737",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "326bbc348298ab0946c5560defe024a5f6ef28bb <bdb640be82e645e2828731648f485224d0c2587b"
+    },
+    {
+      "id": "ef6beaef-4906-325b-aed8-7763ccf49d9b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "326bbc348298ab0946c5560defe024a5f6ef28bb <a22356d1f731553e99aa2707dbd38c659bdd28d8"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "57c11f40-f933-32cd-9c5f-9a6200d58c75",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

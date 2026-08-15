@@ -1,0 +1,152 @@
+{
+  "id": "EUVD-2026-59029",
+  "enisaUuid": "409604db-5404-3e95-98e1-dc38292efbf7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntracing/user_events: Fix use-after-free in user_event_mm_dup()\n\nuser_event_mm_dup() walks the parent mm's enabler list locklessly under\nrcu_read_lock() during fork() (from copy_process()); it does not take\nevent_mutex:\n\n\trcu_read_lock();\n\tlist_for_each_entry_rcu(enabler, &old_mm->enablers, mm_enablers_link)\n\t\tenabler->event = user_event_get(orig->event);\n\nuser_event_enabler_destroy() removes an enabler from that list with\nlist_del_rcu() and then, without waiting for a grace period, drops the\nenabler's user_event reference with user_event_put() and frees the enabler\nwith kfree(). A reader that loaded the enabler before the list_del_rcu()\ncan still be walking it, which leads to two use-after-frees:\n\n - kfree(enabler) frees the enabler while that reader dereferences\n   enabler->event.\n\n - user_event_put() may drop the last reference to the user_event, which\n   is then freed (via delayed_destroy_user_event() on a work queue), while\n   the same reader does user_event_get(orig->event) on it.\n\nBoth are reachable by an unprivileged task that can open user_events_data:\none multithreaded process that registers an enabler and then concurrently\nunregisters it and calls fork() triggers the race. KASAN reports a\nslab-use-after-free in user_event_mm_dup() during clone(), with a\n\"refcount_t: addition on 0\" warning when the user_event is freed.\n\nThe enabler use-after-free was found first; the user_event one was reported\nby XIAO WU, and the earlier enabler-only fix did not address it.\n\nDefer both the user_event_put() and the kfree(enabler) to a work item\nqueued with queue_rcu_work(), so they run only after an RCU grace period,\nonce all readers walking the enabler list have finished. The put must run\nin process context because user_event_put() takes event_mutex on the last\nreference, so a work queue is used rather than call_rcu(). The now-unlocked\nput lets the locked argument of user_event_enabler_destroy() be removed;\nall callers are updated.",
+  "datePublished": "Aug 15, 2026, 6:32:11 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:11 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/25acb6711da6fa0382744fa92bd6d42a22c1ae68",
+    "https://git.kernel.org/stable/c/95400e7039cdfeb0b53652d521d766f1698cae95",
+    "https://git.kernel.org/stable/c/b33ac2d39953efb12f598c0dae242c5f644ea669",
+    "https://git.kernel.org/stable/c/05b24f68f78ff3a1ef7f015f7327b35886b741f6",
+    "https://git.kernel.org/stable/c/50fd6dd755c6e48a38af2fa4621167eea56829c2",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72071"
+  ],
+  "aliases": [
+    "CVE-2026-72071",
+    "GHSA-c3qx-9jfj-8c4p"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0ce2fc50-bc44-38ad-aacb-c72e5c4b49b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7235759084a4f8524a46bd2638885ff3b34ce279 <b33ac2d39953efb12f598c0dae242c5f644ea669"
+    },
+    {
+      "id": "0d3485da-dbec-301d-981d-86efe295e96e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc3"
+    },
+    {
+      "id": "594c7677-f5ce-3331-b6b2-1af4f8cf9f70",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.4"
+    },
+    {
+      "id": "7c37d13d-4356-3a4b-9aa1-fb06a3f9a7eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "88dc4871-677c-3dd5-86a7-54655a4250af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7235759084a4f8524a46bd2638885ff3b34ce279 <05b24f68f78ff3a1ef7f015f7327b35886b741f6"
+    },
+    {
+      "id": "903ebe97-eeaa-312f-b0db-578305b65bdc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7235759084a4f8524a46bd2638885ff3b34ce279 <25acb6711da6fa0382744fa92bd6d42a22c1ae68"
+    },
+    {
+      "id": "a43c49e5-f084-3d55-9383-e19edeea4625",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.97"
+    },
+    {
+      "id": "b0b365ec-cbea-3fa0-a0c8-06e97d126e46",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7235759084a4f8524a46bd2638885ff3b34ce279 <95400e7039cdfeb0b53652d521d766f1698cae95"
+    },
+    {
+      "id": "b2266646-1388-3b83-a131-94fe849d1d03",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e06864c9-e320-31a4-82b1-46c1cfca7db7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7235759084a4f8524a46bd2638885ff3b34ce279 <50fd6dd755c6e48a38af2fa4621167eea56829c2"
+    },
+    {
+      "id": "e0929be4-143e-3f6b-afe8-e6a85d594631",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "f8f23f23-e818-33f4-b7f4-c9d1de5951fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "93edc3fd-df90-3c94-b993-5776dde3f5f0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

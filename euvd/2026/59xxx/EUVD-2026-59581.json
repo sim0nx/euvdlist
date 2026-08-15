@@ -1,0 +1,110 @@
+{
+  "id": "EUVD-2026-59581",
+  "enisaUuid": "3b0e9ae3-a61c-37ed-aaa0-79b79dfc7ee0",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrxrpc: Don't move a peeked OOB message onto the pending queue\n\nrxrpc_recvmsg_oob() takes a received oob message off recvmsg_oobq and,\nif a response is needed, moves it onto the pending_oobq tree. However,\nonly the unlink from recvmsg_oobq is guarded by MSG_PEEK; the move onto\npending_oobq always runs.\n\nAs a result, reading a challenge with MSG_PEEK leaves the skb on\nrecvmsg_oobq while also adding it to pending_oobq. Since struct\nsk_buff's rbnode shares storage with its next and prev pointers,\nrb_insert_color() overwrites the list linkage, and the skb, which holds\na single reference, becomes reachable from both queues at once.\n\nWhen the socket is closed both queues are drained in turn. While\ndraining recvmsg_oobq, __skb_unlink() follows the next and prev\npointers that rbnode has overwritten and writes to a bad address. Also,\nas the skb holds a single reference but is freed from each queue, both\nthe skb and the connection reference it holds are released twice. This\nleads to memory corruption and to a use-after-free caused by the\nconnection refcount underflow.\n\nMSG_PEEK does not consume the message from the queue, so only unlink it\nfrom recvmsg_oobq and then move it onto pending_oobq or free it when\nthe message is actually consumed.",
+  "datePublished": "Aug 15, 2026, 6:32:33 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:33 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/9ada3931beb37068fcb725b34b0398457009f343",
+    "https://git.kernel.org/stable/c/5f470cc883416fea6d3bce18ef96bf91dd49ffc3",
+    "https://git.kernel.org/stable/c/5801cff7d5d7b4e9d877dfb627b23eb63167f02c",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-74434"
+  ],
+  "aliases": [
+    "GHSA-c2x8-r5f6-55c5",
+    "CVE-2026-74434"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1b617e73-1d65-3d53-a13b-7430f2590774",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "228b6fc0-9427-3f0d-a435-4be03f3179a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "2e2dec73-f4f7-3d2e-abf3-6f04d83c0f9f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.16"
+    },
+    {
+      "id": "354cd819-c79a-3b99-bcf7-e52df6582a0e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "681662c2-8b89-3000-8b24-f4899f812f7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5800b1cf3fd8ccab752a101865be1e76dac33142 <5801cff7d5d7b4e9d877dfb627b23eb63167f02c"
+    },
+    {
+      "id": "6eb1e82b-34b4-3e83-842a-c6d85079e453",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "897b0bfb-aa8a-36e1-bb6a-3ff866bf6dd6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5800b1cf3fd8ccab752a101865be1e76dac33142 <5f470cc883416fea6d3bce18ef96bf91dd49ffc3"
+    },
+    {
+      "id": "8b55dee7-b840-35ba-9b8c-9e40a2c05959",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5800b1cf3fd8ccab752a101865be1e76dac33142 <9ada3931beb37068fcb725b34b0398457009f343"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "aad30710-5194-30c1-9b10-9761a9e0f767",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

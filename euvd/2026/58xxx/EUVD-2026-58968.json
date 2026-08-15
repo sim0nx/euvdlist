@@ -1,0 +1,79 @@
+{
+  "id": "EUVD-2026-58968",
+  "enisaUuid": "be8acf20-9285-3e8d-90df-1a19f85d6ab2",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nntfs: fix off-by-one in mapping pairs decoding bounds checks\n\nIn ntfs_mapping_pairs_decompress(), attr_end points one byte past the\nend of the attribute record:\n\n    attr_end = (u8 *)attr + le32_to_cpu(attr->length);\n\nThe two bounds checks validating that mapping pair data bytes fit within\nthe attribute use strict greater-than (>), which allows a one-byte\nout-of-bounds read when the data extends exactly to attr_end:\n\n  b = *buf & 0xf;\n  if (b) {\n      if (unlikely(buf + b > attr_end))   // off-by-one\n          goto io_error;\n      for (deltaxcn = (s8)buf[b--]; b; b--)\n          deltaxcn = (deltaxcn << 8) + buf[b];\n  }\n\nWhen buf + b == attr_end, the check evaluates to false and buf[b] reads\none byte past the valid attribute boundary. The same pattern appears in\nthe LCN delta bytes check.\n\nFix both checks to use >= so that buf[b] at exactly attr_end is\ncorrectly rejected as out of bounds.",
+  "datePublished": "Aug 15, 2026, 6:32:16 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:16 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/bfe835e535fe0aa5767fdd8116f62e835ba50b55",
+    "https://git.kernel.org/stable/c/18760a74ef7c28df93726445b5595162e62ed341",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72210"
+  ],
+  "aliases": [
+    "CVE-2026-72210",
+    "GHSA-hpv2-jq93-768m"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "43402b02-c97e-3bd1-a72e-1d5e8618fe2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "8e1a03e7-732f-3804-b456-10f3a2373c5a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <7.1.5"
+    },
+    {
+      "id": "952876a4-5b49-339c-8361-cac5bb9b56c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <18760a74ef7c28df93726445b5595162e62ed341"
+    },
+    {
+      "id": "baf882aa-eecd-3652-b0e0-1a448c082ecd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "df5948c5-6c2e-3265-a511-48b64cdcac04",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <bfe835e535fe0aa5767fdd8116f62e835ba50b55"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5b7b7eb8-a669-37d2-9ec4-c784e720f38e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

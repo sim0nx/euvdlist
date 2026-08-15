@@ -1,0 +1,152 @@
+{
+  "id": "EUVD-2026-59136",
+  "enisaUuid": "2f340625-d7fc-3940-994c-45b6f332df0c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nperf/x86/amd/brs: Fix kernel address leakage\n\nA user-only branch stack can contain branches that originate from\nthe kernel. As a result, kernel addresses are exposed to user space\neven when PERF_SAMPLE_BRANCH_USER is requested. On AMD processors\nsupporting X86_FEATURE_BRS (Zen 3 only), perf can still report entries\nsuch as SYSRET/interrupt returns for which the branch-from addresses\nare in the kernel.\n\nE.g.\n\n  $ perf record -j any,u -c 4000 -e branch-brs -o - -- \\\n        perf bench syscall basic --loop 1000 | \\\n        perf script -i - -F brstack|tr ' ' '\\n'| \\\n        grep -E '0x[89a-f][0-9a-f]{15}'\n\n  ...\n  0xffffffff810001c4/0x72e2e32955eb/-/-/-/0//-\n  0xffffffff810001c4/0x72e2d94a9821/-/-/-/0//-\n  0xffffffff810001c4/0x72e2d94ffa1b/-/-/-/0//-\n  ...\n\nBRS provides no hardware branch filtering, so privilege level\nfiltering is performed entirely in software. However, amd_brs_match_plm()\nonly validates the branch-to address against the requested privilege\nlevels. For branches from the kernel to user space, the branch-from\naddress is left unchecked and is leaked. Extend the software filter to\nalso validate the branch-from address, so that any branch record whose\nbranch-from address is in the kernel is dropped when\nPERF_SAMPLE_BRANCH_USER is requested.",
+  "datePublished": "Aug 15, 2026, 6:32:16 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:17 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ac44b4a3d6137489f8fa2e794b12e849c6b22eaa",
+    "https://git.kernel.org/stable/c/90843d00dbc61220b66408ea0d8775cae9e51f70",
+    "https://git.kernel.org/stable/c/046f6244da9b68e463a849b21446b9424e531491",
+    "https://git.kernel.org/stable/c/2e706be56f418718bb3ae66c0aa94f9b61150e6d",
+    "https://git.kernel.org/stable/c/47915e855fb38b42133e31ba917d99565f862154",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72237"
+  ],
+  "aliases": [
+    "GHSA-wcfv-p978-69xf",
+    "CVE-2026-72237"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "08ab8670-6664-37f8-a190-42d2b4a7f913",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8910075d61a37e5b0d82e6c83ed9a0a31fe9ea08 <046f6244da9b68e463a849b21446b9424e531491"
+    },
+    {
+      "id": "2ef86a46-a7f9-3cbd-8783-95fd4dcd7903",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.97"
+    },
+    {
+      "id": "3759686d-a9d8-36ca-acef-fd88e2fe794b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "8b929cc1-6444-366b-b1ee-5a1301fdb80e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "934f7567-5a85-353a-ad2b-99db9ac31155",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "949fcb02-9159-3868-9f6a-ab81673d233b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "a43037aa-e615-3600-b6e7-135634f970e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8910075d61a37e5b0d82e6c83ed9a0a31fe9ea08 <47915e855fb38b42133e31ba917d99565f862154"
+    },
+    {
+      "id": "ac24ff01-bc44-3c6c-8db3-c1d4784f18bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc3"
+    },
+    {
+      "id": "b88f584d-f476-311d-bb39-3925cc9617d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8910075d61a37e5b0d82e6c83ed9a0a31fe9ea08 <ac44b4a3d6137489f8fa2e794b12e849c6b22eaa"
+    },
+    {
+      "id": "e65e188a-2a6e-388e-bd0e-75eb32cfc82c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.19"
+    },
+    {
+      "id": "ebd6455f-a140-379c-8d5b-535aae64436c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8910075d61a37e5b0d82e6c83ed9a0a31fe9ea08 <90843d00dbc61220b66408ea0d8775cae9e51f70"
+    },
+    {
+      "id": "f5493c06-1b63-3c97-9313-833677641973",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8910075d61a37e5b0d82e6c83ed9a0a31fe9ea08 <2e706be56f418718bb3ae66c0aa94f9b61150e6d"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "08166dbd-4bf3-326f-9ffe-adc4ee26c84a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "id": "EUVD-2026-59052",
+  "enisaUuid": "5485698b-d88e-36bd-ac89-db17e9044ed7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndma-buf: dma-fence: Fix potential NULL pointer dereference\n\nThe commit mentioned in the fixes tag below introduced a mechanism\nthrough which fence producers can fully decouple from fence consumers.\nThis, desirable, mechanism is based on the fence's signaled-bit as the\n\"decoupling point\".\n\nA sophisticated interaction between RCU and atomic instructions attempts\nto ensure that fence consumers can still interact with fence producers\nthrough the dma_fence_ops (callback pointers into the producer).\n\nThis is the desired behavior: to check for decoupling, the signaled-bit\nis first checked. If it's not yet signaled, RCU ensures that the ops\npointer cannot yet be NULL.\n\nHereby, dma_fence_signal_timestamp_locked() first sets the signaled-bit,\nand then sets the ops pointer to NULL. Readers first load the ops\npointer, and then check through the signaled-bit whether the pointer can\nlegally be accessed.\n\nThese set and load operations could occur out of order on weakly ordered\nplatforms. This problem can be solved very elegantly by using the ops\npointer itself as the synchronization point. The pointer is either NULL,\nor cannot become NULL while it is being used thanks to RCU.\n\nReplace the signaled-bit check in dma_fence_timeline_name() and\ndma_fence_driver_name().",
+  "datePublished": "Aug 15, 2026, 6:32:11 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:12 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/15ecfdf0ef6f6d874d0a26690d300857b39ebfd0",
+    "https://git.kernel.org/stable/c/035219a760edb35ae9a9e96beba7f122e26a997b",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72094"
+  ],
+  "aliases": [
+    "CVE-2026-72094",
+    "GHSA-cpm6-254x-7j7p"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0b4380c5-7e42-3f6d-990f-b9834506cad2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "137ce965-3835-3ad5-a64e-72129780f2c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f4cc3ab824d6772a48ca9d9c74ac623b3309985d <15ecfdf0ef6f6d874d0a26690d300857b39ebfd0"
+    },
+    {
+      "id": "4867f8af-2164-382f-bf82-c6a3f5201d17",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "65cb2caf-f260-372f-be0a-1a736d6bf16f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc2"
+    },
+    {
+      "id": "964c6c06-5eac-34e4-a3fe-586bfeb5686c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f4cc3ab824d6772a48ca9d9c74ac623b3309985d <035219a760edb35ae9a9e96beba7f122e26a997b"
+    },
+    {
+      "id": "c0616221-a2be-3044-9592-ce4c00b348f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "41828787-31cb-3438-8f17-c84e07555fe2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

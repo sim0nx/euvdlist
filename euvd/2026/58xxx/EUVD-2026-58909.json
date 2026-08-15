@@ -1,0 +1,131 @@
+{
+  "id": "EUVD-2026-58909",
+  "enisaUuid": "be72e535-64fe-3877-b382-b73a6e14dd2c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntpm: tpm2-sessions: wait for async KPP completion in tpm_buf_append_salt\n\ntpm_buf_append_salt() in drivers/char/tpm/tpm2-sessions.c calls\ncrypto_kpp_generate_public_key() and crypto_kpp_compute_shared_secret()\nwithout installing a completion callback, discards both return values,\nand immediately frees the kpp_request via kpp_request_free(). When the\nresolved ecdh-nist-p256 KPP backend is asynchronous (atmel-ecc, HPRE,\nkeembay-ocs), either operation returns -EINPROGRESS and the deferred\ncompletion worker dereferences the freed request.\n\nThe path fires automatically from the hwrng_fillfn kernel thread via\ntpm_get_random -> tpm2_get_random -> tpm2_start_auth_session ->\ntpm_buf_append_salt on every entropy poll, without any userland action.\n\nInstall crypto_req_done as the completion callback, wrap both KPP\noperations in crypto_wait_req(), and propagate errors to the caller.\nThe wait is a no-op for synchronous backends.",
+  "datePublished": "Aug 15, 2026, 6:32:14 AM",
+  "dateUpdated": "Aug 15, 2026, 6:32:14 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/111e520efbe82b324bc42b1999b723c0619eea6d",
+    "https://git.kernel.org/stable/c/934d1cd40e2893bf7a041b54f6afd1c008d7a21c",
+    "https://git.kernel.org/stable/c/493333f167926c7adab8e7563e21ad71d8af84fa",
+    "https://git.kernel.org/stable/c/73851a7c43dfa52d2ed9415889b33daf85da0ed9",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-72151"
+  ],
+  "aliases": [
+    "GHSA-53hq-7c43-pvmj",
+    "CVE-2026-72151"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0de4f417-cc38-36de-bcde-2b6156b0fef2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "14908030-4b1e-36fc-94ca-1f416c2d344c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.10"
+    },
+    {
+      "id": "2450efdb-c52b-368b-9fcb-4db12a6189b5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1085b8276bb4239daa7008f0dcd5c973e4bd690f <111e520efbe82b324bc42b1999b723c0619eea6d"
+    },
+    {
+      "id": "2edad432-3498-3385-bc1f-94ba8101477b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.97"
+    },
+    {
+      "id": "42f11a3d-0141-3bb1-9bdf-6e6fd20a3cb1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc1"
+    },
+    {
+      "id": "6238a750-8149-3c37-9348-f2bb95776b3f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "87f6c722-e3c5-348d-8595-6a952c8f4014",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "ac55a301-63f5-3a85-a7a3-e7526290a997",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1085b8276bb4239daa7008f0dcd5c973e4bd690f <73851a7c43dfa52d2ed9415889b33daf85da0ed9"
+    },
+    {
+      "id": "c44401ec-3b1a-3cb1-aa2e-ddb2c1128648",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1085b8276bb4239daa7008f0dcd5c973e4bd690f <493333f167926c7adab8e7563e21ad71d8af84fa"
+    },
+    {
+      "id": "da2406a6-8f73-3738-a033-28df7bd495ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1085b8276bb4239daa7008f0dcd5c973e4bd690f <934d1cd40e2893bf7a041b54f6afd1c008d7a21c"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6538dd1a-4841-315b-830d-6bea089ff8ff",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
