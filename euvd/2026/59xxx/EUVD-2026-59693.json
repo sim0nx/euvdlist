@@ -1,0 +1,169 @@
+{
+  "id": "EUVD-2026-59693",
+  "enisaUuid": "df2089fa-24f5-3c70-8907-546c52cd1093",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: usb-audio: fix stack info leak in RME Digiface status\n\nsnd_rme_digiface_read_status() reads a four-word status block from the\ndevice into an uninitialised on-stack __le32 buf[4] and, whenever the\nvendor control-IN transfer does not return a negative error, copies all\nfour words into the caller's status[].\n\nsnd_usb_ctl_msg() copies the full requested size back into the caller's\nbuffer regardless of how many bytes the data stage actually delivered:\n\n\tbuf = kmemdup(data, size, GFP_KERNEL);\n\terr = usb_control_msg(dev, pipe, request, requesttype,\n\t\t\t      value, index, buf, size, timeout);\n\tmemcpy(data, buf, size);\n\nusb_control_msg() returns the transferred length on a short control-IN,\nwhich is a non-negative value, and writes only that many bytes.  The\nremainder of the copy back is the kmemdup()ed image of the caller's\nbuffer, so a device answering with a short data stage leaves the\ntrailing words of buf[] holding leftover kernel stack.  The only guard\nin the caller is err < 0, so those words are stored into status[].\n\nThey then reach user space: snd_rme_digiface_get_status_val() selects a\n16-bit halfword of status[] per the control's reg/mask, and the eight\nDigiface status controls together expose the whole 16-byte frame to an\nunprivileged reader of /dev/snd/controlC*.\n\nZero-initialise the buffer so a short read yields zeros instead of stack\nresidue.  This mirrors snd_rme_get_status1(), which already clears its\noutput word before the same kind of vendor read.\n\nDiscovered by XBOW, triaged by Baul Lee <baul.lee@xbow.com>",
+  "datePublished": "Aug 15, 2026, 12:27:26 PM",
+  "dateUpdated": "Aug 15, 2026, 12:27:26 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/b3a346d5c99dd73cf84711f2a43e42691990efd2",
+    "https://git.kernel.org/stable/c/7ba01e0d3539d9cf0aef3e82938f1648147744cc",
+    "https://git.kernel.org/stable/c/98dbfbb38e297c25c5b0af4a9018d71ac25e8554",
+    "https://git.kernel.org/stable/c/441aaad150c57edaf57ee482a79a3bf4c5b7e353"
+  ],
+  "aliases": [
+    "CVE-2026-74500"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0133dc53-7d77-3d86-9720-98cdf95f82f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc6"
+    },
+    {
+      "id": "101b5458-58d5-3302-b29e-e5094688fbdc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "50f63f11a6ddaa0d34574df72b3fa6ee257c057d"
+    },
+    {
+      "id": "1583f69d-baec-3c6b-ad9b-1760f7062a3d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.103"
+    },
+    {
+      "id": "222adbcc-6069-3d9b-bef6-80aca33d5d4f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.11.3 <6.12"
+    },
+    {
+      "id": "501a54c3-8bdf-35ae-aea6-7e5bc0b23019",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "611a96f6acf2e74fe28cb90908a9c183862348ce <441aaad150c57edaf57ee482a79a3bf4c5b7e353"
+    },
+    {
+      "id": "5d2b182c-5929-3769-8d36-82e4b2d9ff62",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.8"
+    },
+    {
+      "id": "648dd3d8-edbe-3bfd-8893-3736bf696e80",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.10.14 <6.11"
+    },
+    {
+      "id": "7d8abb4f-57af-39c3-aa2c-53d11c97cef3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "611a96f6acf2e74fe28cb90908a9c183862348ce <b3a346d5c99dd73cf84711f2a43e42691990efd2"
+    },
+    {
+      "id": "8d80285f-e152-3743-b3dc-6aff59348480",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a7d17341-ae2f-32eb-a2e7-8b966dd21642",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.44"
+    },
+    {
+      "id": "ad59ad1b-829f-363c-a14a-95882f348ef1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "611a96f6acf2e74fe28cb90908a9c183862348ce <7ba01e0d3539d9cf0aef3e82938f1648147744cc"
+    },
+    {
+      "id": "b19afade-0b30-3511-a3d1-618cd6405714",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "611a96f6acf2e74fe28cb90908a9c183862348ce <98dbfbb38e297c25c5b0af4a9018d71ac25e8554"
+    },
+    {
+      "id": "ca3ad0b2-0abf-3232-a522-a7c904348f56",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12"
+    },
+    {
+      "id": "e16c2f19-e03f-38bd-a25f-c54f573189b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3089703ab71484a8b9a7641051181d11d60f870c"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0f431c8a-8419-30d3-adca-90fb006dd936",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

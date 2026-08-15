@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-59672",
+  "enisaUuid": "9e1604ea-3a95-3af0-acda-4525634c9653",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: pktgen: fix proc entry use-after-free\n\npktgen_change_name() replaces pkt_dev->entry while holding t->if_lock.\npktgen_remove_device() removes the same entry before\n_rem_dev_from_if_list() takes that lock.\n\nThis allows the following interleaving:\n\n  CPU 0 (NETDEV_CHANGENAME)       CPU 1 (kpktgend)\n  if_lock(t)\n  proc_remove(pkt_dev->entry)\n                                  proc_remove(pkt_dev->entry)\n  pkt_dev->entry = proc_create_data(...)\n  if_unlock(t)\n\nThe kthread can pass the stale proc_dir_entry to proc_remove() after the\nrename path has freed it. A reproducer with a widened race window reports:\n\n  BUG: KASAN: slab-use-after-free in proc_remove+0x78/0x80\n  Read of size 8 at addr ffff8881478fea70 by task kpktgend_0/67\n  Call Trace:\n   proc_remove+0x78/0x80\n   pktgen_remove_device.isra.0+0x11c/0x4c0\n   pktgen_thread_worker+0x1214/0x6bc0\n   kthread+0x2c6/0x3b0\n  Allocated by task 95:\n   __proc_create+0x204/0x790\n   proc_create_data+0x72/0xe0\n   pktgen_thread_write+0xd61/0x1510\n  Freed by task 28:\n   kmem_cache_free+0xcb/0x3d0\n   proc_free_inode+0x5b/0x80\n   rcu_core+0x50a/0x1850\n  The buggy address belongs to the object at ffff8881478fea00\n   which belongs to the cache proc_dir_entry of size 192\n\nMove proc_remove() into the if_lock-protected list removal helper. Keep it\nbefore list_del_rcu() to preserve the ordering required by add_device().\nThe rename path must then finish replacing the entry before removal, or\nit observes that the device is no longer on the list.",
+  "datePublished": "Aug 15, 2026, 12:27:13 PM",
+  "dateUpdated": "Aug 15, 2026, 12:27:13 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/4ef801b838d85c0ea5852c50667f7344ce3b6cd0",
+    "https://git.kernel.org/stable/c/b006a5404470bd3eb2aa0425fc447183032047ef",
+    "https://git.kernel.org/stable/c/817ff6efdb7f484ea547218e11e17d8e43daa3b4"
+  ],
+  "aliases": [
+    "CVE-2026-74479"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1fafb798-df0a-321d-b100-c5792d0ebaec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.22"
+    },
+    {
+      "id": "3fac918c-c68f-31ff-be7e-bbd1cc2141e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "72bb007a-fdd8-3861-8f36-025a53b64ed3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39df232f1a9ba48d41c68ee7d4046756e709cf91 <4ef801b838d85c0ea5852c50667f7344ce3b6cd0"
+    },
+    {
+      "id": "74adc77e-8b0e-3d0a-847b-c2bc993c4c62",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc6"
+    },
+    {
+      "id": "74de824c-574f-39ed-9f69-ea58f34a0c7a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.8"
+    },
+    {
+      "id": "9ac06a3b-c20c-39c7-a32c-955b2b0d314f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39df232f1a9ba48d41c68ee7d4046756e709cf91 <b006a5404470bd3eb2aa0425fc447183032047ef"
+    },
+    {
+      "id": "afea0295-b66f-334d-a917-2ac5c98ceb2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39df232f1a9ba48d41c68ee7d4046756e709cf91 <817ff6efdb7f484ea547218e11e17d8e43daa3b4"
+    },
+    {
+      "id": "e1543087-f13c-33e4-bc90-fbca0a50003d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.44"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3186942d-12d0-3878-b5ea-90a2c58649a9",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

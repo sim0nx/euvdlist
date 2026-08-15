@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-59620",
+  "enisaUuid": "a7fcccd7-9b58-37a8-bcda-1d194e4eb46b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: libsas: Fix HA resume deadlock and hisi_sas disk-wake race\n\nCommit fbefe22811c3 (\"scsi: libsas: Don't always drain event workqueue\nfor HA resume\") introduced sas_resume_ha_no_sync() to avoid a deadlock:\nthe PHYE_RESUME_TIMEOUT handler, running on the HA event workqueue,\ncalls sas_deform_port() -> sas_destruct_devices(), which removes SCSI\ndevices and waits for the host to become runtime-active. But the host\ncannot resume until sas_resume_ha() -> sas_drain_work() returns, and the\ndrain is blocked on that very handler.\n\nHowever skipping the drain reintroduces a race: hisi_sas returns from\nresume before all PHY UP work and libsas discovery work finish. The\ncontroller may then autosuspend while disks are still waking up. The\ndisks issue IO to a suspended controller, the IO fails, and the disks\nget disabled.\n\nFix the deadlock at its source by moving the PHYE_RESUME_TIMEOUT\nnotification to after sas_drain_work(). By then the host resume is about\nto complete, so device removal through device_link no longer blocks on\nthe resume and the cycle is broken.\n\nWith the deadlock gone, restore sas_resume_ha() (the draining variant)\nin hisi_sas and remove sas_resume_ha_no_sync().\n\nThe reorder is safe for the other libsas consumers (isci, pm8001,\naic94xx, mvsas). During suspend, sas_suspend_devices() calls\nsas_notify_lldd_dev_gone() for each device, which sets dev->lldd_dev to\nNULL. When scsi_unblock_requests re-enables I/O in resume, any I/O to a\ntimed-out phy's disk is immediately rejected by the LLDD before reaching\nhardware: isci returns SAS_DEVICE_UNKNOWN (mapped to DID_BAD_TARGET),\nand pm8001 returns SAS_PHY_DOWN (mapped to DID_NO_CONNECT). Both\ncomplete directly via scsi_done() without entering SCSI EH. This is\nidentical in both the old and new ordering since lldd_dev_gone runs\nduring suspend, before resume. The reorder only affects when the\nPHYE_RESUME_TIMEOUT handler runs (synchronized by sas_drain_work()\nvs. asynchronous after resume returns), not whether I/O can reach the\ndevice. aic94xx and mvsas do not register any PM ops and never reach\nthis code path.",
+  "datePublished": "Aug 15, 2026, 12:28:00 PM",
+  "dateUpdated": "Aug 15, 2026, 12:28:00 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e50a6523a603594a6d92cdecfe11997d639410a3",
+    "https://git.kernel.org/stable/c/c391b5899dd46485a5893696c12ae3e95a3a7325",
+    "https://git.kernel.org/stable/c/9e24b47ef81d43b3fb1b14294f09991640c79fcc",
+    "https://git.kernel.org/stable/c/b9c44a14062093e9fc2d6bddc696cfceadb482d7",
+    "https://git.kernel.org/stable/c/3dbbbf656b850c9c8de05df6ad4a1dfc6ff02845"
+  ],
+  "aliases": [
+    "CVE-2026-74555"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "03c9792b-cde6-33be-84fa-12e1e09ebf30",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.151"
+    },
+    {
+      "id": "5ebc0fc4-63a8-3480-bef0-40c76dee33ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbefe22811c3140a686e407e114789ebf328a9a2 <e50a6523a603594a6d92cdecfe11997d639410a3"
+    },
+    {
+      "id": "66709b50-b899-3f6d-a482-06040411b0d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.8"
+    },
+    {
+      "id": "8ce74a74-92d0-3992-a67a-b91959e61b0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "972f9dd5-b44d-3864-8370-c80fae6807aa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc6"
+    },
+    {
+      "id": "a5b90e3f-b01a-3334-a817-27019539afb9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbefe22811c3140a686e407e114789ebf328a9a2 <c391b5899dd46485a5893696c12ae3e95a3a7325"
+    },
+    {
+      "id": "a8247097-7cf0-3702-903b-fd94d541d9a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbefe22811c3140a686e407e114789ebf328a9a2 <9e24b47ef81d43b3fb1b14294f09991640c79fcc"
+    },
+    {
+      "id": "beeb008e-3ce8-38d5-90b7-df59fef5d4a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbefe22811c3140a686e407e114789ebf328a9a2 <b9c44a14062093e9fc2d6bddc696cfceadb482d7"
+    },
+    {
+      "id": "d0102552-215c-3581-a974-4cc4d09d1e53",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbefe22811c3140a686e407e114789ebf328a9a2 <3dbbbf656b850c9c8de05df6ad4a1dfc6ff02845"
+    },
+    {
+      "id": "dbfbe76c-9545-3fef-97f0-5ced6b445a78",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.17"
+    },
+    {
+      "id": "e20c0d3f-dee8-3f6d-82a3-2addf9ec9686",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.44"
+    },
+    {
+      "id": "e8203ea8-f4ab-37cd-8735-7df5350f1cef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.103"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b12c3256-594a-380c-a739-57ce3fd3feb0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

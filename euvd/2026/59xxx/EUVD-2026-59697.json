@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-59697",
+  "enisaUuid": "85de9a48-5427-3e64-b695-4f7ce4142e57",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: seq: Fix division by zero in initialize_timer()\n\nA userspace-driven ALSA timer (SND_UTIMER) lets an unprivileged user set\nthe backing snd_timer's hardware resolution to an arbitrary 64-bit value\nvia SNDRV_TIMER_IOCTL_CREATE. snd_utimer_create() only rejects zero.\n\nWhen such a timer is bound to a sequencer queue, initialize_timer()\ncomputes the tick period as\n\n\ttmr->ticks = 1000000000 / (r * freq);\n\nwhere r is that user-controlled resolution and freq is the sequencer\nupdate rate in Hz, clamped to MIN_FREQUENCY..MAX_FREQUENCY (10..6250).\nA resolution of 2^63 makes the 64-bit product r * freq wrap to zero for\nany even freq, including DEFAULT_FREQUENCY (1000), so the division faults\nwith a divide-by-zero.\n\nThe division runs under tmr->lock with interrupts disabled, so the oops\nleaves the spinlock held and hangs the CPU. It is reachable by an\nunprivileged user with access to /dev/snd/timer and /dev/snd/seq.\n\n  Oops: divide error: 0000 [#1] SMP KASAN PTI\n  CPU: 7 UID: 1000 PID: 456 Comm: alsa_seq_utimer Not tainted 7.2.0-rc4+\n  RIP: 0010:initialize_timer.constprop.0+0x20a/0x2d0\n   snd_seq_timer_start+0x15e/0x2b0\n   snd_seq_control_queue+0x56f/0xba0\n   snd_seq_write+0x3e0/0x730\n\nReject an overflowing product with check_mul_overflow() and fall back to\na single tick, which also avoids feeding a wrapped-but-nonzero divisor\n(e.g. 2^63 * 1000 mod 2^64 == 0, or other resolutions wrapping to a small\nvalue) into the period computation.",
+  "datePublished": "Aug 15, 2026, 12:27:28 PM",
+  "dateUpdated": "Aug 15, 2026, 12:27:28 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d0e19932875746118e298b4c974f3b2d4aeb16fc",
+    "https://git.kernel.org/stable/c/5260e195c53e898a4a76527d4bb2178f31795e78",
+    "https://git.kernel.org/stable/c/42c6543ff27ea280334244458d4f52ec7133cc05",
+    "https://git.kernel.org/stable/c/21e19688433452dfbbbe6b2bb670dea6eb92f0f6"
+  ],
+  "aliases": [
+    "CVE-2026-74504"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "29cac8f1-996f-3832-9587-bb1570e438cf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "37745918e0e7575bc40f38da93a99b9fa6406224 <d0e19932875746118e298b4c974f3b2d4aeb16fc"
+    },
+    {
+      "id": "55a4ea7a-cb68-3a9e-b0d7-baee3de56b91",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "37745918e0e7575bc40f38da93a99b9fa6406224 <42c6543ff27ea280334244458d4f52ec7133cc05"
+    },
+    {
+      "id": "6a966aab-4bcf-30f6-8efd-5f91dc5bc68a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.44"
+    },
+    {
+      "id": "757a9f9b-c2c0-3d9d-ba96-a1a7bd7144eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.103"
+    },
+    {
+      "id": "8a56eae7-95ba-3f7f-af0a-74ed652da6c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "37745918e0e7575bc40f38da93a99b9fa6406224 <21e19688433452dfbbbe6b2bb670dea6eb92f0f6"
+    },
+    {
+      "id": "bc0a7412-6dab-3cc6-8ce9-7987e5648529",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.8"
+    },
+    {
+      "id": "ddae0ef6-6b36-39d7-97dc-5d88e1b448af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "37745918e0e7575bc40f38da93a99b9fa6406224 <5260e195c53e898a4a76527d4bb2178f31795e78"
+    },
+    {
+      "id": "df470069-52fc-3403-8032-c4e0f38a4c3a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12"
+    },
+    {
+      "id": "f32b2e9d-a2f4-3d70-a9fe-31eaf8d904d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "f45d110c-760c-3351-bb6e-87782f8b2759",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc6"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "20ebd52c-6028-3aa4-acc7-b5bd17a6f912",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

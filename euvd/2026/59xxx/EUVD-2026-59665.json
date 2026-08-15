@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-59665",
+  "enisaUuid": "0be01473-9d65-370f-8fc1-ae20d3132545",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nublk: reset kernel-owned dev_info fields in ublk_ctrl_add_dev()\n\nublk_ctrl_add_dev() memcpy()s the userspace ublksrv_ctrl_dev_info into\nub->dev_info and then fixes up the fields the driver owns, but misses\n->state and ->ublksrv_pid.\n\nA device added with ->state = UBLK_S_DEV_LIVE passes the\n\"->state != UBLK_S_DEV_DEAD\" test that ublk_stop_dev_unlocked() uses as its\nproxy for \"a disk is attached\", while ->ub_disk is still NULL, so DEL_DEV\nright after ADD_DEV oopses in del_gendisk().  UBLK_S_DEV_QUIESCED plus\nUBLK_F_USER_RECOVERY dies one step earlier, in ublk_force_abort_dev().  A\npoisoned ->state also gets START_USER_RECOVERY and the char device\nread/write path onto a device that was never started, and wedges START_DEV\nat -EEXIST.  A poisoned ->ublksrv_pid just makes GET_DEV_INFO report an\nunrelated task as the ublk server.\n\nReset both after the memcpy(), as ublk_detach_disk() does.  Userspace only\never reads these back, so correcting them silently breaks nothing.\n\nADD_DEV has copied ->state in unsanitized since ublk was merged, but back\nthen it was harmless: the gendisk was allocated during ADD_DEV, and both\nteardown and the START_DEV -EEXIST check keyed off disk_live() rather than\n->state.  The oops became reachable once the disk allocation moved to\nSTART_DEV and those checks switched to ->state.",
+  "datePublished": "Aug 15, 2026, 12:27:08 PM",
+  "dateUpdated": "Aug 15, 2026, 12:27:08 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ee41b00858ca65b4428e99efe39a4277c1f043d2",
+    "https://git.kernel.org/stable/c/b67ce16b26ad0f14cfd6071013840aa95f823bea",
+    "https://git.kernel.org/stable/c/205feb72e5beb3140e4e1403b6cff30cf739bab9",
+    "https://git.kernel.org/stable/c/127033b79383a3e78361d7e971588aa8849f5124",
+    "https://git.kernel.org/stable/c/e65848e4ce352bac9e3465099354c8b8f845391f"
+  ],
+  "aliases": [
+    "CVE-2026-74472"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "4058dc32-4b58-32a8-8d4c-630c00192244",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6d9e6dfdf3b207701471f364121c67eefb000682 <205feb72e5beb3140e4e1403b6cff30cf739bab9"
+    },
+    {
+      "id": "4a6a169a-23c0-3b3a-80dc-2d82c9c30097",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.0"
+    },
+    {
+      "id": "4e059547-2728-305d-91f1-933931a0d788",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6d9e6dfdf3b207701471f364121c67eefb000682 <127033b79383a3e78361d7e971588aa8849f5124"
+    },
+    {
+      "id": "5d7a5598-71ac-3159-bc16-aa43ed11804d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.103"
+    },
+    {
+      "id": "6daf7c2d-2988-33d8-a1e8-a79adde70d46",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6d9e6dfdf3b207701471f364121c67eefb000682 <ee41b00858ca65b4428e99efe39a4277c1f043d2"
+    },
+    {
+      "id": "85859508-e3fb-312b-90d4-053fe45b9e3e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.8"
+    },
+    {
+      "id": "89a66a76-06c3-376f-9c87-959b53530e4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.151"
+    },
+    {
+      "id": "bab078ae-7b44-33de-a70a-67eefce0447d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2-rc6"
+    },
+    {
+      "id": "bfba9979-cb17-3aa9-90cb-620e9b56354a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6d9e6dfdf3b207701471f364121c67eefb000682 <b67ce16b26ad0f14cfd6071013840aa95f823bea"
+    },
+    {
+      "id": "c2c821b1-f834-3225-8151-54f3f10f7e9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d8ff5ccb-ed38-34f1-af68-0c05d6953f17",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6d9e6dfdf3b207701471f364121c67eefb000682 <e65848e4ce352bac9e3465099354c8b8f845391f"
+    },
+    {
+      "id": "f492ceca-6fad-3e86-9de3-50935ebe382e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.44"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "12456ac4-71ae-3df7-a28c-a67d38ea90f0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
