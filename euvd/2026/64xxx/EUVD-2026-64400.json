@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-64400",
+  "enisaUuid": "322dc337-0115-394c-84b4-c2533e1c7292",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvhost_iotlb: bound map allocation in add_range\n\nvhost_iotlb_add_range_ctx() only retires an old entry when the table\nhas a non-zero limit, has exactly reached that limit and has\nVHOST_IOTLB_FLAG_RETIRE set. Non-retiring tables can keep allocating\nentries after reaching their configured limit.\n\nExisting vhost devices allocate their IOTLB with max_iotlb_entries from\nvhost.c, which defaults to 2048 and is tunable by module parameter. Use\nthe caller-provided limit at the allocation point instead of adding a\nseparate default in the common IOTLB helper, and reject non-positive\nvalues in vhost paths that can report an error.\n\nOther vhost IOTLB users should not create zero-limit tables when entries\ncan be populated from userspace or guest-controlled requests. Add\ncaller-side max_iotlb_entries parameters for mlx5 vDPA, VDUSE and\nvhost-vDPA. Reject non-positive VDUSE and vhost-vDPA values, and require\nat least two entries for vdpa_sim and mlx5 vDPA paths that install\nfull-range mappings, since those mappings are split into two IOTLB\nentries.\n\nHandle full-range mappings in the common helper by checking that the\nIOTLB can hold both split entries before inserting the first half. This\navoids returning an error after leaving a half mapping behind.\n\nWhen the table is full, keep the existing retire behavior for retiring\ntables and return -ENOSPC for non-retiring tables. Reuse the retired map\nnode instead of freeing it and allocating a replacement, so a stream of\nIOTLB updates cannot keep forcing GFP_ATOMIC allocations after the table\nhas reached its limit. If a zero-limit IOTLB still reaches the common\nhelper, treat it as a configuration error and return -EINVAL.\n\nI found this bug myself, though the patch was written with AI assistance.",
+  "datePublished": "Aug 22, 2026, 3:33:09 PM",
+  "dateUpdated": "Aug 22, 2026, 3:33:09 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ae128dd19040ee06a4f8143c7ced4d18080d7a9a",
+    "https://git.kernel.org/stable/c/1ed35ac7f3fe2b4396bdd29ac3a7f0ebc0829e94"
+  ],
+  "aliases": [
+    "CVE-2026-74713"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1a08c147-55c4-3348-b1d3-79de2ec143a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.9"
+    },
+    {
+      "id": "72077c21-2321-3457-bd52-a9f7ea5898d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.7"
+    },
+    {
+      "id": "8660214c-f0fa-33c5-9b89-0122d4c0ab81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "a1b606ee-f9d9-3a84-a3bb-13e3f65d2b24",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a5a60135-45d8-334e-b3d5-8cf34b30184a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0bbe30668d89ec8a309f28ced6d092c90fb23e8c <ae128dd19040ee06a4f8143c7ced4d18080d7a9a"
+    },
+    {
+      "id": "e68a1dcb-3b57-34be-8ea3-1e9c01a99091",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0bbe30668d89ec8a309f28ced6d092c90fb23e8c <1ed35ac7f3fe2b4396bdd29ac3a7f0ebc0829e94"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "76d71b09-e675-3948-9919-f8b57fb0d821",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

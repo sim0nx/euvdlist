@@ -1,0 +1,192 @@
+{
+  "id": "EUVD-2026-64557",
+  "enisaUuid": "1ae5dc6b-f15e-3fed-aabb-fbfbdd0349b9",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: act_gact, act_police: range check the fallback control action\n\ntcf_action_check_ctrlact() range checks the primary control action:\n\n\tif (!opcode)\n\t\tret = action > TC_ACT_VALUE_MAX ? -EINVAL : 0;\n\nTC_ACT_VALUE_MAX is TC_ACT_TRAP, so kernel-internal verdicts above it\ncannot be set that way. But act_gact and act_police each carry a second,\nindependent control action supplied by user space that never reaches that\nhelper - TCA_GACT_PROB.paction and TCA_POLICE_RESULT. Both only reject\nTC_ACT_GOTO_CHAIN, so any other value is stored verbatim and returned\nverbatim from the action.\n\nIn particular user space can store TC_ACT_CONSUMED, which is\nTC_ACT_VALUE_MAX + 1 and is deliberately not part of the UAPI value\nrange. That verdict tells every caller the action took ownership of the\nskb, so nobody frees it: sch_handle_ingress(), sch_handle_egress() and\ntcf_qevent_handle() all deliberately skip the free for it. The result is\none leaked sk_buff plus its data buffer per packet traversing the filter,\nunbounded, for all traffic on the chain including kernel-generated\npackets.\n\nBoth are trivially deterministic. act_gact clamps tcfg_pval to >= 1, so\nwith pval = 1 gact_determ() returns the fallback for every packet.\nact_police has no mandatory rate, so rate = 0 leaves tcfp_mtu = ~0 and\ntcf_police_mtu_check() always passes.\n\nTC_ACT_CONSUMED was added by commit 720f22fed81b (\"net: sched: refactor\nreinsert action\"), after both goto-chain guards were written:\ncommit 9469f375ab09 (\"net/sched: act_gact: disallow 'goto chain' on\nfallback control action\") and\ncommit c08f5ed5d625 (\"net/sched: act_police: disallow 'goto chain' on\nfallback control action\"). Neither guard was widened when the new\nverdict appeared.\n\nFactor the existing range test out of tcf_action_check_ctrlact() as\ntcf_action_valid() and apply it to both fallbacks. The helper cannot call\ntcf_action_check_ctrlact() directly because that also allocates a\ngoto_chain, which is exactly what these two sites must not do.\n\nReproduced on v7.2-rc6: kmemleak reports one leaked 232-byte\nskbuff_head_cache object plus its 704-byte data buffer per packet. With\nthis patch both configurations are rejected with -EINVAL and kmemleak\nreports none.",
+  "datePublished": "Aug 22, 2026, 3:32:04 PM",
+  "dateUpdated": "Aug 22, 2026, 3:32:04 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/efa58aeb6a99028b1fbc3ab2f31ba3a881211ad4",
+    "https://git.kernel.org/stable/c/725efc2ab4a40affc4e285a2dc4896d103948a6c",
+    "https://git.kernel.org/stable/c/6bcb8839aa2d686964a4154650afc4db91e1c514",
+    "https://git.kernel.org/stable/c/5344e01179baa37547ab29fd7b8614f83faa190c",
+    "https://git.kernel.org/stable/c/92f00f1d4d204a428b38e26fce3baee144b6955d",
+    "https://git.kernel.org/stable/c/2e8df8c9190335475a3b64a159d3efd8cdd1cb73",
+    "https://git.kernel.org/stable/c/883b56ae58fe657d8497806c7059646e9ba6dbd0"
+  ],
+  "aliases": [
+    "CVE-2026-74620"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1100a44d-337e-3d53-884f-e547be0efc06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.45"
+    },
+    {
+      "id": "210af10d-584f-3096-8bab-957fe66311a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.9"
+    },
+    {
+      "id": "2a199461-e363-3ff9-907e-d76ca91c65b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "720f22fed81bc6fd1765db7014651b6718887bea <92f00f1d4d204a428b38e26fce3baee144b6955d"
+    },
+    {
+      "id": "3804c7b9-d2da-3796-a92f-0c848e84b7f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.3"
+    },
+    {
+      "id": "44f5ea81-839e-3fc7-a7f6-d18d159fac40",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "720f22fed81bc6fd1765db7014651b6718887bea <883b56ae58fe657d8497806c7059646e9ba6dbd0"
+    },
+    {
+      "id": "4fddfeae-6062-3164-8665-51640bf5c04e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "720f22fed81bc6fd1765db7014651b6718887bea <5344e01179baa37547ab29fd7b8614f83faa190c"
+    },
+    {
+      "id": "58dc9719-de9b-32fb-9463-eea88f37f76b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "704cc0b8-0d13-3fdc-ae23-9e5728e107ca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "9f2eb632-ee6c-33a6-9a4d-70a78d8d7e7f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
+    {
+      "id": "a113112b-4aa0-317e-8b36-80549a4da5af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "720f22fed81bc6fd1765db7014651b6718887bea <efa58aeb6a99028b1fbc3ab2f31ba3a881211ad4"
+    },
+    {
+      "id": "aebdfbe3-9051-3c3d-a6e1-f44691b52da3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "720f22fed81bc6fd1765db7014651b6718887bea <725efc2ab4a40affc4e285a2dc4896d103948a6c"
+    },
+    {
+      "id": "c8af1d3a-8782-321b-9fab-73c18f6d5b54",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "720f22fed81bc6fd1765db7014651b6718887bea <6bcb8839aa2d686964a4154650afc4db91e1c514"
+    },
+    {
+      "id": "cc7894f5-77bf-31fb-bf17-07e9f04035d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.104"
+    },
+    {
+      "id": "d029e92c-9e91-3c48-9a09-43f8c0f95d42",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.152"
+    },
+    {
+      "id": "eeb23850-ada4-3dda-87b2-ae6a2c22a287",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "feb891d1-fced-33aa-a191-208f50248378",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "720f22fed81bc6fd1765db7014651b6718887bea <2e8df8c9190335475a3b64a159d3efd8cdd1cb73"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6af04773-8067-3923-b35d-a7a5dcdb1993",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "id": "EUVD-2026-64547",
+  "enisaUuid": "04877ca3-0aad-30a8-b9e0-70c49c13ae0b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntls: don't leave a full plaintext sk_msg ring unpushed\n\nWhen the copy path in tls_sw_sendmsg_locked() adds the fragment that fills\nthe plaintext sk_msg ring, it does not set full_record, so the record is\nleft full and unpushed.  A later splice() then adds to an already full\nring: sk_msg_page_add() has no fullness check of its own, so sg.end wraps\nonto sg.start and the ring appears empty.  Fragments added after that\noverwrite live entries, and sg.size no longer matches what is reachable\nbetween sg.start and sg.end, so pushing the record runs the scatterwalk off\nthe end of the scatterlist.\n\nAn unprivileged user can trigger this on a loopback TCP socket with the\n\"tls\" ULP attached:\n\n  BUG: kernel NULL pointer dereference, address: 0000000000000008\n  RIP: 0010:memcpy_from_scatterwalk+0x32/0xc0\n  Call Trace:\n   skcipher_walk_next+0x1d1/0x2c0\n   gcm_encrypt_aesni_avx+0x1e9/0x220\n   bpf_exec_tx_verdict+0x3bb/0x860\n   tls_sw_sendmsg+0xa1a/0xca0\n   __sys_sendto+0x1da/0x1f0\n\nSet full_record in the copy path when the ring becomes full, and push a\nrecord that is already full on entry to the sendmsg loop.",
+  "datePublished": "Aug 22, 2026, 3:31:56 PM",
+  "dateUpdated": "Aug 22, 2026, 3:31:56 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/aa8b14647721b5a4958712b35cf43e3125d47753",
+    "https://git.kernel.org/stable/c/f634289a0b557a197c5f37284b623cefedfe73d5",
+    "https://git.kernel.org/stable/c/3fc5044796dd87b8d68be4207046f5ce2748174c",
+    "https://git.kernel.org/stable/c/3c5f8f2aa57c647b83add4896aab64aac5fdedad",
+    "https://git.kernel.org/stable/c/7bca91d63341274e857f4aeaad54d229405e93dc"
+  ],
+  "aliases": [
+    "CVE-2026-74610"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0a1ef79f-567e-3d42-9b49-d5ef9232fda6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.104"
+    },
+    {
+      "id": "10acf647-600b-340f-851c-8d53a5952c60",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fe1e81d4f73b6cbaed4fcc476960d26770642842 <7bca91d63341274e857f4aeaad54d229405e93dc"
+    },
+    {
+      "id": "40ff50d5-8925-388e-944a-71fabd1a0f90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.5"
+    },
+    {
+      "id": "560b22ed-63cb-3d2f-87a9-30a2f5cea7f4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.152"
+    },
+    {
+      "id": "6c281a56-96d0-3cf5-b21b-b391760d103e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fe1e81d4f73b6cbaed4fcc476960d26770642842 <aa8b14647721b5a4958712b35cf43e3125d47753"
+    },
+    {
+      "id": "86c04251-7abc-37af-958b-70f995ff87c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "96aa80c3-d18a-3a24-8a50-1504d6a66efa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.9"
+    },
+    {
+      "id": "a286d8b8-73ed-3985-b679-4c19dd1b5c0f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fe1e81d4f73b6cbaed4fcc476960d26770642842 <f634289a0b557a197c5f37284b623cefedfe73d5"
+    },
+    {
+      "id": "b248447d-ae46-3700-a11f-f355445b2128",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fe1e81d4f73b6cbaed4fcc476960d26770642842 <3fc5044796dd87b8d68be4207046f5ce2748174c"
+    },
+    {
+      "id": "d829d87d-6153-3178-a86e-a65c16d23311",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fe1e81d4f73b6cbaed4fcc476960d26770642842 <3c5f8f2aa57c647b83add4896aab64aac5fdedad"
+    },
+    {
+      "id": "f5922ba1-35ae-3b7e-ad03-609aed8d76d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "ffc59ca1-ccb8-304d-b843-8b3200d92fd6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.45"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "070acb70-c067-3c9a-8a4a-e6c661585eed",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

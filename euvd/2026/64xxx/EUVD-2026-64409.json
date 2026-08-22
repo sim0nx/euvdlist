@@ -1,0 +1,171 @@
+{
+  "id": "EUVD-2026-64409",
+  "enisaUuid": "3767a74d-76c0-3434-b6ad-7cee08224171",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbtrfs: fix memory leak in btrfs_do_encoded_write()\n\nLocal fuzzing of 6.12.94 has found the following memory leak:\n\nUnreferenced object 0xffff888018050a80 (size 64):\n  comm \"syz.0.17\", pid 10297, jiffies 4294953601\n  hex dump (first 32 bytes):\n    00 10 00 00 00 00 00 00 01 00 00 00 00 00 00 00  ................\n    10 0a 05 18 80 88 ff ff 10 0a 05 18 80 88 ff ff  ................\n  backtrace (crc a8a6fc29):\n    kmemleak_alloc_recursive include/linux/kmemleak.h:42 [inline]\n    slab_post_alloc_hook mm/slub.c:4152 [inline]\n    slab_alloc_node mm/slub.c:4197 [inline]\n    __kmalloc_cache_noprof+0x168/0x2c0 mm/slub.c:4358\n    kmalloc_noprof include/linux/slab.h:878 [inline]\n    extent_changeset_alloc fs/btrfs/extent_io.h:207 [inline]\n    qgroup_reserve_data+0x1c5/0x7d0 fs/btrfs/qgroup.c:4305\n    btrfs_qgroup_reserve_data+0x2e/0xb0 fs/btrfs/qgroup.c:4355\n    btrfs_do_encoded_write+0x92e/0x1040 fs/btrfs/inode.c:9746\n    btrfs_encoded_write fs/btrfs/file.c:1482 [inline]\n    btrfs_do_write_iter+0x280/0x610 fs/btrfs/file.c:1507\n    btrfs_ioctl_encoded_write+0x3d6/0x490 fs/btrfs/ioctl.c:4738\n    btrfs_ioctl+0x6f9/0xc90 fs/btrfs/ioctl.c:-1\n    vfs_ioctl fs/ioctl.c:51 [inline]\n    __do_sys_ioctl fs/ioctl.c:906 [inline]\n    __se_sys_ioctl+0xf9/0x170 fs/ioctl.c:892\n    do_syscall_x64 arch/x86/entry/common.c:47 [inline]\n    do_syscall_64+0xbe/0x1a0 arch/x86/entry/common.c:78\n    entry_SYSCALL_64_after_hwframe+0x77/0x7f\n\nUnreferenced object 0xffff888018050a00 (size 64):\n  comm \"syz.0.17\", pid 10297, jiffies 4294953601\n  hex dump (first 32 bytes):\n    00 00 00 00 00 00 00 00 ff 0f 00 00 00 00 00 00  ................\n    90 0a 05 18 80 88 ff ff 90 0a 05 18 80 88 ff ff  ................\n  backtrace (crc cb5c9580):\n    kmemleak_alloc_recursive include/linux/kmemleak.h:42 [inline]\n    slab_post_alloc_hook mm/slub.c:4152 [inline]\n    slab_alloc_node mm/slub.c:4197 [inline]\n    __kmalloc_cache_noprof+0x168/0x2c0 mm/slub.c:4358\n    kmalloc_noprof include/linux/slab.h:878 [inline]\n    kzalloc_noprof include/linux/slab.h:1014 [inline]\n    ulist_prealloc+0x9c/0x110 fs/btrfs/ulist.c:114\n    extent_changeset_prealloc fs/btrfs/extent_io.h:217 [inline]\n    __set_extent_bit+0x16b/0x1a70 fs/btrfs/extent-io-tree.c:1086\n    set_record_extent_bits+0x50/0x90 fs/btrfs/extent-io-tree.c:1821\n    qgroup_reserve_data+0x274/0x7d0 fs/btrfs/qgroup.c:4312\n    btrfs_qgroup_reserve_data+0x2e/0xb0 fs/btrfs/qgroup.c:4355\n    btrfs_do_encoded_write+0x92e/0x1040 fs/btrfs/inode.c:9746\n    btrfs_encoded_write fs/btrfs/file.c:1482 [inline]\n    btrfs_do_write_iter+0x280/0x610 fs/btrfs/file.c:1507\n    btrfs_ioctl_encoded_write+0x3d6/0x490 fs/btrfs/ioctl.c:4738\n    btrfs_ioctl+0x6f9/0xc90 fs/btrfs/ioctl.c:-1\n    vfs_ioctl fs/ioctl.c:51 [inline]\n    __do_sys_ioctl fs/ioctl.c:906 [inline]\n    __se_sys_ioctl+0xf9/0x170 fs/ioctl.c:892\n    do_syscall_x64 arch/x86/entry/common.c:47 [inline]\n    do_syscall_64+0xbe/0x1a0 arch/x86/entry/common.c:78\n    entry_SYSCALL_64_after_hwframe+0x77/0x7f\n\nFix this by freeing an extent changeset before returning from\nbtrfs_do_encoded_write().",
+  "datePublished": "Aug 22, 2026, 3:33:14 PM",
+  "dateUpdated": "Aug 22, 2026, 3:33:14 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0f0da96ccb1b9f35f4d3d4540dcaab0969d9d6b0",
+    "https://git.kernel.org/stable/c/e2c7e88815edd5ecfb88e7660ab9fd42bda6bc47",
+    "https://git.kernel.org/stable/c/20c0eeb4313f9f89d47b80b672b5846f9827cb31",
+    "https://git.kernel.org/stable/c/24a8f2c29aebb753ccb962fbb25bae18d7978f6e",
+    "https://git.kernel.org/stable/c/60b50ceba6243802f8d2c0a9a7c2d549a93b1d64",
+    "https://git.kernel.org/stable/c/d2a4e4e626b2f4670b69b430c357f03f53eb6632"
+  ],
+  "aliases": [
+    "CVE-2026-74722"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "09ab77e1-8bd1-35f9-a7fd-7d0f6b483293",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.45"
+    },
+    {
+      "id": "269c0747-f5e4-318e-83d9-2284b5b22a22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.152"
+    },
+    {
+      "id": "3ad02c11-423b-369c-b0fe-6a103ed90e89",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7c0c7269f7b508ba6e4b063a9314d6bd1fb6db22 <24a8f2c29aebb753ccb962fbb25bae18d7978f6e"
+    },
+    {
+      "id": "3e03bc45-574f-3664-ba91-49d663f1bd13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7c0c7269f7b508ba6e4b063a9314d6bd1fb6db22 <60b50ceba6243802f8d2c0a9a7c2d549a93b1d64"
+    },
+    {
+      "id": "5a90b111-1ae2-3a81-860c-d6a5aa72d712",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "5fb05c3f-45e5-30c7-b489-c06ce0186e3d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.18"
+    },
+    {
+      "id": "7a340053-8e01-3cb3-8a9a-c16c61780a6b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "893e87b2-d2d8-39af-8ad9-b666be897540",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "9170b481-be5c-3087-a4f4-27f67825c484",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.104"
+    },
+    {
+      "id": "97a8c2ef-b755-3e98-a603-cf92027e2257",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7c0c7269f7b508ba6e4b063a9314d6bd1fb6db22 <0f0da96ccb1b9f35f4d3d4540dcaab0969d9d6b0"
+    },
+    {
+      "id": "a374b535-0ceb-3a40-b869-c91284cc8d42",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.9"
+    },
+    {
+      "id": "c3813a3d-15cc-3744-8be5-621c3b24fcf8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7c0c7269f7b508ba6e4b063a9314d6bd1fb6db22 <20c0eeb4313f9f89d47b80b672b5846f9827cb31"
+    },
+    {
+      "id": "e00bca05-cff9-378b-8325-8d69cea62e8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7c0c7269f7b508ba6e4b063a9314d6bd1fb6db22 <d2a4e4e626b2f4670b69b430c357f03f53eb6632"
+    },
+    {
+      "id": "fa5085b9-d9cb-37e8-a948-25489db74f4d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7c0c7269f7b508ba6e4b063a9314d6bd1fb6db22 <e2c7e88815edd5ecfb88e7660ab9fd42bda6bc47"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7d0ee293-3320-3171-ad70-706c3e8ab973",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-64544",
+  "enisaUuid": "9cdddfc3-9d73-3062-87bf-c96c01c811bd",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: SVM: Serialize accesses to the owner and mirror list with separate lock\n\nInteraction between KVM_CAP_VM_MOVE_ENC_CONTEXT_FROM and\nKVM_CAP_VM_COPY_ENC_CONTEXT_FROM can cause two separate issues:\n\n- in sev_migrate_from(), when the destination KVM is a mirror, the mirror\n  entry is moved from the source's list to the owner's mirror_vms list,\n  without holding the owner's lock unlike other writers of the owner's\n  mirror list (sev_vm_copy_enc_context_from(), sev_vm_destroy()).\n  A concurrent COPY or destroy can race with sev_migrate_from() and\n  corrupt the list.\n\n- In sev_vm_destroy(), the *owner* is still active and could receive\n  concurrently a KVM_CAP_VM_MOVE_ENC_CONTEXT_FROM that causes\n  sev->enc_context_owner to change.  In this case the incorrect VM\n  receives kvm_put_kvm().\n\nThe second issue needs particular care because the owner could disappear\naltogether (even though the race window is impossibly small) between\nreading it and locking it.  There is thus no way to perform the checks\nunder the owner lock without putting struct kvm under SLAB_TYPESAFE_BY_RCU\n(which would allow kvm_get_kvm_safe() under RCU critical section).\n\nIt is much simpler to just use a global lock, since the critical\nsections are so small and the new lock is always a leaf lock.",
+  "datePublished": "Aug 22, 2026, 3:31:54 PM",
+  "dateUpdated": "Aug 22, 2026, 3:31:54 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/47976eaaf0a4eb46dade48b3246779090db9e3ec",
+    "https://git.kernel.org/stable/c/d728baba0f20e49439fc7831bf3e4e7dee82161a",
+    "https://git.kernel.org/stable/c/1d78d33275ef2a16c6d080910b291d0a97a0e613"
+  ],
+  "aliases": [
+    "CVE-2026-74607"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "41770e90-2c80-39eb-a357-11eec50504ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b2125513dfc0dd0ec5a9605138a3c356592cfb73 <47976eaaf0a4eb46dade48b3246779090db9e3ec"
+    },
+    {
+      "id": "431ccac1-95a8-3979-b97f-030480dffe57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.45"
+    },
+    {
+      "id": "782be781-a7d9-3816-892c-1c13f6bcf227",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9a21f599-1b69-3e42-af86-2fef5a7d0167",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "abc58292-508d-39ab-a9ea-ead019f1d06f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.18"
+    },
+    {
+      "id": "cc51ca05-7b22-3c9e-81ec-ea6b7ae034ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b2125513dfc0dd0ec5a9605138a3c356592cfb73 <d728baba0f20e49439fc7831bf3e4e7dee82161a"
+    },
+    {
+      "id": "de8e7ce5-f21c-3499-9ed0-4d1ed4bdb83e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b2125513dfc0dd0ec5a9605138a3c356592cfb73 <1d78d33275ef2a16c6d080910b291d0a97a0e613"
+    },
+    {
+      "id": "f6926bbe-045b-31cc-8f2d-342fd3607ea2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9880e769-2e7f-3dd3-a2c5-8813be36e0ca",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
