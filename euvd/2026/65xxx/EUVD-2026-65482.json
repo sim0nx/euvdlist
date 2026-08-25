@@ -1,0 +1,91 @@
+{
+  "id": "EUVD-2026-65482",
+  "enisaUuid": "1cc5ed11-bd7c-3b87-be35-b7847f3b474e",
+  "description": "Issue summary: OpenSSL CMS decryption sizes the key-unwrap output buffer based\non querying the unwrapped key size, but the AES-WRAP-PAD unwrap primitive\ncan write and cleanse more bytes than that query reports, causing an 8-byte\nout-of-bounds heap write.\n\nImpact summary: An attacker who supplies a crafted CMS message can trigger a\ndeterministic 8-byte out-of-bounds heap write when the victim decrypts it\nwith CMS_decrypt(), corrupting the heap and typically resulting in a Denial\nof Service.\n\nCWE: CWE-787: Out-of-bounds Write\n\nDescription: The key-wrap OID is potentially attacker-controlled on the wire.\nCMS unwrapping allows both id-aesNNN-wrap-pad and id-aesNNN-wrap ciphers.\nAn attacker can take a legitimate message and change a single OID byte to\nselect the padded variant while leaving the message otherwise valid. Since\nthe unwrap key is derived from the recipient's private operation (ECDH key\nagreement or ML-KEM decapsulation), the RFC 5649 integrity check cannot\npass, and the decryption fails with integrity failure.\n\nThe write is a fixed-size (8-byte), fixed-value (zero) heap overflow\nimmediately past the allocation, requires no special configuration, and is\nreachable from the public CMS_decrypt() function. The consequence is\na heap corruption leading to a Denial of Service. The fix in the CMS code\nsizes the unwrap output buffer for the worst case so a failed unwrap cannot\nwrite past the allocation.\n\nFIPS impact: no\n\nAs the CMS code lives outside the FIPS module boundary, no FIPS\nmodules are affected by this CVE.",
+  "datePublished": "Aug 25, 2026, 12:59:34 PM",
+  "dateUpdated": "Aug 25, 2026, 12:59:34 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://openssl-library.org/news/secadv/20260825.txt",
+    "https://github.com/openssl/openssl/commit/9530a5fd1aacaeccdced4478ea2340a480613335",
+    "https://github.com/openssl/openssl/commit/2a3dac874c8057c1f0186849bf1ede1ae7b6b756",
+    "https://github.com/openssl/openssl/commit/87784ad619af36b8807c2044b3940006fccc1e42",
+    "https://github.com/openssl/openssl/commit/9ec2f6d2ae2bcad907cf7ee38584855bafe4979a",
+    "https://github.com/openssl/openssl/commit/a0c8ec557d9cac078f032d76cdf684fe743eb382"
+  ],
+  "aliases": [
+    "CVE-2026-63072"
+  ],
+  "assigner": "openssl",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "20bef7ab-a856-3155-b551-6cbff556587e",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "1.1.1 <1.1.1zi"
+    },
+    {
+      "id": "5cb33b31-40fd-3bdd-8da6-4385a2cd8959",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "3.6.0 <3.6.4"
+    },
+    {
+      "id": "8222f7f6-882a-3fc9-8bdf-8e4a25cbc472",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "3.0.0 <3.0.22"
+    },
+    {
+      "id": "8472a63d-0ca4-3640-b7f3-b143e54cf295",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "3.4.0 <3.4.7"
+    },
+    {
+      "id": "acd5d859-378d-3e0d-8990-d755bf000b71",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "3.5.0 <3.5.8"
+    },
+    {
+      "id": "f9e6b9d4-da74-3a09-8a2b-7d33457422b6",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "4.0.0 <4.0.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9eae3286-4606-34b9-ba46-9cbc99d3f9ab",
+      "vendor": {
+        "name": "OpenSSL"
+      }
+    }
+  ]
+}
