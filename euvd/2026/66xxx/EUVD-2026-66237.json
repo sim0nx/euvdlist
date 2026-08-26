@@ -1,0 +1,46 @@
+{
+  "id": "EUVD-2026-66237",
+  "enisaUuid": "c4891964-a7ab-38f0-8797-788a1ef969f9",
+  "description": "In FreeBSD 15.0, the kernel structure used to represent user credentials changed: previously the primary group ID was stored in the first element of the array containing the list of supplementary group IDs, whereas now the primary group ID is stored in a dedicated field.  This change was largely internal to the kernel and not user-visible.\n\nOne function, group_is_primary(), was not properly updated as a part of this transition.  This function is used by mac_do to determine the primary group ID of the credential after applying a transition rule, used when the rule target does not explicitly specify a group.\n\nAs a result, with certain mac_do rules, it is possible for a credential switch to incorrectly set the primary group ID to the ID stored in the first element of the original credential's supplementary group array.\n\nIf the list of supplementary groups is empty, this value will be 0, corresponding to the \"wheel\" group.  For example, a rule such as \"uid=1001>uid=1002\" can be abused to set the primary group ID to 0 even if the process did not originally belong to group 0.\n\n\n\nCertain mac_do rules can be abused to set a process' group ID to 0.  Note however, that the rule must apply to the caller in order for the bug to be triggered, e.g., given the ruleset \"uid=1001>uid=1002\", the user must have user ID 1001 in order to trigger the bug.\n\nFurther, logged-in users will in general have a non-empty supplementary group list, in which case the bug can at worst be used to set the credential's first supplementary group ID as its primary group ID.  Processes must explicitly remove themselves from all supplementary groups, using the privileged setgroups(2) system call, in order to exploit the bug to set 0 as the primary group ID.\n\nSince membership in group 0 is often used to enable controlled privilege escalation, the bug might be further exploitable to obtain root privileges, depending on the system configuration.  For instance, a ruleset such as the following could be exploited by a process running as user 1001 and with an empty supplementary group list: \"uid=1001>uid=1002;gid=0>uid=0\".",
+  "datePublished": "Aug 26, 2026, 4:46:17 AM",
+  "dateUpdated": "Aug 26, 2026, 4:46:17 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://security.freebsd.org/advisories/FreeBSD-SA-26:59.mac_do.asc"
+  ],
+  "aliases": [
+    "CVE-2026-58092"
+  ],
+  "assigner": "freebsd",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1d2dee90-ca8e-3351-a74e-9dbba6adfff0",
+      "product": {
+        "name": "FreeBSD",
+        "vendor": {
+          "name": "FreeBSD"
+        }
+      },
+      "product_version": "15.0-RELEASE <p13"
+    },
+    {
+      "id": "92b5179c-9751-3326-b28d-787685cda2e6",
+      "product": {
+        "name": "FreeBSD",
+        "vendor": {
+          "name": "FreeBSD"
+        }
+      },
+      "product_version": "15.1-RELEASE <p3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6412114e-af27-37ff-a19c-9f71e15d3dfa",
+      "vendor": {
+        "name": "FreeBSD"
+      }
+    }
+  ]
+}
