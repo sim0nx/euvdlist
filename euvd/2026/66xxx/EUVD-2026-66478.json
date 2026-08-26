@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-66478",
+  "enisaUuid": "59c56f27-3b54-344d-b500-620f4efd08ef",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngpio: sloppy-logic-analyzer: fix use-after-free via debugfs trigger on unbind\n\nThe \"trigger\" debugfs file has a hand-rolled ->write handler\n(trigger_write()) that dereferences the per-device gpio_la_poll_priv. The\nfile is created with debugfs_create_file_unsafe(), and the handler never\ntakes a debugfs reference. Nothing keeps the object alive while the\nhandler runs.\n\npriv is allocated with devm_kzalloc(). devres frees it when the platform\ndevice is unbound. debugfs_create_file_unsafe() installs no full_proxy\nwrapper, so debugfs_remove_recursive() in gpio_la_poll_remove() does not\nwait for an in-flight trigger_write(). The blob_lock taken there does not\nhelp, because trigger_write() never takes it. A write that races an unbind\ntherefore writes into freed memory:\n\n  trigger_write()                  gpio_la_poll_remove()\n    priv = m->private\n    buf = memdup_user()  [may sleep]\n                                     mutex_lock(&priv->blob_lock)\n                                     debugfs_remove_recursive()  [no wait]\n                                     mutex_unlock(&priv->blob_lock)\n                                   (remove returns; devres frees priv)\n    priv->trig_data = buf   <-- use-after-free write\n    priv->trig_len  = count\n\nThe race is reachable by root via\n/sys/bus/platform/drivers/gpio-sloppy-logic-analyzer/unbind.\n\nCreate \"trigger\" with debugfs_create_file() instead. Its full_proxy\nwrapper makes debugfs_remove_recursive() drain any in-flight ->write\nbefore it returns.\n\nThe use-after-free is confirmed under KASAN with a minimal reproducer of\nthe same debugfs_create_file_unsafe() plus devm_kzalloc() pattern\n(available on request); it produces a slab-use-after-free write in the\nhandler.",
+  "datePublished": "Aug 26, 2026, 2:37:27 PM",
+  "dateUpdated": "Aug 26, 2026, 2:37:27 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/49a1ebb1ef2c8ada300c174b65273810abb4e326",
+    "https://git.kernel.org/stable/c/23e9f32c0c7d2043e39655cff5ee3ddf29a43f80",
+    "https://git.kernel.org/stable/c/24bef4918f6ab806260476e2f93d8f791fd17449",
+    "https://git.kernel.org/stable/c/44f3468a0aef1aabdad551898ab7cfa2a9d20e99"
+  ],
+  "aliases": [
+    "CVE-2026-80563"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "05db64ba-06ff-380a-b2ca-74560d5d6135",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.11"
+    },
+    {
+      "id": "0f4d93f1-05d4-3ac3-919b-1a4b4842375a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7828b7bbbf2074dd7dd14d87f50bc5ce9036d692 <44f3468a0aef1aabdad551898ab7cfa2a9d20e99"
+    },
+    {
+      "id": "1303e8d9-578d-39f0-b579-3d10c81a3531",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7828b7bbbf2074dd7dd14d87f50bc5ce9036d692 <49a1ebb1ef2c8ada300c174b65273810abb4e326"
+    },
+    {
+      "id": "3bb825db-883e-3df2-b0f2-054e398185cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7828b7bbbf2074dd7dd14d87f50bc5ce9036d692 <23e9f32c0c7d2043e39655cff5ee3ddf29a43f80"
+    },
+    {
+      "id": "45f10ef3-27ad-3233-9359-2185d3abde94",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7828b7bbbf2074dd7dd14d87f50bc5ce9036d692 <24bef4918f6ab806260476e2f93d8f791fd17449"
+    },
+    {
+      "id": "5c3b5809-f2fc-3dfc-a794-41c156a2adff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "74aa761a-53c7-3869-82da-2e60ef6ea5f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.10"
+    },
+    {
+      "id": "8aa29d2c-609c-39a9-a891-0882e45d641d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.105"
+    },
+    {
+      "id": "bc6be817-4f12-33f8-a2f5-e569ce7600a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e3eafde0-9ae1-37c4-9f37-0c8c19e5bf9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.46"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "870318e3-b1e7-337e-812d-164a46228f43",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

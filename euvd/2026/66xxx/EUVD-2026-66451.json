@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-66451",
+  "enisaUuid": "c8e58770-657b-358d-a3b0-e54ef2937237",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfs: bounds-check buffer log item's dirty bitmap\n\nxlog_recover_do_reg_buffer() replays each dirty region described by a\nbuffer log item's bitmap into the buffer read for that item:\n\n\tmemcpy(xfs_buf_offset(bp, (uint)bit << XFS_BLF_SHIFT),\n\t\titem->ri_buf[i].iov_base,\n\t\tnbits << XFS_BLF_SHIFT);\n\nThe destination offset (bit/nbits, from the logged dirty bitmap) and the\nbuffer size (from the logged blf_len) are both attacker-controlled and\notherwise unrelated, yet the only thing bounding the copy is an ASSERT(),\nwhich compiles away on production kernels. A crafted image logging a\nsmall blf_len together with a bitmap bit past the end of that buffer\ndrives the memcpy() past the buffer's allocation, corrupting adjacent\nkernel heap during mount-time log recovery. This is reachable by anyone\nwho can get a crafted image mounted -- the malicious-filesystem threat\nmodel XFS already guards against elsewhere.\n\nTurn the ASSERT() into a real XFS_IS_CORRUPT() check that aborts recovery\nof the buffer with -EFSCORRUPTED, consistent with the validate-and-fail\nidiom already used in xlog_recover_do_inode_buffer() and\nxfs_dquot_item_recover.c. xlog_recover_do_reg_buffer() therefore becomes\nSTATIC int and its three callers propagate the error.\n\nFound and confirmed with KASAN on a CONFIG_XFS_DEBUG=n build: the crafted\nimage trips a slab-out-of-bounds write before this change and fails\nrecovery cleanly with -EFSCORRUPTED after it.",
+  "datePublished": "Aug 26, 2026, 2:37:11 PM",
+  "dateUpdated": "Aug 26, 2026, 2:37:11 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f8288214459ead7e87d26e5822f62c14a4f2ed6b",
+    "https://git.kernel.org/stable/c/edaf5b6bd625356893da20d69a259b34a9de2694",
+    "https://git.kernel.org/stable/c/813f8136a2ce1fee266d02a7df73db6e8a541604"
+  ],
+  "aliases": [
+    "CVE-2026-80536"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "05bcf6e8-5116-352b-a10f-c051d4844194",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "13eabc57-19c8-3330-8d85-709bd485a951",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <edaf5b6bd625356893da20d69a259b34a9de2694"
+    },
+    {
+      "id": "24545776-e365-3001-9977-c902443f9582",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f8288214459ead7e87d26e5822f62c14a4f2ed6b"
+    },
+    {
+      "id": "65bb0f66-595e-3d62-a780-c5533e24fa8b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <813f8136a2ce1fee266d02a7df73db6e8a541604"
+    },
+    {
+      "id": "9fef220b-d1e4-33fe-9a90-78c3b79d7cf0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d18aaaa7-e9d6-38aa-93b8-9b95cc4d6e97",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "f2c423a5-83ad-369a-9dd1-219bb02c2afd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.10"
+    },
+    {
+      "id": "fe7e86f6-94da-37e3-9a84-c39f11f22bd0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.46"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "53ca259a-dfe6-3f84-b526-b24f0c7eb595",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

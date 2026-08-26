@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-66581",
+  "enisaUuid": "0a1b7e42-7df1-32c6-a745-caee7e71b11f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: lib: Fix ZBB strnlen reading past count boundary\n\nThe ZBB-optimized strnlen loop loads one word ahead before checking the\naligned boundary:\n\n    REG_L   t1, SZREG(t0)       // load next word\n    addi    t0, t0, SZREG       // advance\n    orc.b   t1, t1\n    bgeu    t0, t4, 4f          // boundary check AFTER load\n\nwhere t4 = (s + count) & -SZREG.  When s is aligned and count is a\nmultiple of SZREG, t4 equals s + count and the loop loads a full word\nstarting at exactly s + count.  If s + count falls on a page boundary\nwith the next page unmapped, this faults.\n\nFix by computing the aligned boundary from the last valid byte\n(s + count - 1) instead of s + count.  This makes the loop stop at the\nword containing the last valid byte rather than potentially loading the\nword after it.  The count == 0 case is already handled by the beqz\nearly exit.\n\nAlso add a pre-loop guard (bgeu t0, t4) for the case where all valid\nbytes fit within the first word.  With the adjusted boundary, t4 can\nequal t0, and entering the loop with stale register state from the\nfirst-word processing would produce incorrect results.\n\nThe final minu clamp ensures the result is still correct when the last\nloaded word extends past s + count - 1 within the same aligned word.",
+  "datePublished": "Aug 26, 2026, 2:36:58 PM",
+  "dateUpdated": "Aug 26, 2026, 2:36:58 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e697e30f3dd2da3a1df7dc0980546d5b53aea4b6",
+    "https://git.kernel.org/stable/c/5d588c684833e678a0008eb69c33190f01a65f4b"
+  ],
+  "aliases": [
+    "CVE-2026-74751"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "4b6a8f78-b494-3772-96ff-3bde1f27a040",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "86d6dc1f-df6c-349a-9d81-132ec995ba14",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ba15d419fab848a3813eb56bbcad00e291fbc49 <e697e30f3dd2da3a1df7dc0980546d5b53aea4b6"
+    },
+    {
+      "id": "a41625be-9a5d-32fa-a93d-b7a90147d1dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.10"
+    },
+    {
+      "id": "a76170af-b621-3b8e-b3c9-84e059cc4443",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ec70abbc-678e-32c7-bb32-9c88cea3e0f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ba15d419fab848a3813eb56bbcad00e291fbc49 <5d588c684833e678a0008eb69c33190f01a65f4b"
+    },
+    {
+      "id": "fe384f83-af5a-3053-ac6f-2f8144f4a640",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "78570435-0da5-3c9f-adf9-bb44d3b64c4e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

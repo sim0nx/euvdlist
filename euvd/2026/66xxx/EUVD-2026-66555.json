@@ -1,0 +1,39 @@
+{
+  "id": "EUVD-2026-66555",
+  "enisaUuid": "341531fc-fb29-370d-8b3e-877bb3f2aa86",
+  "description": "The LoRaWAN application-layer clock-synchronization service parses downlinks in clock_sync_package_callback() (subsys/lorawan/services/clock_sync.c). Its command loop only guarantees that the one-byte command id is in bounds; for the CLOCK_SYNC_CMD_APP_TIME (AppTimeAns) command the handler then reads a 4-byte time correction via sys_get_le32() plus a 1-byte token without checking that 5 bytes remain in the receive buffer (len - rx_pos). A short or crafted AppTimeAns therefore reads up to 5 bytes past the end of the decrypted payload.\n\nThe payload (rx_buf/len) is the decrypted application frame delivered to the registered downlink callback (mcps_indication->Buffer/BufferSize). Reaching the handler requires a frame on the clock-sync port that passes LoRaWAN's MAC integrity check and FRMPayload decryption, so the practical attacker is a malicious or compromised network/application server (the designated sender of AppTimeAns) or a party holding the session keys, rather than an arbitrary radio listener.\n\nThe over-read is bounded: the backing store is a fixed 255-byte static buffer, so the few stray bytes do not fault, and the read values (time_correction, token) are used only internally and never transmitted, so there is no disclosure to the attacker and no crash. The sole effect is that a stale token matching ctx.req_token can apply a garbage time_correction to the device's own clock offset (ctx.time_offset), a minor integrity impact confined to the victim's time estimate. The fix adds an explicit length check that drops a too-short AppTimeAns. Note the sibling one-byte reads in the periodicity and force-resync handlers remain unguarded with the same negligible impact.",
+  "datePublished": "Aug 26, 2026, 2:03:47 PM",
+  "dateUpdated": "Aug 26, 2026, 2:03:47 PM",
+  "baseScore": 3.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:N",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/3d578067652b12993bca13fb8e07dc45d062d4a5",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-2m6g-p3vx-p2fh"
+  ],
+  "aliases": [
+    "CVE-2026-13479"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "6e6d3b68-4975-35c2-949c-790ccf796fef",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "3.3.0 <4.4.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "18fa3c4b-0129-33c1-ab3f-4fde306c91df",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}

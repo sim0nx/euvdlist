@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-66471",
+  "enisaUuid": "029a404f-a2fe-308a-84d6-ff3afcf20593",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmmc: atmel-mci: Fix use-after-free in atmci_remove due to race condition\n\nIn atmci_probe, &host->bh_work is bound with atmci_work_func, and\natmci_interrupt, atmci_timeout_timer and atmci_dma_complete can all\nqueue this work on system_bh_wq.\n\nIf we remove the module, atmci_remove makes cleanup and the memory\nallocated for host with devm_kzalloc() is released after the remove\ncallback returns, while the work mentioned above may still be pending\nor running. The sequence of operations that may lead to a UAF bug is\nas follows:\n\nCPU0                                      CPU1\n\n                                          | atmci_interrupt\n                                          | queue_work(system_bh_wq,\n                                          |            &host->bh_work)\natmci_remove                              |\natmci_cleanup_slot(...)                   |\natmci_writel(host, ATMCI_IDR, ~0UL)       |\ntimer_delete_sync(&host->timer)           |\ndma_release_channel(host->dma.chan)       |\nfree_irq(platform_get_irq(pdev, 0), host) |\n                                          | atmci_work_func\n                                          | // use host\n// devm resources released after          |\n// remove returns, host is freed          |\n                                          | // use host (use-after-free)\n\nFix it by canceling the work after all the sources that can schedule\nit (IRQ handler, timeout timer and DMA completion callback) have been\nstopped, and before proceeding with the remaining cleanup in\natmci_remove.",
+  "datePublished": "Aug 26, 2026, 2:37:23 PM",
+  "dateUpdated": "Aug 26, 2026, 2:37:23 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/22aecf6c4721727a2f724ca0438bc7d4b609bf3f",
+    "https://git.kernel.org/stable/c/b5060ff2f5460795a3e9f7cdf5052aa42f96ff81",
+    "https://git.kernel.org/stable/c/7599a73ff66d195a908f5d88b427933a9fb1c02a",
+    "https://git.kernel.org/stable/c/c125ee35a49a0518521b52b27631eef061b8719a"
+  ],
+  "aliases": [
+    "CVE-2026-80556"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "18883792-2446-3a38-a15f-f410d99d7621",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "1adddbd8-70eb-3bd2-8327-344513bfff8c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7d2be0749a59096a334c94dc48f43294193cb8ed <7599a73ff66d195a908f5d88b427933a9fb1c02a"
+    },
+    {
+      "id": "4d9dd7e3-d773-3d81-9aaa-a64c761d50f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.27"
+    },
+    {
+      "id": "5851b343-fd74-399e-a84c-6f516cfea769",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7d2be0749a59096a334c94dc48f43294193cb8ed <b5060ff2f5460795a3e9f7cdf5052aa42f96ff81"
+    },
+    {
+      "id": "7d763445-0745-3a2b-abe6-0921c5a2576d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.10"
+    },
+    {
+      "id": "8b205fbc-6c56-37b0-9b9b-88420c4e5c10",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.105"
+    },
+    {
+      "id": "8f28c5e0-9bb3-31a6-93c6-70b87cc64375",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.46"
+    },
+    {
+      "id": "97eb3e78-4d5c-37dc-8ac2-86275503b956",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a364bca9-6bc7-3ba3-ae1d-6378df17206a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7d2be0749a59096a334c94dc48f43294193cb8ed <22aecf6c4721727a2f724ca0438bc7d4b609bf3f"
+    },
+    {
+      "id": "f1d55a6d-0785-3d94-b88e-cba4498035e5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7d2be0749a59096a334c94dc48f43294193cb8ed <c125ee35a49a0518521b52b27631eef061b8719a"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "22b09d86-5863-36fe-8654-f0eb8e103788",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
