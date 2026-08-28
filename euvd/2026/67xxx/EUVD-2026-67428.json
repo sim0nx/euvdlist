@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-67428",
+  "enisaUuid": "e15bd8ad-919f-3348-b3aa-9b0a9dc15a65",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nidpf: bound interrupt-vector register fill to the allocated array\n\nidpf_get_reg_intr_vecs() fills the caller-allocated reg_vals[] array from\nthe VIRTCHNL2_OP_ALLOC_VECTORS reply in adapter->req_vec_chunks, bounding\nits inner loop only by the per-chunk num_vectors. The array is sized\nseparately: idpf_intr_reg_init() allocates\nkzalloc_objs(struct idpf_vec_regs, total_vecs) from\ncaps.num_allocated_vectors and only checks the returned count after the\nfill. The sum of per-chunk num_vectors is never reconciled against\ntotal_vecs, so a reply with a small num_allocated_vectors but chunks\nsumming higher writes past the end of reg_vals[].\n\nImpact: a control plane (a PF or hypervisor device model) that returns a\nVIRTCHNL2_OP_ALLOC_VECTORS reply whose per-chunk num_vectors sum exceeds\nnum_allocated_vectors writes struct idpf_vec_regs entries past the end of\nthe reg_vals kmalloc allocation (KASAN slab-out-of-bounds write).\n\nBound the fill loop to the array capacity passed in by the callers,\nmirroring the sibling idpf_vport_get_q_reg(). The existing\nnum_regs < num_vecs check then rejects an undersized reply without the\nout-of-bounds write happening first.",
+  "datePublished": "Aug 28, 2026, 6:52:56 AM",
+  "dateUpdated": "Aug 28, 2026, 6:52:56 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/41bb8748124d0d8ee5d8e1eace9dfbc874bc9564",
+    "https://git.kernel.org/stable/c/9f7007ee9858c99aa43101bc8352c672fee85644"
+  ],
+  "aliases": [
+    "CVE-2026-80693"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "80b02aaf-e16f-3fc5-808a-17e4c028705b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "95b7feb8-132e-3f85-987e-c0d02d5c337f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.8"
+    },
+    {
+      "id": "98ed00c3-ac34-3593-90cf-144cce2309c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d4d5587182664b0c4ab6d3556ce881cb975507c2 <9f7007ee9858c99aa43101bc8352c672fee85644"
+    },
+    {
+      "id": "cb4571e4-be87-36e4-ba60-15a36808f320",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d4d5587182664b0c4ab6d3556ce881cb975507c2 <41bb8748124d0d8ee5d8e1eace9dfbc874bc9564"
+    },
+    {
+      "id": "d63641d8-12dc-3954-a795-ad6be71eacaf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "fc754001-015d-3fbd-90ae-9c0fe66be83e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.7"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2fe24d28-a519-379c-b41c-2f025c79e18d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

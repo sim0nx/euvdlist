@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-67550",
+  "enisaUuid": "93ff5ded-735c-359b-94da-b5e0731cbc05",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nntfs: validate resident attribute lists and harden the validator\n\nA base inode's $ATTRIBUTE_LIST is sanity-checked by load_attribute_list()\nonly on the non-resident path; ntfs_read_locked_inode() copies a *resident*\nattribute list into ni->attr_list with a plain memcpy() and no validation\nat all. Every subsequent walk of ni->attr_list --\nntfs_external_attr_find(), ntfs_inode_attach_all_extents() and\nntfs_attrlist_need() -- then trusts the entries are well-formed and reads\nattr_list_entry fixed-header fields\n(lowest_vcn at offset 8, mft_reference at offset 16, and the name) with\nbounds that assume validation already happened. A crafted resident\nattribute list therefore reaches those walks unvalidated and can drive\nout-of-bounds reads of the attribute-list buffer.\n\nload_attribute_list() itself reads ale->name_offset (offset 7),\nale->mft_reference (offset 16) and the name length under only an\n\"al < al_start + size\" bound, so its own validation loop can over-read the\nfixed header of a truncated trailing entry by a few bytes.\n\nFactor the per-entry validation into ntfs_attr_list_entry_is_valid(),\nwhich requires each entry's fixed header (offsetof(struct\nattr_list_entry, name)) to be in range before any field is dereferenced,\nthat ale->length is a multiple of 8 covering the fixed header plus the\nname, and that the entry is in use and carries a live MFT reference.\nntfs_attr_list_is_valid() walks the buffer with it and checks the entries\ntile it exactly. Use the list validator in load_attribute_list()\n(replacing the open-coded loop, closing its own over-read) and on the\nresident path in ntfs_read_locked_inode() (which previously skipped\nvalidation entirely); patches 2/3 reuse the per-entry helper at the other\ntwo attribute-list walks.",
+  "datePublished": "Aug 28, 2026, 6:49:13 AM",
+  "dateUpdated": "Aug 28, 2026, 6:49:13 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/55e97648f7753c6097cb682d24d1abcfe878e812",
+    "https://git.kernel.org/stable/c/7d19e1ffee084c4f7d321a360c14ba43404f7cc8"
+  ],
+  "aliases": [
+    "CVE-2026-80674"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "24855e04-8616-318b-8877-8f1d72818203",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "25c7b75c-51a4-3ede-a37b-624505caca9a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1e9ea7e04472d4e5e12e58c881eaacfb3e49b669 <7d19e1ffee084c4f7d321a360c14ba43404f7cc8"
+    },
+    {
+      "id": "68203b1c-8ab3-3801-ad58-76d4e8298e67",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "9e929a81-7fdd-3e1e-8b38-1d033cbae59d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c69d24eb-59df-30c8-8a01-0baf1e0c86cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1e9ea7e04472d4e5e12e58c881eaacfb3e49b669 <55e97648f7753c6097cb682d24d1abcfe878e812"
+    },
+    {
+      "id": "e389c255-5982-358a-964d-63208032303b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "21727dfb-8382-3991-9cca-028226166f7c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

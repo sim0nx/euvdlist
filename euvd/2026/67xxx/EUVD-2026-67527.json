@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-67527",
+  "enisaUuid": "1bd6e196-94db-3eb2-9856-1adadba2c51d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncrypto: ccp/sev-dev-tsm - bail out early when pdev->bus is NULL\n\ndsm_create() initially checks pdev->bus when computing segment_id:\n\n\tu8 segment_id = pdev->bus ? pci_domain_nr(pdev->bus) : 0;\n\nBut the next two lines unconditionally dereference pdev->bus via\npcie_find_root_port() and especially pci_dev_id(pdev), which expands\nto PCI_DEVID(dev->bus->number, dev->devfn). If pdev->bus is in fact\nNULL, segment_id is initialised to 0 but the very next statement\ncrashes the kernel.\n\nsmatch flags this:\n\n  drivers/crypto/ccp/sev-dev-tsm.c:253 dsm_create() error: we\n    previously assumed 'pdev->bus' could be null (see line 251)\n\nMake the NULL handling consistent: if pdev->bus is NULL the device\nhas no PCI context to work with and SEV TIO setup cannot proceed,\nso return -ENODEV before any of the bus-dependent lookups. The\nremaining initialisation now runs only on the path where pdev->bus\nis known to be valid.\n\nNo change for callers where pdev->bus is non-NULL, which is the\nonly case where dsm_create() did meaningful work before this change.",
+  "datePublished": "Aug 28, 2026, 6:48:59 AM",
+  "dateUpdated": "Aug 28, 2026, 6:48:59 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6bafd740095fb3d0e9a00540bc8f3484c38e6f85",
+    "https://git.kernel.org/stable/c/930d9d36ea618a775985446a125aedeb401db522"
+  ],
+  "aliases": [
+    "CVE-2026-80651"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "32098fb6-1ae3-3b8b-aae7-aefc0539c8f4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4be423572da1f4c11f45168e3fafda870ddac9f8 <930d9d36ea618a775985446a125aedeb401db522"
+    },
+    {
+      "id": "594fa979-9e3b-3be5-9d36-f4d36a3d8f42",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4be423572da1f4c11f45168e3fafda870ddac9f8 <6bafd740095fb3d0e9a00540bc8f3484c38e6f85"
+    },
+    {
+      "id": "65c8b5b0-5a35-3872-b006-160ddc028fc0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "7406d55b-ebba-3568-8878-d6d65c1356ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e5367c05-9587-3054-abf8-6308d90e82fa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "f54ce9ea-a249-3ec7-bc21-20f72b667a5f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3cea7750-6075-32e7-b40f-3b17bbc7dbc3",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

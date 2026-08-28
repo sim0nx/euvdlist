@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-67548",
+  "enisaUuid": "4949b558-cfa4-3db1-ab0a-ffa11350a08b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nntfs: fix u16 truncation of restart-area length check\n\nntfs_check_restart_area() validates that the $LogFile restart area and\nits trailing log client record array fit within the system page size:\n\n        u16 ra_ofs, ra_len, ca_ofs;\n        ...\n        ra_len = ca_ofs + le16_to_cpu(ra->log_clients) *\n                        sizeof(struct log_client_record);\n        if (ra_ofs + ra_len > le32_to_cpu(rp->system_page_size) || ...)\n                return false;\n\nra_len is u16, but the right-hand side is computed in size_t\n(sizeof(struct log_client_record) == 160). Both ca_ofs and log_clients\ncome straight from the on-disk restart area. With an on-disk\nlog_clients of 410 the product 410 * 160 = 65600; adding ca_ofs and\nstoring into the u16 ra_len truncates modulo 65536 (e.g. ca_ofs 64\ngives ra_len 128), so the \"fits in the page\" check passes even though\nthe client array described by log_clients extends far beyond the page.\n\nntfs_check_log_client_array() then walks the array bounded only by the\non-disk log_clients count:\n\n        cr = ca + idx;\n        if (cr->prev_client != LOGFILE_NO_CLIENT) ...\n\nFor log_clients 410 it dereferences records up to ca + 409 * 160,\n~64 KiB past the kvzalloc(system_page_size) restart-page buffer -- an\nout-of-bounds read of attacker-controlled extent, reachable when a\ncrafted NTFS image is mounted (load_and_check_logfile() at mount time).\nThis is the in-kernel analogue of CVE-2022-30789, fixed in the ntfs-3g\nuserspace driver but never in this revived classic driver.\n\nCompute the restart-area length in a u32 so the existing bounds check\nrejects an over-large client array instead of being defeated by the\ntruncation. Widen ra_ofs and ca_ofs to u32 as well: both are loaded\nfrom __le16 on-disk fields and every comparison already promotes to\nint/size_t, so this changes no result and keeps the declaration uniform.",
+  "datePublished": "Aug 28, 2026, 6:49:12 AM",
+  "dateUpdated": "Aug 28, 2026, 6:49:12 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/07a4751ef3ccc8bfd17bfbb16e5003c03161790d",
+    "https://git.kernel.org/stable/c/390936fb15053d8d8991ca3a22776e251a5a7f2f"
+  ],
+  "aliases": [
+    "CVE-2026-80672"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1f163661-57bb-3125-a8aa-e8c4087c4c13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1e9ea7e04472d4e5e12e58c881eaacfb3e49b669 <07a4751ef3ccc8bfd17bfbb16e5003c03161790d"
+    },
+    {
+      "id": "92f4deb6-54df-3bac-b76f-8ee3e25b24cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1e9ea7e04472d4e5e12e58c881eaacfb3e49b669 <390936fb15053d8d8991ca3a22776e251a5a7f2f"
+    },
+    {
+      "id": "bb0ec81f-7e7e-3234-b933-0086c90e9773",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c2e1aa32-c1f2-3db7-917c-24510afe8a54",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "d464103e-145c-303d-b60b-e7d253011af2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "f0d5b9af-741c-39e4-97d3-8e18885115bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0e9d75a6-3025-3f43-a033-22f283355d77",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

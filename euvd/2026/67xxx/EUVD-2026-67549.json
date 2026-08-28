@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-67549",
+  "enisaUuid": "6388a318-e7ff-3bc2-8117-e62dcaa4bde2",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nntfs: bound the look-ahead attribute-list entry in ntfs_external_attr_find()\n\nWhen resolving an attribute lookup with a non-zero @lowest_vcn,\nntfs_external_attr_find() peeks at the next $ATTRIBUTE_LIST entry to\ndecide whether to keep searching, but bounds that not-yet-validated\nentry only with \"(u8 *)next_al_entry + 6 < al_end\" (which proves just\nbytes 0..6 are in range) and \"(u8 *)next_al_entry + length <= al_end\"\nwith an attacker-controlled, non-8-aligned length. It then reads\nnext_al_entry->lowest_vcn (an __le64 at offset 8) and the name at\nnext_al_entry->name_offset, both of which can lie past al_end -- the\nexact end of the kvmalloc'd attribute-list buffer (allocated at the\non-disk attr_list_size, no rounding). A crafted on-disk $ATTRIBUTE_LIST\nwhose last entry sits a few bytes before al_end therefore yields a slab\nout-of-bounds read when the inode is read.\n\nValidate the look-ahead entry with ntfs_attr_list_entry_is_valid() (added\nin patch 1/3) before dereferencing lowest_vcn and the name, so the same\nfixed-header, length and name bounds the main attribute-list walk uses now\nguard this read too.",
+  "datePublished": "Aug 28, 2026, 6:49:12 AM",
+  "dateUpdated": "Aug 28, 2026, 6:49:12 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/44885c9b45eb4082fb7f558590d84bb254a08e94",
+    "https://git.kernel.org/stable/c/344b18f389f9934d59c7b0cf3d20541ea2e0da58"
+  ],
+  "aliases": [
+    "CVE-2026-80673"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0825d309-3561-3376-bb60-4f92bd6aa0e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "781876ca-72a7-37bb-a479-c4e93c08bdaa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1e9ea7e04472d4e5e12e58c881eaacfb3e49b669 <344b18f389f9934d59c7b0cf3d20541ea2e0da58"
+    },
+    {
+      "id": "9c5f6d8f-a58e-3fc8-bfa4-af8dc250ffa8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ad4bc26c-65a4-33d1-a8f7-262bff1c4e99",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1e9ea7e04472d4e5e12e58c881eaacfb3e49b669 <44885c9b45eb4082fb7f558590d84bb254a08e94"
+    },
+    {
+      "id": "dd8d14bf-1e65-3265-a3d8-99a59099d863",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "f62bc806-7358-3079-ba38-5eb476c80021",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "df68c7e4-37e4-39ac-b45a-7e4afa676632",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

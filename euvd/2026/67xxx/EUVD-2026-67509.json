@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-67509",
+  "enisaUuid": "597210c6-8e22-3acb-b8c4-760b9cc4679b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niommufd: Take dma_resv lock before dma_buf_unpin() in release path\n\ndma_buf_unpin() requires the caller to hold the exporter's dma_resv\nlock:\n\n  void dma_buf_unpin(struct dma_buf_attachment *attach)\n  {\n          ...\n          dma_resv_assert_held(dmabuf->resv);\n          ...\n  }\n\niopt_release_pages() calls dma_buf_unpin() without taking that lock,\nso every iommufd_ioas_destroy()/iommufd_ioas_unmap() that releases\nthe last reference on a DMABUF-backed iopt_pages triggers a WARN.\nThis was hit while running tools/testing/selftests/iommu/iommufd:\n\n  WARNING: drivers/dma-buf/dma-buf.c:1137 at dma_buf_unpin+0x62/0x70\n  RIP: 0010:dma_buf_unpin+0x62/0x70\n  Call Trace:\n   <TASK>\n   dma_buf_unpin+0x62/0x70\n   iopt_release_pages+0xe4/0x190\n   iopt_unmap_iova_range+0x1c7/0x290\n   iopt_unmap_all+0x1a/0x30\n   iommufd_ioas_destroy+0x1d/0x50\n   iommufd_fops_release+0x93/0x150\n   __fput+0xfc/0x2c0\n   __x64_sys_close+0x3d/0x80\n   do_syscall_64+0x65/0x180\n   </TASK>\n\nTake the dma_resv lock around dma_buf_unpin() in iopt_release_pages(),\nmatching the iopt_map_dmabuf() convention. dma_buf_detach() acquires the\nreservation lock internally, so it must remain outside the locked region.",
+  "datePublished": "Aug 28, 2026, 6:48:48 AM",
+  "dateUpdated": "Aug 28, 2026, 6:48:48 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/cc69d0332421fd2943b66dbe5e597bf4fd5af126",
+    "https://git.kernel.org/stable/c/e745cd2c749e557c14a15ac931761c3f58c24489"
+  ],
+  "aliases": [
+    "CVE-2026-80633"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "01b1254e-a3d0-32c8-96c9-f3db2e628fcd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8c5f9645c3893f0db679d9affe4fe4e665b990dd <e745cd2c749e557c14a15ac931761c3f58c24489"
+    },
+    {
+      "id": "02c76987-acba-3bef-a628-bbc4fe1d0fea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8c5f9645c3893f0db679d9affe4fe4e665b990dd <cc69d0332421fd2943b66dbe5e597bf4fd5af126"
+    },
+    {
+      "id": "190f0a37-dde6-3663-8325-a9f9d2b262b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "6d90846c-b9d8-3f25-ac28-f69c5fb23c6d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "a96ebc6d-d229-335b-801c-4bb6f3b66754",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e5fd3b3c-1608-3b39-8b91-49520adc75a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "83a746b2-87e9-3d8e-879c-2a367f142e7a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
