@@ -1,0 +1,51 @@
+{
+  "id": "EUVD-2026-68926",
+  "enisaUuid": "5b25e34b-1373-3e07-be98-aab9e1b80209",
+  "description": "Incorrect Authorization vulnerability in ash-project ash_typescript allows an unauthorized RPC caller to read attribute values that Ash field policies denied.\n\nWhen a field policy denies an attribute, Ash substitutes %Ash.ForbiddenField{}, which retains the real value in original_value because embedded resources must remain writable, and hides it from Inspect rather than removing it. AshTypescript.Rpc.ResultProcessor strips these markers to nil on its template-driven paths, but normalize_primitive/1 in lib/ash_typescript/rpc/result_processor.ex had no such clause, so a marker fell through to the generic struct branch which calls Map.from_struct/1 and serializes every key, original_value included. The denied value is returned to the caller inside the marker that represents its own denial.\n\nThe simplest trigger is an action returning an embedded resource as a map, which routes through normalize_resource_struct/2 with an empty template. normalize_value_for_json/1 is a public, unguarded entry point to the same path.\n\nThis issue affects ash_typescript: from 0.11.0 before 0.18.0.",
+  "datePublished": "Sep 1, 2026, 2:09:01 AM",
+  "dateUpdated": "Sep 1, 2026, 2:09:01 AM",
+  "baseScore": 8.2,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:N/VA:N/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/ash-project/ash_typescript/security/advisories/GHSA-6929-rjmh-4x62",
+    "https://cna.erlef.org/cves/CVE-2026-82730.html",
+    "https://osv.dev/vulnerability/EEF-CVE-2026-82730",
+    "https://github.com/ash-project/ash_typescript/commit/aa7f9f1967b0bec806ac1156142267e805d70a55"
+  ],
+  "aliases": [
+    "CVE-2026-82730"
+  ],
+  "assigner": "EEF",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "61a3cd51-ba0f-368a-8087-28df3a598c94",
+      "product": {
+        "name": "ash_typescript",
+        "vendor": {
+          "name": "ash-project"
+        }
+      },
+      "product_version": "9cade7661a01b6e4d940386f482f48d148dbb1e6 <aa7f9f1967b0bec806ac1156142267e805d70a55"
+    },
+    {
+      "id": "f6d0f642-fae2-368a-9363-ec4d3bba7af5",
+      "product": {
+        "name": "ash_typescript",
+        "vendor": {
+          "name": "ash-project"
+        }
+      },
+      "product_version": "0.11.0 <0.18.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e477f3a0-57e9-3c97-8048-bfd9e0104d2b",
+      "vendor": {
+        "name": "ash-project"
+      }
+    }
+  ]
+}
