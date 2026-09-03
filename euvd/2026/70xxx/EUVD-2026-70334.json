@@ -1,0 +1,171 @@
+{
+  "id": "EUVD-2026-70334",
+  "enisaUuid": "d969f3af-b582-33f7-bf6b-dfcae0d48ef4",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nring-buffer: Fix crash passing ERR_PTR to kthread_stop()\n\nIn test_ringbuffer()'s out_free cleanup loop, the check\n`!rb_threads[cpu]` only catches NULL entries and misses entries that\nhold an ERR_PTR.\n\nrb_threads[] is static, so unassigned slots are NULL. But when\nkthread_run_on_cpu() fails for a cpu, it stores ERR_PTR(-ENOMEM) (or\n-EINTR) in rb_threads[cpu] before the creation loop jumps to out_free.\nThat entry is non-NULL, so the old `!ptr` check does not break, and the\ncleanup proceeds to call kthread_stop() on the ERR_PTR. kthread_stop()\nthen dereferences the bogus pointer, crashing the kernel during the\nlate_initcall self-test.\n\ncrash logs:\n  BUG: kernel NULL pointer dereference, address: 000000000000001c\n  Oops: 0002 [#1] SMP NOPTI\n  CPU: 1 PID: 1 Comm: swapper/0 Not tainted 7.2.0-rc6-dirty #7 PREEMPT(lazy)\n  RIP: 0010:kthread_stop+0x2e/0x220\n  RBX: fffffffffffffff4\n  CR2: 000000000000001c\n  Call Trace:\n   <TASK>\n   test_ringbuffer+0x1ec/0x650\n   do_one_initcall+0x6c/0x2c0\n   kernel_init_freeable+0x21d/0x420\n   kernel_init+0x15/0x1c0\n   ret_from_fork+0x21b/0x320\n   </TASK>\n  Kernel panic - not syncing: Fatal exception",
+  "datePublished": "Sep 3, 2026, 8:21:48 AM",
+  "dateUpdated": "Sep 3, 2026, 8:21:48 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/51d78fad30dd9ae45721224103662bdbcf210096",
+    "https://git.kernel.org/stable/c/93e7044b548a72022208595d2c1b188bb225ce83",
+    "https://git.kernel.org/stable/c/8532983c312e8b875d7c9e440f8ee4674ea4b711",
+    "https://git.kernel.org/stable/c/6dd7a06894d6d3dc84319bd0b7d1a7c27df9d902",
+    "https://git.kernel.org/stable/c/3ea2fd344d93e3cf9503739b09fd702c0d8f8f0b",
+    "https://git.kernel.org/stable/c/91542863abade2fd4f2b361991f5386ad9d19c8c"
+  ],
+  "aliases": [
+    "CVE-2026-80730"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "18200165-c051-3165-ac36-6a3e171b58d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.17"
+    },
+    {
+      "id": "43a30cd7-676d-3514-b064-e1120dd8d54c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "49632e0c-b90f-3dc1-b4d0-383542154247",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "5baff8c7-e5cc-3fca-a257-6ed078421c0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "64ed3a049e3e81b801e7c5bb052416152443f585 <6dd7a06894d6d3dc84319bd0b7d1a7c27df9d902"
+    },
+    {
+      "id": "68e5e524-302b-3348-90f4-aecc563bf48e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.152"
+    },
+    {
+      "id": "72cab534-1e60-3dbb-9bf3-05523a84a057",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.9"
+    },
+    {
+      "id": "922d72ad-c149-373d-98ac-4cbac0e2d5a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "64ed3a049e3e81b801e7c5bb052416152443f585 <8532983c312e8b875d7c9e440f8ee4674ea4b711"
+    },
+    {
+      "id": "9a49ef18-ea97-3e9a-a9aa-8ef87ff20978",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "ac143117-3d88-30cf-8282-a5605070612b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "64ed3a049e3e81b801e7c5bb052416152443f585 <91542863abade2fd4f2b361991f5386ad9d19c8c"
+    },
+    {
+      "id": "b686de71-d4d9-367a-a814-ada7dd08efaf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "64ed3a049e3e81b801e7c5bb052416152443f585 <93e7044b548a72022208595d2c1b188bb225ce83"
+    },
+    {
+      "id": "c3c2f584-766d-38c4-9050-437fd7dade22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.45"
+    },
+    {
+      "id": "cdda3073-c0e4-3632-bf48-66d90ed878a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "64ed3a049e3e81b801e7c5bb052416152443f585 <51d78fad30dd9ae45721224103662bdbcf210096"
+    },
+    {
+      "id": "d068b9c0-70d3-3a2d-af77-a9e001a01a97",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "64ed3a049e3e81b801e7c5bb052416152443f585 <3ea2fd344d93e3cf9503739b09fd702c0d8f8f0b"
+    },
+    {
+      "id": "fd33aee5-21fd-3c7e-8386-c330c2b67e23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.104"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "31266e89-d49d-3854-9841-bb913265f88a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
