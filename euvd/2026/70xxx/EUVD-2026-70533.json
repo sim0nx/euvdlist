@@ -1,0 +1,38 @@
+{
+  "id": "EUVD-2026-70533",
+  "enisaUuid": "23ab5f82-29dd-3f2b-85ae-e9c243faff0e",
+  "description": "A vulnerability in MISP's event template handling allowed an authenticated user with permission to create or modify event templates to bypass validation of the template definition field.\n\nThe EventTemplate::beforeValidate() method only performed semantic validation when the supplied definition was already represented as an array. If a caller instead supplied a pre-encoded string, including malformed JSON or JSON representing an unexpected data type, the value bypassed validateDefinition() and only needed to satisfy the generic notBlank validation rule. As a result, an invalid event template definition could be stored persistently in the database.\n\nWhen event templates were subsequently retrieved, EventTemplate::afterFind() attempted to decode the stored definition using JsonTool::decode() without handling decoding failures. A definition containing invalid JSON could therefore trigger an exception during retrieval. Because the event template index is available to all authenticated users, a single malicious or malformed template could make the event template listing and other functionality relying on EventTemplate queries return HTTP 500 errors until the offending database row was manually repaired.\n\nValid JSON representing an unexpected type, rather than the expected JSON object, could similarly result in invalid data reaching downstream consumers.\n\nThe vulnerability can therefore be exploited by a user capable of saving event templates to persist malformed template data and cause a persistent denial of service against event-template functionality for other users.\n\nThe patch enforces that event template definitions must be supplied as structured objects before saving and always applies semantic validation. On retrieval, malformed JSON and definitions that do not decode to the expected structure are caught, logged, and replaced with an empty definition, preventing a malformed database entry from breaking all event template queries.\n\n\u00a0Poisoning doesn't seem reachable according to the lead developer.",
+  "datePublished": "Sep 3, 2026, 3:37:47 PM",
+  "dateUpdated": "Sep 3, 2026, 3:53:26 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/MISP/MISP/commit/a90d552b3"
+  ],
+  "aliases": [
+    "CVE-2026-85239"
+  ],
+  "assigner": "CIRCL",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0aa7fe34-215e-3d87-a2c5-3e805cac66e4",
+      "product": {
+        "name": "MISP",
+        "vendor": {
+          "name": "MISP"
+        }
+      },
+      "product_version": "0 \u22642.5.45"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a73aa5e2-bc63-3459-89a7-bfa56f13a625",
+      "vendor": {
+        "name": "MISP"
+      }
+    }
+  ]
+}
