@@ -1,0 +1,171 @@
+{
+  "id": "EUVD-2026-71500",
+  "enisaUuid": "d54e16db-03d5-3cc7-b005-32b07aef35fb",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdkfd: Validate CRIU-restored IDs before idr_alloc\n\nThe KFD CRIU restore flow restores previously saved object IDs from\nuserspace.\n\nFor event restore:\n\n  kfd_criu_restore_event()\n      -> create_signal_event() / create_other_event()\n          -> allocate_event_notification_slot()\n              -> idr_alloc(..., *restore_id, *restore_id + 1, ...)\n\nFor BO restore:\n\n  criu_restore_memory_of_gpu()\n      -> idr_alloc(..., bo_priv->idr_handle, ...)\n\nIn both cases, the restored ID comes from userspace-provided CRIU data.\n\nidr_alloc() expects the ID range values to fit within signed int\nlimits. If a restored ID is larger than INT_MAX, it can trigger a WARN\nin the IDR layer.\n\nA kernel WARN is undesirable because it prints a warning trace and may\ncause a panic or reboot on systems with panic_on_warn enabled.\n\nSmatch reported these paths as allowing unchecked userspace values to\nreach idr_alloc().\n\nAdd INT_MAX validation before using restored IDs in:\n\n- kfd_criu_restore_event()\n- criu_restore_memory_of_gpu()\n\nIf the restored ID is invalid, return -EINVAL.\n\nThis prevents invalid restore data from reaching the IDR layer and\navoids WARN-triggering paths, while keeping valid restore behavior\nunchanged.",
+  "datePublished": "Sep 4, 2026, 4:48:31 PM",
+  "dateUpdated": "Sep 4, 2026, 4:48:31 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f8687018f24037056692c1e93c7d96cc72889d5b",
+    "https://git.kernel.org/stable/c/89a75e3349c4fae28cbedc711bc924cbc6293da2",
+    "https://git.kernel.org/stable/c/085ea93bda71fee600cc12a17026598eb10dd1f9",
+    "https://git.kernel.org/stable/c/543ed0f61d56501cc585162da600bbedd7c08c0f",
+    "https://git.kernel.org/stable/c/cb6311f25a096621ac7ffd91b50d1bb1cfb63a96",
+    "https://git.kernel.org/stable/c/85043dd49c2f51a37b22618168e3ae59ab92f0d6"
+  ],
+  "aliases": [
+    "CVE-2026-80870"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3af8163a-d3bc-3b65-9b86-a293f0cd4fda",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "616d4b73-2ec2-3bfd-b7d2-6e73a19cce8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "6ba0dfc9-4c17-362a-993a-3170a6284448",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "6f001717-4bef-3457-a66f-fa13a8e32944",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "40e8a766a761f7fdc8530347527b344fddf6f1a8 <085ea93bda71fee600cc12a17026598eb10dd1f9"
+    },
+    {
+      "id": "774d77dd-03f8-3133-bd7b-500220c764c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "40e8a766a761f7fdc8530347527b344fddf6f1a8 <85043dd49c2f51a37b22618168e3ae59ab92f0d6"
+    },
+    {
+      "id": "97bff4b3-ab02-3f43-b935-bafca8113cba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "40e8a766a761f7fdc8530347527b344fddf6f1a8 <cb6311f25a096621ac7ffd91b50d1bb1cfb63a96"
+    },
+    {
+      "id": "bf17a214-eecd-3244-bc25-223a5f1cf43e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.178"
+    },
+    {
+      "id": "de617026-036e-38dd-bec5-2f5be05d8920",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "40e8a766a761f7fdc8530347527b344fddf6f1a8 <89a75e3349c4fae28cbedc711bc924cbc6293da2"
+    },
+    {
+      "id": "de9da74a-c98d-38f7-a719-80ee748c69dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "40e8a766a761f7fdc8530347527b344fddf6f1a8 <f8687018f24037056692c1e93c7d96cc72889d5b"
+    },
+    {
+      "id": "e48d52ef-5faf-33cc-87ce-6beea3c00360",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e93d3553-0d47-3ef3-b7bf-4d71f4876e49",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.18"
+    },
+    {
+      "id": "ef3d7cea-e79a-3a52-a676-4ae3e54276be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "40e8a766a761f7fdc8530347527b344fddf6f1a8 <543ed0f61d56501cc585162da600bbedd7c08c0f"
+    },
+    {
+      "id": "f017df34-6b2b-33ca-b9f2-b29a62ace6e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "f80d896b-6c81-300d-a0ca-cd0ed2518fec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.97"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2e6b5228-fb75-3e4f-8eb7-a55e46f79add",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
