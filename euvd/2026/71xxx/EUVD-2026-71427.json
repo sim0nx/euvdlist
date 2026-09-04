@@ -1,0 +1,171 @@
+{
+  "id": "EUVD-2026-71427",
+  "enisaUuid": "4f32e06f-66ec-3471-8d17-89f6a829d0dc",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmptcp: pm: fix memory leak from alloc-during-teardown race\n\nmptcp_pm_destroy() empties msk->pm.anno_list and\nmsk->pm.userspace_pm_local_addr_list under msk->pm.lock during socket\nteardown, dropping the lock between the two.\n\nA concurrent userspace PM genl ANNOUNCE on the same msk holds a sock\nreference via mptcp_token_get_sock() and, in\nmptcp_pm_nl_announce_doit(), calls\nmptcp_userspace_pm_append_new_local_addr() and\nmptcp_pm_announced_alloc(). Both take msk->pm.lock briefly to add to\ntheir respective lists. Because the genl handler holds a sock reference,\nmptcp_pm_destroy() may run on the same msk via mptcp_disconnect(), which\ninvokes mptcp_destroy_common() without dropping the sock refcount,\nbefore the handler completes.\n\nIf the lock acquisitions interleave such that mptcp_pm_destroy() empties\na list first, the later alloc adds its entry to a list head that nothing\nelse iterates for this msk, and the entry leaks. kmemleak reports both\nmptcp_pm_add_addr objects (from mptcp_pm_announced_alloc()) and\nmptcp_pm_addr_entry objects (from\nmptcp_userspace_pm_append_new_local_addr()) under sustained concurrent\nANNOUNCE + close load against the userspace PM.\n\nAdd an MPTCP_PM_DESTROYING bit in msk->pm.status, set by\nmptcp_pm_destroy() under pm.lock before the lists are emptied and\nchecked under pm.lock by the alloc paths. Either the alloc takes pm.lock\nfirst, in which case its entry is on the list when mptcp_pm_destroy()\nfrees it; or mptcp_pm_destroy() takes pm.lock first, in which case the\nlater alloc observes the bit and refuses.\n\nFound by an MPTCP protocol-flow harness extending BRF (arXiv:2305.08782).",
+  "datePublished": "Sep 4, 2026, 3:12:56 PM",
+  "dateUpdated": "Sep 4, 2026, 3:12:56 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f48341830e4202db3fe884b819b2db6740f0537d",
+    "https://git.kernel.org/stable/c/bb32e9a6a9a9f99eeda16c4efe443400f3e43892",
+    "https://git.kernel.org/stable/c/b2a0b55bf613bd3e81ed26a847b0f6b8e6b7f804",
+    "https://git.kernel.org/stable/c/9fe5eebb664ecdba88f3fde18062d94b1d1c465f",
+    "https://git.kernel.org/stable/c/6c290915a03fc8228b473641025cf762b256dbd2",
+    "https://git.kernel.org/stable/c/efc33b5102ff859bacd390a5f30112d8e0c084c0"
+  ],
+  "aliases": [
+    "CVE-2026-80784"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1ec7710a-88cd-395b-a65d-6f079b2d4838",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ab4807c84a4aacfc9b4f79cc81254035e0ec361 <f48341830e4202db3fe884b819b2db6740f0537d"
+    },
+    {
+      "id": "2714cf93-f2cc-3908-841b-6645941fa4d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ab4807c84a4aacfc9b4f79cc81254035e0ec361 <bb32e9a6a9a9f99eeda16c4efe443400f3e43892"
+    },
+    {
+      "id": "27554282-c6bb-396e-9ed0-67034ef67601",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.187"
+    },
+    {
+      "id": "2e71c3ac-2ecc-3033-b319-93ce52ecdc56",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ab4807c84a4aacfc9b4f79cc81254035e0ec361 <9fe5eebb664ecdba88f3fde18062d94b1d1c465f"
+    },
+    {
+      "id": "2ef0a0f4-9f15-3207-bd49-1027a53815f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "38e3fa71-e4ad-383a-9090-c3f1280a6e68",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.11"
+    },
+    {
+      "id": "67025da4-2906-3704-9a1d-0999459ded23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.19"
+    },
+    {
+      "id": "77cbc9fe-89f0-310a-8777-51ae3e61967e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ab4807c84a4aacfc9b4f79cc81254035e0ec361 <b2a0b55bf613bd3e81ed26a847b0f6b8e6b7f804"
+    },
+    {
+      "id": "95cd36e6-e49a-3e73-9b4e-de620e4004f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.47"
+    },
+    {
+      "id": "aca22b16-a850-3395-8a50-7008e1c223c2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b4f4604e-fa4a-3262-8082-a7826b9cc3ea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ab4807c84a4aacfc9b4f79cc81254035e0ec361 <6c290915a03fc8228b473641025cf762b256dbd2"
+    },
+    {
+      "id": "d3971abb-8a3a-3c78-bfd0-caff11dd98ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ab4807c84a4aacfc9b4f79cc81254035e0ec361 <efc33b5102ff859bacd390a5f30112d8e0c084c0"
+    },
+    {
+      "id": "f35d2cc8-d37c-380d-af04-85054a2a3ea7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.106"
+    },
+    {
+      "id": "fc0e2894-819b-3279-b634-7f0123145d71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.154"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "925caab5-3d36-39c7-b764-30179f6bc8ed",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
