@@ -1,0 +1,253 @@
+{
+  "id": "EUVD-2026-71665",
+  "enisaUuid": "bc59d5c4-7c8d-3821-8d9f-eece85d43691",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: packet: fix wrong transport_header when sending VLAN-tagged frame\n\nIn packet_parse_headers(), when processing a VLAN-tagged frame,\nskb_set_network_header() is called to advance network_header past the\nVLAN tag to the inner protocol header. skb_probe_transport_header() is\nthen called with skb->protocol still set to the outer VLAN EtherType\n(e.g. ETH_P_8021Q), while nhoff (derived from skb_network_offset())\nalready points past the VLAN tag to the inner protocol header.\n\nIn __skb_flow_dissect(), proto is initialized to ETH_P_8021Q and nhoff\npoints past the VLAN tag. When the dissector hits case ETH_P_8021Q, it\nreads a struct vlan_hdr at nhoff via __skb_header_pointer(), but that\noffset contains the inner protocol header (e.g. an IP header). The bytes\nare misinterpreted as a VLAN header, yielding a garbage encapsulated\nEtherType that matches no known protocol. The dissector returns false,\nso skb_probe_transport_header() never calls skb_set_transport_header(),\nleaving transport_header at its uninitialized sentinel value (~0U).\n\nMove skb_probe_transport_header() to before skb_set_network_header(). At\nthe time skb_probe_transport_header() is called, network_header still\npoints to the VLAN header, so nhoff correctly points to the VLAN header.\nThe flow dissector can then parse the VLAN header, extract the inner\nEtherType, and advance nhoff to the inner protocol header, allowing\ntransport_header to be set correctly.",
+  "datePublished": "Sep 4, 2026, 5:19:16 PM",
+  "dateUpdated": "Sep 4, 2026, 5:19:16 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a4b82de96d465ddb44bc931145c0fa80c4fe9c9c",
+    "https://git.kernel.org/stable/c/fa86bc52ea8ba981f74f851fd61e2a3d3bc0feac",
+    "https://git.kernel.org/stable/c/5479eb9b355f44745d7ccfe112386bd4f96eceea",
+    "https://git.kernel.org/stable/c/e451e20adb869a983a21dda158625f024142e61f",
+    "https://git.kernel.org/stable/c/6971cf319263d6a1b4096f9248aca9e57d77a1eb",
+    "https://git.kernel.org/stable/c/f9297abbcaba760b7a7b9d63b839f607f738013e",
+    "https://git.kernel.org/stable/c/6386a6ffa2efba2965ed8e4fa303582c0b76a215",
+    "https://git.kernel.org/stable/c/01fdecc0480d916c799dbee584833a4a37e94d06"
+  ],
+  "aliases": [
+    "CVE-2026-80906"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "068348af-ea03-37b8-8b5c-1eb68cd3855b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ff46c36df2e0a1ac352f2f4038eaf3f0f7361b8 <fa86bc52ea8ba981f74f851fd61e2a3d3bc0feac"
+    },
+    {
+      "id": "0aa1269d-8c29-3ca6-9da2-014110dba12d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dfed913e8b55a0c2c4906f1242fd38fd9a116e49 <6386a6ffa2efba2965ed8e4fa303582c0b76a215"
+    },
+    {
+      "id": "2925a5c2-9eac-3b59-865e-9eac4a605311",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "2a1a8b45-6cda-3386-a834-d577e1c32f6f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.10"
+    },
+    {
+      "id": "2c749fa6-9dc8-3750-b161-a1280f47dd23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.4.229 <5.5"
+    },
+    {
+      "id": "3610d8a9-f450-33d9-b32e-d60a0c6c908d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.46"
+    },
+    {
+      "id": "3d8dbc11-5a21-3cbf-a6fd-ac7bf20455d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.105"
+    },
+    {
+      "id": "3e878dab-35c1-3e3d-86ab-ca88bf9fd3bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.217"
+    },
+    {
+      "id": "407c92fd-a4f9-39ab-bbbd-2aafc7ad2010",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dfed913e8b55a0c2c4906f1242fd38fd9a116e49 <5479eb9b355f44745d7ccfe112386bd4f96eceea"
+    },
+    {
+      "id": "42012730-01ce-3621-9efe-28e90062fc64",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.266"
+    },
+    {
+      "id": "596858e0-093c-3ec1-982f-5d71322993c2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dfed913e8b55a0c2c4906f1242fd38fd9a116e49 <6971cf319263d6a1b4096f9248aca9e57d77a1eb"
+    },
+    {
+      "id": "60721317-599d-3691-b449-50c7a1a3531a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.153"
+    },
+    {
+      "id": "62dcd73b-a689-315d-bfbe-d2e064152438",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dfed913e8b55a0c2c4906f1242fd38fd9a116e49 <e451e20adb869a983a21dda158625f024142e61f"
+    },
+    {
+      "id": "63a8520b-d02b-380a-a92f-5021cf47861f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.19"
+    },
+    {
+      "id": "67c74171-fc4e-36c1-bf66-bc27c289fa6c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.184"
+    },
+    {
+      "id": "73a0ecaf-6a4f-32f7-91ff-013e0681eb87",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "7d1c0e7b-d315-3e5f-8a18-b0abc5b3e792",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dfed913e8b55a0c2c4906f1242fd38fd9a116e49 <01fdecc0480d916c799dbee584833a4a37e94d06"
+    },
+    {
+      "id": "83b9d253-c260-3658-9b90-86b65719ebaf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ad3f90a9c4a2c74bb3711f2031bffda4ec44c849"
+    },
+    {
+      "id": "9383a832-792c-3380-a7fb-58717d34fb8b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.87 <5.15.217"
+    },
+    {
+      "id": "b1021bf2-d519-33af-91dc-652626a0b785",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.163 <5.10.266"
+    },
+    {
+      "id": "b23f25c2-59dd-3da5-b255-cfd1b10551ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c2137d565ceb505de69593c181a0543bc4083838 <a4b82de96d465ddb44bc931145c0fa80c4fe9c9c"
+    },
+    {
+      "id": "c85633c8-1468-3c58-85df-0012c2d50634",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dfed913e8b55a0c2c4906f1242fd38fd9a116e49 <f9297abbcaba760b7a7b9d63b839f607f738013e"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "813ce110-147a-394c-b147-8bb52d003570",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

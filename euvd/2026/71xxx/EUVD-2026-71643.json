@@ -1,0 +1,171 @@
+{
+  "id": "EUVD-2026-71643",
+  "enisaUuid": "af82a7a1-d456-31f5-8786-5e6e9da79b37",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/hugetlb: fix swap entry corruption when clearing uffd-wp at fork()\n\ncopy_hugetlb_page_range() clears the uffd-wp bit of migration and hwpoison\nentries with huge_pte_clear_uffd_wp(), which operates on the present-PTE\nbit position.  Swap entries keep the uffd-wp state elsewhere -- the\nmigration branch reads and sets it with pte_swp_uffd_wp() and\npte_swp_mkuffd_wp() -- and the present-PTE position falls into the swap\npayload.  On x86-64 it lands in the inverted swap offset, where a\nnaturally-aligned hugetlb PFN always has the affected bit set, so the\nclear advances the encoded PFN by two pages.\n\nNo userfaultfd needs to be involved: the clear is guarded only by the\nchild VMA not being uffd-wp registered, so a plain fork() with an\nin-flight hugetlb migration entry (or a poisoned hugetlb page) corrupts\nthe entry copied into the child.  Instrumenting the clear and forking\nafter MADV_HWPOISON on a 2MB anon hugetlb page shows:\n\n  offset before=120e00\n  offset after =120e02\n\nThe fallout is mostly latent: rmap walks match migration entries by folio\nrange and remove_migration_pte() rebuilds the PTE from the folio, so a\nwithin-folio PFN skew heals once migration completes.  But any path that\nre-encodes the corrupted offset -- e.g.  hugetlb_change_protection()\nrewriting a writable migration entry via\nmake_readable_migration_entry(swp_offset(entry)) -- propagates it.\n\nMigration entries legitimately carry uffd-wp, so clear it with\npte_swp_clear_uffd_wp(), matching copy_nonpresent_pte() and\nmove_huge_pte().\n\nA hwpoison entry, on the other hand, never carries the uffd-wp bit: it is\ninstalled fresh by make_hwpoison_entry() (try_to_unmap_one() does not\npreserve uffd-wp on the hwpoison path) and hugetlb_change_protection()\nleaves hwpoison entries untouched.  There was nothing to clear there, only\nthe corruption, so drop the clear entirely.",
+  "datePublished": "Sep 4, 2026, 5:11:09 PM",
+  "dateUpdated": "Sep 4, 2026, 5:11:09 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f1b1311c0352873137768bac5a126e491271a747",
+    "https://git.kernel.org/stable/c/69cb5825d9988c7944bc9f1dc08cb233655405a7",
+    "https://git.kernel.org/stable/c/8b0de7005b148738d79d6c45594d566489948a68",
+    "https://git.kernel.org/stable/c/2b9a07002c2f296aa6a9c591213933d3492e3089",
+    "https://git.kernel.org/stable/c/2fa11c60c9c06bafc19cf4d9efdaa36a38079e87",
+    "https://git.kernel.org/stable/c/83abe2fd5b3aeb3123b5408a5a91709c5538fb23"
+  ],
+  "aliases": [
+    "CVE-2026-80893"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "126f512a-81ed-3a56-b123-631a99a92d83",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc70fbf269fdff410b0b6d75c3770b9f59117b90 <8b0de7005b148738d79d6c45594d566489948a68"
+    },
+    {
+      "id": "14faf0a5-fe58-3855-a6a9-8039f6d41d62",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc70fbf269fdff410b0b6d75c3770b9f59117b90 <69cb5825d9988c7944bc9f1dc08cb233655405a7"
+    },
+    {
+      "id": "24d4ed4f-d720-343b-8f67-dc2250e470ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.44"
+    },
+    {
+      "id": "2c68f127-cd74-3e6d-8401-f851a4ac704e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.103"
+    },
+    {
+      "id": "34bd066d-31c7-3b12-b8b2-7dcf7a4333ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc70fbf269fdff410b0b6d75c3770b9f59117b90 <83abe2fd5b3aeb3123b5408a5a91709c5538fb23"
+    },
+    {
+      "id": "5234f710-6571-3a33-9499-21af876eaae3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.19"
+    },
+    {
+      "id": "60113f02-03cc-3d32-acc0-a2ba1b2c3f69",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc70fbf269fdff410b0b6d75c3770b9f59117b90 <f1b1311c0352873137768bac5a126e491271a747"
+    },
+    {
+      "id": "7e2d45b6-a9dc-35ac-afbb-79a7819642f4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc70fbf269fdff410b0b6d75c3770b9f59117b90 <2fa11c60c9c06bafc19cf4d9efdaa36a38079e87"
+    },
+    {
+      "id": "a9d16d82-ac5a-318c-99ea-fcd9d271e7fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "d1dc61fc-141d-361c-88ec-6a1bf51c6008",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "dae59ce2-6925-3d37-ab6d-8923ee0b2797",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc70fbf269fdff410b0b6d75c3770b9f59117b90 <2b9a07002c2f296aa6a9c591213933d3492e3089"
+    },
+    {
+      "id": "ddd28239-050b-3e2c-b301-3ae11b55d045",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "e6101a55-8e31-3cdc-b5ad-fefa26a6daee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1.8"
+    },
+    {
+      "id": "f8260959-12b2-333e-b1eb-bbd72a8fd35c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.151"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "01e1c537-c977-327e-8871-c711cc45c8fa",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
