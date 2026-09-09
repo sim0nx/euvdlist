@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-75102",
+  "enisaUuid": "fdc67833-bb59-3148-a233-687c6f83e59d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvlan: fix skb_under_panic and races when toggling HW VLAN offload\n\nToggling hardware VLAN TX offload (NETIF_F_HW_VLAN_CTAG_TX or\nNETIF_F_HW_VLAN_STAG_TX) on a lower device invokes vlan_transfer_features(),\nwhich dynamically changed vlandev->hard_header_len.\n\nThis causes two issues:\n1. Lockless TX paths (e.g. packet_snd in af_packet.c, ip6_finish_output2)\n   read dev->hard_header_len without holding RTNL lock. Mutating\n   hard_header_len dynamically under RTNL creates a data race where upper\n   layers reserve insufficient headroom based on a stale hard_header_len,\n   resulting in skb_under_panic when vlan_dev_hard_header() is called.\n2. In addition, vlan_transfer_features() updated hard_header_len without\n   updating header_ops, causing a mismatch between allocated headroom\n   and header creation.\n\nAlways setting dev->hard_header_len = real_dev->hard_header_len and\ndev->needed_headroom = real_dev->needed_headroom + VLAN_HLEN unconditionally\nensures:\n- dev->hard_header_len remains 100% static and immutable at real_dev->hard_header_len,\n  eliminating all dynamic runtime updates and data races on hard_header_len.\n- Upper layers allocating skbs via LL_RESERVED_SPACE() will always reserve\n  sufficient headroom for software VLAN tag insertion (real_dev->hard_header_len +\n  real_dev->needed_headroom + VLAN_HLEN).\n- vlandev inherits real_dev->needed_tailroom so underlying trailer/padding/ICV\n  requirements are honored.\n- AF_PACKET SOCK_RAW network header offsets remain correctly aligned at\n  real_dev->hard_header_len.\n- vlan_header_ops is used unconditionally.\n\nNote to stable teams: Make sure to backport these commits:\n\ne16e960d55a4 (\"ipvlan: inherit needed_headroom and needed_tailroom from phy_dev\")\ncef51860becd (\"macvlan: inherit needed_headroom and needed_tailroom from lowerdev\")",
+  "datePublished": "Sep 9, 2026, 4:19:44 PM",
+  "dateUpdated": "Sep 9, 2026, 4:19:44 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a29f3b884ba50217e6f50414f568073221e2bb07",
+    "https://git.kernel.org/stable/c/447cbe95ebb95392b5d8f6a01c0556826919ce23"
+  ],
+  "aliases": [
+    "CVE-2026-80925"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "381ed679-8c0b-3d73-9e69-80549107c3ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.3"
+    },
+    {
+      "id": "71252cfd-c59f-3f24-93f2-ddf18cd3b1ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "9c47355b-cdb1-371e-a662-cfe4aecccf6c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "9c5f5da0-5092-365f-86a5-4201d20b5d4f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c2bd01ff-080b-3121-970a-d636c80f8327",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <447cbe95ebb95392b5d8f6a01c0556826919ce23"
+    },
+    {
+      "id": "da0f4758-53c5-39a5-a322-b4400d1b195a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a29f3b884ba50217e6f50414f568073221e2bb07"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "432bb576-8f14-3e00-a9d7-7dace0b1991d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
