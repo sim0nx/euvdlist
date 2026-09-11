@@ -1,0 +1,139 @@
+{
+  "id": "EUVD-2026-76668",
+  "enisaUuid": "786c3128-2123-3bf1-9cf8-47241814f0f2",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/migrate: report RCU-tasks quiescent states in migrate_pages_batch()\n\nmigrate_pages_batch() unmaps each folio before moving it, and every\nunmap runs the mmu_notifier invalidate callbacks.  On KVM hosts\ntry_to_migrate() ends up in kvm_mmu_notifier_invalidate_range_start() ->\ntdp_mmu_zap_leafs(), which is expensive, so unmapping a large batch keeps\nthe CPU busy for a long time.\n\nThe loop already calls cond_resched(), but on PREEMPTION kernels that is\na no-op, and involuntary preemption is not a Tasks-RCU quiescent state.\n\nA long batch therefore never reports a quiescent state, and the\nmigrating task (e.g. kcompactd) becomes a Tasks-RCU holdout, stalling the\nTasks-RCU grace period for minutes, which is common at Meta fleet:\n\n  INFO: rcu_tasks detected stalls on tasks:\n  0000000055349ecc: .. nvcsw: 1157401/1157401 holdout: 1 idle_cpu: -1/56 task:kcompactd0      state:R  running task\n  Call Trace:\n   tdp_mmu_zap_leafs\n   tdp_mmu_next_root\n   gfn_to_pfn_cache_invalidate_start\n   kvm_mmu_notifier_invalidate_range_start\n   __mmu_notifier_invalidate_range_start\n   try_to_migrate_one\n   try_to_migrate\n   migrate_pages_batch\n   migrate_pages\n   compact_zone\n   compact_node\n   kcompactd\n   kthread\n\nUse cond_resched_tasks_rcu_qs() so a quiescent state is reported even\nwhen cond_resched() does nothing.\n\nThis has also been discussed at [1]",
+  "datePublished": "Sep 11, 2026, 7:46:59 PM",
+  "dateUpdated": "Sep 11, 2026, 7:46:59 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/4996a7bc01ef35570664854dac2530c604981039",
+    "https://git.kernel.org/stable/c/5dc0daff0341c6baba19c38f47d299ac831d7e99",
+    "https://git.kernel.org/stable/c/66734981b4d3c105223a13c827c9c73be18d91ad",
+    "https://git.kernel.org/stable/c/efe8f86c0916f0f74eea74ae21a3b37f728c6bad"
+  ],
+  "aliases": [
+    "CVE-2026-89756"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "00801da6-b0c5-3516-b6a3-64ee741cb8e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <7.2.4"
+    },
+    {
+      "id": "15e8a549-6d9b-38cf-a1df-9b4ab89474bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4996a7bc01ef35570664854dac2530c604981039"
+    },
+    {
+      "id": "21a13c0e-c647-31e5-af4f-bbb3f2c51359",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.50"
+    },
+    {
+      "id": "24154bca-8491-3f3b-80de-f014b0e97d18",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "4cf2fffe-dd33-3b85-b58a-573288823d71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "51d57171-7b83-326c-94bc-d1190f0a70bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <efe8f86c0916f0f74eea74ae21a3b37f728c6bad"
+    },
+    {
+      "id": "91f4705a-2afe-3f27-82ec-138835da3c9c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.109"
+    },
+    {
+      "id": "b027edc7-fa5c-3efb-8069-138badb2f709",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <5dc0daff0341c6baba19c38f47d299ac831d7e99"
+    },
+    {
+      "id": "c4a242d7-af6e-304c-a44c-0f2a67036632",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "e1553559-d5c0-3714-9c0c-8fe284a9d083",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "efae5187-df0c-363a-81af-bc51958300d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <66734981b4d3c105223a13c827c9c73be18d91ad"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6f313d7e-f7f2-3780-b32c-1b5004d8225a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

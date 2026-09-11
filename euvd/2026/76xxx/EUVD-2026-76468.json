@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76468",
+  "enisaUuid": "bc3697a3-090e-3c23-b6ae-3973ce3e80b3",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmd: do overflow check for sb->bblog_shift in super_1_load()\n\nIn super_1_load(), sb->bblog_shift is an __u8 type value loaded from on-\ndisk superblock. It is used for badblocks API badblocks_set() by the\nfollowing sequence,\n\n 1930   rdev->badblocks.shift = sb->bblog_shift;\n 1931   for (i = 0 ; i < (sectors << (9-3)) ; i++, bbp++) {\n 1932           u64 bb = le64_to_cpu(*bbp);\n 1933           int count = bb & (0x3ff);\n 1934           u64 sector = bb >> 10;\n 1935           sector <<= sb->bblog_shift;\n 1936           count <<= sb->bblog_shift;\n 1937           if (bb + 1 == 0)\n 1938                   break;\n 1939           if (!badblocks_set(&rdev->badblocks, sector, count, 1))\n 1940                   return -EINVAL;\n 1941   }\n\nbb->bblog_shit is in range of 0-255, variable sector is 64bit width, for\nan invalid bb->bblog_shit, it is possible to make sector be overflowed\nby the following calculation,\n 1935           sector <<= sb->bblog_shift;\nThen in turn when call badblocks_set() at line 1939 with the invalid\nrdev->badblocks.shift set at line 1930, may result an overflow inside\n_badblocks_clear() in block/badblocks.c.\n\nAlthough there are many places to call badblocks APIs, the non-zero\nshift value is only used in super_1_load(), other places always use 0 as\nthe shift value. Therefore it is unnecessary to do a general shift value\noverflow check inside badblock API, and just check here as the caller.\n\nThis may avoid unnecessary check, make the badblocks API code more simple\nand elegant.",
+  "datePublished": "Sep 11, 2026, 7:44:29 PM",
+  "dateUpdated": "Sep 11, 2026, 7:44:29 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/75d15738fd33a782606d0dc80cfeff47edf2ddd8",
+    "https://git.kernel.org/stable/c/3b097416b4cff77285c1f472fc2c4058d8a7554f",
+    "https://git.kernel.org/stable/c/df7d4d011d5ace20699ea948712f09f9ac08924f",
+    "https://git.kernel.org/stable/c/35d522bd32462afcf1981dab6da8a9256c26c1e0"
+  ],
+  "aliases": [
+    "CVE-2026-89557"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "4b49ee71-200b-311d-b13f-e0b7f81ae424",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "4ffaf498-64c0-3074-b9c0-7bd706019313",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6b320296-88db-3986-9511-f980fc81e3a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "6c0e8803-22ab-3af3-b656-868c0ce5d409",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.1"
+    },
+    {
+      "id": "78c43965-68d8-3695-8402-0caf5b1b8bf7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2699b67223aca6b1450fc2f72e40fada952afc85 <3b097416b4cff77285c1f472fc2c4058d8a7554f"
+    },
+    {
+      "id": "78e03d9b-a215-3b59-b6a5-37de197de45a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2699b67223aca6b1450fc2f72e40fada952afc85 <35d522bd32462afcf1981dab6da8a9256c26c1e0"
+    },
+    {
+      "id": "8342a90a-1dc1-3fe5-a7ce-f7494c9954ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "8c41628b-41d7-360c-a724-43ecca03e715",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2699b67223aca6b1450fc2f72e40fada952afc85 <df7d4d011d5ace20699ea948712f09f9ac08924f"
+    },
+    {
+      "id": "b27a5f6b-8bef-3575-b2b9-e4a1280178bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "e9dc18b0-ea7e-37f8-b929-db0b7ac69e57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2699b67223aca6b1450fc2f72e40fada952afc85 <75d15738fd33a782606d0dc80cfeff47edf2ddd8"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "17799858-7eb7-3a1d-a711-64844e4d7e92",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76586",
+  "enisaUuid": "a47da06f-2c94-3523-8c35-4e6aeea9df5f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfsd: fix XDR length calculation in nfsd4_ff_encode_layoutget\n\nThe XDR buffer size calculation in nfsd4_ff_encode_layoutget() has\nmultiple errors that can result in either an out-of-bounds write or\nleaking uninitialized kernel memory to the client:\n\n - fh_len doesn't account for XDR padding on the file handle data\n - uid and gid lengths use \"8 + len\" but xdr_encode_opaque() actually\n   writes \"4 + xdr_align_size(len)\" bytes\n - ds_len omits the flags and stats_collect_hint fields (8 bytes),\n   while len's header constant overestimates by 8 bytes -- these\n   partially cancel but leave a net mismatch\n\nThe worst case occurs with short strings (e.g. uid=0, gid=0 with an\nodd-sized file handle), where the function writes up to 5 bytes past\nthe reserved XDR buffer. Conversely, when string lengths happen to be\n4-byte aligned, the reservation is too large and stale buffer content\nis sent to the client.\n\nFix this by breaking out every encoded field explicitly in the ds_len\ncalculation, using xdr_align_size() for all variable-length opaque\nfields, and correcting the header constants.",
+  "datePublished": "Sep 11, 2026, 7:45:58 PM",
+  "dateUpdated": "Sep 11, 2026, 7:45:58 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e7d9d23ecd9172f05b09bb678ff22db8e361c428",
+    "https://git.kernel.org/stable/c/0380129b1373c437eb35401a174671c8888f4b80",
+    "https://git.kernel.org/stable/c/c81cef6a805dec266c10fc4f83c93d6fcf1a2b43",
+    "https://git.kernel.org/stable/c/f9868174af49d207fbaf0c5e055d088a983684af"
+  ],
+  "aliases": [
+    "CVE-2026-89674"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "11f73456-ecc1-38af-9bb9-58d58065d63f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.8"
+    },
+    {
+      "id": "26506771-42fa-34e1-a9db-35ea9a05b630",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9b9960a0ca4773e21c4b153ed355583946346b25 <c81cef6a805dec266c10fc4f83c93d6fcf1a2b43"
+    },
+    {
+      "id": "347937c4-b7f6-32c5-ad87-6cb75c55f511",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "4c434fc7-c1df-3bc8-9226-88bf0ce0cac2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "798ef5ff-ce52-38fc-a1cb-a6189d62834e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9b9960a0ca4773e21c4b153ed355583946346b25 <e7d9d23ecd9172f05b09bb678ff22db8e361c428"
+    },
+    {
+      "id": "7c35633b-13ef-31b6-9b24-3c60315861ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "b15fbc97-fbe7-3a0c-8121-81cc60cc30e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b735e1c2-630b-39b2-b65d-7239578b16eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9b9960a0ca4773e21c4b153ed355583946346b25 <f9868174af49d207fbaf0c5e055d088a983684af"
+    },
+    {
+      "id": "db61a1ed-86a2-39ec-b157-933c42afb71f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "e837b703-598c-38ec-804e-ba5ceacc0f6e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9b9960a0ca4773e21c4b153ed355583946346b25 <0380129b1373c437eb35401a174671c8888f4b80"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "49c9f7a5-5336-387b-b7a1-704cbc769bc1",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

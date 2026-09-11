@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76540",
+  "enisaUuid": "f47ed173-dd86-3401-8dee-0a3a22376368",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: picolcd: clamp eeprom debugfs read to bytes actually received\n\npicolcd_debug_eeprom_read() trusts resp->raw_data[2] -- a length byte\nsupplied by the device in its REPORT_EE_DATA reply -- clamped only to\nthe caller's read() count:\n\n\tret = resp->raw_data[2];\n\tif (ret > s)\n\t\tret = s;\n\tif (copy_to_user(u, resp->raw_data+3, ret))\n\nIt never checks resp->raw_size, the number of bytes picolcd_raw_event()\nactually copied into the 64-byte raw_data[] of the kmalloc'd struct\npicolcd_pending. A device (or a spoofed picoLCD) returning a length byte\nof 0xff, read with a count >= 255, makes copy_to_user() read past\nraw_data[] into adjacent slab memory and return it to userspace through\nthe debugfs \"eeprom\" file:\n\n\tBUG: KASAN: slab-out-of-bounds in _copy_to_user\n\tRead of size 255 ... picolcd_debug_eeprom_read+0x214/0x2f0 [hid_picolcd]\n\nThe debug-dump path in the same file already validates the device length\nbyte against the received size before trusting it; this read does not.\nThe file is created S_IRUSR (root-only) and a crafted device is needed,\nso it is neither unprivileged- nor remotely-triggerable.\n\nClamp the copy length to resp->raw_size - 3 (the payload actually\nreceived, minus the 3-byte header), floored at 0 for short replies.",
+  "datePublished": "Sep 11, 2026, 7:45:24 PM",
+  "dateUpdated": "Sep 11, 2026, 7:45:24 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a3e6e8d7198a9f3861861520a38b673684a1062b",
+    "https://git.kernel.org/stable/c/471f4a939c66d1d44aece2321807abf609fc9098",
+    "https://git.kernel.org/stable/c/699a3c8b56e168ca19d12722f3f5ef1d6f4b1d84",
+    "https://git.kernel.org/stable/c/e9c667395ac1f8024f623250b32bae4c7af9caa0"
+  ],
+  "aliases": [
+    "CVE-2026-89628"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "046e01b4-8b7b-3c01-813b-b114aef76e89",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.35"
+    },
+    {
+      "id": "2f876d7c-f252-3b69-94cb-70d1d5e97d51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9bbf2b98ba11d00bd73e3254e15cfe17ccaff6ba <e9c667395ac1f8024f623250b32bae4c7af9caa0"
+    },
+    {
+      "id": "3feee0bd-e48d-39a1-8147-5af3ebd3e5ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "49acb41d-0cb9-3e87-b950-5ee946d5413c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9bbf2b98ba11d00bd73e3254e15cfe17ccaff6ba <699a3c8b56e168ca19d12722f3f5ef1d6f4b1d84"
+    },
+    {
+      "id": "81626516-5b4d-3021-a45b-c45fd3c74d59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9bbf2b98ba11d00bd73e3254e15cfe17ccaff6ba <a3e6e8d7198a9f3861861520a38b673684a1062b"
+    },
+    {
+      "id": "95e35d0e-b620-3c72-af0b-0a95fb6c4d84",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "ad52281b-2d30-3910-bc9c-246a91ad3686",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "c41f5436-b743-3a21-a405-3b906e7acef1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c56869f2-6805-3270-b365-e4d832e89015",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "f08aa236-6036-3193-9c2b-1fd01c885c90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9bbf2b98ba11d00bd73e3254e15cfe17ccaff6ba <471f4a939c66d1d44aece2321807abf609fc9098"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "110e55e8-5c9f-3a8e-b947-ee8465e284fa",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

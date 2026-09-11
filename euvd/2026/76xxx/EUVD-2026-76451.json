@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76451",
+  "enisaUuid": "1cea683a-c116-33c3-97a7-22bd9e54f402",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsunrpc: init gssp_lock before publishing proc entry\n\ncreate_use_gss_proxy_proc_entry() publishes /proc/net/rpc/use-gss-proxy\nvia proc_create_data() before init_gssp_clnt() runs mutex_init() on\nsn->gssp_lock.  Once the dentry is linked under proc_subdir_lock it is\nimmediately reachable from userspace, so a write that lands in the\nwindow drives set_gssp_clnt() into mutex_lock() on a zero-initialized\nstruct mutex.\n\n    create_use_gss_proxy_proc_entry(net)\n      proc_create_data(\"use-gss-proxy\", ...)   /* dentry live */\n      init_gssp_clnt(sn)\n        mutex_init(&sn->gssp_lock)             /* too late */\n\n    write_gssp()\n      set_gssp_clnt(net)\n        mutex_lock(&sn->gssp_lock)             /* uninitialized */\n        gssp_rpc_create(...)\n        sn->gssp_clnt = clnt\n        mutex_unlock(&sn->gssp_lock)\n\nThe window spans only the two statements between proc_create_data()\nreturning and init_gssp_clnt(), so a writer reaches it only if the\nregistering thread is preempted there while another task is already\nopening the freshly published file.  register_pernet_subsys() runs in\npreemptible context under pernet_ops_rwsem, so that preemption is\npossible, and the window widens on auth_rpcgss module load, when the\nproc entry is created for every live net namespace whose tasks are\nalready running.  A writer that wins the race locks a zero-filled\nstruct mutex.  On CONFIG_DEBUG_MUTEXES the missing magic value trips a\n\"lock used without init\" splat; on a production kernel the fast path\nacquires the lock via CMPXCHG(owner, 0, current).  In the latter case\na second writer that arrives before init_gssp_clnt() re-zeroes owner\ncan enter set_gssp_clnt() concurrently, shut down the first writer's\nclnt while it is still in use, and leak the loser's clnt.\n\nFix by initializing sn->gssp_lock in sunrpc_init_net() so its lifetime\nmatches the sunrpc_net it lives in.  sn->gssp_clnt is already NULL from\nthe kzalloc that backs net_generic storage, so the lazy helper is no\nlonger needed; drop init_gssp_clnt(), its prototype, and the call from\ncreate_use_gss_proxy_proc_entry().  sunrpc.ko is a build-time\ndependency of auth_rpcgss.ko, so sunrpc_init_net() has always run on\nevery netns before any auth_gss pernet init can publish the proc\nentry.",
+  "datePublished": "Sep 11, 2026, 7:44:17 PM",
+  "dateUpdated": "Sep 11, 2026, 7:44:17 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f15b87521168c2a92cb1931f532cba422f856f01",
+    "https://git.kernel.org/stable/c/edeefb111d6181a4aa278f415b005efe284b9489",
+    "https://git.kernel.org/stable/c/3f019571928b269feebcff59926ec13294215e0e",
+    "https://git.kernel.org/stable/c/5ce1ed6159731a41fdd0b03eedbed4e147036a5a"
+  ],
+  "aliases": [
+    "CVE-2026-89540"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "4299166f-dd67-30a4-9465-310c0cff7011",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030d794bf49855f5e2a9e8dfbfad34211d1eb08b <3f019571928b269feebcff59926ec13294215e0e"
+    },
+    {
+      "id": "4f5a7cd3-16a4-3c55-8461-2e1b2a342189",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "5796049e-7ba2-3cee-af58-9ea113bd05d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.10"
+    },
+    {
+      "id": "59908341-effe-3a2e-abbc-692b4dc41c92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030d794bf49855f5e2a9e8dfbfad34211d1eb08b <5ce1ed6159731a41fdd0b03eedbed4e147036a5a"
+    },
+    {
+      "id": "7e64edab-303c-30f8-b845-02dc7c10c167",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "91c7b143-ee81-3f25-8ff8-743ded3a2b5a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030d794bf49855f5e2a9e8dfbfad34211d1eb08b <edeefb111d6181a4aa278f415b005efe284b9489"
+    },
+    {
+      "id": "9cb64c0d-ee70-3f7e-b897-d3f002e37dc2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "d7c8e3ba-2d61-3752-a440-e98aa19fd45c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e78b00bd-292a-3132-91d0-e35ed46a069d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030d794bf49855f5e2a9e8dfbfad34211d1eb08b <f15b87521168c2a92cb1931f532cba422f856f01"
+    },
+    {
+      "id": "e8f57421-7fc7-326e-be15-52f2c388dff2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f96f240d-95ff-36e4-a018-22647e9ed635",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

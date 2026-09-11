@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76596",
+  "enisaUuid": "27a9faf5-bf70-31e6-8251-0c799c03c57a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfsd: fix cpntf publish race in nfs4_init_cp_state\n\nnfs4_alloc_init_cpntf_state() published the new cpntf entry into the\ns2s_cp_stateids IDR (with cs_type set) in one s2s_cp_lock section, then\ntook the lock again to list_add() it onto p_stid->sc_cp_list. In the gap\nthe entry is reachable by so_id but cp_list is still {NULL,NULL} from\nkzalloc. A racing OFFLOAD_CANCEL (so_id is echoed to the client as\ncnr_stateid, so any NFSv4.2 client can drive it) reaches\nmanage_cpntf_state() -> _free_cpntf_state_locked() and does list_del() on\nthe zeroed list_head, oopsing the server.\n\nFold the cs_type assignment and the list_add() into the same critical\nsection as idr_alloc_cyclic(), so a concurrent lookup either misses the\nentry or sees a fully linked cp_list. INIT_LIST_HEAD() the entry after\nallocation and switch _free_cpntf_state_locked() to list_del_init() so a\nstale unlink is a no-op. nfs4_init_copy_state() passes NULL p_stid and\nskips the list_add, preserving NFS4_COPY_STID semantics.",
+  "datePublished": "Sep 11, 2026, 7:46:06 PM",
+  "dateUpdated": "Sep 11, 2026, 7:46:06 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/21d6c5957f5ca97d7352e60f55ea412beb9419f5",
+    "https://git.kernel.org/stable/c/a631a26a8777bb235eabd478bbbaf26a4db750bf",
+    "https://git.kernel.org/stable/c/c7270f62e7a05a2ee68aa2b74262b658a14463bd",
+    "https://git.kernel.org/stable/c/be3a5c1d857b0dcbc11796cea603ef25834f75b2"
+  ],
+  "aliases": [
+    "CVE-2026-89684"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "09f03de6-2f9b-3f41-86a4-06274a109875",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.6"
+    },
+    {
+      "id": "5989f72c-ba6b-34ee-bd29-4bc57fe2371f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "624322f1adc58acd0b69f77a6ddc764207e97241 <a631a26a8777bb235eabd478bbbaf26a4db750bf"
+    },
+    {
+      "id": "72578c8d-9e2f-35f5-acd2-ba5adb93a50d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "73911d8c-ab42-3a94-a194-1e9a5068442a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "624322f1adc58acd0b69f77a6ddc764207e97241 <be3a5c1d857b0dcbc11796cea603ef25834f75b2"
+    },
+    {
+      "id": "9096fb3e-4b4f-3a7d-9aee-5fd59c0fca83",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ad9c98f8-df20-379a-b09a-9eb1156592e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "b68a3217-9c2f-397a-bd2a-e50835fd1a65",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "b7fe036c-bfa7-3a94-bedd-88ac24b9b8b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "624322f1adc58acd0b69f77a6ddc764207e97241 <21d6c5957f5ca97d7352e60f55ea412beb9419f5"
+    },
+    {
+      "id": "d6d0153a-3d54-32b0-b270-2dae0495e171",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "624322f1adc58acd0b69f77a6ddc764207e97241 <c7270f62e7a05a2ee68aa2b74262b658a14463bd"
+    },
+    {
+      "id": "e4cb86e3-82e3-30e7-a9f4-de5635a70c4b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c993752d-db8c-349c-8e4e-ee35cb1d5e77",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

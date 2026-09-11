@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76399",
+  "enisaUuid": "0896e8ba-4bf0-327b-8068-56eb15e6656e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: validate rl_used against rl_count in refcount block validator\n\nocfs2_find_refcount_rec_in_rl() walks the on-disk refcount record array\nwith:\n\n\tfor (; i < le16_to_cpu(rb->rf_records.rl_used); i++) {\n\t\trec = &rb->rf_records.rl_recs[i];\n\t\t...\n\nrl_recs[] lives in a single metadata block (4096 bytes on the common\nconfiguration), so its real capacity is fixed by\nocfs2_refcount_recs_per_rb(sb) (247 records for a 4K block with the\n16-byte ocfs2_refcount_rec).  rl_used and rl_count are both read directly\noff disk by ocfs2_validate_refcount_block() and are never checked against\nthat capacity, nor against each other, before any refcount/reflink/CoW\noperation walks the array.\n\nA crafted (or corrupted) refcount block with rl_used == 0xffff makes the\nloop above walk far past the end of the block, dereferencing rl_recs[i]\nfor i up to 65534.  The resulting index is then handed to the sibling\nocfs2_insert_refcount_rec(), whose insert-shift does:\n\n\tif (index < le16_to_cpu(rf_list->rl_used))\n\t\tmemmove(&rf_list->rl_recs[index + 1],\n\t\t\t&rf_list->rl_recs[index],\n\t\t\t(le16_to_cpu(rf_list->rl_used) - index) *\n\t\t\t sizeof(struct ocfs2_refcount_rec));\n\ni.e.  a memmove() of up to (0xffff - index) * 16 bytes (~1 MiB) from an\noffset already past the block.  This is reachable from an ordinary reflink\n(FICLONE) against a crafted/corrupted ocfs2 image: attaching an extent\nwhose cpos sorts past every real record in the leaf forces the lookup to\nrun off the end instead of returning early on a match.  The attacker model\nis local: CAP_SYS_ADMIN mounting a crafted or corrupted ocfs2 image, or a\nraw write to the block device backing an already-mounted ocfs2 filesystem.\n\nocfs2_validate_refcount_block() already validates the block's ECC,\nsignature, rf_blkno and rf_fs_generation, but never rl_count/rl_used\nagainst the block's actual on-disk capacity.  This is the same class of\ngap that ocfs2_validate_extent_block() (fs/ocfs2/alloc.c) already closes\nfor the sibling extent-list header, which checks both the record capacity\nand the \"used\" bound before any code walks h_list.l_recs[]:\n\n\tif (le16_to_cpu(eb->h_list.l_count) != ocfs2_extent_recs_per_eb(sb)) {\n\t\trc = ocfs2_error(...);\n\t\tgoto bail;\n\t}\n\n\tif (le16_to_cpu(eb->h_list.l_next_free_rec) >\n\t    le16_to_cpu(eb->h_list.l_count)) {\n\t\trc = ocfs2_error(...);\n\t\tgoto bail;\n\t}\n\nAdd the equivalent pair of checks to ocfs2_validate_refcount_block():\nreject a refcount block whose rl_count does not match the fixed per-block\ncapacity returned by ocfs2_refcount_recs_per_rb(), and reject rl_used >\nrl_count.  Both checks are skipped when OCFS2_REFCOUNT_TREE_FL is set,\nbecause in that case the same union bytes hold an ocfs2_extent_list\n(rf_list), not the refcount record list (rf_records) -- that layout is\nalready validated separately by ocfs2_validate_extent_block() when the\nreferenced extent block is read.  This mirrors the existing\n\"!(rb->rf_flags & OCFS2_REFCOUNT_TREE_FL)\" guard used elsewhere in this\nfile (e.g.  ocfs2_get_refcount_rec()) to decide whether rf_records or\nrf_list is the live member of the union.\n\nWith this in place, a forged rl_used/rl_count is caught at block\nvalidation time (ocfs2_error()), consistent with every other corruption\ncheck in this function, instead of driving an out-of-bounds read in\nocfs2_find_refcount_rec_in_rl() and a subsequent out-of-bounds memmove()\nin ocfs2_insert_refcount_rec().\n\nVerified against a crafted image on a v6.19 KASAN (KASAN_GENERIC) build:\nreplaying the same reflink (FICLONE) reliably hit a KASAN report in\n__ocfs2_increase_refcount()/ocfs2_insert_refcount_rec() before this patch,\nand triggers no report once ocfs2_validate_refcount_block() rejects the\nforged rl_used/rl_count.",
+  "datePublished": "Sep 11, 2026, 7:43:44 PM",
+  "dateUpdated": "Sep 11, 2026, 7:43:44 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/af56e90cb546cb0c47bef059335365283f61d6a4",
+    "https://git.kernel.org/stable/c/0761d2c9494424469a0d30a9da3496ca010b0b2d",
+    "https://git.kernel.org/stable/c/04ead708e13ddcb9c39319cbe02a18cef99cb823",
+    "https://git.kernel.org/stable/c/4ca62df6bc0708947b48da3f6a712ecb8e73929c"
+  ],
+  "aliases": [
+    "CVE-2026-89493"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2d91f90b-f365-3a2c-8976-300292587d61",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "7f6a2f1e-c119-3992-a077-a5411e7bde6d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f2c870e3b12e38da6d9b5b17c4c8ae56a0ed68e4 <af56e90cb546cb0c47bef059335365283f61d6a4"
+    },
+    {
+      "id": "85196ce1-2e92-3936-80da-9ff9330392d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.32"
+    },
+    {
+      "id": "945f89af-a709-3703-be35-d7aff1fba935",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "9c53f119-bd42-33a6-af32-29fa5d3eda71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "b33c6541-83f9-38be-baa1-764a16de2bba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f2c870e3b12e38da6d9b5b17c4c8ae56a0ed68e4 <4ca62df6bc0708947b48da3f6a712ecb8e73929c"
+    },
+    {
+      "id": "ddca1d70-c4f3-3764-9e7c-faa0bc48f192",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e134a489-911a-3d70-8caf-09166fb1428a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "f47a730a-df82-3b36-b3a9-13cd48ac46be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f2c870e3b12e38da6d9b5b17c4c8ae56a0ed68e4 <0761d2c9494424469a0d30a9da3496ca010b0b2d"
+    },
+    {
+      "id": "ff3cc2ca-7a59-30d8-b9b9-ca2cf61166c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f2c870e3b12e38da6d9b5b17c4c8ae56a0ed68e4 <04ead708e13ddcb9c39319cbe02a18cef99cb823"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e919fd3d-8043-335b-996d-296547e7b52d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

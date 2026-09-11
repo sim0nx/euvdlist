@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76305",
+  "enisaUuid": "3477e6f2-50fe-3f39-8260-f5c6039da453",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/smc: fix use-after-free in smc_rx_pipe_buf_release()\n\nsmc_rx_splice() hands RMB pages to a pipe and takes a socket reference\nper entry so the smc_sock stays alive until the reader finishes. The\nconnection does not: a concurrent close runs smc_conn_free(), which\nreleases the receive buffer back to the link group pool.\n\nsmc_rx_pipe_buf_release() tests sk_state before taking the socket lock.\nThe state can change between the test and the lock, and\nsmc_rx_update_cons() then dereferences conn->rmb_desc and walks\nconn->lgr, which smc_conn_free() has already released. On the\nis_reg_err path smcr_buf_unuse() frees the descriptor outright, so\nthis is a use-after-free.\n\nTake the socket lock first and test conn->freed instead.\nsmc_conn_free() sets that flag before releasing anything, and every\ncaller holds the socket lock. The two paths exclude each other: either\nthe pipe release runs first with everything valid, or it sees the flag\nand skips the update.",
+  "datePublished": "Sep 11, 2026, 7:42:42 PM",
+  "dateUpdated": "Sep 11, 2026, 7:42:42 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6a644a7340df978785f3109d1e0726a982ce2c6f",
+    "https://git.kernel.org/stable/c/0761e49aa78c2f1362511054c6e9670653858837",
+    "https://git.kernel.org/stable/c/0926f59ca0f94120895b92180c636a48d0ed3a6d",
+    "https://git.kernel.org/stable/c/c924884743e948e25625b7fbf3ee2a9325a204a7"
+  ],
+  "aliases": [
+    "CVE-2026-80982"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "061e705d-d174-37e2-8738-c78121961115",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9014db202cb764b8e14c53e7bacc81f9a1a2ba7f <0761e49aa78c2f1362511054c6e9670653858837"
+    },
+    {
+      "id": "0d5f5a4b-7127-3d6c-bc35-69303f38a5d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "4ad52beb-03dd-342d-9f99-89439da387b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "615ff638-4572-3b47-8de2-9b5ac58742ae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "8f3b4de3-c5f2-3d04-8d1b-ca7e40d2197c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9014db202cb764b8e14c53e7bacc81f9a1a2ba7f <6a644a7340df978785f3109d1e0726a982ce2c6f"
+    },
+    {
+      "id": "ba33493d-d788-3892-a38e-0ce53be10bcc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9014db202cb764b8e14c53e7bacc81f9a1a2ba7f <c924884743e948e25625b7fbf3ee2a9325a204a7"
+    },
+    {
+      "id": "c0e106a8-14d9-3d8c-99e2-05ab9ffd91db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "d180a2a2-8bc6-3e6f-ba6e-e2fafc84c7c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d640b888-609d-3e40-97f0-4e4d3f7d9bce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9014db202cb764b8e14c53e7bacc81f9a1a2ba7f <0926f59ca0f94120895b92180c636a48d0ed3a6d"
+    },
+    {
+      "id": "d689ea1c-097b-3639-9b45-f0762ef33e22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.18"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "dd0c4088-d4c9-3b25-a4e4-b294fccddecd",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

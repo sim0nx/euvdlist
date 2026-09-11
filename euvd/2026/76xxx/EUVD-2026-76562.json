@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76562",
+  "enisaUuid": "ca3f3be0-284c-324b-86b4-1b6637bbb259",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nceph: bound num_export_targets array for mds info v2/v3\n\nceph_mdsmap_decode() in fs/ceph/mdsmap.c reads num_export_targets from\neach per-mds info record and advances the decode cursor by\nnum_export_targets * sizeof(u32) without first checking that many bytes\nremain. The only upper-bound check that catches a runaway cursor\n(*p > info_end) is gated on info_v >= 4, because info_end is left NULL\nfor info_v 2 and 3. When the monitor sends an MDS map whose per-mds\ninfo version is 2 or 3 with an oversized num_export_targets, the cursor\nmoves past the message front buffer and the later export-targets loop\ncalls the unchecked ceph_decode_32() on out-of-bounds memory.\n\nA kernel client processes CEPH_MSG_MDS_MAP from its monitor session\n(net/ceph/mon_client.c dispatches it; fs/ceph/super.c routes it to\nceph_mdsc_handle_mdsmap(), which sets end to the front buffer bound and\ncalls ceph_mdsmap_decode()). A malicious or compromised monitor, or an\non-path attacker on an unsigned/unencrypted messenger session, can\ntherefore drive an out-of-bounds read in the client kernel; on x86_64\nwith KASAN it is reported as a slab-out-of-bounds read in\nceph_mdsmap_decode(). The decoded values land in the internal\ninfo->export_targets[] array, so the consequence is a kernel\nout-of-bounds read, not an information leak to the attacker.\n\nImpact: a malicious or compromised Ceph monitor sending an MDS map with\na per-mds info version of 2 or 3 and an oversized num_export_targets\nfield triggers an out-of-bounds read in the CephFS client kernel.\n\nAdd a ceph_decode_need() for the export-targets array before advancing\nthe cursor, so the bound is enforced for every info_v >= 2, not only\ninfo_v >= 4. This mirrors the count-then-need idiom already used for\nm_data_pg_pools later in the same function.\n\nCompute the export-targets byte count with size_mul() and reuse that\nchecked length when advancing the cursor, so the attacker-controlled\nnum_export_targets multiplication fails closed on overflow rather than\nrelying on the later kcalloc() guard.",
+  "datePublished": "Sep 11, 2026, 7:45:40 PM",
+  "dateUpdated": "Sep 11, 2026, 7:45:40 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/3bf7dba8dba9a05774b846affec61a3624ddba38",
+    "https://git.kernel.org/stable/c/58c2d3e954c13694ef6e820a5e9456461bb9e7df",
+    "https://git.kernel.org/stable/c/332c444f4dc6fa1e8b8637c9e82d29e97f768656",
+    "https://git.kernel.org/stable/c/a3eb169ee297aa99670ba927c659990bd1e453f3"
+  ],
+  "aliases": [
+    "CVE-2026-89650"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1d9ea697-bca7-36ec-8f0e-d86a3d628140",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "397a6c29-fadd-34cf-bd5c-b029b920e76a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d463a43d69f4af85887671d76182437775fd1631 <332c444f4dc6fa1e8b8637c9e82d29e97f768656"
+    },
+    {
+      "id": "3b7f6138-483e-34a9-bc84-1b774e3eb86c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.7"
+    },
+    {
+      "id": "3b8f7163-ee2b-33a9-93d9-8e031e1a6d16",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d463a43d69f4af85887671d76182437775fd1631 <58c2d3e954c13694ef6e820a5e9456461bb9e7df"
+    },
+    {
+      "id": "4d46dcdc-e71b-3a15-81eb-a901c902deb3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d463a43d69f4af85887671d76182437775fd1631 <3bf7dba8dba9a05774b846affec61a3624ddba38"
+    },
+    {
+      "id": "55b92ac7-23f4-3148-bf48-19d7ef0384b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "a39c64d0-86a4-3cdc-a4f7-c0758ae06d1b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "a7bba0ae-4606-31f4-83fa-1f9670037483",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b9862a4d-f510-3824-b8b4-bcb79310e082",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "f63955de-1e53-3925-b1aa-c04699d117d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d463a43d69f4af85887671d76182437775fd1631 <a3eb169ee297aa99670ba927c659990bd1e453f3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ec8e34a5-b3d9-3bac-92d9-00cc3834ca22",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

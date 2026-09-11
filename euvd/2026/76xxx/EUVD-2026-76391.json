@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76391",
+  "enisaUuid": "2dedbe18-b802-3056-8c8c-a67c92442ad0",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nlockd: pin next file across nlm_inspect_file lock-drop\n\nnlm_traverse_files() pins the current file with f_count++ across\na mutex_unlock for nlm_inspect_file(), but nothing pins the saved\nnext pointer.  A concurrent nlm_release_file() can kfree the next\nfile during the unlock window, and the iterator dereferences freed\nmemory on the next loop step.\n\nPin both current and next before the lock-drop.  Advance by\nswapping the pinned cursors at the end of each iteration so next\nis always held alive across the unlock.\n\nAlways call nlm_file_release() after dropping the iteration pin,\nregardless of whether the file matched the predicate.  Use\nnlm_file_inuse(), which does a live walk of the inode lock list,\nrather than the cached f_locks field, so skipped files that never\nran nlm_inspect_file() are evaluated correctly.\n\nBecause every file in a hash bucket is now pinned and released,\nfiles skipped by the is_failover_file predicate that have no\nlocks, blocks, shares, or external references are deleted during\ntraversal.  The old code never evaluated skipped files for\ncleanup.  The new behavior is intentional: such files are stale\nand should not persist in the table.",
+  "datePublished": "Sep 11, 2026, 7:43:39 PM",
+  "dateUpdated": "Sep 11, 2026, 7:43:39 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/c24bdb7df2f34bdc38ca8a73796f5acb40f1830c",
+    "https://git.kernel.org/stable/c/41f0a6d31615fcae261bf28a0aa50050dc93a401",
+    "https://git.kernel.org/stable/c/e999a88133654c6dfc68487fb49da5f20dfa2d4f",
+    "https://git.kernel.org/stable/c/526c49cff3f72c3ec74752016380c7567040581b"
+  ],
+  "aliases": [
+    "CVE-2026-89485"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3b41d1e5-9214-3c01-9bc7-d1617bca085d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "01df9c5e918ae5559f2d96da0143f8bfbb9e6171 <41f0a6d31615fcae261bf28a0aa50050dc93a401"
+    },
+    {
+      "id": "4a410738-c73f-38de-a4f2-0e928c33260b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "591cab69-2d85-31d2-8430-ce9ec28a12b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "5d983142-ead9-3f1d-9fc3-2b80e10fff16",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "6a9dfd4e-496e-3c2f-be2c-8c540ffdc0e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "92cf7622-5253-3e58-a51e-06fa16345f10",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "01df9c5e918ae5559f2d96da0143f8bfbb9e6171 <c24bdb7df2f34bdc38ca8a73796f5acb40f1830c"
+    },
+    {
+      "id": "aae0bc6f-3b3d-395a-9f1b-266124c2fdfb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.18"
+    },
+    {
+      "id": "b2814496-fad2-3f12-8349-a5a7469ef0c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "01df9c5e918ae5559f2d96da0143f8bfbb9e6171 <e999a88133654c6dfc68487fb49da5f20dfa2d4f"
+    },
+    {
+      "id": "b9cf4706-c974-3c93-8fc3-dc3ea3a2904a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "c0a3382e-7847-3b88-9f08-e8566bf4dbfd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "01df9c5e918ae5559f2d96da0143f8bfbb9e6171 <526c49cff3f72c3ec74752016380c7567040581b"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "938e4a9b-d714-341e-ae5c-8728c63086be",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

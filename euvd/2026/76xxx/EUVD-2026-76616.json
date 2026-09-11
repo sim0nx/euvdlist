@@ -1,0 +1,169 @@
+{
+  "id": "EUVD-2026-76616",
+  "enisaUuid": "01bbf5c0-39a3-3683-89a0-6b95f33a4dd7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfsd: sample writeback error cursor before async COPY loop\n\n_nfsd_copy_file_range() samples dst->f_wb_err into \"since\"\nafter the copy loop, then uses it to detect writeback errors\nvia filemap_check_wb_err() once vfs_fsync_range() returns.\nBecause the nfsd_file cache reuses a single struct file\nacross requests targeting the same inode, a concurrent\nCOMMIT or stable WRITE on dst advances dst->f_wb_err to the\ncurrent mapping->wb_err via file_check_and_advance_wb_err()\nduring its own vfs_fsync_range(). If that advancement lands\nbetween the writeback error appearing in mapping->wb_err\nand the COPY worker sampling \"since\", the worker captures\nthe already-advanced cursor, errseq_check() sees cur ==\nsince and returns zero, and NFSD4_COPY_F_COMMITTED is set\neven though writeback failed. CB_OFFLOAD then encodes\nwr_stable_how = FILE_SYNC4, the client treats the copied\ndata as durable, and the failure becomes silent data loss.\n\nSample since once at the start of the function. The cursor\nthen reflects state in effect before this COPY issues any\nwrites, and filemap_check_wb_err() detects any error that\noccurs during the copy regardless of which thread first\nobserves it. This matches the pattern used by\nnfsd_vfs_write() and nfsd4_clone_file_range().",
+  "datePublished": "Sep 11, 2026, 7:46:21 PM",
+  "dateUpdated": "Sep 11, 2026, 7:46:21 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/52b2db7a72e19ac2686fa4b2a52406661e7bf9e2",
+    "https://git.kernel.org/stable/c/8277d4a11ae2cb5495842be558fd946032c24363",
+    "https://git.kernel.org/stable/c/a1cbafe756cd5e6ab0e099062f37da7a5b081169",
+    "https://git.kernel.org/stable/c/20a67a7d18221af736f124770c2c5e859b479046"
+  ],
+  "aliases": [
+    "CVE-2026-89704"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "192dded3-1c35-3c4a-8d68-6a867146bab9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "555dbf1a9aac6d3150c8b52fa35f768a692f4eeb <52b2db7a72e19ac2686fa4b2a52406661e7bf9e2"
+    },
+    {
+      "id": "2d5c804a-5f84-35e6-af65-9e66d673b112",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.49 <5.16"
+    },
+    {
+      "id": "2fa90edb-9839-306e-9390-2328309389ea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "32296958-1342-36d6-9bb8-7f140e737a63",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.17"
+    },
+    {
+      "id": "45e47a4f-40ad-39f1-8077-32a302d8c366",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "93fdd49f-03a1-3202-99e7-b4a57b8b4892",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "97d87792-3050-3eba-a96a-2e9b277fe0d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.124 <5.11"
+    },
+    {
+      "id": "99d556b2-4aa5-3a2c-afbb-a6e550a64304",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3145fe0ebb16e1715ad541a301bc6675c8375fcd"
+    },
+    {
+      "id": "b416594a-3b05-31f4-b714-44e860a3f380",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "bc159787-411b-3987-8f89-da6c9f2d0163",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "555dbf1a9aac6d3150c8b52fa35f768a692f4eeb <8277d4a11ae2cb5495842be558fd946032c24363"
+    },
+    {
+      "id": "d9ada310-b155-3555-bd00-1afe9a10b5a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "dd16bc43-d663-3b39-89e0-c43048bb8440",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "555dbf1a9aac6d3150c8b52fa35f768a692f4eeb <20a67a7d18221af736f124770c2c5e859b479046"
+    },
+    {
+      "id": "ffaff2bc-4b10-342c-a34f-f01262c0577c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f14816f2f928c560d28ba344af689f56efcd6f55"
+    },
+    {
+      "id": "fff1c6da-c2b8-36f0-85ec-e276f4c1d72b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "555dbf1a9aac6d3150c8b52fa35f768a692f4eeb <a1cbafe756cd5e6ab0e099062f37da7a5b081169"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2099e741-ca36-3037-ba19-0219e03e7e7d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

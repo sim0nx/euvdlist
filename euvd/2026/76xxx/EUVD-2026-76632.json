@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76632",
+  "enisaUuid": "4b688b7d-8d50-3699-92da-ee6a1f7db429",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nubifs: fix out-of-bounds read in signature length check\n\nubifs_sb_verify_signature() bounds the on-disk ubifs_sig_node->len field\nbefore handing the signature payload to verify_pkcs7_signature(), but the\ncheck has the wrong sign:\n\n\tif (le32_to_cpu(signode->len) > snod->len + sizeof(struct ubifs_sig_node))\n\nThe signature bytes start sizeof(struct ubifs_sig_node) (UBIFS_SIG_NODE_SZ,\n64 bytes) into the node, so the payload is at most\n\n\tsnod->len - sizeof(struct ubifs_sig_node)\n\nbytes long. Adding the header size instead of subtracting it accepts a\ndeclared length up to 2 * UBIFS_SIG_NODE_SZ larger than the node actually\nholds -- past the end of c->sbuf, which is vmalloc(c->leb_size).\nverify_pkcs7_signature() -> pkcs7_parse_message() -> asn1_ber_decoder()\nis then handed that inflated length and reads beyond the allocation while\nwalking the DER headers. The node length comes straight from the mounted\nimage, so a crafted signed UBIFS image reaches this via\nubifs_read_superblock() before the signature is cryptographically checked.\n\nsnod->len is guaranteed to be >= UBIFS_SIG_NODE_SZ by the node scanner\n(c->ranges[UBIFS_SIG_NODE].min_len == UBIFS_SIG_NODE_SZ), so the corrected\nsubtraction cannot underflow. Legitimately signed images are unaffected: a\ncorrect superblock never declares a signature longer than the node it is\nembedded in.",
+  "datePublished": "Sep 11, 2026, 7:46:32 PM",
+  "dateUpdated": "Sep 11, 2026, 7:46:32 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f76b79d6e42af20682495bccd22f72c7164b0018",
+    "https://git.kernel.org/stable/c/a1dc246f98bb94233effa4fa3ec7bf84700bb7d1",
+    "https://git.kernel.org/stable/c/83e1aa9f5f906c9b1f4949d0521f0f950a159d96",
+    "https://git.kernel.org/stable/c/95d27c1708bb6e8823c8e7c623f9abc2a91bf4bf"
+  ],
+  "aliases": [
+    "CVE-2026-89720"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "044af3c3-5887-3ddc-9773-26e2f931fcb4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "817aa094842dfc3a6b98c9582d4a647827f66201 <95d27c1708bb6e8823c8e7c623f9abc2a91bf4bf"
+    },
+    {
+      "id": "169be3d9-4876-3360-87f5-a6c693eb6fc7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "4a9fb5e1-cdea-349d-8aa2-8425c0c920df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "752f2529-97dd-3c52-b474-6ce96010d556",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7841e93c-d874-356c-b312-3b7fc6026fb8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "83326565-4df8-3933-a88e-877cc08b185d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.3"
+    },
+    {
+      "id": "b81b5713-fbc5-3061-aa5f-2457b09677dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "817aa094842dfc3a6b98c9582d4a647827f66201 <a1dc246f98bb94233effa4fa3ec7bf84700bb7d1"
+    },
+    {
+      "id": "ea7e3f95-4b1a-3c58-beb9-3af9a29f3fce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "817aa094842dfc3a6b98c9582d4a647827f66201 <83e1aa9f5f906c9b1f4949d0521f0f950a159d96"
+    },
+    {
+      "id": "f62aa0eb-df98-3224-92b4-671a7b7412b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "ff0ccd1d-c148-3a20-bc7e-e08239d4eccb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "817aa094842dfc3a6b98c9582d4a647827f66201 <f76b79d6e42af20682495bccd22f72c7164b0018"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "09d4147e-9c83-3bb3-8f92-29466d786c01",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

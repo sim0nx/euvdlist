@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76575",
+  "enisaUuid": "9455a45d-8c66-3fe3-b129-de93304fc949",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfsd: revoke copy-notify stateids before dropping their reference\n\nCopy-notify stateids live in the s2s_cp_stateids IDR and on their parent\nstid's sc_cp_list, pinned by a single membership reference.\n_free_cpntf_state_locked() only unlinks an entry once its refcount reaches\nzero, so any revoke path that runs while a concurrent\nfind_cpntf_state()/manage_cpntf_state() holder has elevated cs_count drops\nthe reference without unlinking, leaving the entry discoverable with its\nmembership reference already consumed. A second revoke or a laundromat tick\nthen frees it while the reader still holds the pointer -- a\nKASAN-detectable use-after-free at the reader's nfs4_put_cpntf_state().\n\nThis affected all three revoke paths:\n\n  - The parent-stid drain (nfs4_free_cpntf_statelist()) repeatedly called\n    _free_cpntf_state_locked() on the first list entry; a holder that had\n    bumped cs_count made it return early, so the next iteration\n    re-decremented and burned the holder's reference.\n\n  - OFFLOAD_CANCEL (manage_cpntf_state()) and laundromat expiry likewise\n    used _free_cpntf_state_locked() and could drop 2->1 without unlinking.\n\nAdd revoke_cpntf_state_locked(), which unhashes the entry from the IDR and\nsc_cp_list first (deferring the final free to any holder), and use it from\nall three revoke paths. The drain now walks with list_for_each_entry_safe()\nand revokes each entry unconditionally, so it terminates in one pass per\nentry regardless of cs_count. The unhash is gated on\n!list_empty(&cps->cp_list); the idr_remove() gate matters because\nidr_alloc_cyclic() may have recycled the so_id by then. Keep\n_free_cpntf_state_locked() for the reference-holder put path only, where a\nconcurrent revoke may already have unlinked the entry (its list_del_init()\nthen a no-op).",
+  "datePublished": "Sep 11, 2026, 7:45:50 PM",
+  "dateUpdated": "Sep 11, 2026, 7:45:50 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6b8149448cdcb476fba4559d1ecc247efee9971b",
+    "https://git.kernel.org/stable/c/b56d2c5f01cddbeca7d11cce81d97db4ec9a464f",
+    "https://git.kernel.org/stable/c/ff8a3cff02b92b2a82f1a9876038fcf953ae9c25",
+    "https://git.kernel.org/stable/c/3b0c3595db99bb4bebd7c8aa8a36f3c50e411bb7"
+  ],
+  "aliases": [
+    "CVE-2026-89663"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "176dfb19-59b4-3062-9339-a106d2484718",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "624322f1adc58acd0b69f77a6ddc764207e97241 <6b8149448cdcb476fba4559d1ecc247efee9971b"
+    },
+    {
+      "id": "58c31729-02a1-38e9-9f94-a4bee609c906",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "624322f1adc58acd0b69f77a6ddc764207e97241 <3b0c3595db99bb4bebd7c8aa8a36f3c50e411bb7"
+    },
+    {
+      "id": "72bd216e-93fc-3b97-99e9-8ab305244df0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "624322f1adc58acd0b69f77a6ddc764207e97241 <b56d2c5f01cddbeca7d11cce81d97db4ec9a464f"
+    },
+    {
+      "id": "74140507-9833-3364-9783-2c9441143437",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "868b8c11-191c-3e6c-bc72-449bfdd11204",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "b5d1e101-e00b-33bf-9a35-6687533aa84b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "624322f1adc58acd0b69f77a6ddc764207e97241 <ff8a3cff02b92b2a82f1a9876038fcf953ae9c25"
+    },
+    {
+      "id": "bc5ca2a2-268a-3d1a-8e58-834d7724f3da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c4e07eca-2be4-32a0-b1c4-1d1fabdda2c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.6"
+    },
+    {
+      "id": "dc2d18d1-b062-367f-8c05-09a52a1ccd84",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "ecead1ad-4309-36fd-8bb6-c02e9bc3887f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5858ab5e-ea82-3ad8-8790-c38ee0e9de5f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

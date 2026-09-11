@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-76545",
+  "enisaUuid": "d2d0871d-c891-34d4-b9ef-43529dd7b0a4",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: fix OOB read/write from unvalidated DataOffset in coalesce_t2()\n\ncoalesce_t2() computes data pointers directly from server-supplied\nDataOffset fields with no validation against buffer bounds:\n\n  data_area_of_tgt = (char *)&pSMBt->hdr.Protocol +\n                     get_unaligned_le16(&pSMBt->t2_rsp.DataOffset);\n  data_area_of_src = (char *)&pSMBs->hdr.Protocol +\n                     get_unaligned_le16(&pSMBs->t2_rsp.DataOffset);\n  data_area_of_tgt += total_in_tgt;\n  ...\n  memcpy(data_area_of_tgt, data_area_of_src, total_in_src);\n\nA small DataOffset can push a pointer below the actual byte area,\noverwriting header fields; a large one can push it past the buffer\nend, causing out-of-bounds heap reads (source) or writes (target).\nThe BCC overflow guard does not prevent this: BCC reflects how much\ndata is present, while DataOffset controls where in the buffer it\nstarts.\n\nThe \"validate target area\" comment present since the function was\nfirst written in 2005 was a placeholder that was never implemented.\n\nAdd lower- and upper-bound checks for both data pointers before the\nmemcpy, and before any target header fields are modified.",
+  "datePublished": "Sep 11, 2026, 7:45:28 PM",
+  "dateUpdated": "Sep 11, 2026, 7:45:28 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/672cf86aa6aa0fb4012ce4c3b3498df42ad67a4e",
+    "https://git.kernel.org/stable/c/033bc80019f07d158630df4e69b19a49010f54f1",
+    "https://git.kernel.org/stable/c/6343c1da561962688f203362d80d6a3bfa39fa1b"
+  ],
+  "aliases": [
+    "CVE-2026-89633"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0143ff0b-11df-3cf9-b9f8-a2ae267026f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e4eb295d38b57f4d4b956942a48887eb252d97c6 <033bc80019f07d158630df4e69b19a49010f54f1"
+    },
+    {
+      "id": "06412781-92fc-3bd8-ba19-1b978d93e48f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "39d8ed7f-69b2-3fd7-a389-54671e9774c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "3f643b4f-22e2-35e8-a308-798057a27853",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "5805352b-e0fa-3c6b-a009-9e92e4843618",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e4eb295d38b57f4d4b956942a48887eb252d97c6 <6343c1da561962688f203362d80d6a3bfa39fa1b"
+    },
+    {
+      "id": "93cc9261-7111-3ae6-ba71-10eb81119bee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e4eb295d38b57f4d4b956942a48887eb252d97c6 <672cf86aa6aa0fb4012ce4c3b3498df42ad67a4e"
+    },
+    {
+      "id": "b8174fc6-bae1-3b8f-90a2-4be647d0ae9a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "e67ef48a-0fc8-3009-863a-578e4af77c5f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.51"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "bfbe9ece-0309-3ee0-8676-04fa0037adc8",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

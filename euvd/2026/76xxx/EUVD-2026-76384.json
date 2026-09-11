@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76384",
+  "enisaUuid": "b06947b5-a87f-3753-9ded-a9b84a2ca827",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsctp: drop a chunk if its transport was removed\n\nsctp_rcv() resolves the transport once per packet and leaves it in\nchunk->transport. The lookup reference, or the one sctp_add_backlog() takes\nif the socket is owned by userspace, keeps it around until the chunk has\nbeen processed.\n\nAn authenticated ASCONF DEL-IP can remove it in the meantime.\nsctp_assoc_rm_peer() takes the transport out of the association and calls\nsctp_transport_free(), which tags it dead and drops the reference the\nassociation held. There is a window on both paths: the packet can sit on\nthe socket backlog, and on the direct path the lookup completes before\nbh_lock_sock().\n\nThe DATA chunk in that packet puts the removed transport back into\nasoc->peer.last_data_from. Once the packet is done that reference goes\naway and the transport is freed by RCU, so the next delayed SACK carries\nthe pointer into the SACK chunk and sctp_outq_select_transport() reads the\nfreed transport's state.\n\nDrop the chunk in sctp_inq_push(), next to the existing rcvr->dead check.\nBoth paths reach it with the association's socket lock held. The peer\nretransmits it.",
+  "datePublished": "Sep 11, 2026, 7:43:34 PM",
+  "dateUpdated": "Sep 11, 2026, 7:43:34 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/c6c86a5e62a4fec36692ddd64b9144b660f71f96",
+    "https://git.kernel.org/stable/c/1035bdef1efb9b1076d1a57b81e08c637ff08ecc",
+    "https://git.kernel.org/stable/c/3537961df2163258bddc230db0e18dc14e925ea6",
+    "https://git.kernel.org/stable/c/03a9d10ecf71f54b2af8020935f2033d4a132be5"
+  ],
+  "aliases": [
+    "CVE-2026-89478"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1522b0ad-2304-3aee-9e23-040d630abd5f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <1035bdef1efb9b1076d1a57b81e08c637ff08ecc"
+    },
+    {
+      "id": "18327650-094f-3bff-a19d-497fc26a69c3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "37845925-bdaf-37ea-92b8-1eab1526ef26",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "5399d6bd-ce8c-36c3-8bc4-0007fc419d1e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "9ded6d39-62b4-375c-aab3-85e2223399a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c6c86a5e62a4fec36692ddd64b9144b660f71f96"
+    },
+    {
+      "id": "a7c6afb3-6f8e-3cf3-a782-41ee161ac242",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "aed16d98-4262-37fe-878e-0fcaa7024977",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <03a9d10ecf71f54b2af8020935f2033d4a132be5"
+    },
+    {
+      "id": "b846ef4e-49a6-32b7-86c3-1c72c3383be7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ca5945f7-e3bf-31e6-a0a9-3db1a4b6e073",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "db24a47d-f637-386a-9080-78dc08914761",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <3537961df2163258bddc230db0e18dc14e925ea6"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "160f5945-e38d-348a-b7c7-4338b64f2e2c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

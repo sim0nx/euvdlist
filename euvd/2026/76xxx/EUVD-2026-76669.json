@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-76669",
+  "enisaUuid": "ceb2b849-438c-3ab9-b907-b91e1034c704",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/mglru: fix and remove redundant unevictable folio handling\n\nsort_folio() has a shortcut for moving folios that are no longer evictable\nbut are still sitting on a generation list.  However, this shortcut is\nbuggy.  It does not follow the PG_lru usage convention, and it has a more\nserious issue.\n\nUnevictable folios are not threaded on lists[LRU_UNEVICTABLE], so that\nfolio->lru can be reused to hold folio->mlock_count (see the comment in\nlruvec_init()).  Hence lruvec_add_folio() skips the list_add() for them,\nand every other place that turns a folio unevictable initialises\nmlock_count explicitly: lru_add() sets it to 0, __mlock_folio() and\n__mlock_new_folio() set it to !!folio_test_mlocked(folio).  sort_folio()\nsets nothing, and the lru_gen_del_folio() right above it may have already\npoisoned folio->lru via list_del(), so mlock_count ends up aliasing\nLIST_POISON2, which reads as 0x122, i.e.  290.  The result is user\nvisible.  On munlock, __munlock_folio() decrements that bogus count, finds\nit still non-zero and bails out before clearing PG_mlocked, so the folio\nremains unevictable and the Mlocked accounting stays inflated until the\nfolio is freed.\n\nThe shortcut also touches the LRU flags in the wrong order.  It calls\nlru_gen_del_folio() while PG_lru is still set, so a concurrent\nfolio_test_clear_lru() (e.g.  compaction, folio_isolate_lru()) can succeed\non a folio that has already been taken off the generation list, which may\nlead to unexpected behavior.\n\nSo fix it by isolating them as common folios and letting the generic\nshrink path cull them.  This matches the classical LRU behavior, and there\nshould be no visible effect on the generic eviction or isolation behavior.\n\nThere is no performance concern either, such a folio goes through this\nonce, and then it is off the generation lists for good.",
+  "datePublished": "Sep 11, 2026, 7:46:59 PM",
+  "dateUpdated": "Sep 11, 2026, 7:46:59 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/54a58d6656dd403b686b247f0bad8507cbfb45df",
+    "https://git.kernel.org/stable/c/15d3a2a71c8bf7333d019d249ee33669e69e4275",
+    "https://git.kernel.org/stable/c/f7e698e326b239a91ea15844817551921209e826"
+  ],
+  "aliases": [
+    "CVE-2026-89757"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "18f3a579-fdac-3d96-8a3e-576a300b6f71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.51"
+    },
+    {
+      "id": "4193672e-9e4f-32e1-9c96-43c78ca9e135",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ac35a490237446b71e3b4b782b1596967edd0aa8 <f7e698e326b239a91ea15844817551921209e826"
+    },
+    {
+      "id": "41bd5ac1-6c9d-31ef-81b3-b1964aa775e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "825c6b1a-a41e-3fd9-b8de-c45ada666729",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a68aaa95-f1ab-3a6c-84ed-a2a9eb8d4582",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "c949e57e-fb27-3e3a-96e3-d5a84a0135c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1"
+    },
+    {
+      "id": "cf807a26-007c-37a4-80b1-68ec51e4ab80",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ac35a490237446b71e3b4b782b1596967edd0aa8 <54a58d6656dd403b686b247f0bad8507cbfb45df"
+    },
+    {
+      "id": "d2d3fbbd-78bf-32c5-adce-6661b22dfc2d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ac35a490237446b71e3b4b782b1596967edd0aa8 <15d3a2a71c8bf7333d019d249ee33669e69e4275"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d2e4712e-20de-3769-836d-10b301efb6cd",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-76644",
+  "enisaUuid": "1b40c8df-d7e4-3910-9b71-71a4cb5fe45a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: f_fs: Prevent deadlock during ep0 read loop\n\nCurrently, ffs_ep0_read() holds ffs->mutex when it prepares to go to\nsleep waiting for an event. When no setup events are pending, it calls\nwait_event_interruptible_exclusive_locked_irq() with the mutex still\nheld. The wait macro deliberately drops the waitqueue spinlock before\nsleeping but does not drop the mutex.\n\nIf a userspace daemon is polling ep0 via read() and the gadget is\nasynchronously torn down via configfs (e.g., echo \"\" > UDC), a\ndeadlock can occur:\n\n1. The configfs teardown calls functionfs_unbind(), which queues a\n   FUNCTIONFS_UNBIND event.\n2. The daemon wakes up, consumes the event, and drops the mutex.\n3. However, if the daemon loops and immediately issues another read()\n   before exiting, it reacquires ffs->mutex and again goes into an\n   interruptible sleep.\n4. Meanwhile, functionfs_unbind() continues execution and attempts to\n   acquire ffs->mutex to tear down ep0req.\n5. The kernel deadlocks because the configfs thread is stuck in an\n   uninterruptible sleep waiting for the mutex, while the userspace\n   daemon is in an interruptible sleep holding the mutex forever\n   because no more events will arrive.\n\nTo fix this, we drop both the waitqueue spinlock and ffs->mutex before\ngoing to sleep, and use wait_event_interruptible_exclusive() instead.\nUpon waking up, we jump back to the `retry` label to safely reacquire\nthe mutex and re-evaluate the state machine. By not sleeping with\nffs->mutex held, we natively decouple gadget teardowns (which require\nthe mutex) from userspace polling.",
+  "datePublished": "Sep 11, 2026, 7:46:41 PM",
+  "dateUpdated": "Sep 11, 2026, 7:46:41 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/fd20cc68bbdb5620696ac108e8f2efd180fe2c1a",
+    "https://git.kernel.org/stable/c/34e88f53614640b59039a46717fb6142e9871022",
+    "https://git.kernel.org/stable/c/eac233e63f9db82ba874e3cccafaafab162999e0",
+    "https://git.kernel.org/stable/c/569dd7e5dcffe1e1c6b26ca2cd3be57eb433e082"
+  ],
+  "aliases": [
+    "CVE-2026-89732"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "176ed732-47e4-313a-8144-2da8e22f4568",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ddf8abd2599491cbad959c700b90ba72a5dce8d0 <fd20cc68bbdb5620696ac108e8f2efd180fe2c1a"
+    },
+    {
+      "id": "5164e22f-5028-3dd7-b9b2-e79d14418b9d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "65df3672-b3fd-3a7e-88fc-42ede2d8ec4a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.35"
+    },
+    {
+      "id": "77fba46b-c418-319d-a83a-5014ebc50c00",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.109"
+    },
+    {
+      "id": "7e68c1a8-d3ef-3e49-b372-b159942ddb9d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "7fe525d7-3afa-3725-8cff-ce8a9d019673",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ddf8abd2599491cbad959c700b90ba72a5dce8d0 <34e88f53614640b59039a46717fb6142e9871022"
+    },
+    {
+      "id": "925b54a9-964c-34da-b4fc-c3dd07857534",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ddf8abd2599491cbad959c700b90ba72a5dce8d0 <569dd7e5dcffe1e1c6b26ca2cd3be57eb433e082"
+    },
+    {
+      "id": "ba4d41cc-dc22-3f59-b243-12f548d84e67",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "eee65106-f02d-3fe4-ba44-486a971b2708",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ddf8abd2599491cbad959c700b90ba72a5dce8d0 <eac233e63f9db82ba874e3cccafaafab162999e0"
+    },
+    {
+      "id": "fc194fb4-2cb6-3d19-b19b-d8a7ff6a9077",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "39a0ece7-fa22-3773-aa19-7a0087659780",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-76394",
+  "enisaUuid": "aea2ea53-9207-3652-bd27-45f6d5ddbaf6",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nopenvswitch: Fix CT limit teardown use-after-free\n\nPacket processing uses CT limit state under RCU, while netns teardown\nfrees that state under ovs_mutex. The CT limit pointer was neither removed\nfrom readers nor protected by a grace period, allowing packet processing to\ndereference the freed state.\n\nAn unprivileged user can trigger this bug from a user and network\nnamespace, causing a slab-use-after-free in ovs_ct_execute() when the\nnetns is torn down.\n\nPublish the CT limit pointer through RCU, remove it before teardown, and\nwait for readers before freeing its contents. Keep ovs_mutex around\nindividual CT limit updates, and use the RCU read-side lock while GET\ntraverses the RCU-protected limit lists.\n\nNetns teardown detaches the RCU-protected CT limit state in the pernet\n.pre_exit callback while holding ovs_mutex.  The pernet core guarantees an\nRCU grace period between the .pre_exit and .exit callbacks, so the .exit\ncallback completes the teardown without adding any extra synchronization.\n\nThe netlink command handlers do not need NULL checks because the userspace\nnetlink socket holds an active reference to its network namespace while a\nrequest is processed. The per-netns exit path therefore cannot run\nconcurrently with SET, DEL, or GET for that socket's namespace.",
+  "datePublished": "Sep 11, 2026, 7:43:41 PM",
+  "dateUpdated": "Sep 11, 2026, 7:43:41 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e15407c3a8a005324f633cd46cd8fb58042c1157",
+    "https://git.kernel.org/stable/c/6a6d36fadb8537d9b79e72c9fa51885ec0c33e10",
+    "https://git.kernel.org/stable/c/403f96c32c9e24600093d7d0c61c17daeedca957"
+  ],
+  "aliases": [
+    "CVE-2026-89488"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "08fe839f-c0ba-3d36-8970-98941a330713",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "170610be-f41b-30d9-ac96-bf04206ada2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.18"
+    },
+    {
+      "id": "1fc543fa-09fe-3924-8e3e-d12457392ef1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11efd5cb04a184eea4f57b68ea63dddd463158d1 <403f96c32c9e24600093d7d0c61c17daeedca957"
+    },
+    {
+      "id": "45e63f06-2c0f-3a98-a861-f87f03368c66",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.51"
+    },
+    {
+      "id": "53ae4d44-0efa-369d-83b7-3f05ef855685",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11efd5cb04a184eea4f57b68ea63dddd463158d1 <6a6d36fadb8537d9b79e72c9fa51885ec0c33e10"
+    },
+    {
+      "id": "6e35777c-d2e9-3991-b864-6892ea549803",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "909f6ae7-f17a-3e55-8ce0-7e132f04f518",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11efd5cb04a184eea4f57b68ea63dddd463158d1 <e15407c3a8a005324f633cd46cd8fb58042c1157"
+    },
+    {
+      "id": "ef77acb3-8e8c-3207-9eab-e3e07595080c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "912f456b-9352-3c44-b0af-d6b9f819f7e4",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
