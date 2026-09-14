@@ -1,0 +1,49 @@
+{
+  "id": "EUVD-2026-77524",
+  "enisaUuid": "808139f3-3134-324c-a8b4-3da01efabd95",
+  "description": "Description\n\n`getNimbusConf` returned the complete daemon configuration without redaction after only a user-level\nauthorization check. Where the cluster is configured with them, that response includes\n`storm.zookeeper.auth.payload` and the keystore and truststore passwords for the Thrift, Netty and\nZooKeeper TLS configuration. The project masks passwords elsewhere before display, so the omission here is\ninconsistent rather than intended.\n\nThe UI endpoint `/api/v1/cluster/configuration` compounded this. It carried no `@AuthNimbusOp` annotation,\nand the authorization filter treated a missing annotation as \"no gate required\" and returned immediately, so\nthe endpoint applied no per-user check at all and proxied the request under the UI daemon's own principal.\nAny user able to pass `ui.filter` therefore received the full configuration, including principals that\nNimbus itself would have refused.\u00a0\n\nMitigation\n\nUpgrade to 3.1.0, where credential-bearing values are masked before the configuration is served and where\nevery UI API endpoint must declare its authorization explicitly.\n\nUsers who cannot upgrade immediately should place the UI behind an authenticating reverse proxy that\nrestricts `/api/v1/cluster/configuration`, and should rotate the ZooKeeper authentication payload and any\nTLS keystore or truststore passwords that were reachable through it.\n\nCredit\n\nThe ASF -- found using Claude agents to study the security of open-source projects, validated and reported by Apache Storm.",
+  "datePublished": "Sep 14, 2026, 3:32:49 PM",
+  "dateUpdated": "Sep 14, 2026, 3:32:49 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://lists.apache.org/thread/ohw4s30rhm2r20498c0zbqxyy7xd5hxl",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-82433",
+    "http://www.openwall.com/lists/oss-security/2026/09/13/13"
+  ],
+  "aliases": [
+    "GHSA-3p33-32v8-fg8j",
+    "CVE-2026-82433"
+  ],
+  "assigner": "apache",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "266e2511-d00d-3f9e-9d43-e3e4fe099508",
+      "product": {
+        "name": "Apache Storm Nimbus",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "3.0.0 <3.1.0"
+    },
+    {
+      "id": "81a8a48b-90bd-3df6-aa2d-dfe7ea254067",
+      "product": {
+        "name": "Apache Storm UI",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "3.0.0 <3.1.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "67fb2368-f4dc-36b7-895f-6f6cf107759c",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}
