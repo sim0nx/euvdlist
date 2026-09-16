@@ -1,0 +1,110 @@
+{
+  "id": "EUVD-2026-80312",
+  "enisaUuid": "f28c313f-20f6-3322-8145-a54cedaa0772",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nperf: Fix use-after-free when perf mmap() revival races with the last munmap()\n\nperf_mmap_close() drops rb->mmap_count *without* holding\nevent->mmap_mutex (the refcount_dec_and_test() right before the\nrefcount_dec_and_mutex_lock() of event->mmap_count). A concurrent\nperf_mmap_rb() can slot its entire \"revival\" path into that window\n(perf_mmap holds event->mmap_mutex for its whole duration, including\nrb_alloc):\n\n  munmap side (perf_mmap_close)          mmap side (perf_mmap_rb)\n  -----------------------------------    --------------------------------\n  rb->mmap_count 1 -> 0   (no lock)      (holds event->mmap_mutex)\n                                         inc_not_zero(rb->mmap_count) fails\n                                         ring_buffer_attach(event, NULL)\n                                         rb_alloc() + attach new rb\n                                         refcount_set(&event->mmap_count, 1)\n  lock; event->mmap_count 1 -> 0\n  ring_buffer_attach(event, NULL)\n  ring_buffer_put() -> frees the *new* rb\n\nThe revival's refcount_set(&event->mmap_count, 1) is an invisible\n1 -> 1 write: the close frees the just-revived buffer although the\nother process still has it mapped -- a page-level use-after-free\nallowing local privilege escalation to root by any unprivileged user\n(default kernel.perf_event_paranoid=2).\n\nSwap the order of the two counter updates: event->mmap_count is\ndropped first via refcount_dec_and_mutex_lock(), so its 1 -> 0\ntransition and the ring_buffer_attach() stay serialized with\nperf_mmap(). rb->mmap_count == 0 then implies every event using the\nbuffer is detached already, so the result of the rb->mmap_count drop\ncan gate the remaining teardown directly and detach_rest is no longer\nneeded.\n\nAn earlier fix for this race from Kyle Zeng and David Lee takes\nevent->mmap_mutex around both counter updates [0]; here the not-last\nclose stays lockless.",
+  "datePublished": "Sep 16, 2026, 9:30:30 AM",
+  "dateUpdated": "Sep 16, 2026, 9:30:30 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/929cb3b9dc818dd9fa89d510d4ff2b255e42badd",
+    "https://git.kernel.org/stable/c/0c739f54f1c77f3a4643160cd2e031b6c2f2aab6",
+    "https://git.kernel.org/stable/c/58a8108bc73de0740d5b88150465d6690ea5f85f",
+    "https://nvd.nist.gov/vuln/detail/CVE-2026-89791"
+  ],
+  "aliases": [
+    "GHSA-3xg9-4g5f-3mp3",
+    "CVE-2026-89791"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "175ce79d-1e8a-361c-8f94-6ac740eef4c2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.5"
+    },
+    {
+      "id": "26314b3d-62b0-3c00-bb96-1fffa0a52182",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "59741451b49ce9964a9758c19d6f7df2a1255c75 <929cb3b9dc818dd9fa89d510d4ff2b255e42badd"
+    },
+    {
+      "id": "30ecd95b-ec53-347f-9319-766097fc05dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "59741451b49ce9964a9758c19d6f7df2a1255c75 <58a8108bc73de0740d5b88150465d6690ea5f85f"
+    },
+    {
+      "id": "661b5333-2d8a-3214-8f92-6a5b399ae8af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "8b4e4662-1a81-3ce8-93ca-40dce93a98e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.52"
+    },
+    {
+      "id": "90e23157-dde2-321a-ae9d-e898d251d5cd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.18"
+    },
+    {
+      "id": "979cd556-274b-3a37-9cc3-e46203465a51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "59741451b49ce9964a9758c19d6f7df2a1255c75 <0c739f54f1c77f3a4643160cd2e031b6c2f2aab6"
+    },
+    {
+      "id": "f96db275-0d62-3e2d-aa83-f2d97c07cffe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0a9aebce-7fd6-35b8-873a-fddaf7611266",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
