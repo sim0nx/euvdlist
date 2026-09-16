@@ -1,0 +1,167 @@
+{
+  "id": "EUVD-2026-80396",
+  "enisaUuid": "9cafe812-84fa-3f21-86f6-99245dd99a70",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/damon/core: avoid infinite kdamond_merge_regions() internal loop\n\nPatch series \"mm/damon: unurgent fixes for infinite loop, NULL de-ref and\nraces\", v1.1.\n\nSashiko found a few issues in DAMON that could cause infinite loop, NULL\ndereference and monitoring results degradation.  The first two sounds\nscary but the infinite loop happens only under unreasonable user setup. \nThe NULL dereference is only in a unit test.  Monitoring results\ndegradation is trivial since it is only best-effort, and those happens\nfrom only unlikely races.  Still those are bugs that better to fix if\npossible.  Fix those.\n\n\nThis patch (of 6):\n\nDue to online parameter update like events, the number of DAMON regions\ncould be higher than the user-set upper limit.  kdamond_merge_regions()\nrepeats merge regions until the number meets the limit, while doubling the\nmerge threshold up to the theoretical maximum threshold.  It is tried only\nup to the theoretical maximum threshold because even the aggressive\nmerging can fail from reducing the number of regions under the\nuser-defined upper limit.  For example, there could be many user-defined\nnon-contiguous regions that cannot be merged.\n\nThe threshold based loop break condition is evaluated by comparing the\nthreshold for the next merging try against the theoretical maximum\nthreshold.  If max_thres is larger than UINT_MAX / 2, doubling the\nthreshold could make it overflow, and bypass the loop break condition.  In\nthe case, if the number of regions cannot be reduced under the upper limit\nlike explained above, the loop will run infinitely.\n\nPrevent the case by doing the break condition check before doubling the\nthreshold.  Also, prevent the threshold exceeding the maximum threshold,\nas it could overflow and apply the wrong merge threshold.\n\nThis issue is unlikely to occur in real world, since having the max_thres\nhigher than UINT_MAX / 2 require unrealistically large aggregation\nintervals compared to the sampling interval.  Also, it requires an\nunrealistically large number of uncontiguous regions setup.  Nonetheless,\nthe consequence is bad and the fix is simple.\n\nThe issue was discovered [1] by Sashiko.",
+  "datePublished": "Sep 16, 2026, 10:30:27 AM",
+  "dateUpdated": "Sep 16, 2026, 10:30:27 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/8a96a06e04d210845be5d9581c0e9e338947e8f8",
+    "https://git.kernel.org/stable/c/123e4619ab6c8ab1c4cb1d7a58311a2af13929cd"
+  ],
+  "aliases": [
+    "CVE-2026-89796"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "25d60e4a-906f-3404-9ee5-de3fe3167911",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11078e2d11465518a9e85096bd28f8cd5fa1ea41"
+    },
+    {
+      "id": "31d97dab-e3a0-3b22-ab6a-93a49c04492d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "310d6c15e9104c99d5d9d0ff8e5383a79da7d5e6 <123e4619ab6c8ab1c4cb1d7a58311a2af13929cd"
+    },
+    {
+      "id": "35087d22-41a9-360a-b81f-67a1eaf782c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc1"
+    },
+    {
+      "id": "3b2c8252-f7d6-3a14-b5c8-51ee44f52520",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "3ef82296-245f-3bf4-a9bd-327fe18f3b4e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.9.10 <6.10"
+    },
+    {
+      "id": "4141a2b9-2b77-3636-ac98-50365298b44b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f2bd3184b6aeca6a497394b558337246e09fc02d"
+    },
+    {
+      "id": "45a360a2-df6f-35ac-8778-378dda990d72",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.5"
+    },
+    {
+      "id": "7463de79-5cb5-3b02-98d4-0f6aa3fc7a5b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d7eda72e59bbf3ed592db7ff0fd8c246c73149a8"
+    },
+    {
+      "id": "7af0f224-8435-3e66-a2db-cd98125a5ece",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.101 <6.2"
+    },
+    {
+      "id": "8274c97e-f280-352a-b40e-481fe2cc85b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1e865019cef354a5f0314491b4b4fc9f9a613642"
+    },
+    {
+      "id": "9006b20a-1909-3411-a867-0c79287e4333",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "310d6c15e9104c99d5d9d0ff8e5383a79da7d5e6 <8a96a06e04d210845be5d9581c0e9e338947e8f8"
+    },
+    {
+      "id": "94567185-fd24-3928-a3bd-91b4b552b143",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.41 <6.7"
+    },
+    {
+      "id": "a17dba02-2faf-3e42-8fa1-ffe02d2e97c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.164 <5.16"
+    },
+    {
+      "id": "bebcb339-b5d9-3e65-8b85-6e9dcc0d7e44",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.10"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "bb992fe0-f626-327a-b273-cb275e4ec575",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
