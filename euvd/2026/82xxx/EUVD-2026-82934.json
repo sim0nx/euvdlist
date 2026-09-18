@@ -1,0 +1,21 @@
+{
+  "id": "EUVD-2026-82934",
+  "enisaUuid": "59b89ba2-bb52-3a43-b656-a95fbe7df150",
+  "description": "### Summary\r\n`RtspMethods.valueOf()` silently strips trailing control bytes (any character with code point <= 0x20, the full range that `String.trim()` removes) before performing a cache lookup against its ten pre-populated method constants. A wire-delivered RTSP request whose method token ends with a trailing control byte \u2014 for example `PLAY\\x00` or `PLAY\\r`, immediately before the separating space \u2014 is decoded by `RtspDecoder` as a fully successful PLAY request, with `decoderResult().isSuccess() == true and request.method() == RtspMethods.PLAY` (same object reference as the cached singleton). The application layer cannot distinguish this from a clean\r\n`PLAY` request.\r\n\r\nThis is the same root cause as #16723 and #16971, in a sibling that those fixes did not reach. The fix for `HttpMethod` hardened `HttpMethod.valueOf()` directly, but `RtspMethods.valueOf()` has its own independent `checkNonEmptyAfterTrim()` call that runs before the cache lookup \u2014 meaning a trailing-control-byte token hits the cache before the hardened `HttpMethod` constructor ever sees it.\r\n\r\n### Reproduction\r\n\r\nMinimal wire-level reproduction\r\n\r\nSend the following raw bytes to any Netty-based RTSP server using R",
+  "datePublished": "Sep 18, 2026, 2:18:11 PM",
+  "dateUpdated": "Sep 18, 2026, 2:18:11 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N",
+  "references": [
+    "https://access.redhat.com/security/cve/CVE-2026-93565",
+    "https://bugzilla.redhat.com/show_bug.cgi?id=2536952"
+  ],
+  "aliases": [
+    "CVE-2026-93565"
+  ],
+  "assigner": "redhat",
+  "epss": 0.0,
+  "enisaIdProduct": [],
+  "enisaIdVendor": []
+}
