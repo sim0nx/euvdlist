@@ -1,0 +1,77 @@
+{
+  "id": "EUVD-2026-86078",
+  "enisaUuid": "c0e90902-d27c-3216-b92d-34bfbc07e775",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntty: serial: 8250: protect against NULL uart->port.dev in register\n\nserial8250_register_8250_port() conditionally copies uart->port.dev\nfrom up->port.dev only when up->port.dev is non-NULL:\n\n\tif (up->port.dev) {\n\t\tuart->port.dev = up->port.dev;\n\t\t...\n\t}\n\nSo if both the existing uart slot and up have a NULL ->dev,\nuart->port.dev remains NULL. The very next ACPI companion check\nthen dereferences it unconditionally:\n\n\tif (!has_acpi_companion(uart->port.dev)) {\n\nhas_acpi_companion() reads dev->fwnode without a NULL guard\n(include/linux/acpi.h), so this NULL-derefs the kernel for the\nremaining no-dev case rather than just skipping the\nmctrl_gpio_init() initialisation as intended.\n\nsmatch flags the inconsistency:\n\n  drivers/tty/serial/8250/8250_core.c:767\n  serial8250_register_8250_port() error: 'uart->port.dev' could be\n  null (see line 719)\n\nGuard the call with a NULL check so register continues to work\nfor callers that legitimately have no parent device (legacy\nnon-OF/non-ACPI registrations).\n\nNo functional change for callers that pass a non-NULL ->dev.",
+  "datePublished": "Sep 24, 2026, 4:04:22 PM",
+  "dateUpdated": "Sep 24, 2026, 4:04:22 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/5cbab666721d974bfe033a12045d808936deaefd",
+    "https://git.kernel.org/stable/c/941c9f84c9b6310f7aaa1c8c785dcc634ee33050"
+  ],
+  "aliases": [
+    "CVE-2026-97480"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "18f11ab5-ee6f-314f-8727-41dfeb4721dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <5cbab666721d974bfe033a12045d808936deaefd"
+    },
+    {
+      "id": "1cd4bfd1-b7ef-376f-a514-f4f5e19670ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.53"
+    },
+    {
+      "id": "42149f5c-4000-390f-a55d-db384be80aab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <941c9f84c9b6310f7aaa1c8c785dcc634ee33050"
+    },
+    {
+      "id": "669e439a-1f21-35d1-8825-5b2126b1e8c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "71cb3179-6350-31b3-957e-0326ea74be03",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "fee9f9e4-7a01-3875-af02-f493a4e6ea46",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

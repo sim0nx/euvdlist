@@ -1,0 +1,77 @@
+{
+  "id": "EUVD-2026-86037",
+  "enisaUuid": "3ad9755a-686a-3ee9-b85d-aa62520e46d2",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdgpu/ras: add ras_suspend callback and use it for cp_ecc_error_irq\n\ncp_ecc_error_irq is acquired in amdgpu_gfx_ras_late_init() but\nreleased in gfx_v9_0_hw_fini(), so the put site has to query\namdgpu_irq_enabled() because the get is skipped on SR-IOV VF.\n\nras_late_init / ras_fini have no suspend counterpart, so move the\nput to amdgpu_gfx_ras_suspend() / amdgpu_gfx_ras_fini() and add a\nmatching ras_suspend callback that is invoked from\namdgpu_ras_suspend() before disable_all_features().  The get and\nput now sit in the same place and check the same condition (not\nVF, funcs registered), no refcount querying needed.\n\nAn active flag gates ras_fini so the\nsuspend-then-unload-without-resume path falls into\namdgpu_ras_block_late_fini_default() instead of double-releasing\nwhat ras_suspend already cleaned up.\n\nDrop the cp_ecc_error_irq put from gfx_v9_0_hw_fini().  gfx_v8_0\nmanages cp_ecc_error_irq locally and is unaffected; no other GFX\ngeneration has this IRQ.",
+  "datePublished": "Sep 24, 2026, 4:03:37 PM",
+  "dateUpdated": "Sep 24, 2026, 4:03:37 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/001824103f2fe6ffd2380afddf81f43b446035b2",
+    "https://git.kernel.org/stable/c/e3829992dd9fa0a82511af4f01733fc854cd15a5"
+  ],
+  "aliases": [
+    "CVE-2026-97424"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "04e945a3-1bb7-367c-b782-7b0c673dca5a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "32db6287-c614-3180-b65a-f0edf224e23f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e3829992dd9fa0a82511af4f01733fc854cd15a5"
+    },
+    {
+      "id": "b0abb510-afa4-35ba-b1cc-01b2899cbe55",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <001824103f2fe6ffd2380afddf81f43b446035b2"
+    },
+    {
+      "id": "b9383f7a-b39b-3080-88a3-16ac6fdb9909",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.53"
+    },
+    {
+      "id": "f1ce10da-46a1-3c44-a4be-b497d4b37435",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f1d16605-9ff0-3556-ac97-cbb977a5f5fd",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

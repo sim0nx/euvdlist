@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-86219",
+  "enisaUuid": "25cb5ae5-0d56-3b07-8ffb-97c83c1b6452",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: stmmac: xgmac2: disable RBUE in default RX interrupt mask\n\nEnabling the RX Buffer Unavailable (RBUE) interrupt is counterproductive\nand can trigger a MAC interrupt storm under heavy RX pressure. When the\nDMA runs out of RX descriptors it fires RBUE continuously until software\nrefills the ring.\n\nHowever, RBUE is redundant: the normal RX completion interrupt (RIE)\nalready triggers NAPI, which processes completed descriptors and refills\nthe ring, causing the DMA to resume. The RBUE handler itself only sets\nhandle_rx - the same outcome as RIE.\n\nOn Agilex5 under heavy RX pressure, the MAC interrupt (which includes\nRBUE) was observed firing 1,821,811,555 times against only 2,618,627\nactual RX completions - a ~695x ratio - confirming the severity of the\nstorm.\n\nRBUE does not provide OOM recovery. If page_pool is exhausted,\nstmmac_rx_refill() cannot advance the DMA tail pointer, the DMA stays\nsuspended, and RBUE fires again on the next NAPI completion - a storm\nwith no forward progress. This patch trades that storm for a clean\nstall with the same RX outcome. Proper OOM recovery is a pre-existing\ngap outside the scope of this fix.\n\nNote: as a consequence of disabling RBUE, the rx_buf_unav_irq ethtool\ncounter will always read 0 on XGMAC2 devices. This behaviour is already\ninconsistent across DWMAC core versions.\n\nRemove RBUE from XGMAC_DMA_INT_DEFAULT_EN and XGMAC_DMA_INT_DEFAULT_RX\nto prevent the interrupt storm while keeping normal RX handling intact.",
+  "datePublished": "Sep 24, 2026, 4:03:12 PM",
+  "dateUpdated": "Sep 24, 2026, 4:03:12 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0b1a5d3647ce07c27a9fffefc11a8cbf7d7b25ce",
+    "https://git.kernel.org/stable/c/87e2826ed2058747ddf014c082569a46bfadd96b",
+    "https://git.kernel.org/stable/c/d3265c19b35d036bba327b36b5366bee76b0157c"
+  ],
+  "aliases": [
+    "CVE-2026-93830"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "00b3a8db-7fec-3072-819b-cf82687b7e42",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <87e2826ed2058747ddf014c082569a46bfadd96b"
+    },
+    {
+      "id": "0322636d-c93a-3f1c-950e-d0d61d756e77",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0b1a5d3647ce07c27a9fffefc11a8cbf7d7b25ce"
+    },
+    {
+      "id": "0c392fd8-aee8-34e5-b57d-0a611eb8561e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "32293657-7ac5-3093-a274-f299fd7f6305",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.111"
+    },
+    {
+      "id": "5a1160e5-3e95-31f0-ab97-701525fc3157",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.53"
+    },
+    {
+      "id": "5a1efcaf-9261-333b-b8c8-1d0af8001285",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d3265c19b35d036bba327b36b5366bee76b0157c"
+    },
+    {
+      "id": "8d2c9fc3-9ae9-3f51-b29f-364fed6d2137",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.111"
+    },
+    {
+      "id": "d2a9faad-a710-33f9-91fd-6ad88fac2539",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f6e2b386-88c7-3eff-9dc8-64406d5c3dbf",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-86168",
+  "enisaUuid": "571798f2-b2d3-3f83-aca9-d73eee51c011",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: core: Do not block on tag allocation in scsi_eh_lock_door()\n\nscsi_eh_lock_door() is called from scsi_restart_operations() while the\nhost is still in the SHOST_RECOVERY state, i.e. before the host is\nswitched back to SHOST_RUNNING and scsi_run_host_queues() restarts the\nqueues. It allocates a request via scsi_alloc_request() with no flags,\nso blk_mq_get_tag() may block waiting for a free sched tag when all tags\nare already in use.\n\nThose tags can be held by commands that were just requeued by\nscsi_eh_flush_done_q() during error handling. Such commands cannot be\ndispatched until the host leaves SHOST_RECOVERY and\nscsi_run_host_queues() is called - which only happens *after*\nscsi_eh_lock_door() returns.\n\nThis forms a circular dependency:\n\n  - scsi_eh_lock_door(), running in the SCSI error handler thread, waits\n    for a sched tag held by a requeued command;\n\n  - the requeued command cannot complete and release its sched tag until\n    the error handler thread leaves scsi_restart_operations() and restart\n    the queues.\n\nFor devices with a single driver tag (e.g. USB storage) it is a\nguaranteed deadlock and I/O that can never be submitted. This problem\nhas also been reproduced in our environment.\n\nLocking the door is a best-effort operation, and scsi_eh_lock_door()\nalready returns silently when the request allocation fails. Pass\nBLK_MQ_REQ_NOWAIT to scsi_alloc_request() so the allocation fails\ninstead of blocking when no tag is available. This breaks the circular\ndependency and allows the error handler to finish restarting the queues,\nafter which the pending commands are dispatched normally.",
+  "datePublished": "Sep 24, 2026, 4:02:13 PM",
+  "dateUpdated": "Sep 24, 2026, 4:02:13 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/261c80a6b23e34ba98bcf3f75317e35ecf0a08f0",
+    "https://git.kernel.org/stable/c/dc9e1b6b9080dd6374cc9a38e4b53abca63c3b1b",
+    "https://git.kernel.org/stable/c/732cb6bb37fd26863d5786522fb1997e7f5865b4"
+  ],
+  "aliases": [
+    "CVE-2026-93781"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "7671b743-a294-3b7b-9b10-28fb387bfd3d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <dc9e1b6b9080dd6374cc9a38e4b53abca63c3b1b"
+    },
+    {
+      "id": "82c7c71d-81a2-37a3-8098-82de5ec43985",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.111"
+    },
+    {
+      "id": "82db92aa-5570-385a-b1d2-c593d5224cd7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <261c80a6b23e34ba98bcf3f75317e35ecf0a08f0"
+    },
+    {
+      "id": "b2bc73d5-90d6-3959-b668-09ddaeae997c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.53"
+    },
+    {
+      "id": "b3be8b20-70d7-35c8-949b-c60dbbaec806",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "b4e949fa-a199-34e1-84c8-1dc84a72f0e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "daef6642-660f-3507-b767-fd6e09251056",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <732cb6bb37fd26863d5786522fb1997e7f5865b4"
+    },
+    {
+      "id": "fbf13543-d3ca-372f-a1c6-c4a1183c5ca2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.111"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a5b00327-1846-34be-89c2-8fd888d9f49d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-86216",
+  "enisaUuid": "043c654b-6f65-37f2-987d-e910778edab5",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvirtio-fs: avoid double-free on failed queue setup\n\nvirtio_fs_setup_vqs() allocates fs->vqs and fs->mq_map before calling\nvirtio_find_vqs(). If virtio_find_vqs() fails, the error path frees both\npointers and returns an error to virtio_fs_probe().\n\nvirtio_fs_probe() then drops the last kobject reference, and\nvirtio_fs_ktype_release() frees fs->vqs and fs->mq_map again. This leaves\ndangling pointers in struct virtio_fs and can trigger a double-free during\nprobe failure cleanup.\n\nSet fs->vqs and fs->mq_map to NULL immediately after kfree() in the\nvirtio_fs_setup_vqs() error path so that the later kobject release sees an\nuninitialized state and kfree(NULL) becomes harmless.\n\nThis can be reproduced when a broken virtio-fs device advertises more\nrequest queues than the transport actually provides. In that case\nvirtio_find_vqs() fails while setting up the extra queue, and the probe\npath reaches the double-free cleanup sequence.",
+  "datePublished": "Sep 24, 2026, 4:03:05 PM",
+  "dateUpdated": "Sep 24, 2026, 4:03:05 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/3fbc5ee776fefbc6ea34d2518f1f5f90aa2e1dad",
+    "https://git.kernel.org/stable/c/20ef4739b329bb09cff11dd2458795a50674658e",
+    "https://git.kernel.org/stable/c/6af3330ec5d5fb8c06c04eb520a71cf73ea5a765"
+  ],
+  "aliases": [
+    "CVE-2026-93827"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "13ffd048-2b00-3b90-9af9-04f4d02c929f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "4eba479f-2145-31a0-860e-5f11fc22d0dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.111"
+    },
+    {
+      "id": "52aa471c-df48-3e73-a24a-883b00d1d75f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "8a11289f-d19a-3e2f-8cb4-34df0f86e610",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.53"
+    },
+    {
+      "id": "8f1300e8-cf23-38f0-94f3-f8962348dd6f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.111"
+    },
+    {
+      "id": "bf1a2f4d-b53a-3dad-a808-658a34becded",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <3fbc5ee776fefbc6ea34d2518f1f5f90aa2e1dad"
+    },
+    {
+      "id": "db413699-1d38-38d4-bd1f-34646bc426f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <20ef4739b329bb09cff11dd2458795a50674658e"
+    },
+    {
+      "id": "dc666a36-5555-3ea1-8e47-fc6d946f4cef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6af3330ec5d5fb8c06c04eb520a71cf73ea5a765"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f341734e-4ae4-32ea-8329-4508753452fe",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

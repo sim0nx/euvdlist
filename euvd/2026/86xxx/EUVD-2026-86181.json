@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-86181",
+  "enisaUuid": "fff11b6d-a4db-3089-af4d-2eac0490329b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb/client: flush dirty data before punching a hole\n\nPunching a hole after a large buffered write may leave the range\nreported as data. Reproduce it with:\n\n  xfs_io -f \\\n    -c \"pwrite -b 3m -S 0x61 0 3m\" \\\n    -c \"fpunch 1m 1m\" \\\n    -c \"seek -h 0\" \\\n    -c \"seek -d 1m\" \\\n    /mnt/test/repro\n\nPunching 1 MiB at offset 1 MiB should produce:\n\n  0          1 MiB       2 MiB       3 MiB\n  |  DATA    |   HOLE    |   DATA    | EOF\n\nInstead, the entire file is reported as data. SEEK_HOLE(0) returns EOF,\nand SEEK_DATA(1M) returns 1M.\n\nThis happens because a dirty folio spanning the punched range can be\nwritten back after the punch and refill the hole.\n\nFix this by flushing and waiting for dirty data in the punched range\nbefore invalidating the page cache and issuing FSCTL_SET_ZERO_DATA.\n\nThe xfstests generic/539 pass against Samba/ksmbd with this change.",
+  "datePublished": "Sep 24, 2026, 4:02:27 PM",
+  "dateUpdated": "Sep 24, 2026, 4:02:27 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6c265aca08155e519a8f6f6071c59dff4f535f70",
+    "https://git.kernel.org/stable/c/39562a56cdb515f6635c3e7bfe6629439b18a169",
+    "https://git.kernel.org/stable/c/d7d2adcd022baade5cab65ca492ce63421ce3a6e"
+  ],
+  "aliases": [
+    "CVE-2026-93794"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "01787526-2615-333c-9983-2733b75bf8f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.111"
+    },
+    {
+      "id": "17915989-7894-360c-8dbd-3ffc048b23e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.111"
+    },
+    {
+      "id": "2f087cd5-0200-3d84-9a79-167131410fd9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "45a2f3ab-936a-3deb-a937-988c504ef313",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <39562a56cdb515f6635c3e7bfe6629439b18a169"
+    },
+    {
+      "id": "46e52427-8a03-3fa6-9a95-9ab0f533b056",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6c265aca08155e519a8f6f6071c59dff4f535f70"
+    },
+    {
+      "id": "48539b10-5356-3dab-8bdd-d9b933a8669a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "9602214b-1462-31dd-a669-00351ceaa1a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.53"
+    },
+    {
+      "id": "bbc41d21-ec4f-3a69-b498-1ff670c615b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d7d2adcd022baade5cab65ca492ce63421ce3a6e"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a3d79bb5-d54e-3864-90ab-e31389e85e28",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
