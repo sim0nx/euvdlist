@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-86926",
+  "enisaUuid": "0abab3ad-af5e-3a0e-a0e9-3dcd7a33b40f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipv6: sr: restore network header before routing and forwarding\n\nipv6_srh_rcv() runs with skb->data at the Segment Routing Header (SRH)\nwhile skb_network_header() points at the IPv6 header.\n\nWhen segments_left > 0, ipv6_srh_rcv() previously restored the skb->data\nposition by pushing sizeof(struct ipv6hdr), assuming the SRH immediately\nfollowed the fixed IPv6 header. If another extension header (such as a\nHop-by-Hop options header) precedes the SRH, skb_network_offset()\nremained negative.\n\nThis led to two problems:\n1. During ip6_route_input(), fib6_rules_early_flow_dissect() invokes\n   __skb_flow_dissect() which passes the negative skb_network_offset()\n   to flow dissection, breaking BPF and C flow dissector logic.\n2. If forwarded via ip6_forward() or redirected via act_mirred, downstream\n   handlers (like sch_fragment() or neighbour output) pass the negative\n   offset as an unsigned length, triggering OOB memcpy or buffer overflows.\n\nFix this by pushing -skb_network_offset(skb) before routing, ensuring\nskb_network_offset(skb) is 0 for route lookup / flow dissection as well as\ndownstream forwarding. On the loopback path, pull skb_transport_offset(skb)\nto restore skb->data to the SRH before looping back.",
+  "datePublished": "Sep 25, 2026, 10:24:27 AM",
+  "dateUpdated": "Sep 25, 2026, 10:24:27 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ce4c8beedc19aceeab0e7bdc6f34394fb158c47c",
+    "https://git.kernel.org/stable/c/97b21ef57dfabbff660a4672c9fef7edfb720f47",
+    "https://git.kernel.org/stable/c/3ad7dca5e03bd64c65983a19734337512fd75491",
+    "https://git.kernel.org/stable/c/975b5b067f525a1b1338c4a3bee1c46545801518"
+  ],
+  "aliases": [
+    "CVE-2026-98096"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0cb4c156-a6a3-37aa-a50e-eddf98e71240",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.10"
+    },
+    {
+      "id": "18aa1bbb-721f-3d3a-961d-6b5c4b9be6e7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "2021f8a5-346d-3e7f-8a1b-9ba0527c962e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.7"
+    },
+    {
+      "id": "227c5671-ff54-3f93-933d-05887fd904ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "40dbfd50-fc61-342a-ada4-ee55dcd4ff1b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc2"
+    },
+    {
+      "id": "44500bd3-bd30-398f-8950-ffab5f691e11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1ababeba4a21f3dba3da3523c670b207fb2feb62 <975b5b067f525a1b1338c4a3bee1c46545801518"
+    },
+    {
+      "id": "71c7718d-af49-3ccb-8fd1-b9a9cbaac88d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1ababeba4a21f3dba3da3523c670b207fb2feb62 <ce4c8beedc19aceeab0e7bdc6f34394fb158c47c"
+    },
+    {
+      "id": "7b336491-f59f-3289-b13d-e141727704e7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.111"
+    },
+    {
+      "id": "8dad474d-3aeb-3ebc-aada-8d4a9af699d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1ababeba4a21f3dba3da3523c670b207fb2feb62 <97b21ef57dfabbff660a4672c9fef7edfb720f47"
+    },
+    {
+      "id": "b273018c-ba74-38b7-8680-73870c4f49d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1ababeba4a21f3dba3da3523c670b207fb2feb62 <3ad7dca5e03bd64c65983a19734337512fd75491"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "26f53aba-a2d5-32c6-84c9-5c7868ccbeb4",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

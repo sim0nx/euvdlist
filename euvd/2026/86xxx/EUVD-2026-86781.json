@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-86781",
+  "enisaUuid": "af4ff5c0-048e-3b3c-84cd-024436b0c2b6",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nufs: create the root dentry after loading cylinder metadata\n\nufs_fill_super() installed sb->s_root before it loaded the cylinder\ngroup structures for a writable mount:\n\n\tsb->s_root = d_make_root(inode);\n\t...\n\tif (!sb_rdonly(sb))\n\t\tif (!ufs_read_cylinder_structures(sb))\n\t\t\tgoto failed;\n\nWhen ufs_read_cylinder_structures() failed, the error path freed the\nin-core superblock information and set sb->s_fs_info to NULL while\nsb->s_root stayed installed. get_tree_bdev() then reached\ndeactivate_locked_super(), and because s_root was present,\ngeneric_shutdown_super() called sync_filesystem() and the put_super\noperation. Both dereference UFS_SB(sb), which is now NULL, so a mount\nthat fails only while reading the cylinder groups oopses during\nteardown. A crafted image whose first cylinder group cannot be read\nreaches this path.\n\nLoad the cylinder group metadata first and create the root dentry last,\nso the superblock is published to the VFS only once it is fully set up.\nufs_setup_cstotal() and ufs_read_cylinder_structures() take only the\nsuper_block and do not use the root inode, so the reordering is safe.",
+  "datePublished": "Sep 25, 2026, 10:22:44 AM",
+  "dateUpdated": "Sep 25, 2026, 10:22:44 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a9804121d55aaa4319c1cac00b99794aa177dd6a",
+    "https://git.kernel.org/stable/c/785e523b6c1931d802cab9f85912f3e6c7028af1",
+    "https://git.kernel.org/stable/c/8173e051a8acbb4ae6547be0436727944119e0b5",
+    "https://git.kernel.org/stable/c/55a4c98abb9694b067c6a031d11501f06b6b523c"
+  ],
+  "aliases": [
+    "CVE-2026-97927"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "09f44f74-4405-35fe-bf68-49d3a49e4bb0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "44323c91-c2e0-37ba-91ab-76884e5fdf82",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.111"
+    },
+    {
+      "id": "4b89961f-d1d8-3738-8f8e-ea9bd8d33fc4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.7"
+    },
+    {
+      "id": "5244eaa5-2cf9-3abe-a60f-0c0fb18d5da5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <8173e051a8acbb4ae6547be0436727944119e0b5"
+    },
+    {
+      "id": "5982dca9-5fc9-375e-bca8-a0cef9477b06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc3"
+    },
+    {
+      "id": "5ca2828b-9aaa-33c6-aa2b-45080e80d464",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "6b4d7108-af7c-3cb8-ab27-8445d01ad5d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a9804121d55aaa4319c1cac00b99794aa177dd6a"
+    },
+    {
+      "id": "7f641300-b802-3b9c-8f37-7881d19ac1bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <785e523b6c1931d802cab9f85912f3e6c7028af1"
+    },
+    {
+      "id": "9d1921fd-c599-3851-b61c-927ca76dc1f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "ca092c8c-53b5-3285-9708-66d0b873c3de",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <55a4c98abb9694b067c6a031d11501f06b6b523c"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3c159bab-0693-36ca-80eb-8a5ba8138581",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

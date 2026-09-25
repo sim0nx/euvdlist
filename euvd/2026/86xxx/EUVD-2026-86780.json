@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-86780",
+  "enisaUuid": "a2c156a6-a256-34a9-98ef-f511ae383f20",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nufs: validate cylinder group metadata before caching it\n\nufs_read_cylinder() copies the cylinder group index and the rotor\npositions straight from the on-disk group and caches them without any\ncheck:\n\n\tucpi->c_cgx    = fs32_to_cpu(sb, ucg->cg_cgx);\n\tucpi->c_rotor  = fs32_to_cpu(sb, ucg->cg_rotor);\n\tucpi->c_frotor = fs32_to_cpu(sb, ucg->cg_frotor);\n\tucpi->c_irotor = fs32_to_cpu(sb, ucg->cg_irotor);\n\nThey are then used as indices during allocation and free:\n\n  - c_cgx indexes the cylinder summary array as\n    UFS_SB(sb)->fs_cs(ucpi->c_cgx), so a value past s_ncg writes a 32\n    bit count outside the s_csp allocation.\n\n  - c_frotor becomes a bitmap scan start, start = c_frotor >> 3, and\n    then length = ((s_fpg + 7) >> 3) - start. A start beyond the block\n    bitmap wraps the unsigned length to a huge value, so ubh_scanc()\n    walks far past the cylinder group buffers. c_irotor drives the\n    inode bitmap the same way.\n\nA crafted image can set any of these freely, turning an ordinary\nallocation into an out of bounds access.\n\nReject a cylinder group whose recorded index does not match the group\nbeing read, or whose rotors fall outside the group, before the metadata\nis cached. Valid filesystems keep cg_cgx equal to the group number and\nthe rotors within the group, so only malformed images are rejected.",
+  "datePublished": "Sep 25, 2026, 10:22:44 AM",
+  "dateUpdated": "Sep 25, 2026, 10:22:44 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/5902a95066883cf96fa15b2680694fc5dd0c7d11",
+    "https://git.kernel.org/stable/c/87b12dc360a002eb2d498aa4f01e84347019612d",
+    "https://git.kernel.org/stable/c/abde9eb33106850dfa367ad3965d3588bb8558d5",
+    "https://git.kernel.org/stable/c/c9d263be26806d388129fab8c6904bed197fc6af"
+  ],
+  "aliases": [
+    "CVE-2026-97926"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2ce79614-f8cf-34a4-a245-288d5e367439",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "3c0174ee-b25f-3c5a-8962-0bec6defb2f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc3"
+    },
+    {
+      "id": "3fdafc39-d65e-360e-8095-1f16c30cb61c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <87b12dc360a002eb2d498aa4f01e84347019612d"
+    },
+    {
+      "id": "648df3b0-aeed-365a-a49d-5e2b2895867d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.111"
+    },
+    {
+      "id": "744728e0-f2c9-3254-a7ed-72f4691ee105",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "75c78658-fb04-3f3b-a214-30b8c337b6a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ab90efea-a516-31ac-a3a2-0494cd32e81a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.7"
+    },
+    {
+      "id": "c9f2bfbe-fe57-36b0-b963-16ba8b52ff5d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <abde9eb33106850dfa367ad3965d3588bb8558d5"
+    },
+    {
+      "id": "cd65c0f8-7e9a-3ad2-a9f6-d13e87d8627b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <5902a95066883cf96fa15b2680694fc5dd0c7d11"
+    },
+    {
+      "id": "ec4dcb94-643c-3d18-b88d-643c2c5886de",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c9d263be26806d388129fab8c6904bed197fc6af"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2116e290-071f-3a81-92ca-633e5e7596ed",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

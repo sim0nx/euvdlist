@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-86866",
+  "enisaUuid": "41be600f-87a3-302b-9134-6b713ee099eb",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: fix cifsFileInfo reference leak in deferred close\n\nWhen cifs_close() defers a close, it hands the cifsFileInfo reference\nof the closing struct file to the queued work. Each execution of\nsmb2_deferred_work_close() drops one such reference.\n\ndeferred_close_scheduled can be false while the work is pending: the\nworkqueue clears PENDING when the callback starts to run, before the\ncallback clears the flag under deferred_lock. A close in that\ninterval requeues the running work, and the callback then clears the\nflag, leaving the requeued work pending with the flag down. A later\ncifs_open() can reuse the handle and its cifs_close() reaches the\nsame branch: queue_delayed_work() fails because the work is still\npending, but cifs_close() returns without dropping the closing file's\nreference. The cifsFileInfo count stays pinned and its tlink, dentry\nand server handle are leaked.\n\nCheck the return value and hand off the reference only when work was\nactually queued. Otherwise, use the shared _cifsFileInfo_put(), like\nthe mod_delayed_work() branch above: the pending execution already\nowns its reference.\n\nThis issue was found by an in-house static analysis tool.",
+  "datePublished": "Sep 25, 2026, 10:21:48 AM",
+  "dateUpdated": "Sep 25, 2026, 10:21:48 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ea93759d6c2789924f4e557aed5be532207715ea",
+    "https://git.kernel.org/stable/c/5520e89a5a4f834bced64cf2ac927001cc513a40"
+  ],
+  "aliases": [
+    "CVE-2026-97558"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "28e59ea4-59b3-37e7-b734-b05ba4128c4d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.7"
+    },
+    {
+      "id": "4d24c2e8-9078-34f0-aee3-0e560eedb4c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c3f207ab29f793b8c942ce8067ed123f18d5b81b <5520e89a5a4f834bced64cf2ac927001cc513a40"
+    },
+    {
+      "id": "5aa2df4c-2edb-3771-affd-48010592d515",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a78e0d13-ee50-3711-84eb-44ee67f5276f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c3f207ab29f793b8c942ce8067ed123f18d5b81b <ea93759d6c2789924f4e557aed5be532207715ea"
+    },
+    {
+      "id": "b8aa8ece-5331-3ed0-bf53-da425aa9c4d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.13"
+    },
+    {
+      "id": "f8f4e73f-201b-3543-a8d2-091c3fbe05e7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3e047093-8908-3e4e-b268-4f2bdc8d8213",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

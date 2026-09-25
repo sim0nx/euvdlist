@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-86727",
+  "enisaUuid": "d9467ccd-952e-3411-9484-8d9e111c8cff",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbonding: do not clear curr_active_slave prematurely when releasing all slaves\n\nWhen releasing all slaves during bond destruction (all == true),\n__bond_release_one() unconditionally clears bond->curr_active_slave to\nNULL in every iteration.\n\nIf a backup slave is released before the active slave,\nbond_alb_deinit_slave() triggers rlb_teach_disabled_mac_on_primary(),\nwhich increments the active slave dev promiscuity counter and sets\nbond_info->primary_is_promisc = 1.\n\nBecause bond->curr_active_slave was prematurely cleared to NULL when\nreleasing the backup slave, the subsequent iteration releasing the active\nslave evaluates oldcurrent as NULL, so bond_change_active_slave(bond, NULL)\nis skipped. Consequently, bond_alb_handle_active_change() is never called\nto decrement the promiscuity counter, permanently leaking promiscuous\nmode on the physical device after bond teardown.\n\nWhen oldcurrent == slave, bond_change_active_slave(bond, NULL) already sets\nbond->curr_active_slave to NULL. We only need to avoid selecting a new\nactive slave when all == true. Replace the if (all) branch with\nif (!all && oldcurrent == slave).",
+  "datePublished": "Sep 25, 2026, 10:24:13 AM",
+  "dateUpdated": "Sep 25, 2026, 10:24:13 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d6ef22e79c2be3612868daede0e9a84f05439d9e",
+    "https://git.kernel.org/stable/c/19ba7ecfade159b3702c78a360fd7d971e2b7109",
+    "https://git.kernel.org/stable/c/6d0ee411d5437f3d126ea6979acb83a8da29dc81",
+    "https://git.kernel.org/stable/c/af602c7aa5fedc9be3043244017aef4f26c96b70"
+  ],
+  "aliases": [
+    "CVE-2026-98074"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0bf94640-9976-3212-a87b-9ad7e50fb4bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0896341a44bf04bf6149d9307fe4686006f3eee1 <af602c7aa5fedc9be3043244017aef4f26c96b70"
+    },
+    {
+      "id": "0c3e6ce4-4e55-3aa6-8ca2-8f95e9533b1e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0896341a44bf04bf6149d9307fe4686006f3eee1 <6d0ee411d5437f3d126ea6979acb83a8da29dc81"
+    },
+    {
+      "id": "2cb373fd-aea9-32f4-a3b4-515c181e0ffa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.7"
+    },
+    {
+      "id": "3922966b-0c85-3421-b750-193a8e83bebd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.9"
+    },
+    {
+      "id": "60973b6c-c838-36c8-adac-03a87cadd022",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.111"
+    },
+    {
+      "id": "63c937c5-889d-3246-a5c5-857a1cba57fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "69fc5898-7f85-3942-96ce-4b0862e007f4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc2"
+    },
+    {
+      "id": "8df49c15-8f63-335c-bf3b-1e4aadefb925",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0896341a44bf04bf6149d9307fe4686006f3eee1 <19ba7ecfade159b3702c78a360fd7d971e2b7109"
+    },
+    {
+      "id": "930b9f76-075c-3678-b25a-730329858445",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0896341a44bf04bf6149d9307fe4686006f3eee1 <d6ef22e79c2be3612868daede0e9a84f05439d9e"
+    },
+    {
+      "id": "b587d55c-e527-3a6f-bf4a-dc4b330eec91",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2d82c6b7-f76d-35c2-b789-c871c53e01d7",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

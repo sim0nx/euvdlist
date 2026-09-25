@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-86739",
+  "enisaUuid": "8f41e547-5e7b-375c-b588-1e7bb3124db5",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: nf_log: unregister loggers before per-net teardown\n\nnf_log_syslog and nfnetlink_log unregister their per-network namespace\noperations before unregistering their global logger backends. This\nleaves a window where a sysctl or netlink writer can rebind the still-\nregistered logger after the per-net pre-exit callback cleared the old\nselection.\n\nThe race looks like this:\n\n  CPU 0                                 CPU 1\n  ----                                  ----\n  unregister_pernet_subsys()\n    nf_log_unset(net, logger)\n      net->nf.nf_loggers[pf] = NULL\n\n                                        lock nf_log_mutex\n                                        find logger in loggers[][]\n                                        net->nf.nf_loggers[pf] = logger\n                                        unlock nf_log_mutex\n\n  nf_log_unregister(logger)\n    lock nf_log_mutex\n    loggers[pf][type] = NULL\n    unlock nf_log_mutex\n    synchronize_rcu()\n  module exit returns\n  module core frees backend memory\n\nLater, a sysctl read or packet logging operation can dereference the\nstale per-net logger pointer.\n\nFix this by unregistering the global logger backends before tearing down\nper-net state. Once the global registrations are gone, later writers can\nno longer rebind the logger. unregister_pernet_subsys() already waits\nfor an RCU grace period after the pre-exit callback clears the per-net\nselection, while nf_log_unregister() continues to cover readers of the\nglobal logger table.\n\nApply this ordering fix to both nf_log backends that combine per-net\nteardown with global logger registration.",
+  "datePublished": "Sep 25, 2026, 10:22:19 AM",
+  "dateUpdated": "Sep 25, 2026, 10:22:19 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/eaec35fae8f2052c1878a5c7cc7699d8357d79f2",
+    "https://git.kernel.org/stable/c/64803ba0a05791cf9ca874466480e4c4cadaf7ab",
+    "https://git.kernel.org/stable/c/dce24f3a146948595bb1b86347f31e20b4975daa",
+    "https://git.kernel.org/stable/c/2c018cc4842c33f0c732962e2ab58635e8ae5823"
+  ],
+  "aliases": [
+    "CVE-2026-97608"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "5d61c592-850a-332a-9c24-719db67fd616",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.111"
+    },
+    {
+      "id": "5ff8c838-7be0-35f2-9c46-f0aae33f670f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5b023fc8d8e0997e0b7ea6506d243afd5478c96e <2c018cc4842c33f0c732962e2ab58635e8ae5823"
+    },
+    {
+      "id": "675a00a9-5953-3e4a-bbd9-2696b6656668",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc3"
+    },
+    {
+      "id": "6f66016b-1382-3730-966a-3ee57ca2c8da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "92f832a8-a94c-3f2a-9d3f-a2a92b602fb8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.10"
+    },
+    {
+      "id": "937afd55-84cb-3a39-ae4d-269656860e00",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5b023fc8d8e0997e0b7ea6506d243afd5478c96e <dce24f3a146948595bb1b86347f31e20b4975daa"
+    },
+    {
+      "id": "95b325fa-43a5-3daa-9d22-d4351e3946cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5b023fc8d8e0997e0b7ea6506d243afd5478c96e <64803ba0a05791cf9ca874466480e4c4cadaf7ab"
+    },
+    {
+      "id": "bbc9acc2-1116-3953-9eea-6574bf1df1ae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.7"
+    },
+    {
+      "id": "c7274574-fe17-35b9-8570-8650d43657d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5b023fc8d8e0997e0b7ea6506d243afd5478c96e <eaec35fae8f2052c1878a5c7cc7699d8357d79f2"
+    },
+    {
+      "id": "fbf587c4-00b2-304f-8b4b-4cf00ff32dd4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "781897a2-d538-3f35-b46e-7f8d74e2f0ae",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-86742",
+  "enisaUuid": "3d23b13b-0a23-3506-b668-ef47314d44cc",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: openvswitch: fix use-after-free of the flow table mask array\n\ntbl_mask_array_realloc() retires the old mask_array before it stops being\nreachable:\n\n\told = ovsl_dereference(tbl->mask_array);\n\tif (old) {\n\t\t...\n\t\tcall_rcu(&old->rcu, mask_array_rcu_cb);\n\t}\n\n\trcu_assign_pointer(tbl->mask_array, new);\n\ncall_rcu() only waits for read-side critical sections already in flight.\ntbl->mask_array still points at old between the call_rcu() and the\nrcu_assign_pointer(), so a reader entering ovs_flow_tbl_lookup_stats() in\nthat window picks up old in a fresh critical section that the pending\ngrace period does not cover.\n\ntbl_mask_array_realloc() runs in process context under ovs_mutex, so the\nwindow is preemptible and can outlast the grace period. Then\nmask_array_rcu_cb() frees old before the swap runs:\n\n  BUG: KASAN: slab-use-after-free in flow_lookup.constprop.0+0x2bf/0x2f0\n  Read of size 8 at addr ffff888020b3e018 by task poc/741\n   flow_lookup.constprop.0+0x2bf/0x2f0\n   ovs_flow_tbl_lookup_stats+0x4a3/0x5c0\n   ovs_dp_process_packet+0x19c/0x710\n   ovs_vport_receive+0x243/0x390\n   internal_dev_xmit+0x81/0x170\n  Freed by task 728:\n   kfree+0x16a/0x4e0\n   rcu_core+0x853/0x1030\n\nPublish the new array before retiring the old one. The kfree_rcu() that\ncall_rcu() replaced ran after the swap.",
+  "datePublished": "Sep 25, 2026, 10:22:20 AM",
+  "dateUpdated": "Sep 25, 2026, 10:22:20 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/cd982e11684def5d4a9fcfd5354de09032828414",
+    "https://git.kernel.org/stable/c/a0d18d21d48a551f82ee344e50efb8a682161489",
+    "https://git.kernel.org/stable/c/035e9c3722067648a99010711d0ce81f42572ef4",
+    "https://git.kernel.org/stable/c/ba4ba11ed6eb8972c69070417fc27b48deb002e8"
+  ],
+  "aliases": [
+    "CVE-2026-97611"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "012d9d68-00b5-349f-9306-2b6020d7725a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eac87c413bf9794c14d488998a5265ea5b32f04e <035e9c3722067648a99010711d0ce81f42572ef4"
+    },
+    {
+      "id": "1cb65408-2883-3c62-a7a6-defeba8dfff9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.7"
+    },
+    {
+      "id": "25aa5526-08a9-3181-84bd-901daa7fe1bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "35ffe323-a5cd-3d8e-b973-5f29cdcc07ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eac87c413bf9794c14d488998a5265ea5b32f04e <ba4ba11ed6eb8972c69070417fc27b48deb002e8"
+    },
+    {
+      "id": "3880e5e9-b369-3349-af26-f5fb9dd14e73",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eac87c413bf9794c14d488998a5265ea5b32f04e <a0d18d21d48a551f82ee344e50efb8a682161489"
+    },
+    {
+      "id": "4f17a710-7f83-3385-a224-a12581c5a7c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eac87c413bf9794c14d488998a5265ea5b32f04e <cd982e11684def5d4a9fcfd5354de09032828414"
+    },
+    {
+      "id": "5d156c6c-bf13-3741-af45-68f06a4a6177",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.111"
+    },
+    {
+      "id": "72a99447-6c8d-33dd-85ad-bc33d832f57f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.9"
+    },
+    {
+      "id": "749f2087-8643-3bc2-9ee9-6c9c780d202e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c8237b28-cf59-3a15-b17c-cd696eafc945",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e507cdd6-b76c-3f02-a521-0955c0250297",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
