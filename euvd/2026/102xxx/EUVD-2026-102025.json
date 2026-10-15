@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-102025",
+  "enisaUuid": "81256d71-9a98-321f-85ce-1af688696fc3",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipv4: free inet_opt and ireq_opt after an RCU grace period\n\ntcp_v4_syn_recv_sock() transfers ownership of ireq->ireq_opt to the\nchild socket (newinet->inet_opt) without copying it.\n\nAnother cpu can concurrently process a retransmitted SYN for the same\nrequest socket, and send a SYNACK from tcp_check_req().\ntcp_v4_send_synack() and inet_csk_route_req() read ireq->ireq_opt\nunder rcu_read_lock() only, and ip_build_and_send_pkt() and\nip_options_build() then read opt->optlen twice.\n\nNote that the SYNACK timer itself is not an issue: it holds a\nreference on its request socket, and inet_csk_reqsk_queue_drop()\ncalls timer_delete_sync() before the child can be freed.\n\nSince commit 079096f103fa (\"tcp/dccp: install syn_recv requests\ninto ehash table\"), request sockets are processed without holding\nthe listener lock, so nothing prevents the child socket from being\nfreed while the SYNACK is still being built. TCP child sockets do\nnot have SOCK_RCU_FREE, and inet_sock_destruct() frees inet_opt\nwith a plain kfree(), leading to a use-after-free in\nip_options_build().\n\nA similar issue exists with request socket migration\n(net.ipv4.tcp_migrate_req=1, or a BPF_SK_REUSEPORT_SELECT_OR_MIGRATE\nprogram). reqsk_timer_handler() clones the request socket with\ninet_reqsk_clone(), so that the old request socket and its clone\nshare the same ireq_opt, then reqsk_migrate_reset() clears the\npointer in the old one. Another cpu holding a reference on the old\nrequest socket can still be using these options (sending a SYNACK,\nor creating a child in tcp_v4_syn_recv_sock()) when the clone is\nfreed, and tcp_v4_reqsk_destructor() also uses a plain kfree().\n\nReaders already use RCU, and other paths replacing inet_opt\n(do_ip_setsockopt(), cipso_v4_sock_setattr()...) already use\nkfree_rcu(). Use kfree_rcu() in inet_sock_destruct() and\ntcp_v4_reqsk_destructor() as well.\n\nIPv6 is not affected by the first issue, because tcp_v6_syn_recv_sock()\nduplicates the options. tcp_v6_reqsk_destructor() has the same\nmigration issue with ipv6_opt, which is only set by CALIPSO. This\nwill be addressed in a separate patch.",
+  "datePublished": "Oct 15, 2026, 12:08:22 PM",
+  "dateUpdated": "Oct 15, 2026, 12:08:22 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/11a03ce3c4a62d84c10ccdfe47f8075006498568",
+    "https://git.kernel.org/stable/c/a47406c769f72c070386985488f1c4d057df86b2",
+    "https://git.kernel.org/stable/c/26d4c36d318cffbbd160884a0e4cec0da4da4936",
+    "https://git.kernel.org/stable/c/e3f33b0a1d89d738e2b913dab519226eaf76e15b"
+  ],
+  "aliases": [
+    "CVE-2026-98432"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "124f2f0c-5bd9-3564-bb85-4171cc0168b5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.10"
+    },
+    {
+      "id": "1da226e2-eadc-37b8-906b-fe6e1a44b21c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.56"
+    },
+    {
+      "id": "209a84cf-cc93-3ecd-8efc-11056b007d1d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "079096f103faca2dd87342cca6f23d4b34da8871 <26d4c36d318cffbbd160884a0e4cec0da4da4936"
+    },
+    {
+      "id": "2ef3d2cc-4688-3753-9475-b4abaeb74395",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "079096f103faca2dd87342cca6f23d4b34da8871 <a47406c769f72c070386985488f1c4d057df86b2"
+    },
+    {
+      "id": "3e03ec89-3484-33ea-a4fc-8a436e6b78d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "4c947b1e-1e35-357c-830b-da25c786f770",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.113"
+    },
+    {
+      "id": "6468ca6b-3d5e-3b4b-b8f5-d619765bc64f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "079096f103faca2dd87342cca6f23d4b34da8871 <e3f33b0a1d89d738e2b913dab519226eaf76e15b"
+    },
+    {
+      "id": "89eeb24d-7383-3313-9066-aea1bc70d2c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3-rc7"
+    },
+    {
+      "id": "ea23de44-6fc7-35f4-9718-ee1a3605e0cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.4"
+    },
+    {
+      "id": "ee72e4b5-eb64-3511-9c84-b6f8ceeda0f4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "079096f103faca2dd87342cca6f23d4b34da8871 <11a03ce3c4a62d84c10ccdfe47f8075006498568"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "43784323-c369-37a9-8fd1-3d788fd79095",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
