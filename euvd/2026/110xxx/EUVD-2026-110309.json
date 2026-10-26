@@ -1,0 +1,52 @@
+{
+  "id": "EUVD-2026-110309",
+  "enisaUuid": "a7ea43a5-9c04-3efb-9a7f-27eed2e9cd97",
+  "description": "Inefficient Algorithmic Complexity in erlang-jose allows an unauthenticated remote attacker to cause a CPU-exhaustion denial of service by submitting a crafted RSA JSON Web Key.\n\nWhen an application parses an untrusted JWK through the public jose_jwk:from_binary/1 or jose_jwk:from_map/1 API (or the Elixir wrappers JOSE.JWK.from_binary/1 and JOSE.JWK.from_map/1), an RSA private key that supplies d, e, and n but omits all Chinese Remainder Theorem parameters (p, q, dp, dq, qi) is routed into convert_sfm_to_crt/1, which tries to recover the missing primes by factoring the modulus. The three integers are read straight from the base64url input and are never validated as a real RSA key. When the modulus cannot be split into two factors (for example, when it is itself prime), the search loop convert_sfm_to_crt_find_p/6 performs a modular exponentiation over the attacker-sized modulus on every iteration and never succeeds. A single request of a few hundred bytes forces close to one CPU-second of work before an internal one-second watchdog kills the worker, and a larger modulus raises the cost further. By flooding such requests an attacker can saturate every scheduler and deny service, without credentials, a valid RSA key, or any special configuration.\n\nThis issue affects jose: from 1.7.7 before 1.11.13.",
+  "datePublished": "Oct 26, 2026, 7:53:45 PM",
+  "dateUpdated": "Oct 26, 2026, 7:53:45 PM",
+  "baseScore": 6.9,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/potatosalad/erlang-jose/security/advisories/GHSA-3m45-vrpj-xmrq",
+    "https://cna.erlef.org/cves/CVE-2026-65631.html",
+    "https://osv.dev/vulnerability/EEF-CVE-2026-65631",
+    "https://github.com/potatosalad/erlang-jose/commit/d19e1ba68d88c68d29aa942be2573a22dbafca1f",
+    "https://github.com/potatosalad/erlang-jose/commit/bfd336c0062bff93e65d08c22361897e96afd956"
+  ],
+  "aliases": [
+    "CVE-2026-65631"
+  ],
+  "assigner": "EEF",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3351188e-6b88-33f5-b169-1c9328e7bc79",
+      "product": {
+        "name": "jose",
+        "vendor": {
+          "name": "appsup-dart"
+        }
+      },
+      "product_version": "d19e1ba68d88c68d29aa942be2573a22dbafca1f <bfd336c0062bff93e65d08c22361897e96afd956"
+    },
+    {
+      "id": "3cfc7ec7-9c96-3ab3-a20d-5c5a6a8f54c3",
+      "product": {
+        "name": "jose",
+        "vendor": {
+          "name": "appsup-dart"
+        }
+      },
+      "product_version": "1.7.7 <1.11.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f79c7456-a043-3807-81f5-cf398556dae7",
+      "vendor": {
+        "name": "potatosalad"
+      }
+    }
+  ]
+}
