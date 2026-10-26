@@ -1,0 +1,39 @@
+{
+  "id": "EUVD-2026-109975",
+  "enisaUuid": "d5ec3a18-5eb3-33f5-900a-4ee7b4fc2a94",
+  "description": "In the Bluetooth Classic Hands-Free Profile Audio Gateway role, hfp_ag_create() in subsys/bluetooth/host/classic/hfp_ag.c starts an SDP discovery toward the peer, which links the embedded ag->sdp_param._node into the SDP client's pending request list in subsys/bluetooth/host/classic/sdp.c. If the subsequent bt_rfcomm_dlc_connect() call fails, bt_hfp_ag_connect() cleaned up by memset()-ing the entire AG object while that node was still linked, and while ag->slc_work could still be queued on the system work queue. An in-flight SDP discovery cannot be cancelled \u2014 bt_sdp_discover_cancel() is declared in the public header but has no implementation \u2014 so the request stays in the list with its func, pool and uuid pointers zeroed.\n\nThe RFCOMM channel passed to bt_hfp_ag_connect() is taken from the peer's own SDP Hands-Free service record in the normal AG flow (bt_sdp_get_proto_param() performs no range validation, and samples/bluetooth/classic/handsfree_ag feeds the value straight through), so a remote BR/EDR device in radio range that advertises an RFCOMM channel outside the valid range 0x01..0x1e deterministically forces bt_rfcomm_dlc_connect() to fail and reach the wipe. Reading the peer's SDP record requires no pairing, and the peer can also trigger the failure by dropping the ACL or racing an RFCOMM DLC on the same DLCI at the right moment.\n\nWhen the SDP client next advances its request list, sdp_client_discover() dereferences the zeroed parameters \u2014 net_buf_alloc(param->pool, \u2026) with a NULL pool and param->uuid->type \u2014 and the result-notification paths call through the NULL params->func. Zeroing a linked node also truncates the request list behind a stale tail pointer, and re-arming the freed AG slot re-appends the same node and can produce a self-looping list that hangs the Bluetooth RX thread. The impact is a crash or hang of the Bluetooth stack; the written value is a constant zero at a fixed static address, so no attacker-controlled write is available.\n\nOnly builds with CONFIG_BT_CLASSIC and CONFIG_BT_HFP_AG that use the Audio Gateway role are affected.",
+  "datePublished": "Oct 26, 2026, 4:08:53 PM",
+  "dateUpdated": "Oct 26, 2026, 4:08:53 PM",
+  "baseScore": 6.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/18a3243b21ef6298988a3034dbda2704a7ad73a4",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-rrqj-542q-26jm"
+  ],
+  "aliases": [
+    "CVE-2026-82389"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2b6735d6-4184-370e-8e29-109d0864c397",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.4.0 <4.5.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "10ab38bc-1c91-3475-9130-942f5799fb42",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}

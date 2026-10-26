@@ -1,0 +1,39 @@
+{
+  "id": "EUVD-2026-109972",
+  "enisaUuid": "83562032-bf1e-3f06-a473-7b28753f0a0c",
+  "description": "The Object Transfer Service server builds its Object Action Control Point (OACP) response indication in oacp_ind_send() (subsys/bluetooth/services/ots/ots_oacp.c). Before this fix the four-byte Checksum Value field was appended whenever the requested op code was BT_GATT_OTS_OACP_PROC_CHECKSUM_CALC, regardless of the result code. The response payload is a bare, uninitialized four-byte stack buffer declared with NET_BUF_SIMPLE_DEFINE(resp_param, sizeof(uint32_t)) in bt_gatt_ots_oacp_write(), and it is filled only on the success path of oacp_checksum_proc_validate(). On every failure path the buffer is still empty, so net_buf_simple_pull_le32() was invoked on a zero-length buffer.\n\nThe OACP characteristic and its client characteristic configuration descriptor are declared with BT_GATT_PERM_WRITE and BT_GATT_PERM_READ | BT_GATT_PERM_WRITE, so no pairing, encryption, or authentication is required. Any peer within radio range that can connect to a device running the OTS server can enable OACP indications and write a nine-byte Calculate Checksum command that fails validation \u2014 for example by issuing it with no object selected, which returns BT_GATT_OTS_OACP_RES_INV_OBJ. Because oacp_command_decode() accepts the Calculate Checksum op code unconditionally (it is not guarded by CONFIG_BT_OTS_OACP_CHECKSUM_SUPPORT), builds without checksum support are reachable too: they answer BT_GATT_OTS_OACP_RES_OPCODE_NOT_SUP and take the same bad path.\n\nOn builds with CONFIG_ASSERT enabled, the zero-length pull trips the assertion inside net_buf_simple_pull_mem() and panics the device, giving a remotely triggered denial of service. On builds with assertions disabled there is no check: the pull returns the untouched stack array and four bytes of uninitialized stack memory are copied into the indication and transmitted to the peer, repeatable on every request. The disclosure is bounded to four bytes per request and the write stays inside the seven-byte res indication buffer, so there is no memory corruption; the impact is uninitialized-memory disclosure plus an availability loss in assertion-enabled configurations.",
+  "datePublished": "Oct 26, 2026, 4:08:50 PM",
+  "dateUpdated": "Oct 26, 2026, 4:08:50 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:H",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/36145a6f1164e2e0a18c8c83d5b1be6e7d3f6e23",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-7c9w-mhqw-5g86"
+  ],
+  "aliases": [
+    "CVE-2026-81038"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "8e257676-eeee-3169-a7ca-8983a974ba7f",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "3.3.0 \u22644.4.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0f645a28-c451-3bb9-bb64-42adc671f4e9",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}
