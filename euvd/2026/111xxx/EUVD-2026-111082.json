@@ -1,0 +1,41 @@
+{
+  "id": "EUVD-2026-111082",
+  "enisaUuid": "ab6198a7-f5fe-3b7e-8544-5e34fa5b4b80",
+  "description": "The 3D Viewer for Nextcloud is a comprehensive 3D model viewer application for Nextcloud that supports multiple 3D file formats. In versions 1.7.9 through 3.3.1, the app's public file endpoint performed no share authorization. Anyone who knows a share token could read the shared file's contents even when the link share was protected by a password. `PublicFileController` extended `OCP\\AppFramework\\Controller` and marked its routes `#[PublicPage]`. Nextcloud only enforces share passwords through `PublicShareMiddleware`, which returns early for any controller that is not an `OCP\\AppFramework\\PublicShareController` instance \u2014 so no password, expiry, or share-type check ran for these routes. `ShareFileService::loadLinkShare()` compounded this by treating any token that `getShareByToken()` matched as authorised. A share token is the part of the URL that people paste into chats, emails, and tickets. Password protection exists precisely for the case where holding the token should not by itself grant access, and that guarantee did not hold. Requests to `GET /ocs/v2.php/apps/threedviewer/public/file/{token}/{fileId}` returned `200` with the full file body for password-protected shares, with no password and no session. Nextcloud's own share page correctly redirected such requests to the password prompt. Scope is limited to files in the formats this app handles (STL, GLB/glTF, OBJ, STEP, IFC, and the other supported 3D types). Non-3D files in the same share are unaffected. Expired shares returned `500` rather than leaking contents. This issue is fixed in 3.3.2. `PublicFileController` now extends `PublicShareController` and implements `isValidToken()`, `isPasswordProtected()`, and `getPasswordHash()`, delegating password and token validation to the framework and gaining brute-force throttling. `ShareFileService::findValidLinkShare()` additionally rejects share types other than link and email, rejects expired shares, and treats a `ShareNotFound` from the share manager as \"no share\" instead of letting it surface as a 500. As a workaround, disable the 3D Viewer app (`occ app:disable threedviewer`), or avoid relying on passwords to protect link shares that contain 3D model files, until you can upgrade.",
+  "datePublished": "Oct 27, 2026, 3:22:14 PM",
+  "dateUpdated": "Oct 27, 2026, 3:22:14 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+  "references": [
+    "https://github.com/maz1987in/3Dviewer-Nextcloud/security/advisories/GHSA-gjh8-x4wm-3cfj",
+    "https://github.com/maz1987in/3Dviewer-Nextcloud/commit/1b0ca86ff9a96b4e045cb379bc8b8c2fe05f2fae",
+    "https://github.com/maz1987in/3Dviewer-Nextcloud/commit/2cfef0326afc56112b948b3fdf7e5c873fab4104",
+    "https://github.com/maz1987in/3Dviewer-Nextcloud/releases/tag/v3.3.2"
+  ],
+  "aliases": [
+    "CVE-2026-104189"
+  ],
+  "assigner": "GitHub_M",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "dbf16eef-9864-3070-b2c7-7db526318bac",
+      "product": {
+        "name": "3Dviewer-Nextcloud",
+        "vendor": {
+          "name": "maz1987in"
+        }
+      },
+      "product_version": "1.7.9, < 3.3.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "046798c2-6a95-3148-a2f8-b1120e499c58",
+      "vendor": {
+        "name": "maz1987in"
+      }
+    }
+  ]
+}
