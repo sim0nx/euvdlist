@@ -1,0 +1,40 @@
+{
+  "id": "EUVD-2026-112405",
+  "enisaUuid": "ff68058a-0ae4-3e3a-9cc3-9de8fdf3996c",
+  "description": "FearlessCMS is a flat-file `content` management system centered on simplicity and open source. Prior to version 0.1.4, five debug/test PHP scripts under `admin/` perform privileged operations without `isLoggedIn()` authentication checks, CSRF protection or adequate `path` validation. On PHP's built-in development server, including the default Docker deployment, `router.php` checks an unnormalized admin URI prefix while the filesystem resolves dot segments, so `/./admin/` bypasses the admin login gate and executes those scripts directly. In `admin/debug_save_flow.php`, attacker-controlled `path` and `content` reach `file_put_contents` for arbitrary `.md` writes under `content`/ or outside it through `path` traversal, enabling site defacement and stored JavaScript in public pages; `print_r($_POST)` output without `htmlspecialchars` escaping also causes reflected cross-site scripting. The `admin/debug_content.php` `path` parameter reaches `scandir()`, `file_get_contents()` and `posix_getpwuid()`, permitting arbitrary directory enumeration and `.md` file reads that expose absolute paths, ownership, permissions, hashes and `content` previews. The `admin/preview-handler.php` endpoint accepts JSON `content` and `title` and writes enumerable files under `content/_preview/`, enabling stored cross-site scripting and disk exhaustion. The `admin/testdebug.php` endpoint appends to `admin/testdebug.log` without authentication, also enabling disk exhaustion. The `admin/test_redirect.php` script exposes a test artifact but escapes its inputs and is not itself an XSS sink. Stored script execution can steal sessions and compromise administrators when they view affected `content`. Reads and writes execute with PHP's privileges; the tested deployment runs PHP as root, amplifying filesystem impact. This issue is fixed in version 0.1.4.",
+  "datePublished": "Oct 28, 2026, 7:28:00 PM",
+  "dateUpdated": "Oct 28, 2026, 7:28:00 PM",
+  "baseScore": 9.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:L",
+  "references": [
+    "https://github.com/fearlessgeekmedia/FearlessCMS/security/advisories/GHSA-3mq8-hrhf-7hv6",
+    "https://github.com/fearlessgeekmedia/FearlessCMS/commit/59fb22cf989b5ba14c387c3212e15b146e02cf9a",
+    "https://github.com/fearlessgeekmedia/FearlessCMS/tree/0.1.4"
+  ],
+  "aliases": [
+    "CVE-2026-63190"
+  ],
+  "assigner": "GitHub_M",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "26640e27-0187-32ee-b859-6a731188586c",
+      "product": {
+        "name": "FearlessCMS",
+        "vendor": {
+          "name": "fearlessgeekmedia"
+        }
+      },
+      "product_version": "< 0.1.4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "575b7994-c7f5-3a96-974f-9ac19a51ca51",
+      "vendor": {
+        "name": "fearlessgeekmedia"
+      }
+    }
+  ]
+}
