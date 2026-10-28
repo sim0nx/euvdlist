@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-112013",
+  "enisaUuid": "1a2e3e6c-8533-3bff-a216-1f82ecb6d8b8",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: zero the FS_OBJECT_ID_INFORMATION buffer before filling it in\n\nsmb2_get_info_filesystem() reports 64 bytes for FS_OBJECT_ID_INFORMATION,\nthat is the whole of struct object_id_info, but writes only 46 of them:\n\n - objid[] is 16 bytes, and when the volume UUID is not available only\n   sizeof(stfs.f_fsid) (8) bytes are copied into it;\n - extended_info.version_string[] is STRING_LENGTH (28) bytes, and only\n   strlen(\"1.1.0\") (5) bytes are copied into it.\n\nThe response buffer is zeroed on allocation (kvzalloc() in\nsmb2_allocate_rsp_buf()), so for a standalone request the remaining 31\nbytes are zero.  In a compound request they need not be.  The offset of\nthe next response is advanced by the length pinned for the previous one,\nso if a preceding command wrote its reply into the buffer and then\nfailed, smb2_set_err_rsp() pins only the short error response and the\nnext reply lands inside the area that has already been written.  Only\nthe header is cleared there:\n\n\tmemset((char *)rsp_hdr, 0, sizeof(struct smb2_hdr) + 2);\n\nThe client then receives up to 31 bytes of a response it was not meant\nto see, including one that failed with an access denied error.\n\nClear the structure before filling it in.  As a side effect\nversion_string is now NUL terminated.",
+  "datePublished": "Oct 28, 2026, 10:34:30 AM",
+  "dateUpdated": "Oct 28, 2026, 10:34:30 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/898cb4f2e12a5ddea1b2d821cc642c3100f46da7",
+    "https://git.kernel.org/stable/c/015fffa48e96ca8d73a627445341ccff86b02251",
+    "https://git.kernel.org/stable/c/399aa12450a61a5c73dc77e73f069ece9687c95d"
+  ],
+  "aliases": [
+    "CVE-2026-99113"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0f23ff85-db38-3074-889c-802ed94bbb05",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <399aa12450a61a5c73dc77e73f069ece9687c95d"
+    },
+    {
+      "id": "226873bc-bcad-3bd1-b47d-91c27810d752",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <898cb4f2e12a5ddea1b2d821cc642c3100f46da7"
+    },
+    {
+      "id": "57d99ff8-0b3c-335b-b3a6-f411d46325b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <015fffa48e96ca8d73a627445341ccff86b02251"
+    },
+    {
+      "id": "660de2ca-9fb4-3869-bb32-95e3a9359d24",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    },
+    {
+      "id": "6a789ac9-4b7a-38b4-ab53-17c042ddcf22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.59"
+    },
+    {
+      "id": "9b38b42a-325c-3af9-a3ef-3def13e32f18",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "cf98f8ef-47a5-31d6-bb2d-8644b8c78087",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "f0d7f626-ed4e-3827-ab54-36d7dd2de306",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9eb186d6-b40a-3731-812a-98f812a4d520",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

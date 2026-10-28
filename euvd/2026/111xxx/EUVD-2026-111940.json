@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-111940",
+  "enisaUuid": "da37b50e-0182-3096-98ad-9bdd8a67d7c7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: stmmac: dwmac1000: clear the RGMII status interrupt\n\nSince commit 2e2c878a3141 (\"net: stmmac: remove SGMII/RGMII/SMII\ninterrupt handling\") nothing on the RGMII path reads GMAC_RGSMIIIS, so\nRGSMIIIS stays pending behind GMAC_INT_MASK from the first link change\non. stmmac_resume() resets the MAC in stmmac_hw_setup(); the reset sets\nGMAC_INT_MASK to 0 until dwmac1000_core_init() writes the mask again,\nand the pending status storms the line:\n\n  dwmac_dma_interrupt: unexpected status 04000000\n\nA register dump at the first message on ODROID-HC4 showed it:\n\n  core int_status 00000001 int_mask 00000000 pmt 00000000 rgsmiiis 0000000d\n\nWhen the resume thread runs on the CPU that takes the MAC interrupt,\nthe storm starves it: a soft lockup, then a watchdog reset or a hang.\n\nRead GMAC_RGSMIIIS in dwmac1000_irq_status() when the status is not\nmasked, as the driver did before 2e2c878a3141; the read clears it.\n\nWake-on-LAN resume from s2idle with the resume thread and the MAC\ninterrupt on one CPU: Helios64 (dwmac-rk), 7.3-rc6, soft-locked in 3 of\n3 resumes without a fix and in 0 of 10 with this patch; it ran with an\nout-of-tree dwmac-rk change that keeps the GMAC powered across suspend.\nODROID-HC4 (dwmac-meson8b): 0 of 10 with this patch, 2 of 2 without a\nfix on a 7.3-rc5 build. irq_rgmii_n went up by one per resume.",
+  "datePublished": "Oct 28, 2026, 10:35:45 AM",
+  "dateUpdated": "Oct 28, 2026, 10:35:45 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/affc6d572935282ef9ab1e0b790cbc31e5ad8bca",
+    "https://git.kernel.org/stable/c/aa07285705f8d5bac464eb1c5b7412f8e88b91e1"
+  ],
+  "aliases": [
+    "CVE-2026-99188"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0589fc09-0e1d-3f25-839d-017fd28af048",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "0c03bffa-8653-305b-911f-9e8fa749501d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "4ffe0741-37df-3d08-89b3-e5069fd96df0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    },
+    {
+      "id": "5c13716d-fbb7-3f38-9d99-59e93335aa71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    },
+    {
+      "id": "b68afbca-1d7a-3042-9850-257345198bd9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2e2c878a314175a4c3b76ee3be455f543438f472 <affc6d572935282ef9ab1e0b790cbc31e5ad8bca"
+    },
+    {
+      "id": "e469bdb1-51e9-3a93-866b-d7c2ae5e6731",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2e2c878a314175a4c3b76ee3be455f543438f472 <aa07285705f8d5bac464eb1c5b7412f8e88b91e1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6d75658a-d5ae-3730-9716-caf0c4631048",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

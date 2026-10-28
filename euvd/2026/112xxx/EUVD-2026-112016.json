@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-112016",
+  "enisaUuid": "dfbecb91-e271-3fcf-b9c6-9493225cc522",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: psp: do not inherit the Rx association on clone\n\nsk->psp_assoc sits past sk_dontcopy_end, so sock_copy() copies it into\nevery socket accepted from a listener without taking a reference, while\ninet_sock_destruct() puts for every inet socket. psp_twsk_init() does\nrefcount_inc() for the timewait socket, so a child closing through\nTIME_WAIT cancels its own put and leaves the association with one\nreference and N timewait sockets holding the same pointer. Closing the\nlistener frees it, and the timewait timers then put freed memory.\n\nRejecting the association on a listening socket is not sufficient: a socket\ncan acquire one while established and then be turned back into a listener,\nbecause tcp_disconnect() leaves sk->psp_assoc in place.\n\n  BUG: KASAN: slab-use-after-free in psp_twsk_assoc_free+0x6f/0xf0\n  Write of size 4 at addr ffff888110f9255c by task swapper/7/0\n   psp_twsk_assoc_free+0x6f/0xf0\n   inet_twsk_put+0xda/0x1b0\n   call_timer_fn+0x53/0x2e0\n   __run_timers+0x764/0xa80\n  Freed by task 99:\n   kfree+0x1a7/0x500\n   process_one_work+0x7ec/0x1100\n\nAn association carries a per-connection SPI and key, so a child must not\ninherit the parent's. Clear it on clone.",
+  "datePublished": "Oct 28, 2026, 10:34:33 AM",
+  "dateUpdated": "Oct 28, 2026, 10:34:33 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a9f14ea73e82db743f0acf4219f499d594589288",
+    "https://git.kernel.org/stable/c/c962695467d3ab9738a6508279827ec33a7d2bdf",
+    "https://git.kernel.org/stable/c/1d2929d0850fff683b8aff051275945e65f082c8"
+  ],
+  "aliases": [
+    "CVE-2026-99116"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1c8df31a-0fb3-3268-9b08-78efc3139f23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "575b3541-063e-3cc4-bc96-f59efdd3f03a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "60bf4663-af7c-3cd9-9b19-7cdffa5ca899",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6b46ca260e2290e3453d1355ab5b6d283d73d780 <a9f14ea73e82db743f0acf4219f499d594589288"
+    },
+    {
+      "id": "75311a25-c78c-3685-8cf4-88c298256496",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.59"
+    },
+    {
+      "id": "a359cb62-8260-3001-b3ba-4e187f6ba83d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.18"
+    },
+    {
+      "id": "acde0a41-265c-3b17-a0e2-853a81c69247",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6b46ca260e2290e3453d1355ab5b6d283d73d780 <1d2929d0850fff683b8aff051275945e65f082c8"
+    },
+    {
+      "id": "afb18242-ae5b-36d9-ad01-f6adb18d311a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6b46ca260e2290e3453d1355ab5b6d283d73d780 <c962695467d3ab9738a6508279827ec33a7d2bdf"
+    },
+    {
+      "id": "dbf2ed8a-5aea-3fbc-864e-19ed925276b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e9d92e9d-37b2-388f-b206-bf631ba865dc",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

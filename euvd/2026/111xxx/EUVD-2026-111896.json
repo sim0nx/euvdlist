@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-111896",
+  "enisaUuid": "a74563d2-6588-3e06-8b52-6cf2f8faf657",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsched_ext: Fix use-after-free of a destroyed user DSQ by a deferred reenqueue\n\nA deferred reenqueue can read a freed user DSQ. The request stays on its\nCPU's deferred list until run_deferred() takes it, and the RCU callback that\nfrees the DSQ assumes that the grace period has flushed it, so exit_dsq()\nchecks the per-CPU node without the deferred list lock. A grace period waits\nfor readers in flight, not for a pending run_deferred(). A run_deferred()\nwhich starts after the grace period began can detach the request right\nbefore the callback looks and then read the freed DSQ's id.\n\nCancel the pending requests before the grace period instead. The irq work\nthat frees the DSQ unlinks every CPU's request under the per-CPU deferred\nlist lock, and schedule_dsq_reenq() ignores a new request under the same\nlock once the id is invalid. Only a run_deferred() that started before the\ngrace period can hold a request, and it runs with IRQs disabled, so the\ngrace period waits for it and nothing touches the DSQ after the callback.",
+  "datePublished": "Oct 28, 2026, 10:35:00 AM",
+  "dateUpdated": "Oct 28, 2026, 10:35:00 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/633f586329bfd9843bf8acf86c95353f4c16e22d",
+    "https://git.kernel.org/stable/c/069403dff337feb192bfc70fb28ddc8a171e20c1"
+  ],
+  "aliases": [
+    "CVE-2026-99144"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "04575428-8115-3815-98cd-5f20d52eba49",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "84b1a0ea0b7c23dec240783a592e480780efe459 <069403dff337feb192bfc70fb28ddc8a171e20c1"
+    },
+    {
+      "id": "bc5c98be-29af-302d-b9c3-bbd55a82fb22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "84b1a0ea0b7c23dec240783a592e480780efe459 <633f586329bfd9843bf8acf86c95353f4c16e22d"
+    },
+    {
+      "id": "c0a0d9db-f2bd-33a3-b922-40b234d46e6c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    },
+    {
+      "id": "c8b8bd81-6924-3d14-8d78-0d7e268cf614",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "d95bdc30-14e2-3d2c-9e0e-a224976074f5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "f71b393f-d5f7-3beb-b796-aa7f082c1626",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "1682d079-2abb-3f09-b01e-552c9a7c742f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

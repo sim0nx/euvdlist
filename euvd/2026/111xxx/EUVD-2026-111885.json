@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-111885",
+  "enisaUuid": "584f756d-8c06-3166-a96f-2aa4529f5dc4",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/iucv: fix the recvmsg window update\n\niucv_sock_recvmsg() sends the HiperSockets-only AF_IUCV_FLAG_WIN without\ntesting the transport, so on a classic z/VM socket iucv_send_ctrl() sizes\nthe skb through a NULL iucv->hs_dev. SO_MSGLIMIT accepts 1, so msglimit / 2\nis zero and one recvmsg() on its own socket is enough for an unprivileged\nprocess to take a spurious disconnect.\n\nIt also calls iucv_send_ctrl() under spin_lock_bh(&message_q.lock), which\nallocates GFP_KERNEL inside a section the code treats as atomic. Sending\noutside that lock lets two recvmsg() reach afiucv_hs_send() at once, where\nmsg_recv is sampled for the advertised window and subtracted after\ndev_queue_xmit() -- and sendmsg reaches that counter under lock_sock()\nwhile recvmsg holds no socket lock, so both can subtract the same value,\nthe counter goes negative and the credit reaches the peer twice.\n\nTest the transport, claim the credit with atomic_xchg() after the last\nerror exit and hand it back if the transmit fails, and send once the lock\nis dropped.",
+  "datePublished": "Oct 28, 2026, 10:34:46 AM",
+  "dateUpdated": "Oct 28, 2026, 10:34:46 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/8f2efa742f4cfe7dd756154f8bc07350dbe3ec92",
+    "https://git.kernel.org/stable/c/fe7393a627db2d093e8c0cae69d619b30fefae5f",
+    "https://git.kernel.org/stable/c/fa5acd038ea657ad5033713d6916214cbd349151"
+  ],
+  "aliases": [
+    "CVE-2026-99133"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0910203d-bd74-35d9-9457-6c62b2419390",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3881ac441f642d56503818123446f7298442236b <fe7393a627db2d093e8c0cae69d619b30fefae5f"
+    },
+    {
+      "id": "1748bdf4-5d06-3a8c-b1c2-9c1ef285ddd4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3881ac441f642d56503818123446f7298442236b <fa5acd038ea657ad5033713d6916214cbd349151"
+    },
+    {
+      "id": "2a6076fa-74e5-368b-b66e-9a3e055af078",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9369bc9f-c95d-38e9-bf5c-193293fdb537",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "9495b3ea-ace5-3328-a861-6bff188b6de6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    },
+    {
+      "id": "ba0f9ba0-f603-31ce-8cfc-b1544612d7fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3881ac441f642d56503818123446f7298442236b <8f2efa742f4cfe7dd756154f8bc07350dbe3ec92"
+    },
+    {
+      "id": "cd93dd33-ee25-3258-8208-916e7b8b925a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.59"
+    },
+    {
+      "id": "d3de3611-7334-3a0e-b1ea-be82a1df9bbe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "64246720-5ae7-3c3e-a5eb-5a64db01a593",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

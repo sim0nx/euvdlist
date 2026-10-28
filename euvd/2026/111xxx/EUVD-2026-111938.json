@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-111938",
+  "enisaUuid": "9a4184e1-9f5a-3532-9e67-c7a4fd231ced",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nx86/insn-eval: Fix shadowed segment index in get_seg_reg_override_idx()\n\nCommit 45e1dccc0653 (\"x86/insn: Simplify for_each_insn_prefix()\") made\nfor_each_insn_prefix() declare its own loop counter named idx.\nget_seg_reg_override_idx() keeps its result in a local of the same name,\nso the assignments in the loop body now write the loop counter:\n\n - the function always returns INAT_SEG_REG_DEFAULT, so FS and GS\n   overrides are ignored;\n\n - a CS override sets the counter to INAT_SEG_REG_CS (2), the increment\n   makes it 3, and prefixes.bytes[3] holds the last prefix, 0x2e again,\n   so the loop never terminates.\n\nThe UMIP emulation reaches this from the #GP handler for user space: an\nSGDT, SIDT or SMSW with a memory operand and a CS prefix leaves the task\nspinning in the kernel, never returning to user space, with a SIGKILL\nthat is never delivered.  Any user can thus tie up CPUs until reboot.\nWith an FS or GS prefix, the emulated result is written to the wrong\naddress.\n\nRename the internal macro iterator variable.\n\n[ Lukas' original patch renamed the use site, I changed it to rename the\n  iterator in the macro instead, but left Lukas' commit message and\n  authorship   - Linus ]",
+  "datePublished": "Oct 28, 2026, 10:35:44 AM",
+  "dateUpdated": "Oct 28, 2026, 10:35:44 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0efe927053f7eabd1e8658cbda96ee3d78bd1765",
+    "https://git.kernel.org/stable/c/32c52ec87d6245ee2d12ed5dd509e40062939b50"
+  ],
+  "aliases": [
+    "CVE-2026-99186"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0661b009-6c79-34a2-ba9a-df7a2faf24e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "45e1dccc0653c50e377dae57ef086a8d0f71061d <32c52ec87d6245ee2d12ed5dd509e40062939b50"
+    },
+    {
+      "id": "334b2c29-6409-3ebe-836c-ec65112e7b46",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "4cb5fe9e-4ad3-3b17-ab24-293ffad5a7e5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    },
+    {
+      "id": "978b18d6-4ecf-3c57-95ba-e1374d4c6eac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "45e1dccc0653c50e377dae57ef086a8d0f71061d <0efe927053f7eabd1e8658cbda96ee3d78bd1765"
+    },
+    {
+      "id": "b05b15c7-7a63-39fd-9fb2-7da46f94abf6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "dfff4de7-db91-3444-876f-e2b69109b59a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "64388cc8-b6b8-35e8-99c6-12da12d99bb8",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

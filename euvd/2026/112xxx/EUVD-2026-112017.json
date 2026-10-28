@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-112017",
+  "enisaUuid": "74a9cb86-c0f4-3fa7-a14b-01cfa1c220ea",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: bridge: mcast: don't truncate the port group walk on teardown\n\n__br_multicast_disable_port_ctx() and br_multicast_del_port() walk\nport->mglist with hlist_for_each_entry_safe(). However,\nbr_multicast_find_del_pg() can also delete other entries from the same\nlist through br_multicast_fwd_src_remove() or __fwd_del_star_excl().\n\nIf such an entry is the iterator's saved next node, hlist_del_init()\nclears its ->next and terminates the walk early. The reproducer triggers\nthis in both teardown walks, leaving port groups in the bridge mdb with\na dangling ->key.port after del_nbp() frees the port:\n\n  BUG: KASAN: slab-use-after-free in __mdb_fill_info+0x1191/0x1320\n   __mdb_fill_info+0x1191/0x1320\n   br_mdb_dump+0x594/0xe40\n   rtnl_mdb_dump+0x1cf/0x5d0\n\nUse hlist_del_init_rcu() to unlink the group while preserving ->next.\nbr_multicast_del_pg() and the teardown walks run under\nbr->multicast_lock. The GC worker must acquire the same lock before\ndetaching the group for destruction, so the node remains alive while\nthe walk uses the preserved pointer.\n\nPreserving ->next means a walk can now reach a group that an earlier\niteration already deleted as a side effect. That group is off mp->ports,\nso br_multicast_find_del_pg() would fall through its port scan and hit\nthe trailing WARN_ON(1). Skip such groups at the top of that helper: a\nport group is put on port->mglist when it is created and only unlinked\nwhen it is deleted, so hlist_unhashed() identifies exactly this case.",
+  "datePublished": "Oct 28, 2026, 10:34:33 AM",
+  "dateUpdated": "Oct 28, 2026, 10:34:33 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/8243d587a081e790ad96e80d48eef44d9f7ef005",
+    "https://git.kernel.org/stable/c/b45e8c24608c992d1e2cea047eb5bcbfa537f86b",
+    "https://git.kernel.org/stable/c/5a3f7a683aee56e1f15c9d53041f3236767eaae7"
+  ],
+  "aliases": [
+    "CVE-2026-99117"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "097c0343-adb5-3f10-ac38-e6e3e205d353",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    },
+    {
+      "id": "3294b136-b209-3713-b6f7-80354cf3129e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.59"
+    },
+    {
+      "id": "4384087a-56ce-3214-b225-0acb64b0b216",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b08123684bd55fa6d6ee4b52d4ae3040fadb5aa2 <b45e8c24608c992d1e2cea047eb5bcbfa537f86b"
+    },
+    {
+      "id": "44d1a08e-0037-34a4-96ac-da3bbfe64323",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "6877dd95-79c3-39e9-b220-0882d12cb539",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b08123684bd55fa6d6ee4b52d4ae3040fadb5aa2 <5a3f7a683aee56e1f15c9d53041f3236767eaae7"
+    },
+    {
+      "id": "8a9958d6-f1b4-3fdd-b892-6bdcb85b2209",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "dc6384b7-46e1-3a7c-ac3b-c7837afe3961",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b08123684bd55fa6d6ee4b52d4ae3040fadb5aa2 <8243d587a081e790ad96e80d48eef44d9f7ef005"
+    },
+    {
+      "id": "eccf2197-2470-3c3f-96e6-afeacbfc5c67",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "bce3f475-e2b1-3b03-9196-772589ecd7ae",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "id": "EUVD-2026-111954",
+  "enisaUuid": "a2253b32-3d36-3be4-9943-8355abb6bbe3",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: libsas: Fix SMP IO deadlock during HA resume\n\nsmp_execute_task_sg() calls pm_runtime_get_sync() on the host before\nissuing an SMP command. When that command is itself issued from the HA\nresume path, the get_sync() deadlocks: it waits for the ongoing resume\n(the device is RPM_RESUMING), while the resume is blocked in\nsas_drain_work() waiting for that same SMP IO to complete.\n\nThe deadlock needs an expander-attached SATA disk. During\nsas_resume_ha() -> sas_drain_work(), DISCE_RESUME -> sas_resume_sata()\n-> ata_sas_port_resume() requests ATA_EH_RESET, and the hard reset for\nsuch a disk is done via SMP PHY CONTROL (sas_ata_hard_reset() ->\nsas_phy_reset() -> sas_smp_phy_control() ->\nsmp_execute_task_sg()). Direct-attached SATA resets through\nlldd_control_phy() and SSP devices use TMFs, so neither hits this.\n\nReplace the get_sync()/put_sync() pair with\npm_runtime_get_noresume()/pm_runtime_put(). smp_execute_task_sg() only\nneeds to hold off autosuspend while the SMP is in flight, and it must\nnot try to resume the host: a sync resume issued from the HA resume path\nitself is what deadlocks, and by the time sas_resume_ha() runs, hw_init\nhas already reinitialized the hardware, so the device is accessible\nwithout one.\n\nThe usage reference is still required. Discovery work normally runs\ninside an event worker's PM reference, taken at sas_notify_port_event()\nnotify time and held until the handler has flushed the disco\nqueue. sas_rediscover_ex_phy() however requeues DISCE_REVALIDATE_DOMAIN\nfrom within the revalidation worker itself, and flush_workqueue() does\nnot wait for work items queued during execution, so that chained\nrevalidation runs with no outer PM reference - without the\nget_noresume(), its SMP could race autosuspend.\n\nFor the BSG path, sas_smp_handler() is the only caller which may find\nthe host autosuspended: expander SMP requests do not go through any SCSI\ndevice request queue, so nothing else in that path holds the host\nawake. Resume it there with pm_runtime_resume_and_get() and check the\nresult.",
+  "datePublished": "Oct 28, 2026, 10:35:56 AM",
+  "dateUpdated": "Oct 28, 2026, 10:35:56 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/c9fb89246d9922ac0a45d504adb03e0bb971310c",
+    "https://git.kernel.org/stable/c/08b95ef36a64c3ae4490794bed3c35d0c3354e85",
+    "https://git.kernel.org/stable/c/81e097a064b28b4a1f6ca1a8b433e659c1bd64c0"
+  ],
+  "aliases": [
+    "CVE-2026-99202"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "11d751b2-747f-3f5f-82fb-ceddfb9284bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b9c44a14062093e9fc2d6bddc696cfceadb482d7"
+    },
+    {
+      "id": "1e14749e-3dbc-3586-a59b-3f4ce2c841b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1.8 <7.2"
+    },
+    {
+      "id": "28bee4f2-98d2-3f2e-8996-a376ccea4c94",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c391b5899dd46485a5893696c12ae3e95a3a7325"
+    },
+    {
+      "id": "310ecd44-7b25-30df-b679-39edb721a431",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.183 <6.2"
+    },
+    {
+      "id": "4ca5ea49-b371-3d83-a1df-d6bf24fda09f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3dbbbf656b850c9c8de05df6ad4a1dfc6ff02845 <81e097a064b28b4a1f6ca1a8b433e659c1bd64c0"
+    },
+    {
+      "id": "62d88807-71e9-34bc-ae49-bddb0a606604",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12.103 <6.13"
+    },
+    {
+      "id": "6ca3b33b-f3b7-336f-adde-40f5aad25a0d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3dbbbf656b850c9c8de05df6ad4a1dfc6ff02845 <08b95ef36a64c3ae4490794bed3c35d0c3354e85"
+    },
+    {
+      "id": "7c8fe5cc-7a3d-3296-b3eb-d6ad92559914",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.18.44 <6.18.59"
+    },
+    {
+      "id": "800ea26b-53c3-32c7-aff0-1a8232e2178a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.2"
+    },
+    {
+      "id": "822122f3-22b5-3065-80b1-7b981be3909f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    },
+    {
+      "id": "8eae7ff4-ebe5-352f-ac0e-08d5be8b20bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.151 <6.7"
+    },
+    {
+      "id": "91da080d-90ba-3f51-b5df-2cdccbad2b08",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9a75588a-6cd1-3e31-8005-f35d5704ab04",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e50a6523a603594a6d92cdecfe11997d639410a3"
+    },
+    {
+      "id": "a99475ad-c4f6-331f-a56e-eb965229ee03",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.59"
+    },
+    {
+      "id": "ad76d52c-dfa9-3c81-bb17-935c981bcf52",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "09357f067122e2e28ec52e27013a1660a1571618"
+    },
+    {
+      "id": "b885c4c0-74c1-37dc-8cc9-3fa390eb89f5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9e24b47ef81d43b3fb1b14294f09991640c79fcc <c9fb89246d9922ac0a45d504adb03e0bb971310c"
+    },
+    {
+      "id": "ba3d75ac-84df-39fa-9be2-496d388ce48c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "560ad978-d70c-380c-b513-4d1ced0a6fc8",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

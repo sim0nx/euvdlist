@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-111959",
+  "enisaUuid": "b08fdde5-5eb8-3b22-9c37-9c2dd40b0311",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: target: Disable interrupts while holding delayed_cmd_lock\n\ntarget_do_delayed_work() takes dev->delayed_cmd_lock with a plain\nspin_lock(). It runs from system_percpu_wq, so interrupts stay enabled\nwhile the lock is held. Every other acquisition of that lock uses\nspin_lock_irqsave(): target_handle_task_attr() and\ntransport_complete_ordered_sync() in target_core_transport.c, and\ntarget_non_ordered_release() in target_core_device.c.\n\nThat was safe while every caller of transport_complete_task_attr() ran\nin process context: target_complete_ok_work() from target_completion_wq,\ntransport_complete_qf() from dev->qf_work_queue, and\ntransport_generic_request_failure() from the submit and execute paths.\n\nSince commit 06933066d88a (\"scsi: target: Add support for completing\ncommands from backend context\") that is no longer true. With\ncomplete_type=1 on a fabric that sets direct_compl_supp,\ntarget_complete() runs target_complete_ok_work() inline in the backend's\ncompletion context, which target_complete_cmd_with_sense() documents as\n\"May be called from interrupt context\". For iblock that is the bio\nend_io.\n\ntarget_complete_ok_work() starts with transport_complete_task_attr(),\nwhich takes delayed_cmd_lock in two ways:\n\n - Every ORDERED command is put on dev->delayed_cmd_list by\n   target_handle_task_attr() and dispatched from there by\n   target_do_delayed_work(), which marks it SCF_TASK_ORDERED_SYNC.  Its\n   completion therefore goes through transport_complete_ordered_sync().\n\n - A SIMPLE command that completes while an ORDERED command is pending\n   drops the last reference to the killed dev->non_ordered, and\n   percpu_ref_put() then runs target_non_ordered_release() in the\n   completing context.\n\nBoth take the lock and, if commands are waiting, call\nschedule_work(&dev->delayed_cmd_work), which queues on system_percpu_wq,\ni.e. on the CPU that took the completion. Further completions for the\nsame queue are typically delivered there too, so one arriving while the\nwork holds the lock spins on it forever.\n\nReaching this needs complete_type=1, which is not the default\n(vhost-scsi, the only fabric with direct_compl_supp, defaults to\nTARGET_QUEUE_COMPL), a backend whose I/O completes from interrupt\ncontext, and ORDERED commands from the initiator. Linux virtio_scsi\nguests send only VIRTIO_SCSI_S_SIMPLE and never take the ordered path;\nany guest that uses the ORDERED task attribute, which vhost-scsi\naccepts, does.\n\ntarget_do_delayed_work() is a work item and always runs in process\ncontext, so spin_lock_irq() is sufficient.\n\nFound by inspection; no runtime report. A single ORDERED command goes\nthrough both acquisitions, so with CONFIG_PROVE_LOCKING the first one\ncompleted through direct completion should produce an inconsistent lock\nstate report on delayed_cmd_lock (hardirq or softirq, depending on where\nthe backend completes).",
+  "datePublished": "Oct 28, 2026, 10:36:00 AM",
+  "dateUpdated": "Oct 28, 2026, 10:36:00 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/7563650522732041ccfb2e4593878b5ea98d498c",
+    "https://git.kernel.org/stable/c/04a67a8b1a4460345d22fe75d93430cbf7e651d7"
+  ],
+  "aliases": [
+    "CVE-2026-99207"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "40a5448e-4d6a-3946-8c31-41432cf2e7b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "06933066d88a3093953b062922c016a67d2cdbf8 <7563650522732041ccfb2e4593878b5ea98d498c"
+    },
+    {
+      "id": "689eb0af-0ce3-3eb6-9502-da8e2c094e72",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "06933066d88a3093953b062922c016a67d2cdbf8 <04a67a8b1a4460345d22fe75d93430cbf7e651d7"
+    },
+    {
+      "id": "b3316450-d21f-3562-82b4-f66422e29057",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "c1d563f0-0e9c-364f-b019-b57e07001dcb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e69a1f7e-23ae-32cd-8a24-309a21cd258d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "fe337bf2-2aee-38b9-8439-f389dce34c2d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "47031fd6-db84-31a1-8cf8-bc4e40add763",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

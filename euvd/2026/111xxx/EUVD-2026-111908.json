@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-111908",
+  "enisaUuid": "72133224-3b4b-3880-a9d2-33e3788b4b71",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: st: Fix use-after-free race between st_remove() and st_open()\n\nst_remove() drops the probe reference on the scsi_tape with kref_put()\nand only afterwards removes its index from st_index_idr. If that was the\nlast reference, scsi_tape_release() frees the structure while it is\nstill published in the idr.\n\nscsi_tape_get(), called from st_open(), looks up the tape in\nst_index_idr and takes a reference under st_ref_mutex and\nst_index_lock. remove_cdevs() does not wait for opens that are already\npast chrdev_open(), so an open that is blocked on st_ref_mutex while\nst_remove() holds it can take the mutex as soon as st_remove() drops it,\nfind the freed tpnt in the idr and call kref_get() on it:\n\n  BUG: KASAN: slab-use-after-free in st_open\n  Write of size 4 ...\n   st_open (drivers/scsi/st.c:254 drivers/scsi/st.c:1291)\n   chrdev_open\n  ...\n  Freed by task ...:\n   kfree\n   st_remove (drivers/scsi/st.c:4512)\n\nRemove the index from the idr before dropping the reference, all under\nst_ref_mutex. A concurrent scsi_tape_get() now either runs first and\nholds a valid reference that keeps the tape alive, or runs afterwards\nand finds nothing, so st_open() fails with -ENXIO.\n\nThis restores the ordering st_remove() had before the conversion to\nst_index_idr, where the tape was unpublished from scsi_tapes[] before\nthe final kref_put().",
+  "datePublished": "Oct 28, 2026, 10:35:10 AM",
+  "dateUpdated": "Oct 28, 2026, 10:35:10 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a1647b653549ff29f0422a63eabf329b842f3822",
+    "https://git.kernel.org/stable/c/18a0e3733ce38718688e813e5e2d1106bd4830e5",
+    "https://git.kernel.org/stable/c/71caf7f84bd62a4bf91cc95abd2de690afb8d15f"
+  ],
+  "aliases": [
+    "CVE-2026-99156"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3a3ac820-62ca-318b-acff-62c7d76c310e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    },
+    {
+      "id": "44e80d34-02c4-3454-8a1c-74157df6e894",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6c648d95a6af4a79241a916871df17c84c68ea20 <71caf7f84bd62a4bf91cc95abd2de690afb8d15f"
+    },
+    {
+      "id": "78f1fce8-d9ed-3442-8982-3635a3798f6c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "7abc109e-50c9-3d7a-92eb-b1eeb66918c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.7"
+    },
+    {
+      "id": "82bcf94d-806b-37ff-b8cc-53b14ad71ece",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6c648d95a6af4a79241a916871df17c84c68ea20 <18a0e3733ce38718688e813e5e2d1106bd4830e5"
+    },
+    {
+      "id": "d1a7617f-d6e3-3473-8351-4ab0f8576592",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e00b2054-7bdc-3e86-a138-10ca53bd7b72",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.59"
+    },
+    {
+      "id": "f902e090-a31b-38ae-97b5-dc6621e52337",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6c648d95a6af4a79241a916871df17c84c68ea20 <a1647b653549ff29f0422a63eabf329b842f3822"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b28117df-2a45-32c0-9c58-435dff512469",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

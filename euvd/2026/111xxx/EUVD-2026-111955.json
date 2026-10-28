@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-111955",
+  "enisaUuid": "2a406722-90dc-325a-820b-f91fe8ac6959",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npipe: preserve existing fasync readers on writer setup failure\n\nF_SETFL and FIOASYNC decide whether to invoke ->fasync() before\npipe_fasync() takes pipe->mutex. Two enables of one O_RDWR FIFO can\ntherefore both enter the callback.\n\nfasync_helper() allocates before checking for an existing entry. If the\nfirst enable installs both entries, a second enable can update the\nreader entry and then fail the allocation for the writer entry. The\nerror path removes the pre-existing reader entry, clearing FASYNC while\nthe writer entry remains registered. __fput() then skips ->fasync(), so a\nlater pipe notification can dereference the freed file or its f_owner.\nAn unprivileged memory-pressure reproducer triggers a KASAN\nslab-use-after-free in send_sigio() through this path.\n\nKeep the reader helper's result and undo the registration only if this\ncall added it. The pipe mutex serializes changes to both lists, so a\nfailed new registration still removes its reader, while a failed\nduplicate preserves the existing registrations and FASYNC. Successful\nduplicate enables continue to update fa_fd as before.",
+  "datePublished": "Oct 28, 2026, 10:35:57 AM",
+  "dateUpdated": "Oct 28, 2026, 10:35:57 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/4c42ce499ce4b1c787e61082e3b13df4f30c4eaa",
+    "https://git.kernel.org/stable/c/2259809e5b7043c4ba20af7b14ba3e471cf55521",
+    "https://git.kernel.org/stable/c/40bb03d3ea6f6a915218508819ecc4d7a7fa260d"
+  ],
+  "aliases": [
+    "CVE-2026-99203"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0047c29c-450a-363f-a502-c5daf4ec58db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "09c59493-9ea4-36c6-a1c7-4ce05bf57b85",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.59"
+    },
+    {
+      "id": "33c18347-0ed0-3f14-92c9-2301b0e726ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.30"
+    },
+    {
+      "id": "702dad84-eec9-394c-8173-d7d40dd846f2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "76398425bb06b07cc3a3b1ce169c67dc9d6874ed <40bb03d3ea6f6a915218508819ecc4d7a7fa260d"
+    },
+    {
+      "id": "ba3da934-43d7-303f-869d-b0483e3cdfb0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "76398425bb06b07cc3a3b1ce169c67dc9d6874ed <2259809e5b7043c4ba20af7b14ba3e471cf55521"
+    },
+    {
+      "id": "e98479e9-6c03-372a-835d-bc5a19fa991c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e9c9220d-93be-3a8c-8b84-1cef7f916a65",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "76398425bb06b07cc3a3b1ce169c67dc9d6874ed <4c42ce499ce4b1c787e61082e3b13df4f30c4eaa"
+    },
+    {
+      "id": "ebb065f1-1467-3150-bdd7-00c722b1b0b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "96d1f9d4-8ebe-3863-b2f9-34630f6fd860",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

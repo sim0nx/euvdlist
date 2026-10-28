@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-111964",
+  "enisaUuid": "df729985-4aec-3335-aa14-be17b5ca8d3a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/rds: don't let the rdma_cm destroy an id RDS still owns on route failure\n\nrds_rdma_cm_event_handler_cmn() hands the return value of\nrdma_resolve_route() straight back to the rdma_cm on\nRDMA_CM_EVENT_ADDR_RESOLVED.  A synchronous failure there - -ENOMEM\nfrom the route work allocation, an SA query that cannot be set up, a\nRoCE route with no usable device - makes addr_handler() destroy the\nid the event was delivered on.  That id is ic->i_cm_id, and nothing\nclears the pointer: the connection sits in RDS_CONN_CONNECTING with a\nfreed id until its shutdown calls rdma_disconnect() and\nrdma_destroy_id() on it.\n\nThe ROUTE_RESOLVED case already avoids this: rds_ib_cm_initiate_connect()\nforces a zero return while ic->i_cm_id == cm_id, as the comment there\nexplains.  Do the same here - drop the connection and return 0 - so\nthe id stays RDS's to destroy from the shutdown, and the reconnect\ngets a fresh one.",
+  "datePublished": "Oct 28, 2026, 10:36:05 AM",
+  "dateUpdated": "Oct 28, 2026, 10:36:05 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a7c7d0ff876377fea7ae876a28d6df8d9349df57",
+    "https://git.kernel.org/stable/c/91ece3efa064f0b3b3c67b9b045d9eeb4a034e43",
+    "https://git.kernel.org/stable/c/98d446b7c013254a8a7b49720557676a3a851fde"
+  ],
+  "aliases": [
+    "CVE-2026-99212"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "23601034-8129-34f8-a71f-8cfbc9abe222",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.30"
+    },
+    {
+      "id": "248ee976-beb8-3a16-8fa7-bdeb914db329",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "557aee8b-c9b6-3fcd-8bd7-b5081bf7bf47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "55b7ed0b582f9ff4bf3b9b44969cddda8c6763ea <a7c7d0ff876377fea7ae876a28d6df8d9349df57"
+    },
+    {
+      "id": "a7039d07-98a9-3195-a57a-a13f467c877f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.59"
+    },
+    {
+      "id": "b53e4b94-c96f-3a03-adf1-32526a3db466",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.13"
+    },
+    {
+      "id": "c0cd9b11-47b9-3a48-89eb-44b768c80874",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "cd816e32-ba15-33d4-bcc6-84426e51272d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "55b7ed0b582f9ff4bf3b9b44969cddda8c6763ea <91ece3efa064f0b3b3c67b9b045d9eeb4a034e43"
+    },
+    {
+      "id": "f9a6a940-d5f3-3739-b0ee-6c9f631887ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "55b7ed0b582f9ff4bf3b9b44969cddda8c6763ea <98d446b7c013254a8a7b49720557676a3a851fde"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "13b142f0-c606-3699-99a9-85a143986f85",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
