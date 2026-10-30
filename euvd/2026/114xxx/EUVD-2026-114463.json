@@ -1,0 +1,41 @@
+{
+  "id": "EUVD-2026-114463",
+  "enisaUuid": "e91c8e0d-23c5-30a6-85fe-c85af0a7e19e",
+  "description": "LibreDWG is a free C library to read and write DWG files. Prior to 0.14.8413, a crafted pre-R13 DWG can make `decode_preR13_entities()` in `src/decode.c` enter a nonterminating loop that allocates a new object each iteration. `decode_preR13` in `src/decode_r11.c` computes `size` from the raw file-controlled `entities_start` and `entities_end` header bounds; the callee clamps `end` to `dat->size` but never recalculates `size`. At `end` of input, `bit_read_RC` and `bit_read_RS` stop advancing `dat->byte`, the overflow guard fails because `end` equals `dat->size`, and the no-advance check compares against `oldpos` saved before the loop instead of the previous iteration. This leaves repeated allocation of `dwg->object` entries until allocation fails or the process is OOM-killed, not merely a constant-memory CPU hang. The defect remains after the clamping and no-progress changes associated with the earlier issue 1131. Applications and tools calling `dwg_read_file()` on untrusted files, including `dwg2dxf`, `dwgread` and `dwg2svg`, can suffer denial of service when a user or automated pipeline opens a malformed file; no attacker credentials are required. This issue is fixed in repository nightly version 0.14.8413.",
+  "datePublished": "Oct 30, 2026, 8:37:47 PM",
+  "dateUpdated": "Oct 30, 2026, 8:37:47 PM",
+  "baseScore": 5.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://github.com/LibreDWG/libredwg/security/advisories/GHSA-7625-26gc-xqvp",
+    "https://github.com/LibreDWG/libredwg/issues/1131",
+    "https://github.com/LibreDWG/libredwg/commit/4e14952c43be5b8feff6e54a61af3425d6ca95a4",
+    "https://github.com/LibreDWG/libredwg/releases/tag/0.14.8413"
+  ],
+  "aliases": [
+    "CVE-2026-62250"
+  ],
+  "assigner": "GitHub_M",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "a989476b-dcec-3dc9-8dc4-98dfffdf5d39",
+      "product": {
+        "name": "libredwg",
+        "vendor": {
+          "name": "n/a"
+        }
+      },
+      "product_version": "< 0.14.8413"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a8e4e5ab-76d1-30a9-ab32-bb0ec4f51810",
+      "vendor": {
+        "name": "LibreDWG"
+      }
+    }
+  ]
+}

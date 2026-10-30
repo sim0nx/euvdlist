@@ -1,0 +1,41 @@
+{
+  "id": "EUVD-2026-114443",
+  "enisaUuid": "a3580962-cd3d-3162-848d-56ad6346913d",
+  "description": "Arc is an open, SQL-native time-series database for telemetry. Prior to the repository-verified 26.06.2 repair, the remediation of `CVE-2026-47735` leaves a cross-database authorization bypass through DuckDB table-valued I/O functions. In `internal/database/sandbox.go`, `allowed_directories` uses `cfg.LocalStorageRoot`, configured by `storage.local_path`, while `enable_external_access=false` blocks access outside that entire multi-tenant root. `GetStoragePath` in `internal/storage/util.go` stores all databases beneath it. In `internal/api/query.go`, `extractTableReferences` skips names followed by an opening parenthesis and `checkQueryPermissions` allows queries with no extracted table references, including tokens with `permissions: []`. The `userSQLReadParquetPattern` denylist catches literal `read_parquet(` and the earlier protection also blocks `arc_partition_agg(`, but misses the `parquet_scan` alias and `glob`, `parquet_metadata`, `parquet_schema`, `read_blob`, `read_csv_auto`, `read_json` and `read_text`. A request to `POST /api/v1/query` using these unblocked functions passes `ValidateSQLRequest` and `convertSQLToStoragePaths` without tenant authorization, allowing reads and enumeration of other databases' time-series data, schema and per-column value-range statistics within the allowlisted root. The sandbox still blocks out-of-root OS files and HTTP SSRF, and the sibling SQLite token database outside the root is not exposed by this mechanism. The earlier 26.06.1 remediation does not comprehensively deny these I/O functions. Repository tag 26.06.2 contains the I/O-function repair and supplies the provisional remediation boundary; conflicting advisory affected-version statements require curator adjudication.",
+  "datePublished": "Oct 30, 2026, 8:09:04 PM",
+  "dateUpdated": "Oct 30, 2026, 8:09:04 PM",
+  "baseScore": 6.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+  "references": [
+    "https://github.com/Basekick-Labs/arc/security/advisories/GHSA-93cm-2v4m-c56c",
+    "https://github.com/Basekick-Labs/arc/pull/495",
+    "https://github.com/Basekick-Labs/arc/commit/5dc8f53b70a3871b16b0cebf328f07c578af7a45",
+    "https://github.com/Basekick-Labs/arc/tree/v26.06.2"
+  ],
+  "aliases": [
+    "CVE-2026-55098"
+  ],
+  "assigner": "GitHub_M",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "b5204d51-72b3-328d-9b7b-9505c6844202",
+      "product": {
+        "name": "Arc",
+        "vendor": {
+          "name": "Nozomi Networks"
+        }
+      },
+      "product_version": "< 26.06.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "fa7e4d5e-1d61-34b8-814f-4dd9ad8cdc64",
+      "vendor": {
+        "name": "Basekick-Labs"
+      }
+    }
+  ]
+}
