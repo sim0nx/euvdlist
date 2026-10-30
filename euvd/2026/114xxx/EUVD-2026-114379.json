@@ -1,0 +1,41 @@
+{
+  "id": "EUVD-2026-114379",
+  "enisaUuid": "1348bf4d-1163-39b2-9b04-45807b3c8375",
+  "description": "In server mode pgAdmin 4 locks an internal account after MAX_LOGIN_ATTEMPTS failed logins (3 by default). The limit could be bypassed, giving an unauthenticated attacker an unlimited number of password guesses against any internal account, including the administrator's, in the default configuration:\n\n- Flask-Security registers its own views next to pgAdmin's. A login submitted to its /login view was checked and logged in without pgAdmin's failed login count or lock. Its /verify view checked a signed-in user's password without limit, its /change view changed a password without pgAdmin's change password permission or re-encrypting the user's saved server passwords, and its /reset views sent and applied password resets for accounts that are not internal or are locked.\n- The internal account was looked up by its exact username, while the login form matches the email ignoring case, so a login with the username typed in another case was neither counted nor checked for the lock.\n- With LDAP or webserver authentication also configured, a wrong internal password was never counted, and with Kerberos or webserver authentication configured a guess could be answered without being counted.\n\nIn addition, where accounts from different authentication sources share an email address, a password reset could be sent for, or applied to, an account from another source, and the About box showed the server configuration to a user whose email was that of an administrator's account.\n\nThe fix refuses submissions to Flask-Security's own views, counts every failed internal login however the username is typed and whatever other sources are configured, no longer lets a login that posts a password fall back to an authentication source that does not check it, and locks only internal authentication. Password resets and the About box act only on the user's own internal account. Desktop mode is not affected.\n\nThis issue affects pgAdmin 4: before 9.19.",
+  "datePublished": "Oct 30, 2026, 7:55:11 PM",
+  "dateUpdated": "Oct 30, 2026, 7:55:11 PM",
+  "baseScore": 9.2,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/pgadmin-org/pgadmin4/issues/10676",
+    "https://github.com/pgadmin-org/pgadmin4/commit/58c531d831179dc9b0a5bf873ccb80c71c8d387a",
+    "https://github.com/pgadmin-org/pgadmin4/commit/35c9235d17a7d5a99778f01b2f1b9e5e3a3b7fde",
+    "https://github.com/pgadmin-org/pgadmin4/commit/c6ef41a951012cd877a1992b5dac681eec36e48d"
+  ],
+  "aliases": [
+    "CVE-2026-116238"
+  ],
+  "assigner": "PostgreSQL",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "821685c4-80aa-3c22-8287-3028b4526d5e",
+      "product": {
+        "name": "pgAdmin 4",
+        "vendor": {
+          "name": "pgadmin.org"
+        }
+      },
+      "product_version": "0 <9.19"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "01682f04-a36a-3682-9855-029f1207c35b",
+      "vendor": {
+        "name": "pgadmin.org"
+      }
+    }
+  ]
+}
