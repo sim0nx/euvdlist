@@ -1,0 +1,58 @@
+{
+  "id": "EUVD-2026-114899",
+  "enisaUuid": "dcdfa908-3c8d-3eb1-8d32-f45322f3d482",
+  "description": "Files accessible to external parties in Apache Wicket.\n\norg.apache.wicket.markup.html.PackageResourceGuard decides whether a file on the classpath may be streamed to a client as a package resource. HTML is on the default allow list, so the only thing that separates a static HTML file, which may be served, from a component's markup template, which may not, is a check for a class file of the same name beside it. That check calls getResource() on the class loader that loaded wicket-core. The resource itself is reached through different class loaders: the scope class is resolved through the application's IClassResolver, which uses the thread context class loader, and org.apache.wicket.core.util.resource.ClassPathResourceFinder#find() then tries the scope class' own loader, the context class loader, and the wicket-core loader last.\n\nWhere wicket-core is loaded by a class loader that cannot see the application's classes, the check finds no class file, concludes the file is not a component markup template, and serves it. A request for the package resource URL of a component class then returns that component's markup template with status 200. What is disclosed is developer-authored template content: component structure, developer comments, markup that is rendered only under some conditions, inline script, and the endpoints a template names. Access is read-only, and no user data, credential or session material is reachable this way.\n\nSuch a deployment is rare. The ordinary packaging, a web archive with wicket-core in WEB-INF/lib, puts the framework and the application in one class loader, so the check finds the class file and the template is refused; those deployments are not affected. The exposure is confined to deployments that give wicket-core a class loader which cannot see the application's component classes: wicket-core placed in a servlet container's shared library directory, in an enterprise archive library directory with the application in the web archive, as an application server global module, or as an OSGi bundle, where wicket-core's bundle cannot resolve a class held by an application bundle. Markup shipped by Wicket's own modules, and by any other code sharing a class loader with wicket-core, remains protected. An attacker has to name a component class, and Wicket writes fully qualified class names into the URL of every package resource it renders.\n\nThis issue affects Apache Wicket: from 8.0.0 through 8.19.0, from 9.0.0 through 9.24.0, from 10.0.0 through 10.11.0. Users of Apache Wicket 7.x or older, which are no longer supported, should upgrade to a supported version. Users are recommended to upgrade to version 8.20.0, 9.25.0 or 10.12.0, which fix the issue.",
+  "datePublished": "Nov 1, 2026, 10:24:14 PM",
+  "dateUpdated": "Nov 1, 2026, 10:24:14 PM",
+  "baseScore": 6.3,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N",
+  "references": [
+    "https://lists.apache.org/thread.html/90mlx42q7nkdccdby1ql1ksl4sxy13x6"
+  ],
+  "aliases": [
+    "CVE-2026-84172"
+  ],
+  "assigner": "apache",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "271b9d24-68a7-3c46-bef4-f7495eec7cee",
+      "product": {
+        "name": "Apache Wicket",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "8.0.0 \u22648.19.0"
+    },
+    {
+      "id": "32695ccb-79e3-3d7f-a3f5-702d65fe8f30",
+      "product": {
+        "name": "Apache Wicket",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "9.0.0 \u22649.24.0"
+    },
+    {
+      "id": "32fa58f9-781f-363f-be9a-87605baaecdc",
+      "product": {
+        "name": "Apache Wicket",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "10.0.0 \u226410.11.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d7701e33-ed61-3dae-ae18-d26c9bb067b0",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}
