@@ -1,0 +1,58 @@
+{
+  "id": "EUVD-2026-114886",
+  "enisaUuid": "4ebdbdf4-57a4-3161-b549-1c707c065139",
+  "description": "Missing authorization in Apache Wicket.\n\norg.apache.wicket.protocol.ws.api.WebSocketMessageBroadcastHandler, the request handler Wicket's native WebSocket support uses to deliver an incoming frame, resolves the shared resource named by the client's handshake parameter and calls WebSocketResource#onPayload() on it directly, without consulting IAuthorizationStrategy#isResourceAuthorized(). That method has a single enforcement point in the framework, org.apache.wicket.request.handler.resource.ResourceRequestHandler, which the WebSocket transport does not pass through, and WebSocketResource#respond() is final and empty. No route to a WebSocketResource therefore asks the configured authorization strategy whether the caller may use it, and an @AuthorizeResource annotation on such a class has no effect.\n\nA caller needs a bound Wicket session and the name of the resource. The name is not a secret: Wicket writes it into the page that opens the connection. No page of the application is otherwise involved, because a request naming a resource is served with a throwaway page. All of the resource's callbacks are reached this way, including onConnect() and both onMessage() overloads, and what a callback pushes back through WebSocketRequestHandler goes to the caller's own connection.\n\nAn application is affected where it registers a WebSocketResource as a shared resource and relies on the authorization strategy to restrict it. What the caller gains is whatever that resource's callbacks do with a text or binary message of the caller's choosing. The connection is registered under the caller's own session, so it gives no access to another user's connection.\n\nAs a workaround, reject unauthorized connections with an IWebSocketConnectionFilter registered through WebSocketSettings#setConnectionFilter(), or repeat the authorization check at the start of each callback.\n\nThis issue affects Apache Wicket: from 8.0.0 through 8.19.0, from 9.0.0 through 9.24.0, from 10.0.0 through 10.11.0. Older, unsupported releases from 7.0.0 onwards are also affected. Users are recommended to upgrade to version 8.20.0, 9.25.0 or 10.12.0, which fix the issue.",
+  "datePublished": "Nov 1, 2026, 9:42:45 PM",
+  "dateUpdated": "Nov 1, 2026, 9:42:45 PM",
+  "baseScore": 6.3,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:L/VI:L/VA:N/SC:N/SI:N/SA:N",
+  "references": [
+    "https://lists.apache.org/thread.html/0lj9og7vp22ps77nrwdj42f64cfb9g4c"
+  ],
+  "aliases": [
+    "CVE-2026-82115"
+  ],
+  "assigner": "apache",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "132e5f51-e430-304d-bea6-b83bc6417501",
+      "product": {
+        "name": "Apache Wicket",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "8.0.0 \u22648.19.0"
+    },
+    {
+      "id": "c83a4914-501f-3699-bc7f-8aadd6e35bc0",
+      "product": {
+        "name": "Apache Wicket",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "9.0.0 \u22649.24.0"
+    },
+    {
+      "id": "d8d4d8a1-738c-3d7d-9555-51dd41ce18a9",
+      "product": {
+        "name": "Apache Wicket",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "10.0.0 \u226410.11.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ed7f63be-ad56-3895-a761-d2e39870b0b1",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}
