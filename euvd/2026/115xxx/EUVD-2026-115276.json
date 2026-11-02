@@ -1,0 +1,213 @@
+{
+  "id": "EUVD-2026-115276",
+  "enisaUuid": "8045797f-c496-3496-bdf1-76cecaeea363",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntracing: Unregister field variable histograms when the command fails\n\nAn action that names a field on another event needs that field as a\nvariable, so create_field_var_hist() registers a second hist trigger on\nthat event to provide it, and records it in\ntarget_hist_data->field_var_hists[].\n\nIf a later part of the same command fails, create_actions() returns an\nerror and event_hist_trigger_parse() jumps to out_free. The write fails\nwith -EINVAL and sched_switch gets no trigger, but:\n\n  # echo 'hist:keys=pid:ts0=common_timestamp.usecs' >> \\\n      events/sched/sched_waking/trigger\n  # echo 'my_synth u64 lat; int a; int b' >> synthetic_events\n  # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0:\\\n      onmatch(sched.sched_waking).my_synth($wakeup_lat,prio,nosuchfld)'\\\n      >> events/sched/sched_switch/trigger\n  # cat events/sched/sched_waking/trigger\n  hist:keys=pid:vals=hitcount:ts0=common_timestamp.usecs:sort=hitcount:size=2048:clock=global [active]\n  hist:keys=pid:vals=hitcount:synthetic_prio=prio:sort=hitcount:size=2048 [active]\n\nThe second histogram is the one created for 'prio'. It is still active and\nstill counting.\n\nout_free reaches destroy_field_var_hists(), which frees the\nfield_var_hists[] entries, but never unregister_field_var_hists(), which is\nwhat removes the triggers and runs only from event_hist_trigger_free(). The\nentry is freed and the trigger is left with nothing tracking it.\n\nUnregister the field variable histograms in out_free as well, and record\neach one as soon as its trigger is registered rather than after the lookup\nthat follows it, so no exit can leave a registered trigger untracked. The\nentry then belongs to field_var_hists[] and is released by\ndestroy_field_var_hists(), so freeing it on that exit would be a double\nfree.",
+  "datePublished": "Nov 2, 2026, 4:06:41 PM",
+  "dateUpdated": "Nov 2, 2026, 4:06:41 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f21351d1c4cdcc6a68f03636a407c2af1a5e1e10",
+    "https://git.kernel.org/stable/c/dba0f492703956801149cc70b39d2650a37995c3",
+    "https://git.kernel.org/stable/c/a3d7ffd2409700748a495b645948fef48199206e",
+    "https://git.kernel.org/stable/c/aae0ccd7326eef78dcdefffef3d1253e6f0615ca",
+    "https://git.kernel.org/stable/c/8482ec5b65f606d5bbcec518e0afc69ad65ca414",
+    "https://git.kernel.org/stable/c/431959fc76456cbba539279fe8967aa9391e6f23",
+    "https://git.kernel.org/stable/c/5afb9317e2eeb1c7021a82995ce244fda5a4bd4f",
+    "https://git.kernel.org/stable/c/d0090baf02dd08f6e909f36f0ad54a4e80f5e79b"
+  ],
+  "aliases": [
+    "CVE-2026-99234"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0ee5987d-9901-3747-9165-909d95aa1513",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <dba0f492703956801149cc70b39d2650a37995c3"
+    },
+    {
+      "id": "1e966272-d582-3950-9684-fb788a7a44cf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "2970fc75-3b19-36b5-bd78-7cef83f6a52e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "3006a08a-9375-3dab-92ce-586c9558fa92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <aae0ccd7326eef78dcdefffef3d1253e6f0615ca"
+    },
+    {
+      "id": "31b5ca7c-ea6a-3781-8773-351a1982bce7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.60"
+    },
+    {
+      "id": "510d453b-694c-35ff-88c6-464512f88cd6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <d0090baf02dd08f6e909f36f0ad54a4e80f5e79b"
+    },
+    {
+      "id": "71392c69-737a-3b28-b3e2-f02a3257d6df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.14"
+    },
+    {
+      "id": "747f5bc9-76fd-3301-8244-69ffe8098de8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.1"
+    },
+    {
+      "id": "7bf26a30-bb91-35d7-96c2-3d24bf943909",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <8482ec5b65f606d5bbcec518e0afc69ad65ca414"
+    },
+    {
+      "id": "8207f10d-e871-3561-9694-282130b47ea4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <5afb9317e2eeb1c7021a82995ce244fda5a4bd4f"
+    },
+    {
+      "id": "917b4b46-6afa-3c42-a485-6f3e67edbe18",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a12e822a-c5a6-35f8-a5d5-0fabf7c33f21",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <431959fc76456cbba539279fe8967aa9391e6f23"
+    },
+    {
+      "id": "c83bbab1-3f22-3f78-93d9-f8070a1da41b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "cb433e2e-59fa-3adf-9ea9-b5cf373f0043",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.17"
+    },
+    {
+      "id": "e6d00e12-a7b6-3324-94ab-7dfc0d9f1072",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.161"
+    },
+    {
+      "id": "e8597ce2-73b2-3294-8bec-3a12ed0cf6fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <f21351d1c4cdcc6a68f03636a407c2af1a5e1e10"
+    },
+    {
+      "id": "f50ec724-2997-3f27-a18c-6c659482f606",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <a3d7ffd2409700748a495b645948fef48199206e"
+    },
+    {
+      "id": "f658ec2c-8fc6-357c-8d5d-56194fbfa52a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3b778d21-ffee-35e6-976c-95d1581d8579",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

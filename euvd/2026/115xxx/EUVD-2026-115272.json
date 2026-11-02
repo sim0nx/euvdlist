@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-115272",
+  "enisaUuid": "2eb8cdcf-6259-365b-bce6-7153256b8f29",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/cmd: don't leave list poison in ->hash_node\n\nio_uring_cmd_del_cancelable() uses hlist_del() to take a command off\n->cancelable_uring_cmd, which leaves LIST_POISON1/2 behind in\n->hash_node. Requests are recycled through the request cache without\nbeing reinitialised, and not every user of ->hash_node sets it up before\nit is used:\n\nIf a vectored futex wait is woken while futex_wait_multiple_setup() is\nstill queueing the futexes, io_futexv_wait() doesn't add the request to\n->futex_list, and leaves the completion to the task_work queued by the\nwake up. io_futexv_complete() ends in __io_futex_complete(), whose\nhlist_del_init() is fine for a request that is unhashed, which is how all\nother users of the node leave it. If the request was a cancelable\nuring_cmd in its previous life, e.g. a ublk FETCH_REQ, it writes through\nLIST_POISON2:\n\n  Oops: general protection fault, probably for non-canonical address\n  KASAN: maybe wild-memory-access in range [0xdead000000000120-...]\n  RIP: 0010:io_futexv_complete+0x219/0x420\n  Call Trace:\n   tctx_task_work_run+0x804/0x950\n   tctx_task_work+0x71/0xa0\n   task_work_run+0x118/0x200\n\nLeave the node unhashed.",
+  "datePublished": "Nov 2, 2026, 4:06:37 PM",
+  "dateUpdated": "Nov 2, 2026, 4:06:37 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/cc7f13d006fcefed9564bd79f135b51d344e9c77",
+    "https://git.kernel.org/stable/c/2d5af21422060c088f6e4fb0f1e7dcf5bcdd6707",
+    "https://git.kernel.org/stable/c/685b49483200384d7f49d338af476e26e6824637"
+  ],
+  "aliases": [
+    "CVE-2026-99230"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "06c1987e-088c-3e37-ae3a-f99f291a9b3c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.60"
+    },
+    {
+      "id": "28e700da-fecd-39ed-b85e-04bd9ec6653e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.14"
+    },
+    {
+      "id": "42fb6daa-652f-387f-8631-9a913be518e5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.7"
+    },
+    {
+      "id": "4d0a9e59-040a-3420-8b73-6336b2421502",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "93b8cc60c37b9d17732b7a297e5dca29b50a990d <685b49483200384d7f49d338af476e26e6824637"
+    },
+    {
+      "id": "6fda38bb-5889-39bf-8606-5858cf683ba3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "93b8cc60c37b9d17732b7a297e5dca29b50a990d <cc7f13d006fcefed9564bd79f135b51d344e9c77"
+    },
+    {
+      "id": "adfdd3d1-b1d2-3e5d-8082-9176ee44caf2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "bdbdc4f8-bc61-393b-95f2-6db4e75331b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "93b8cc60c37b9d17732b7a297e5dca29b50a990d <2d5af21422060c088f6e4fb0f1e7dcf5bcdd6707"
+    },
+    {
+      "id": "e7f13f83-3a53-34cd-b1cb-519c5c80e9db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "137f7aa8-1f88-3dff-b749-83941a8e621f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

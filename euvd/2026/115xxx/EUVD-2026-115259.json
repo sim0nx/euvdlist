@@ -1,0 +1,149 @@
+{
+  "id": "EUVD-2026-115259",
+  "enisaUuid": "16fcf6e0-f83f-325d-a066-0c49b36db3ac",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfork: release the files of a failed fork after sched_cancel_fork()\n\nReorder copy_process() cleanup so sched_fork() taking scx_fork_rwsem\nscx_pre_fork() is safe and isn't held around exiting files. Right now, a\nfork that fails while another thread closed the bpf link fd will\ndeadlock against its own read side. It also blocks every fork on the\nsystem:\n\n    copy_process()                  holds scx_fork_rwsem for read\n      exit_files()\n        close_files()\n          filp_close_sync()\n            bpf_scx_unreg()\n              kthread_flush_work()  waits for the disable work\n                scx_root_disable()\n                  percpu_down_write(&scx_fork_rwsem)\n\nSimply release the child's files after sched_cancel_fork() dropped the\nlock. The task starts out as a copy of its parent so p->files points to\nthe parent's table until copy_files() replaces it. exit_files() must not\nrun for a fork that failed before that. Clear p->files up front so\nexit_files() is a no-op for those and make copy_files() set it\nexplicitly for CLONE_FILES.",
+  "datePublished": "Nov 2, 2026, 4:06:30 PM",
+  "dateUpdated": "Nov 2, 2026, 4:06:30 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/27e1cbf8ec5f7117f6bb2d2e44030ac055f09097",
+    "https://git.kernel.org/stable/c/f7ac8500d58e7684d37403553b1dea90ee2b27b1",
+    "https://git.kernel.org/stable/c/14c7de6ca239326b79fd3f7aee55dfada1bb72ab",
+    "https://git.kernel.org/stable/c/afa8eb069694bd9f845e5e44eac6e81cbc06780e"
+  ],
+  "aliases": [
+    "CVE-2026-99217"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "05663bd2-1937-3651-ae14-d61ad43d3e11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <14c7de6ca239326b79fd3f7aee55dfada1bb72ab"
+    },
+    {
+      "id": "2237e14b-61aa-3070-b230-65d57e444e90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f7ac8500d58e7684d37403553b1dea90ee2b27b1"
+    },
+    {
+      "id": "303b56a8-6803-3940-8450-49c412a3fa5f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.1"
+    },
+    {
+      "id": "31a1d571-e7f3-3090-9090-a38f3c8784de",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
+    },
+    {
+      "id": "350411a7-e825-3f91-bc5c-0084e332940f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.14"
+    },
+    {
+      "id": "41d030e2-ac3e-3ba2-a63c-520ed0a25076",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <27e1cbf8ec5f7117f6bb2d2e44030ac055f09097"
+    },
+    {
+      "id": "5e499b74-fdf0-363b-8ff0-ad2108a40214",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.18.60"
+    },
+    {
+      "id": "61533194-4a2d-3761-9599-28a3d95d32a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.60"
+    },
+    {
+      "id": "8ad0bc73-df7a-3027-9f15-00f66b6622cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <7.3.1"
+    },
+    {
+      "id": "adce6598-2fb1-3690-be2b-f0b1271dd088",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <afa8eb069694bd9f845e5e44eac6e81cbc06780e"
+    },
+    {
+      "id": "d5b57d3f-19bf-3c93-a03f-3e8fa2b89a90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <6.12.115"
+    },
+    {
+      "id": "ded46027-aa7a-39ff-bd2e-1c729e69f835",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0 <7.2.14"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "16111a8e-260e-33b7-a8a7-b1ba09101d73",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2026-115273",
+  "enisaUuid": "04f0811e-6002-3975-9cb1-04827b799908",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/waitid: own the request before clearing ->head\n\nio_waitid_remove_wq() only takes the wait queue lock if ->head is set.\nio_waitid_wait() clears ->head first thing, before it tries to become the\nowner of the request by bumping ->refs. If somebody else owns the request\nat that point, nothing keeps it from completing the request while the\nwake up handler is still going to touch it:\n\nCPU0 (io_waitid_wait)                 CPU1 (io_waitid, holds a ref)\nlist_del_init(&wait->entry)\nsmp_store_release(&iw->head, NULL)\n                                      __do_wait() finds another child\n                                      io_waitid_remove_wq()\n                                        // ->head == NULL, no locking\n                                      io_waitid_finish(), IOU_COMPLETE\n                                      // request freed and reused\natomic_fetch_inc(&iw->refs)\n\nThe same goes for __io_waitid_cancel() if it claims the request in that\nwindow. ->refs is part of the per opcode data of the request, so this\nincrements whatever the next user of the request keeps there. If that\nhappens to be zero, the handler concludes that it owns the request, and\nqueues io_waitid_cb() for it. With the window held open by a delay, and\nthe request reused for a receive that is waiting for data:\n\n  BUG: KASAN: slab-use-after-free in __wake_up_common+0x1ca/0x1f0\n   __wake_up_sync_key+0x36/0x50\n   sock_def_readable+0xf1/0x420\n   unix_stream_sendmsg+0x60b/0x1110\n  Allocated by task 87:\n   io_arm_apoll+0x1ed/0x940\n  Freed by task 87:\n   __io_submit_flush_completions+0x118d/0x1a10\n   tctx_task_work_run+0x327/0x950\n\nOnly clear ->head once the handler owns the request. If it doesn't, the\nowner finds ->head set and has to wait for the lock, which is held by the\ncaller of the handler. Deleting the already deleted entry again is\nharmless.",
+  "datePublished": "Nov 2, 2026, 4:06:38 PM",
+  "dateUpdated": "Nov 2, 2026, 4:06:38 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/bf01da1a9cca4a54e5c30b8344e52c26afb87be7",
+    "https://git.kernel.org/stable/c/8381a912c65b8de16e8a848225c7c5a56b6ea834",
+    "https://git.kernel.org/stable/c/c10ad2813e15186fb51b37a4d17fafddc99e89a5"
+  ],
+  "aliases": [
+    "CVE-2026-99231"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "201759eb-8a9a-3fc5-877a-a9ca9d3f7e9a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.14"
+    },
+    {
+      "id": "21426bce-b7ec-35a8-b0b8-c55fb14eceed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "09951a4d37e33b0197afc7fb77e39f09a3213ee6 <bf01da1a9cca4a54e5c30b8344e52c26afb87be7"
+    },
+    {
+      "id": "4bb0f5fa-2de9-3512-8762-38ca20b7abc1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "934ffdd1cdef232eb125e63c2ebafb7f2deff6af <8381a912c65b8de16e8a848225c7c5a56b6ea834"
+    },
+    {
+      "id": "6765cc08-fa9c-379c-a68e-c8fb9882f658",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
+    },
+    {
+      "id": "7010d832-405c-34ae-b756-fcb05f46af32",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ab673c1bcaf20ac70352eeb6bf5b828462676693 <c10ad2813e15186fb51b37a4d17fafddc99e89a5"
+    },
+    {
+      "id": "941ac550-2210-3009-97f5-a1c87324599e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.18.52 <6.18.60"
+    },
+    {
+      "id": "a438201f-04f2-3e09-a61b-2b679a4f874a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    },
+    {
+      "id": "ad7cae92-3600-35bc-ae18-0fa881d1d89f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.60"
+    },
+    {
+      "id": "e0a2f4c7-a939-3682-b545-3011db53b8b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12.113 <6.12.115"
+    },
+    {
+      "id": "ea0ce24b-ea1d-3084-ade2-0f11c45ef3a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "464582d7-7e82-3944-bae1-e51d0fe3e4bd",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
