@@ -1,0 +1,66 @@
+{
+  "id": "EUVD-2026-115763",
+  "enisaUuid": "926bf7e2-928a-32e0-bc78-9eee52411728",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/mpscq: disable preemption while pushing\n\nA push makes the node the new tail, and then links it to its predecessor.\nIn between the queue isn't empty, but mpscq_pop() can't get at the node.\nThe consumers deal with that by trying again, with a cond_resched() in\nthe loop to give a preempted producer the chance to finish.\n\ncond_resched() doesn't do that if the consumer has a higher priority than\nthe producer and both have to use the same CPU:\n\n  producer (SCHED_OTHER)              consumer (SCHED_FIFO), same CPU\n  io_req_local_work_add()\n    mpscq_push()\n      prev = xchg(&q->tail, node)\n  <preempted>                         io_cqring_wait()\n                                        __io_run_local_work()\n                                      again:\n                                          cond_resched()  // nothing to do\n                                          mpscq_pop()     // NULL\n                                          // work pending, no events yet\n                                          goto again\n\nThe producer can be any task that is able to queue task_work for the\nring: an io-wq worker, or somebody who sends a message with\nIORING_OP_MSG_RING. The consumer spins, holding ->uring_lock, until the\nscheduler takes pity on the fair class, which takes about a second with\nthe default settings of the fair server, and forever without it. The\nloops in tctx_task_work_run() and io_cancel_local_task_work() have the\nsame problem.\n\nDon't allow preemption between the two steps. That bounds the time the\nwindow is open on the CPU of the producer by what interrupts take, and a\nconsumer that waits for that is on another CPU. The cost is a\npreempt_disable()/preempt_enable() pair per push.",
+  "datePublished": "Nov 3, 2026, 11:20:12 AM",
+  "dateUpdated": "Nov 3, 2026, 11:20:12 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/8c94677e2b6145393d4c129fe0f5364b0e5000a5"
+  ],
+  "aliases": [
+    "CVE-2026-99252"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "016b45c6-325a-3deb-a5a9-d3d1352f6354",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "50cb44bd0d5f243919a06b17b1d979fdcd72cb2b <8c94677e2b6145393d4c129fe0f5364b0e5000a5"
+    },
+    {
+      "id": "5f7356c4-c8cf-3699-83a1-7590af4abcbc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "905738d9-442a-3f5d-97dd-a37fefb24bce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.2"
+    },
+    {
+      "id": "af74fe67-44d4-399c-a2c6-73cffede3606",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.14"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "22e8e0e8-0200-3c62-9f6a-a1752f06255d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
