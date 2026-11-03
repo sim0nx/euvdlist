@@ -1,0 +1,49 @@
+{
+  "id": "EUVD-2026-115822",
+  "enisaUuid": "b891c524-c50c-359f-af91-299fac60378d",
+  "description": "The Bluetooth host's GATT client passed the value of a received Handle Value Notification, Handle Value Indication or Multiple Handle Value Notification to bt_gatt_subscribe_params::notify callbacks using only the length derived from the received ATT PDU. bt_att_recv() in subsys/bluetooth/host/att.c validates only a minimum PDU length and does not enforce the negotiated ATT MTU, and the fixed ATT L2CAP channel in subsys/bluetooth/host/l2cap.c applies no rx.mtu check either, so the only ceiling was the ACL reassembly buffer CONFIG_BT_BUF_ACL_RX_SIZE. Values longer than the 512-octet maximum attribute length defined by the Bluetooth Core Specification (Vol 3, Part F, Section 3.2.9) could therefore be handed to subscribers that size their buffers to that documented limit.\n\nA remote peer that a device has connected and subscribed to \u2014 a malicious, spoofed or compromised GATT server within radio range \u2014 triggers the flaw by sending a notification or indication whose value exceeds 512 octets on a subscribed handle. In the LE Audio unicast client this reaches a concrete out-of-bounds write: unicast_client_ep_notify() in subsys/bluetooth/audio/bap_unicast_client.c copies the notification into the 512-byte att_buf of struct unicast_client with net_buf_simple_add_mem() and no tailroom check whenever length equals bt_audio_get_max_ntf_size(), i.e. the negotiated ATT MTU minus three. notify_handler() in subsys/bluetooth/audio/bap_broadcast_assistant.c has the same shape. Reaching the overflow requires a build whose ATT MTU exceeds 515 octets (CONFIG_BT_L2CAP_TX_MTU and CONFIG_BT_BUF_ACL_RX_SIZE set for full-length attribute support); the shipped defaults are far smaller.\n\nThe overflow writes peer-controlled bytes past att_buf directly over the adjacent struct net_buf_simple net_buf \u2014 its data, __buf, len and size fields \u2014 which the subsequent long-read accumulation then uses as its destination, turning a small linear overflow into a controlled write. net_buf_simple_add() only asserts on insufficient tailroom unless CONFIG_NET_BUF_HARDENING is enabled, and that option is disabled by default, so ordinary production builds perform the copy. Beyond the in-tree LE Audio clients, any application subscriber that sized its receive buffer to the specification's 512-octet limit was exposed to the same overflow.\n\nThe fix rejects notification, indication and multiple-notification values longer than BT_ATT_MAX_ATTRIBUTE_LEN in call_notify_cb_and_maybe_unsubscribe() in subsys/bluetooth/host/gatt.c before any subscriber callback is invoked, so no subscriber can be handed more than the specified maximum. Remaining tuples of a multiple handle value notification are still delivered and oversized indications are still confirmed.",
+  "datePublished": "Nov 3, 2026, 1:36:07 PM",
+  "dateUpdated": "Nov 3, 2026, 1:36:07 PM",
+  "baseScore": 6.7,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:H/PR:L/UI:N/S:U/C:L/I:H/A:H",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/64b1e7447856f635ee8bce9eab7c615da78133b8",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-47vq-phhp-rhxq"
+  ],
+  "aliases": [
+    "CVE-2026-85034"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "614762cb-27ab-313b-8be8-28dfe0c09db1",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.4.0 <4.5.0"
+    },
+    {
+      "id": "998e8d0e-fd5d-3f09-99f8-df21c36b7887",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "3.4.0 <4.3.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "873b4d75-7b30-3297-bfdc-1de2f3c09be3",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}

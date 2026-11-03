@@ -1,0 +1,49 @@
+{
+  "id": "EUVD-2026-115823",
+  "enisaUuid": "84623018-be8d-304d-8c94-082699cb801c",
+  "description": "The can_add_rx_filter_msgq() system call installs a CAN RX filter whose callback (can_msgq_put() in drivers/can/can_common.c) is handed the caller's struct k_msgq * as user_data. The controller driver stores that raw pointer in its filter table and dereferences it from the RX path every time a matching frame arrives. The system call verifier z_vrfy_can_add_rx_filter_msgq() in drivers/can/can_handlers.c validated the queue only with K_SYSCALL_OBJ(), which is a point-in-time check of type, initialization and caller permission and says nothing about the object's lifetime.\n\nOn a build with CONFIG_USERSPACE=y and CONFIG_DYNAMIC_OBJECTS=y, an unprivileged user-mode thread that has been granted access to a CAN device can obtain a message queue whose lifetime it fully controls: k_object_alloc(K_OBJ_MSGQ) followed by k_msgq_alloc_init(). The lifetime of such an object is driven solely by its permission bitmask, and a pointer retained by the kernel is not represented there. After registering the filter, the thread calls k_object_release() \u2014 or simply terminates \u2014 and unref_check() frees the struct k_msgq storage while the CAN driver still holds the pointer.\n\nThe next matching CAN frame causes k_msgq_put() to run in supervisor context against freed memory that the attacker can have groomed with another kernel allocation: the frame payload is memcpy()d through the reused block's write_ptr, and the queue's wait_q (and poll_events under CONFIG_POLL) list nodes are manipulated. This yields kernel-heap corruption reachable from a user-mode thread, defeating the isolation CONFIG_USERSPACE is intended to provide; the same dangling pointer also arises benignly when an application thread exits without calling can_remove_rx_filter().\n\nThe fix validates the queue with K_SYSCALL_OBJ_STATIC(), which additionally rejects objects carrying K_OBJ_FLAG_ALLOC, so only statically defined queues (CAN_MSGQ_DEFINE()) may be registered from user mode. Supervisor-mode callers bypass the verifier and must themselves keep the queue valid until the filter is removed.",
+  "datePublished": "Nov 3, 2026, 1:36:08 PM",
+  "dateUpdated": "Nov 3, 2026, 1:36:08 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/0114bee266211c72a49f3b6a914d3eaf821dd460",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-6pxv-r7ww-3g2q"
+  ],
+  "aliases": [
+    "CVE-2026-85035"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "4de96c6c-27c1-3cbe-a2d4-bb6cdd94ebe0",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "1.14.0 <4.3.2"
+    },
+    {
+      "id": "737afb6d-fdd2-3aa1-9e4f-521a110e9a7a",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.4.0 <4.5.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "829cb9df-590f-316b-8f51-6bd5ef28c590",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}
