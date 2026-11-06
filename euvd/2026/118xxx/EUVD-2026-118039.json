@@ -1,0 +1,52 @@
+{
+  "id": "EUVD-2026-118039",
+  "enisaUuid": "bff4dbb9-736e-36cc-9201-cc1fc4e1c485",
+  "description": "XML injection in the Saxy XML encoder. Saxy.Encoder.cdata/1 serializes a {:cdata, characters} node by wrapping the supplied characters between <![CDATA[ and ]]> and passing the payload through byte for byte. The encoder's character-data and attribute-value paths escape the XML metacharacters <, >, &, \", and ', but the CDATA path applies no neutralization at all. XML provides no character escaping mechanism inside a CDATA section, so the only correct way to represent a ]]> substring is to split the section and rejoin it as ]]]]><![CDATA[>. Saxy neither performs that split nor rejects the substring.\n\nAn application that renders untrusted text as CDATA, by building the node with Saxy.XML.cdata/1 and serializing it with Saxy.encode!/2 or Saxy.encode_to_iodata!/2, therefore lets an attacker terminate the section at a position of their choosing. Everything supplied after the ]]> is emitted outside any CDATA context and is parsed as markup, so a single attacker-controlled text field becomes attacker-controlled document structure: arbitrary sibling elements and attributes that the application never built. Downstream consumers of the serialized document accept the injected markup as genuine. Services that generate SOAP envelopes, RSS or Atom feeds, sitemaps, SVG, or XML exports from user-supplied content can have trusted fields forged or overridden. Applications that never place untrusted text in a CDATA node are not affected.\n\nThis issue affects saxy: from 0.7.0 before 1.7.0.",
+  "datePublished": "Nov 6, 2026, 10:16:49 AM",
+  "dateUpdated": "Nov 6, 2026, 10:16:49 AM",
+  "baseScore": 2.1,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:L/AC:L/AT:P/PR:N/UI:N/VC:N/VI:L/VA:N/SC:N/SI:L/SA:N",
+  "references": [
+    "https://github.com/qcam/saxy/security/advisories/GHSA-hq6g-j46w-wx72",
+    "https://cna.erlef.org/cves/CVE-2026-66294.html",
+    "https://osv.dev/vulnerability/EEF-CVE-2026-66294",
+    "https://github.com/qcam/saxy/commit/7266632e9407842f28ffac254c56dc41210a5690",
+    "https://github.com/qcam/saxy/commit/71d99fae12f1d6596f5edb57b71f26ba854f4d33"
+  ],
+  "aliases": [
+    "CVE-2026-66294"
+  ],
+  "assigner": "EEF",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "cd7de7fb-a0e9-3494-9144-1ec0d3dd488a",
+      "product": {
+        "name": "saxy",
+        "vendor": {
+          "name": "qcam"
+        }
+      },
+      "product_version": "0.7.0 <1.7.0"
+    },
+    {
+      "id": "e8d3ef02-682e-32ee-ba27-f86f206cdc05",
+      "product": {
+        "name": "saxy",
+        "vendor": {
+          "name": "qcam"
+        }
+      },
+      "product_version": "7266632e9407842f28ffac254c56dc41210a5690 <71d99fae12f1d6596f5edb57b71f26ba854f4d33"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "8b2434ed-4ff3-38e3-b7c2-007aba982b30",
+      "vendor": {
+        "name": "qcam"
+      }
+    }
+  ]
+}
