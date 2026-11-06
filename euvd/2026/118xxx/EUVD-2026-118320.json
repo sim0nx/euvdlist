@@ -1,0 +1,70 @@
+{
+  "id": "EUVD-2026-118320",
+  "enisaUuid": "d718da95-19a7-3af4-8857-7720632418dc",
+  "description": "The Symfony Serializer component\u00a0DataUriNormalizer\u00a0handles only the exact types\u00a0SplFileInfo, SplFileObject, and File, so for a property typed with a subclass such as UploadedFile, ObjectNormalizer instantiates the object through its constructor from attacker-controlled data, including the file path. This allows an arbitrary file on the server to be treated as an uploaded file in Symfony versions prior to 5.4.56, 6.x prior to 6.4.50, 7.x prior to 7.4.23, and 8.x prior to 8.1.11.\n\nA request body such as\u00a0{\"image\": {\"path\": \"/path/to/project/.env.local\", \"originalName\": \"a.png\", \"test\": true}}\u00a0makes the application handle any file on the server as an upload, without the file being sent. With\u00a0test: true,\u00a0UploadedFile::isValid()\u00a0skips\u00a0is_uploaded_file()\u00a0and\u00a0move()\u00a0falls back to\u00a0rename().\u00a0Assert\\File\u00a0does not prevent this because it validates\u00a0the file at the attacker-chosen path, which exists on the server.\nAny code that deserializes untrusted data into a type that holds such a property is affected. That includes\u00a0#[MapRequestPayload]\u00a0on a DTO with an\u00a0UploadedFile\u00a0property, which is how uploads are mapped in Symfony 8.1; a single unauthenticated request with a JSON or form body is enough. Depending on what the application does with the upload, this can expose any file readable by PHP (for instance, when uploads are stored and served back), move any such file when\u00a0move()\u00a0is called, and reveal whether a path exists.\n\nA serializer built without\u00a0DataUriNormalizer\u00a0ahead of the object normalizer is not protected by the fix; the serializer configured by\u00a0FrameworkBundle\u00a0is.",
+  "datePublished": "Nov 6, 2026, 4:17:01 PM",
+  "dateUpdated": "Nov 6, 2026, 4:17:01 PM",
+  "baseScore": 8.4,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:L/VA:H/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/symfony/symfony/security/advisories/GHSA-h38r-xrmh-cwhr",
+    "https://github.com/symfony/symfony/commit/72ece5bb3084e8233325166357f85c8c0650ee86",
+    "https://github.com/symfony/symfony/commit/c459104eb18ebda31e112c5490970da3f30bd668"
+  ],
+  "aliases": [
+    "CVE-2026-118515"
+  ],
+  "assigner": "Checkmarx",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "00ae2103-92b7-344c-9d37-8781575e5544",
+      "product": {
+        "name": "symfony",
+        "vendor": {
+          "name": "symfony"
+        }
+      },
+      "product_version": "8.0.0 <8.1.11"
+    },
+    {
+      "id": "67868bc5-8ca5-32b3-907f-ab7ccab38e11",
+      "product": {
+        "name": "symfony",
+        "vendor": {
+          "name": "symfony"
+        }
+      },
+      "product_version": "7.0.0 <7.4.23"
+    },
+    {
+      "id": "698b0811-a628-3b66-b3bd-f1edc5509542",
+      "product": {
+        "name": "symfony",
+        "vendor": {
+          "name": "symfony"
+        }
+      },
+      "product_version": "6.0.0 <6.4.50"
+    },
+    {
+      "id": "eda2f1e1-667a-3cb4-a50a-0be1b3fb655c",
+      "product": {
+        "name": "symfony",
+        "vendor": {
+          "name": "symfony"
+        }
+      },
+      "product_version": "0 <5.4.56"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "db8f3e7d-d29b-3be2-aa3b-fb3cee67f38f",
+      "vendor": {
+        "name": "sensiolabs"
+      }
+    }
+  ]
+}
