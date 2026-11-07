@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-119287",
+  "enisaUuid": "3cd4008a-fb44-3424-aa91-48edac317b43",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: reject short SESSION_SETUP responses\n\nsmb2_check_message() accepts frames shorter than struct smb2_pdu when\nthe SMB2 status is non-zero, before the minimum-PDU check added by\nb4694f269e66d. A 64-byte STATUS_MORE_PROCESSING_REQUIRED SESSION_SETUP\nresponse is therefore accepted even though it cannot contain the\nSecurityBufferOffset and SecurityBufferLength fields.\n\nThe parser then reads those fields from stale bytes left in the reused\nreceive buffer by an earlier frame. With a long stale\nSecurityBufferLength, decode_ntlmssp_challenge() copies up to about\n64 KB from beyond the receive object and sends the data back to the\nserver in the NTLMv2 AUTHENTICATE target info.\n\nReject short MPR SESSION_SETUP responses before the short-error path,\nand validate SecurityBufferOffset + SecurityBufferLength against the\nreceived response length before decoding the challenge.\n\nThe ordering bypass is not new: the short-error early return predates\nb4694f269e66d, and the unvalidated SecurityBufferLength read predates\nthe 2016 raw NTLMSSP split in 166cea4dc3a4, so all supported stable\ntrees are affected. Reproduced on 6.6.87.2; the path is unchanged on\nmainline.",
+  "datePublished": "Nov 7, 2026, 2:08:46 PM",
+  "dateUpdated": "Nov 7, 2026, 2:08:46 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/df63e01933886153e40706483b9635b2456ad91f",
+    "https://git.kernel.org/stable/c/4d8930afa3446041358a7db33e7b23a0bb9459b5"
+  ],
+  "aliases": [
+    "CVE-2026-99275"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "61792e47-084a-3e98-92d7-e5c895ff9abb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.6"
+    },
+    {
+      "id": "8310bb07-981d-3faf-b0ad-97004e551d89",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "96dd9f58-057c-3d0e-9ecd-437eb302602f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5478f9ba9a34d660eb3227dcd16314689c51f946 <df63e01933886153e40706483b9635b2456ad91f"
+    },
+    {
+      "id": "a7a49910-4352-33eb-a1fe-5ad125943ea0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5478f9ba9a34d660eb3227dcd16314689c51f946 <4d8930afa3446041358a7db33e7b23a0bb9459b5"
+    },
+    {
+      "id": "d6303d77-0f41-30d9-82e4-058dade02d9a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "e3dfe54a-ed16-318e-9a2d-d9f189bcba23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "185cbbd3-5d88-372c-9913-3e69762a5770",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
