@@ -1,0 +1,36 @@
+{
+  "id": "EUVD-2026-119925",
+  "enisaUuid": "0110a334-6d13-3876-9eee-55af53c5467a",
+  "description": "Description\n\nNimbus instantiates the class named by a topology's `topology.scheduler.strategy` when scheduling it. The\nallowlist intended to constrain that choice, `nimbus.scheduler.strategy.class.whitelist`, was treated as\n\"allow any class\" when unset, and it had no entry in the shipped `defaults.yaml`, so unset was the shipped\nstate. An authenticated submitter could therefore cause Nimbus to instantiate any class on the Nimbus\nclasspath that has a no-argument constructor.\n\nStorm's own production artifacts contain classes with side effects suitable for this: instantiating\n`org.apache.storm.testing.InProcessZookeeper` starts a ZooKeeper server with its own threads and sockets\nand nothing closes it, and `org.apache.storm.LocalCluster` behaves similarly. Repeated submissions\ntherefore consume threads, sockets and memory in the most privileged daemon in the cluster.\n\nMitigation\n\nUpgrade to 3.1.0, where an unset allowlist means the strategies shipped with Storm rather than any class.\n\nNote that this is a behaviour change: a cluster running an out-of-tree scheduler strategy without an\nexplicit allowlist will have those topologies refused until the class is added to\n`nimbus.scheduler.strategy.class.whitelist`. The rejection message names the refused class and the\nconfiguration key.\n\nUsers who cannot upgrade immediately should set `nimbus.scheduler.strategy.class.whitelist` explicitly to\nthe strategies they intend to permit.",
+  "datePublished": "Nov 9, 2026, 10:01:57 AM",
+  "dateUpdated": "Nov 9, 2026, 10:13:16 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://lists.apache.org/thread.html/hxcyk1vg9qx8bzos8g3kx91nz8d23jgt"
+  ],
+  "aliases": [
+    "CVE-2026-82440"
+  ],
+  "assigner": "apache",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "4f4f70b3-26bd-36ab-90a0-c089763413f2",
+      "product": {
+        "name": "Apache Storm Nimbus",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "3.0.0 <3.1.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2d14520a-c4b0-35a1-9450-3281e75f4e97",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}
