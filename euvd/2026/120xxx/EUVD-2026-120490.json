@@ -1,0 +1,49 @@
+{
+  "id": "EUVD-2026-120490",
+  "enisaUuid": "b31f5de4-dce2-3832-857f-d493044df15c",
+  "description": "When CONFIG_THREAD_STACK_MEM_MAPPED is enabled, each thread stack is mapped into the kernel virtual address space with a guard page on either side, and the mapping is released during abort cleanup. k_thread_abort_cleanup() in kernel/thread.c has two paths: a deferred one for self-abort, which stashes the mapping in thread_cleanup_stack_addr/thread_cleanup_stack_sz, and an immediate one for a thread aborted by some other thread. The immediate path called do_thread_cleanup(), which ignored its thread argument and only ever unmapped the stashed address \u2014 a value populated exclusively by the self-abort path. The mapped stack of a thread aborted by another thread was therefore never unmapped.\n\nEvery k_thread_abort() of a non-current thread leaks the thread's stack region plus its two guard pages from the kernel virtual address space. Threads that end by returning from their entry function take the working self-abort path, so the leak is specific to explicit cancellation \u2014 k_thread_abort(), pthread_cancel(), osThreadTerminate(), or the kernel thread kill shell command. Both k_thread_create() and k_thread_abort() are system calls, so with CONFIG_USERSPACE an unprivileged user-mode thread that has been granted a thread object and a user-capable stack object can drive the leak from user mode, consuming a kernel-side resource it cannot otherwise touch.\n\nWith CONFIG_KERNEL_VM_SIZE defaulting to 8 MB, a few hundred create/abort cycles exhaust the runtime mapping region. k_mem_map_phys_guard() then returns NULL, and map_thread_stack() guards that only with __ASSERT_NO_MSG(), which is compiled out of production builds; thread creation proceeds to write through a NULL-derived stack base and faults in kernel mode. The impact is a persistent denial of service \u2014 a kernel fatal error requiring a reboot \u2014 with no memory disclosure or corruption, and it is limited to configurations where memory-mapped thread stacks are enabled (x86 targets with X86_MMU and demand paging disabled, where the option is implied by default).",
+  "datePublished": "Nov 9, 2026, 10:04:01 PM",
+  "dateUpdated": "Nov 9, 2026, 10:04:01 PM",
+  "baseScore": 5.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/d9ec92ccb1d91f4ea5b15271d30169d5b27ba667",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-xj93-xhq8-g5p4"
+  ],
+  "aliases": [
+    "CVE-2026-90589"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "5599b480-43ed-3d9c-9147-dec4416afdc3",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.4.0 <4.5.0"
+    },
+    {
+      "id": "90d386bd-600d-37ff-a3f3-b68330560dd7",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "3.7.0 <4.3.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b13994d4-1477-354b-9a67-91105d8242e5",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}
