@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-126208",
+  "enisaUuid": "83b288bb-758c-35de-855b-8ea502c2cf27",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnvmet-rdma: reject short connection requests\n\nnvmet_rdma_parse_cm_connect_req() treats RDMA-CM private data as a\nstruct nvme_rdma_cm_req but accepts any nonzero private_data_len.  The\niWARP path allocates exactly the peer-provided length, so a six-byte MPA\nrequest reaches the parser and the hsqsize load reads two bytes past the\nallocation.\n\nRequire the complete request structure before reading any of its fields.\nThe decoded KASAN report is:\n\n  BUG: KASAN: slab-out-of-bounds in nvmet_rdma_cm_handler\n    (drivers/nvme/target/rdma.c:1427 drivers/nvme/target/rdma.c:1475\n     drivers/nvme/target/rdma.c:1614 drivers/nvme/target/rdma.c:1814)\n  Read of size 2 at addr ff1100010459d366 by task kworker/u16:1/41\n  Workqueue: iw_cm_wq cm_work_handler\n  Call Trace:\n   <TASK>\n   dump_stack_lvl (lib/dump_stack.c:94 lib/dump_stack.c:120)\n   print_report (mm/kasan/report.c:378 mm/kasan/report.c:482)\n   kasan_report (mm/kasan/report.c:595)\n   nvmet_rdma_cm_handler\n    (drivers/nvme/target/rdma.c:1427 drivers/nvme/target/rdma.c:1475\n     drivers/nvme/target/rdma.c:1614 drivers/nvme/target/rdma.c:1814)\n   cma_cm_event_handler (drivers/infiniband/core/cma.c:2181)\n   iw_conn_req_handler (drivers/infiniband/core/cma.c:2640)\n   cm_work_handler\n    (drivers/infiniband/core/cm.c:2502\n     drivers/infiniband/core/cm.c:3858)\n   process_one_work (kernel/workqueue.c:3396)\n   worker_thread (kernel/workqueue.c:3479 kernel/workqueue.c:3560)\n   kthread (kernel/kthread.c:436)\n   ret_from_fork (arch/x86/kernel/process.c:158)\n   ret_from_fork_asm (arch/x86/entry/entry_64.S:245)\n   </TASK>\n\n  Allocated by task 12:\n   __kasan_kmalloc (mm/kasan/common.c:398 mm/kasan/common.c:415)\n   __kmalloc_node_track_caller_noprof\n    (mm/slub.c:5414 mm/slub.c:5545)\n   kmemdup_noprof (mm/util.c:138)\n   cm_event_handler\n    (drivers/infiniband/core/iwcm.c:194\n     drivers/infiniband/core/iwcm.c:1076)\n   siw_cm_upcall (drivers/infiniband/sw/siw/siw_cm.c:408)\n   siw_proc_mpareq (drivers/infiniband/sw/siw/siw_cm.c:750)\n   siw_cm_work_handler (drivers/infiniband/sw/siw/siw_cm.c:1086)\n\n  The buggy address is located 0 bytes to the right of\n  allocated 6-byte region [ff1100010459d360, ff1100010459d366)",
+  "datePublished": "Nov 16, 2026, 9:59:27 AM",
+  "dateUpdated": "Nov 16, 2026, 9:59:27 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/22d0eb8d7aa4e45d22491d7cc1327010f19c86b9",
+    "https://git.kernel.org/stable/c/36c3af0e94b6c385c4934c028cbca27e138ae1ee",
+    "https://git.kernel.org/stable/c/c17d443d1e984a0c0840692c6435cdc455936160",
+    "https://git.kernel.org/stable/c/635e760169a87abf03874cd4636cd91b580cb427"
+  ],
+  "aliases": [
+    "CVE-2026-99302"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "10f68520-0225-3bb6-a914-54ff2b92cf7d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.8"
+    },
+    {
+      "id": "1e083cc7-b60b-37b4-b975-60e2463a8fa8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.63"
+    },
+    {
+      "id": "3d014ab0-fa8a-34d1-b7a1-cce89e4e39ea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "456c584e-4d27-36b9-928d-846321526c47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8f000cac6e7a6edca7ab93bafc7ed28b27c1545b <c17d443d1e984a0c0840692c6435cdc455936160"
+    },
+    {
+      "id": "6a150eae-b047-38f0-888c-69db0edda37c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "960b249d-6d4e-3ff6-b425-9fb0f6eacc70",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8f000cac6e7a6edca7ab93bafc7ed28b27c1545b <36c3af0e94b6c385c4934c028cbca27e138ae1ee"
+    },
+    {
+      "id": "b6bc6607-097a-332b-af56-fd7ec081b7c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.4"
+    },
+    {
+      "id": "c17d8597-4df4-3f17-bbf2-4c7cdbc845d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8f000cac6e7a6edca7ab93bafc7ed28b27c1545b <635e760169a87abf03874cd4636cd91b580cb427"
+    },
+    {
+      "id": "d508d229-9011-3daf-8bb8-51c415b616a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "e50dcd7a-9d91-3276-96d7-f7cf5af514e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8f000cac6e7a6edca7ab93bafc7ed28b27c1545b <22d0eb8d7aa4e45d22491d7cc1327010f19c86b9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "fb1279ed-dc83-3c04-a605-c21b9d1b19f6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

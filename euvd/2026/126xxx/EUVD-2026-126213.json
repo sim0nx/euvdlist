@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-126213",
+  "enisaUuid": "d834afc9-a729-3f26-8099-5c622c04e55f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nceph: require the dentry lease record to cover struct ceph_mds_reply_lease\n\nparse_reply_info_lease() reads a 32-bit struct_len off the wire and only\nchecks that many bytes are present, without requiring struct_len to cover\nsizeof(struct ceph_mds_reply_lease) (10 bytes).  A malicious MDS can\ndeclare a shorter record and still get the pointer published: the\nfollowing *p += sizeof(**lease) overshoot is undone by *p = lend, so\nnothing downstream rejects the reply.  ceph_fill_trace() ->\nupdate_dentry_lease() then reads 10 bytes through that pointer on any\nlookup on a mounted CephFS, running past the end of the message front.\n\nRequire the record to cover the structure, matching the sibling\nparse_reply_info_dir().  A conforming MDS always encodes the full 10\nbytes.\n\n  BUG: KASAN: slab-out-of-bounds in __update_dentry_lease.constprop.0 (fs/ceph/inode.c:1459)\n  Read of size 4 at addr ffff888026c63d65 by task kworker/0:3/2366\n  Workqueue: ceph-msgr ceph_con_workfn\n  Call Trace:\n   __update_dentry_lease.constprop.0 (fs/ceph/inode.c:1459)\n   ceph_fill_trace (fs/ceph/inode.c:1474 fs/ceph/inode.c:1823)\n   mds_dispatch (fs/ceph/mds_client.c:4229 fs/ceph/mds_client.c:7225)\n   ceph_con_process_message (net/ceph/messenger.c:1424)\n   ceph_con_v1_try_read (net/ceph/messenger_v1.c:1430)\n   ceph_con_workfn (net/ceph/messenger.c:1576)\n   process_one_work (kernel/workqueue.c:3396)\n   worker_thread (kernel/workqueue.c:3479 kernel/workqueue.c:3560)\n   kthread (kernel/kthread.c:436)\n   ret_from_fork (arch/x86/kernel/process.c:158)\n   ret_from_fork_asm (arch/x86/entry/entry_64.S:245)\n\n  The buggy address is located 357 bytes inside of\n   allocated 360-byte region [ffff888026c63c00, ffff888026c63d68)",
+  "datePublished": "Nov 16, 2026, 9:59:31 AM",
+  "dateUpdated": "Nov 16, 2026, 9:59:31 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/380bc69a0dbc50549cb196da40409aed69c84cfc",
+    "https://git.kernel.org/stable/c/5ab17ed54e8b7ca64a8d167a09d6a2c865ed51cc",
+    "https://git.kernel.org/stable/c/058e1c38722a6d5b0181f38fdec03d5da95c3ad1",
+    "https://git.kernel.org/stable/c/7286b2ffe04d4b39b4e9884f714792589d94f316"
+  ],
+  "aliases": [
+    "CVE-2026-99307"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "01912118-e656-3beb-97f6-9224e3b472b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4ac4c23eaa389859f746a6ef31e1c71d880312f4 <5ab17ed54e8b7ca64a8d167a09d6a2c865ed51cc"
+    },
+    {
+      "id": "0758fe2c-5f50-34b8-919a-c5ab40a01c33",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4ac4c23eaa389859f746a6ef31e1c71d880312f4 <058e1c38722a6d5b0181f38fdec03d5da95c3ad1"
+    },
+    {
+      "id": "0dd75f8b-4430-32f9-9a70-d9fbe2be685c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4ac4c23eaa389859f746a6ef31e1c71d880312f4 <7286b2ffe04d4b39b4e9884f714792589d94f316"
+    },
+    {
+      "id": "1d065a5d-05be-3643-82d2-862d2cc4d8db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "2c2971aa-af6a-33b2-b6dc-81a7ccdcf384",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4ac4c23eaa389859f746a6ef31e1c71d880312f4 <380bc69a0dbc50549cb196da40409aed69c84cfc"
+    },
+    {
+      "id": "3a86e705-441e-3b38-973f-b3f1a75bd583",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "9b800b74-2661-3d58-8645-eea079b1bb4d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.4"
+    },
+    {
+      "id": "a14089ff-1743-3183-963c-b768ff65e3b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "adb14c15-86e6-33d4-86f0-21d3805dbf51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.63"
+    },
+    {
+      "id": "c36ff289-eeb1-35d4-81c8-7b5fe1f8617d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a399e7e3-f0ac-34eb-a2f9-5957d392905f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

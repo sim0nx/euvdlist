@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-126195",
+  "enisaUuid": "78293c85-8a8d-340d-bbc0-f5125485e591",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: fix app-instance non-durable supersede session UAF\n\nksmbd_close_fd_app_instance_id() supersedes a prior open that has the\nsame AppInstanceId. It reaches that open's session through opinfo->sess.\nThis pointer is not refcounted.\n\nSession teardown detaches durable handles before it frees the session.\nIt does not detach a non-durable open. That open still points at the\nsession through opinfo->sess after the session is freed. Another session\ncan supersede the open at the same time. The supersede then takes a\nwrite lock through the stale pointer, in the freed session's file table.\n\n  BUG: KASAN: slab-use-after-free in _raw_write_lock+0x71/0xd0\n  Call Trace:\n   _raw_write_lock+0x71/0xd0\n   ksmbd_close_fd_app_instance_id+0xd9/0x670 [ksmbd]\n   smb2_open+0x3e10/0xd910 [ksmbd]\n  Freed by task 212:\n   ksmbd_session_destroy+0x38d/0x480 [ksmbd]\n\nFix this by looking the session up by opinfo->session_id. The lookup\nreturns a reference, as smb2_break_collect_channels() does. Recheck that\nopinfo->sess still points at it before using it.\n\nDo the lookup without m_lock held. destroy_previous_session() takes\nm_lock under the session table lock, and taking them in the other order\nhere would deadlock.",
+  "datePublished": "Nov 16, 2026, 9:59:18 AM",
+  "dateUpdated": "Nov 16, 2026, 9:59:18 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a5b190b352b0ba85f4debe436f42950ced10fadb",
+    "https://git.kernel.org/stable/c/f728cfee6929057087c303d07d7a6a7c61196b48"
+  ],
+  "aliases": [
+    "CVE-2026-99289"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "27df2671-faec-33ea-9d4c-29b08b5e0ab4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "16c30649709d949b439273e61769028b1e706327 <a5b190b352b0ba85f4debe436f42950ced10fadb"
+    },
+    {
+      "id": "4f6470a8-23b6-33a2-9679-0f0484514293",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "71d0fbf4-576c-3298-8faa-a5c31f25e101",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "a24fafb6-6f8b-3d75-ae44-78028488da47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.2"
+    },
+    {
+      "id": "f136a1f5-cd4a-3af0-ae13-3872e0a9fd08",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "fb3fd390-2046-38cf-bd3f-4701e0fc6d5e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "16c30649709d949b439273e61769028b1e706327 <f728cfee6929057087c303d07d7a6a7c61196b48"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0754fc4f-1d64-386a-9bca-4e85a329583b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

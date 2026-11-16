@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-126199",
+  "enisaUuid": "7040862a-9a15-334f-ae1d-312259ccd5e0",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfuse: don't BUG when the copy buffer is exhausted\n\nfuse_copy_fill() hits BUG_ON(!err) once the iterator backing the copy\nruns out of pages.  Over io-uring the amount copied is not bounded by the\npayload buffer the server registered, so an unprivileged user can drain\nthe iterator and panic the host - mount a FUSE filesystem with small\npayload buffers, then setxattr() a larger value:\n\n  kernel BUG at fs/fuse/dev.c:1064!\n  Oops: invalid opcode: 0000 [#1] SMP KASAN NOPTI\n  CPU: 1 UID: 0 PID: 148 Comm: exploit Not tainted 7.3.0-rc1 #2\n  RIP: 0010:fuse_copy_fill (fs/fuse/dev.c:1033)\n  Call Trace:\n   <TASK>\n   fuse_copy_args (fs/fuse/dev.c:1354 fs/fuse/dev.c:1380)\n   fuse_uring_args_to_ring (fs/fuse/dev_uring.c:891)\n   fuse_uring_prepare_send (fs/fuse/dev_uring.c:940 fs/fuse/dev_uring.c:1057)\n   fuse_uring_send_in_task (fs/fuse/dev_uring.c:1745)\n   tctx_task_work_run (io_uring/tw.c:96)\n   tctx_task_work (io_uring/tw.c:133)\n   task_work_run (kernel/task_work.c:233)\n   io_run_task_work (io_uring/tw.h:84)\n   io_cqring_wait (io_uring/wait.c:278)\n   __do_sys_io_uring_enter (io_uring/io_uring.c:2676)\n   do_syscall_64 (arch/x86/entry/syscall_64.c:61)\n   entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:121)\n\nThe reply path can drain it the same way, via the server-supplied\npayload_sz in fuse_uring_copy_from_ring().\n\nReturn -EIO instead.  All three fuse_copy_fill() callers already\npropagate the error.",
+  "datePublished": "Nov 16, 2026, 9:59:21 AM",
+  "dateUpdated": "Nov 16, 2026, 9:59:21 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/61adcab593ff6bb806ba09df8c2c3d7e19edc908",
+    "https://git.kernel.org/stable/c/10a58bf0107a02854584ed79281d05a84d62d900",
+    "https://git.kernel.org/stable/c/c1338aae7b4054e26f322155423f6aba90aeea23"
+  ],
+  "aliases": [
+    "CVE-2026-99293"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0bc7eee9-46c9-3761-a3cc-75cb631f8063",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "1508148c-b7d7-3222-9674-0d01586a4e52",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c090c8abae4b6b77a1bee116aa6c385456ebef96 <c1338aae7b4054e26f322155423f6aba90aeea23"
+    },
+    {
+      "id": "58f50f91-2a27-314c-9206-e80c721b4c23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.14"
+    },
+    {
+      "id": "5cf3aecc-5bdf-3b5b-a34a-722f021cd0d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "61a88332-26a2-39cd-813c-01adeb698a4e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c090c8abae4b6b77a1bee116aa6c385456ebef96 <10a58bf0107a02854584ed79281d05a84d62d900"
+    },
+    {
+      "id": "967d49e3-213e-3ab1-af18-b9eea8ecb4bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "ad965811-f4c1-3ef3-a366-e2368685146a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "fbd70947-54d9-382f-970b-784b38be7a10",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c090c8abae4b6b77a1bee116aa6c385456ebef96 <61adcab593ff6bb806ba09df8c2c3d7e19edc908"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "10aeaefa-a211-365f-ab7d-27fb757fd3c6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
