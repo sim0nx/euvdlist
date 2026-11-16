@@ -1,0 +1,38 @@
+{
+  "id": "EUVD-2026-126186",
+  "enisaUuid": "da1cba90-1c14-30f9-b03c-e3f4263f2a3f",
+  "description": "In the vulnerability-lookup web application, the authentication decorators for feed-key requests (auth_feedkey_func in website/decorators.py) and API-key requests (auth_func in website/web/api/v1/common.py) called Flask-Login's login_user() function. This caused the HTTP response to a request authenticated solely by a feed key (supplied as the X-FEED-KEY URL parameter) or an API key (supplied as the X-API-KEY header) to set a session cookie that grants full authenticated access to every page in the application, without requiring a password or two-factor authentication.\n\nThe practical impact is that any party possessing a leaked feed URL (a common occurrence, as feed URLs are shared with RSS readers) or an API key could obtain a valid web session for the associated account. This session provides access to the user's account page, which exposes the API key and other profile data, and for accounts with the administrator role, access to the /admin interface, enabling full administrative control of the application.\n\nThe vulnerability affects all users whose feed key or API key is exposed. No prior authentication, user interaction, or special network conditions are required; a single HTTP request with the token is sufficient to establish the session. The session persists until it expires, and because it is not bound to the original credential (a related CWE-613 issue noted by the developers), revoking the feed key or API key does not invalidate the already-created session.\n\nThe fix replaces the login_user() call with assignment to g._login_user, which Flask-Login's current_user property reads for the current request only, without writing any session cookie. The affected views remain unchanged and continue to see the authenticated user for the single request.",
+  "datePublished": "Nov 16, 2026, 8:36:51 AM",
+  "dateUpdated": "Nov 16, 2026, 8:36:51 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:H/SI:H/SA:N",
+  "references": [
+    "https://github.com/vulnerability-lookup/vulnerability-lookup/commit/3605d5b65d340343cc4b612d40d454afed84302b"
+  ],
+  "aliases": [
+    "CVE-2026-129703"
+  ],
+  "assigner": "CIRCL",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "c69c63c1-8e10-3de2-a213-fe7c49dc2df3",
+      "product": {
+        "name": "Vulnerability-Lookup",
+        "vendor": {
+          "name": "CIRCL"
+        }
+      },
+      "product_version": "unspecified"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e2c4c746-f15a-3744-9200-7e0eb32c46c7",
+      "vendor": {
+        "name": "vulnerability-lookup"
+      }
+    }
+  ]
+}
