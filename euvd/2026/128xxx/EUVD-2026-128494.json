@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-128494",
+  "enisaUuid": "d2b8e18d-0cb9-33d3-8034-b49adc9aaa6b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: us122l: Fix NULL dereference at hwdep open and release\n\nusb_stream_hwdep_open() and usb_stream_hwdep_release() pass the result of\nusb_ifnum_to_if() straight to usb_autopm_get_interface() and\nusb_autopm_put_interface(), without checking it for NULL.\n\nusb_ifnum_to_if() returns NULL once the device is gone, since\nusb_disable_device() clears udev->actconfig on disconnect.  The hwdep file\ncan outlive the disconnect: the card is released with\nsnd_card_free_when_closed(), so a process that keeps the character device\nopen reaches the driver's release callback after the USB configuration has\nbeen dropped, and interface_to_usbdev() then dereferences the NULL\ninterface at offsetof(struct device, parent).  The open callback has the\nsame problem when it races with the disconnect.\n\nCheck both lookups and fail the open with -ENODEV; in release, skip the\nruntime PM put when the interface is already gone and still run the rest\nof the per-file cleanup.  Move the us122l->first bookkeeping after the\nchecks so that a failed open no longer leaves a stale file pointer behind.",
+  "datePublished": "Nov 18, 2026, 8:42:07 AM",
+  "dateUpdated": "Nov 18, 2026, 8:42:07 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/3be1ac0b73e9bf73eec0000197d0177ebeb3cc79",
+    "https://git.kernel.org/stable/c/57dc5db514ab188a24cb300bda70a1ead3c9e479",
+    "https://git.kernel.org/stable/c/b21aa212c9ba4536e66d65783cc883951c95ba01",
+    "https://git.kernel.org/stable/c/820e0050866942b5498488496462d12c6ce1c7a9"
+  ],
+  "aliases": [
+    "CVE-2026-99315"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0d301718-312c-3d55-9a03-379953d7eae9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <820e0050866942b5498488496462d12c6ce1c7a9"
+    },
+    {
+      "id": "1abfe7d8-5a8c-36b0-a231-9e0da2d0763c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "5115b8bc-13ef-3607-98c1-344e24708c55",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <3be1ac0b73e9bf73eec0000197d0177ebeb3cc79"
+    },
+    {
+      "id": "55bbe3a6-d9fb-3f95-a8df-6ac04947b834",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "785aa4cf-d4ce-3aa9-8082-5aadfc0416d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.28"
+    },
+    {
+      "id": "cc4c9de3-f7da-38ad-9688-36de6357d316",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "d493309b-68c4-3871-bab6-1d69ad0f672b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <b21aa212c9ba4536e66d65783cc883951c95ba01"
+    },
+    {
+      "id": "dc2351c0-15cc-3e53-bb22-7752a9b24aa5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e1f003da-a4c3-3374-8b7f-12204da52e33",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <57dc5db514ab188a24cb300bda70a1ead3c9e479"
+    },
+    {
+      "id": "e2ab1673-a100-3989-bb0a-b005f5f63f69",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "1cdb6a4b-ce71-3aeb-9a40-b0bf4841f6d6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
