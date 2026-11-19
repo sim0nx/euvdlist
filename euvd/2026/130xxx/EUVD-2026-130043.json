@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130043",
+  "enisaUuid": "e57c8244-f167-3d66-8c4e-e5026b98eea5",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: fix buffer overflow in SMB2_tcon()\n\nIn SMB2_tcon(), unc_path is allocated with a fixed buffer size of\nMAX_SHARENAME_LENGTH * 2 bytes (672 bytes). However, the user-controlled\nUNC path (tree) length is passed to cifs_strtoUTF16(), which assumes the\ndestination buffer is large enough and writes strlen(tree) + 1 UTF-16 code\nunits.\n\nCommit 62a1a439e0fd (\"cifs: clean up handling of unc= option\") removed the\nlength check on UNC mount options, allowing mount paths to exceed\nMAX_SHARENAME_LENGTH while retaining the fixed-size buffer allocation in\nSMB2_tcon(). Consequently, an oversized UNC string causes cifs_strtoUTF16()\nto write past the end of the heap object, resulting in a slab-out-of-bounds\nwrite. Furthermore, if a tree exceeds MAX_TREE_SIZE characters, strscpy()\ntruncates it in cifs_tcon::tree_name, causing subsequent reconnects or\nfailovers to fail.\n\nFix this by first verifying that the length of tree does not exceed\nMAX_TREE_SIZE, returning -EINVAL if it does. Then, dynamically allocate\nunc_path based on the length of tree so that it safely accommodates all\nUTF-16 code units for paths within MAX_TREE_SIZE.\n\n[pc: remove unused MAX_SHARENAME_LENGTH]",
+  "datePublished": "Nov 19, 2026, 2:23:25 PM",
+  "dateUpdated": "Nov 19, 2026, 2:38:51 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/75fd4c72aa3dcfabb318144636f416be6796d423",
+    "https://git.kernel.org/stable/c/acf25a7be39dccdbf60fdf3d437dd7832fa4b6d3",
+    "https://git.kernel.org/stable/c/d26f7fbca42532c6c79efdceb4bd5198e1849314",
+    "https://git.kernel.org/stable/c/73cc469b0ff7551f8537ea919709973e6dc4f514"
+  ],
+  "aliases": [
+    "CVE-2026-99385"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0d90dad1-0bb6-35b9-8691-f46e3d7d6871",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "15b5f35a-ae22-3ef5-9310-d268cccded06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "26218441-e1df-3b17-915e-af1dc0a923fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "35c02a8c-9ecc-3722-9f22-468115c97c19",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "62a1a439e0fdd4ec8a80dc00fcbb9f26b5c34de1 <d26f7fbca42532c6c79efdceb4bd5198e1849314"
+    },
+    {
+      "id": "5dd98a0d-67e6-328f-906d-856dd0f41f62",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "62a1a439e0fdd4ec8a80dc00fcbb9f26b5c34de1 <73cc469b0ff7551f8537ea919709973e6dc4f514"
+    },
+    {
+      "id": "6cbd4b84-0aed-3d82-984e-2c2fc484f1e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "753d7c36-e66a-3180-baea-b19ebbad2c09",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "77545e72-0a40-3367-b97a-b6d9d135b7f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.8"
+    },
+    {
+      "id": "bdde5dd1-034f-3058-b09c-67aa2e8570dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "62a1a439e0fdd4ec8a80dc00fcbb9f26b5c34de1 <acf25a7be39dccdbf60fdf3d437dd7832fa4b6d3"
+    },
+    {
+      "id": "c8465936-4ba0-392a-b35c-349e2bb2cc6e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "62a1a439e0fdd4ec8a80dc00fcbb9f26b5c34de1 <75fd4c72aa3dcfabb318144636f416be6796d423"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "fc3f2c43-57b0-385b-8732-5d3bb23cf71a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

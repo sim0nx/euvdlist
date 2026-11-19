@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130148",
+  "enisaUuid": "aedb7129-2c54-3192-bcfe-702b06b0930c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngenirq: Defer kfree(irqaction) until irq_thread_dtor() finishes\n\nWhen an interrupt thread exits abnormally via do_exit() (e.g. the interrupt\nhandler oopses) without returning from irq_thread(), a concurrent call to\nfree_irq() could free the irqaction before the irq_thread_dtor() exit task\nwork runs.\n\n  irq thread (oopsed)                 free_irq()\n  -------------------                 ----------\n  do_exit()\n    exit_mm()\n      complete_vfork_done()  -------> kthread_stop() returns\n    exit_files() ...                  kfree(action)\n    exit_task_work()\n      irq_thread_dtor()\n        action->...                   <- use-after-free\n\nTrack the pending exit work with the IRQTF_EXIT_WORK thread flag, and have\n__free_irq() wait for the bit to clear before kfree().\n\nirq_thread_dtor() only runs on irq_thread abnormal exit. If that dtor also\nfaults, free_irq() will hang indefinitely, but double IRQ thread faults\nrequire a reboot anyways.\n\n[ tglx: Add missing include ]",
+  "datePublished": "Nov 19, 2026, 2:43:07 PM",
+  "dateUpdated": "Nov 19, 2026, 2:43:07 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ec397edc4c8ca868865953926831b539698469e6",
+    "https://git.kernel.org/stable/c/a6deaadd460a3a3cfd59c857247097e8da892af8",
+    "https://git.kernel.org/stable/c/08aaea3e62b2ddc69a65d52609a5924559d05af2",
+    "https://git.kernel.org/stable/c/d04adff6860587e843948b0c31174f8ae11b8dfe"
+  ],
+  "aliases": [
+    "CVE-2026-99475"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "16e64809-c509-3d1f-8b86-113003fae570",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.6"
+    },
+    {
+      "id": "47d4e064-290e-39a0-869d-ded31c26bd5d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ed3e694d78cc75fa79bf29698631b146fd27aa35 <08aaea3e62b2ddc69a65d52609a5924559d05af2"
+    },
+    {
+      "id": "574a9755-273f-30ab-918a-fca0f031310e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7378b5e9-a2c5-3296-b5bd-3eaad217d40e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "9f927dfb-7ca0-3c58-a103-95db89347edb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "c6c9f614-0d5b-3518-b349-8a498d7db631",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ed3e694d78cc75fa79bf29698631b146fd27aa35 <ec397edc4c8ca868865953926831b539698469e6"
+    },
+    {
+      "id": "d1088803-2c44-31d0-a582-553a68b5dbb2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "d75e264f-1565-39d1-917a-b8ec57eac1b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ed3e694d78cc75fa79bf29698631b146fd27aa35 <a6deaadd460a3a3cfd59c857247097e8da892af8"
+    },
+    {
+      "id": "e4cd42b0-a663-3de2-99ec-6317f66ffff8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "f2f387de-1af9-3987-91a0-0b39b05113c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ed3e694d78cc75fa79bf29698631b146fd27aa35 <d04adff6860587e843948b0c31174f8ae11b8dfe"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6e8ba5a8-743d-322d-9b1f-7f2d0ab796b7",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

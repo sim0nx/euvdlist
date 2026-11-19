@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-130288",
+  "enisaUuid": "da75da3a-69c3-39d8-8f42-0b15b9d2d754",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: smbdirect: don't wait for RDMA_CM_EVENT_DISCONNECTED in smbdirect_socket_destroy_sync()\n\nsmbdirect_socket_destroy_sync() waited for RDMA_CM_EVENT_DISCONNECTED\nafter smbdirect_socket_cleanup_work() called rdma_disconnect(). That\ncan take very long, e.g. if the peer just disappeared, until the\nrdma cm gives up, or forever if the event already happened, but the\nstatus was overwritten afterwards.\n\nThis is not needed: smbdirect_socket_destroy() drains the qp under\nrdma_lock_handler(), destroys it and calls rdma_destroy_id(), which\nonly waits for a currently running event handler and makes sure no\nfurther events are delivered. The rest of the disconnect protocol\n(DREQ/DREP and timewait for IB, abrupt close for iWarp) is handled\nby the rdma core asynchronously. drivers/nvme/host/rdma.c also just\ncalls rdma_disconnect() and ib_drain_qp() before rdma_destroy_id().\n\nSo smbdirect_socket_destroy() now also accepts\nSMBDIRECT_SOCKET_DISCONNECTING and changes the status to\nSMBDIRECT_SOCKET_DISCONNECTED itself under rdma_lock_handler().\n\nWe could still get RDMA_CM_EVENT_DISCONNECTED in the small\nwindows between rdma_unlock_handler() and rdma_destroy_id(),\nbut in that case smbdirect_connection_rdma_event_handler()\nis basically a no-op.",
+  "datePublished": "Nov 19, 2026, 2:45:42 PM",
+  "dateUpdated": "Nov 19, 2026, 2:45:42 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e08d8c2a022754e10b6f7d01faf20958665f4c4d",
+    "https://git.kernel.org/stable/c/1ce50f83ed13b3147d4a40b50cc71d0dfdcc6d41",
+    "https://git.kernel.org/stable/c/4ca76b89917ad5b317e07ae4f0edc16f7c2a1248"
+  ],
+  "aliases": [
+    "CVE-2026-99564"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "05080933-35a5-38b1-a3c6-498f8f58487d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "422a2436697da6cc0f2de812a778ff1d249b5335 <e08d8c2a022754e10b6f7d01faf20958665f4c4d"
+    },
+    {
+      "id": "0f2b91f4-14a2-31a3-86ad-c5ee17496e4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "0fb84556-acd7-3964-b239-3831dae0e48d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "422a2436697da6cc0f2de812a778ff1d249b5335 <1ce50f83ed13b3147d4a40b50cc71d0dfdcc6d41"
+    },
+    {
+      "id": "1529c537-277f-393d-a1a5-8c760fbf379a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b6f5cb82-4453-38a4-8336-c9b32688a123",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2.15"
+    },
+    {
+      "id": "c6a77ecb-0c48-3a54-a5bf-712c262bc0fa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "dee1674e-a7a7-30aa-bbab-70faef7b36e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "422a2436697da6cc0f2de812a778ff1d249b5335 <4ca76b89917ad5b317e07ae4f0edc16f7c2a1248"
+    },
+    {
+      "id": "ff22d5bd-9089-3f30-80ad-0fba5afb5660",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a4f7a007-b0ac-3b22-a46c-686ca9bb186f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

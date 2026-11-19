@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130273",
+  "enisaUuid": "0c8cfac2-7756-3f29-b747-43b574ce021b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: do not pass a NULL buf to is_oplock_break()\n\nreceive_encrypted_read() sets *num_mids = 1 and never writes the\ncaller's bufs[]. Offload returns -1 with *num_mids = 0, so the\ndemultiplex thread skips the frame. The inline decrypt path\nreturns 0 even when smb2_find_mid() fails.\n\ncifs_demultiplex_thread() then treats mids[i] == NULL as an\noplock break and calls is_oplock_break(bufs[i], server) with\nbufs[i] still NULL. smb2_is_valid_oplock_break() reads\nhdr.Command at offset 12 and oopses.\n\nA large encrypted READ whose MessageId does not match is enough\nto panic cifsd.\n\n    Oops: general protection fault, probably for non-canonical address\n    0xdffffc0000000001: 0000 [#1] SMP KASAN PTI\n    KASAN: null-ptr-deref in range\n    [0x0000000000000008-0x000000000000000f]\n    CPU: 0 PID: 100 Comm: cifsd\n    RIP: smb2_is_valid_oplock_break+0xc8/0x2270 [cifs]\n    cifs_demultiplex_thread\n    Kernel panic - not syncing: Fatal exception\n\nReturn -1 when inline decrypt finds no mid, and skip\nis_oplock_break() plus the unknown-frame dump when bufs[i]\nis NULL. receive_encrypted_standard() already assigns\nbufs[*num_mids].",
+  "datePublished": "Nov 19, 2026, 2:45:13 PM",
+  "dateUpdated": "Nov 19, 2026, 2:45:13 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6c1ccd31b3a995a1a73e10e7bc8b6d96cf382241",
+    "https://git.kernel.org/stable/c/ee793cc8dcd58ed9afa0a69a84d66df4f8eacd88",
+    "https://git.kernel.org/stable/c/4bf4fb7f323402df1c57982365c8ac2498b89d10",
+    "https://git.kernel.org/stable/c/2225ab306575e424b3dad2ee1be2521c89249d15"
+  ],
+  "aliases": [
+    "CVE-2026-99549"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "31b8a287-8b21-3209-bf26-3c3a7591575e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "454d440d-6a93-3c0e-8dd8-9b33078b4b41",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c42a6abe3012832a68a371dabe17c2ced97e62ad <ee793cc8dcd58ed9afa0a69a84d66df4f8eacd88"
+    },
+    {
+      "id": "5bf45487-ea66-32cf-a312-d7aa2b335ab5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "6726aab2-f421-3b14-b4c8-ab0de1a16002",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c42a6abe3012832a68a371dabe17c2ced97e62ad <6c1ccd31b3a995a1a73e10e7bc8b6d96cf382241"
+    },
+    {
+      "id": "6d599a56-7fb2-3fcf-8056-194628cc89fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.11"
+    },
+    {
+      "id": "7d783ec2-5aea-3a71-8f99-fb1ca0e7cc11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c42a6abe3012832a68a371dabe17c2ced97e62ad <4bf4fb7f323402df1c57982365c8ac2498b89d10"
+    },
+    {
+      "id": "9113d6c4-19d6-3855-8093-ed51db6aae1c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c42a6abe3012832a68a371dabe17c2ced97e62ad <2225ab306575e424b3dad2ee1be2521c89249d15"
+    },
+    {
+      "id": "9f92cb6d-28c1-3f6b-8bde-ff6f14370f41",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "cd8e637b-6447-3b3a-9787-be2ed16571a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "d0b7a4ab-63f2-3d03-8599-a5318faa1041",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "16d7f4c5-d616-3687-ad75-ac7763fe7fd5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-130126",
+  "enisaUuid": "5da840e4-ba77-3dcb-b2e9-8ffac8294ccf",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmshv_vtl: detach poll waiter on POLLFREE\n\nMSHV_SET_POLL_FILE keeps a poll wait entry after the ioctl returns. A\nfile reference does not always pin the registered waitqueue:\nsignalfd_poll() uses current->sighand->signalfd_wqh, whose lifetime is\ntied to the task.\n\nsignalfd_cleanup() sends POLLFREE before the sighand is freed. The MSHV\ncallback currently leaves its entry linked, so __wake_up_pollfree()\nwarns and a later replacement calls remove_wait_queue() through a stale\nwqh pointer. A source-equivalent KASAN run reproduced:\n\n  BUG: KASAN: slab-use-after-free in _raw_spin_lock_irqsave\n  _raw_spin_lock_irqsave\n  remove_wait_queue\n  harness_ioctl [mshv_pollfree_harness]\n\nThe object belonged to sighand_cache and had been released through\nslab_free_after_rcu_debug() after __cleanup_sighand().\n\nOn POLLFREE, unlink the entry under the provider waitqueue lock. Preserve\nthe existing CPU cancellation before publishing a NULL wqh, since a NULL\nload lets a racing replacement reuse the persistent poll state. Use a\nmatching acquire load under RCU when removing a normal registration.\n\nThe callback takes no mutex and does not sleep, so the existing\nmutex-to-waitqueue-lock order is unchanged.\n\nAn LLM assisted the source audit, fix development, and validation of this\nissue.",
+  "datePublished": "Nov 19, 2026, 2:42:06 PM",
+  "dateUpdated": "Nov 19, 2026, 2:42:06 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ce2b83e47af491f4b7f0f286367b34cdc57e17e9",
+    "https://git.kernel.org/stable/c/efc5dc4c15713fdd6e87882686a26ed1deb22dab"
+  ],
+  "aliases": [
+    "CVE-2026-99459"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "14443332-02ea-34ff-8781-f9556ebbe437",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "30ddf8da-2b73-319b-bd36-d524eb49f6d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "36ae37c9-2522-3236-ab9f-89f2738ab741",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    },
+    {
+      "id": "6959b6ed-9b4c-3534-8e0a-415a396aa8dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "95672b71-9a25-34c7-b919-5df9ce441d7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7bfe3b8ea6e30437e01fcb8e4f56ef6e4d986d0f <ce2b83e47af491f4b7f0f286367b34cdc57e17e9"
+    },
+    {
+      "id": "a19c2bb6-7b1b-367b-975a-b1047645b7e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7bfe3b8ea6e30437e01fcb8e4f56ef6e4d986d0f <efc5dc4c15713fdd6e87882686a26ed1deb22dab"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "89e73824-f914-3f2d-bef3-a4b04fb79246",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

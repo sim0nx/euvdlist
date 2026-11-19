@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130012",
+  "enisaUuid": "065ac268-edd3-34f1-b782-2d048212bdf2",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsunrpc: pin gss module across auth_domain RCU free\n\nA gss auth_domain stores a raw pointer to svcauthops_gss in\ndom->flavour, and its release queues svcauth_gss_domain_release_rcu()\nvia call_rcu(). Both live in auth_rpcgss.ko text, and nothing pins the\nmodule while a domain referencing it is reachable. rmmod auth_rpcgss\ncan therefore unmap that text while an NFSD export still holds a\nreference to the domain.\n\nThe export cache is one such holder. When the export is finally\nreleased, the domain reference drops from module text:\n\n    svc_export_put()\n      auth_domain_put(exp->ex_client)\n        auth_domain_release()\n          dom->flavour->domain_release(dom)   /* into module text */\n            svcauth_gss_domain_release()\n              call_rcu(&dom->rcu_head,\n                       svcauth_gss_domain_release_rcu)\n\nOnce auth_rpcgss is unloaded, the domain_release call lands in\nunmapped memory. The rcu_barrier() in exit_rpcsec_gss() does not\nhelp: it waits only for callbacks already queued, and this one is\nnot queued until the export goes away.\n\nNFSD's NFSv4 objects import symbols from auth_rpcgss.ko, so only a\nserver built without CONFIG_NFSD_V4 can unload auth_rpcgss while\nexports still name a gss domain.\n\nTake a module reference in svcauth_gss_register_pseudoflavor() before\npublishing the domain and drop it at the end of\nsvcauth_gss_domain_release_rcu(). The rcu_barrier() then holds the\nmodule image until this callback has returned.\n\n[ cel: rewrote description ]",
+  "datePublished": "Nov 19, 2026, 2:22:16 PM",
+  "dateUpdated": "Nov 19, 2026, 2:37:06 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0cbdbf26c456ef6ad1260dbd1b772239ce7bd071",
+    "https://git.kernel.org/stable/c/f735700c06303335067a49ad4ad8f0b60eb43897",
+    "https://git.kernel.org/stable/c/1c582f719010b5ff9f678cf8307594be0570831b",
+    "https://git.kernel.org/stable/c/b64d21116374688c33302a6704387c27d1156d72"
+  ],
+  "aliases": [
+    "CVE-2026-99354"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "11359896-3966-3ac9-a1f5-87b20ff2521a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "608a0ab2f54ab0e301ad76a41aad979ea0d02670 <f735700c06303335067a49ad4ad8f0b60eb43897"
+    },
+    {
+      "id": "13dbb20e-09a8-3e36-83b9-e3f2dcbc6704",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.20"
+    },
+    {
+      "id": "1c87cee7-2e1c-3f8f-b645-f1e9f099f0ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "608a0ab2f54ab0e301ad76a41aad979ea0d02670 <b64d21116374688c33302a6704387c27d1156d72"
+    },
+    {
+      "id": "203faad7-95c1-3d92-9365-fc52e194215b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "4a5447d4-4986-3f3a-a83d-7b8d8e0d898f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "608a0ab2f54ab0e301ad76a41aad979ea0d02670 <1c582f719010b5ff9f678cf8307594be0570831b"
+    },
+    {
+      "id": "4a9a1df9-acdd-3ff5-8dc7-45696292dbb6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "78e2cf87-70be-342b-9faf-95676d4d8c25",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a640b6b2-0dfb-358b-ad2d-882d6fff4827",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "aadf5247-86f5-3e0b-8946-67dd689672c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "608a0ab2f54ab0e301ad76a41aad979ea0d02670 <0cbdbf26c456ef6ad1260dbd1b772239ce7bd071"
+    },
+    {
+      "id": "cfeebd68-bee6-3034-9724-d753c32875da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "05370a8f-5f20-3b38-8f7b-426b9e2c2ed5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

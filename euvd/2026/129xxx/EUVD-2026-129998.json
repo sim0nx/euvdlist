@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-129998",
+  "enisaUuid": "2d8bcf6d-15b3-3738-adb7-c04a2cf115c4",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: x86: Take SRCU in kvm_zap_gfn_range()\n\nkvm_zap_gfn_range() walks memslots and rmaps and may drop mmu_lock to\nreschedule. Callers that do not already hold kvm->srcu (or slots_lock)\ncan race with memslot deletion: synchronize_srcu_expedited() does not\nwait, kvm_free_memslot() frees the old slot and its rmap, and the zap\nresumes on freed memory.\n\nThe VFIO noncoherent-DMA path hits this by zapping the entire GPA\nspace without SRCU. KASAN reported:\n\n  BUG: KASAN: vmalloc-out-of-bounds in slot_rmap_walk_next+0x82/0x1c0\n  Read of size 8 at addr ffffc900005c1008\n  Call Trace:\n   slot_rmap_walk_next+0x82/0x1c0\n   __kvm_rmap_zap_gfn_range+0x17a/0x280\n   kvm_zap_gfn_range+0x2a6/0x6a0\n   kvm_vfio_set_attr+0x576/0x770\n   kvm_device_ioctl+0x1ff/0x3b0\n\nTake SRCU inside kvm_zap_gfn_range() so every caller is covered.\nNesting with an existing kvm->srcu critical section is fine; the\nhelper uses a local index. Drop the now-redundant SRCU pair from\n__kvm_set_or_clear_apicv_inhibit().",
+  "datePublished": "Nov 19, 2026, 2:21:48 PM",
+  "dateUpdated": "Nov 19, 2026, 2:35:43 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/9d119b4921ac74bc606917fd274c10c966fa5b72",
+    "https://git.kernel.org/stable/c/ec9df57c8e00f189d58d927cc9a1f49592f687af",
+    "https://git.kernel.org/stable/c/e34057e59ed784a37657835aac9f54eec0864342",
+    "https://git.kernel.org/stable/c/b59a87c1ba3c347e8aec5f932eb7abf13064fd62"
+  ],
+  "aliases": [
+    "CVE-2026-99340"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0b58c94d-c22d-3a5b-8e73-209ab6070886",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "362ff6dca5416e20646badf09394b9a8bfc000db <9d119b4921ac74bc606917fd274c10c966fa5b72"
+    },
+    {
+      "id": "345ec73b-8cb8-3163-b5a7-46c98eeb49ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "362ff6dca5416e20646badf09394b9a8bfc000db <b59a87c1ba3c347e8aec5f932eb7abf13064fd62"
+    },
+    {
+      "id": "55142e93-29cd-313c-8de2-2b9ec2e5d3f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "8187fdfe-eb6d-3935-b447-cdbb0322c616",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "845f2500-430b-3e9d-b29c-91b82e99d7b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.7"
+    },
+    {
+      "id": "b4dff71c-e6e6-3769-8f63-68f362eb911a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "362ff6dca5416e20646badf09394b9a8bfc000db <e34057e59ed784a37657835aac9f54eec0864342"
+    },
+    {
+      "id": "b6c0c68e-37ce-35b0-9806-c2da938219c2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "dc79e5e2-7cde-387a-984f-fa5bfb28ed67",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "362ff6dca5416e20646badf09394b9a8bfc000db <ec9df57c8e00f189d58d927cc9a1f49592f687af"
+    },
+    {
+      "id": "e82726ee-6079-3e81-8c26-1fd063d539e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "f3e129f4-26f5-31a0-b359-90ce52940f85",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0494a0e5-c570-30d2-9203-d2d521063cc1",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

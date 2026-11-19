@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130119",
+  "enisaUuid": "68eef4b7-7dd9-3291-b42a-8760ba9ab96e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxen-blkfront: unbind irq before tearing down ring and shadow requests\n\nIn blkif_free_ring(), the driver tears down the ring's persistent grants,\nshadow request arrays, and shared ring structure (xenbus_teardown_ring),\nand only calls unbind_from_irqhandler() at the very end.\n\nWhile blkif_free_ring() is freeing persistent grants and clearing the\nshadow array, the event channel interrupt (blkif_interrupt) is still\nregistered and active.  If an interrupt arrives from the backend during\nthis teardown window, blkif_interrupt() reads rinfo->ring.sring and,\nvia blkif_completion(), accesses rinfo->shadow[id].grants_used and\nrinfo->shadow[id].sg.  blkif_free_ring() tears these structures down\nwithout holding rinfo->ring_lock, and the handler only checks\ninfo->connected at entry, so this is a real race resulting in a\nuse-after-free or NULL pointer dereference.\n\nFix this by moving unbind_from_irqhandler() to the beginning of\nblkif_free_ring().  Calling unbind_from_irqhandler() first frees the\nIRQ and synchronizes with any in-flight interrupt handlers on other CPUs\nbefore ring memory and shadow request structures are deallocated,\nmatching the teardown order in drivers/net/xen-netfront.c.",
+  "datePublished": "Nov 19, 2026, 2:41:51 PM",
+  "dateUpdated": "Nov 19, 2026, 2:41:51 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/9cdf4fae8fde297ed9ce6bb0058d25449606ee66",
+    "https://git.kernel.org/stable/c/e64707d07fcda07c71d4f1405c1bedb0787a6889",
+    "https://git.kernel.org/stable/c/5f4b2debc87b6f86b56c6e1f5d97007a330d6aac",
+    "https://git.kernel.org/stable/c/f3e27b7955727a4d7c0e9264a2a209fbba788bdc"
+  ],
+  "aliases": [
+    "CVE-2026-99453"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "02194f03-8aa1-36b9-b477-5f67aec1c2a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11659569f7202d0cb6553e81f9b8aa04dfeb94ce <f3e27b7955727a4d7c0e9264a2a209fbba788bdc"
+    },
+    {
+      "id": "02be10d8-8b8e-3747-92ee-1ad9978b129d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11659569f7202d0cb6553e81f9b8aa04dfeb94ce <9cdf4fae8fde297ed9ce6bb0058d25449606ee66"
+    },
+    {
+      "id": "21e8bc26-8658-370c-ab02-afb898c2cf21",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "66a33242-e37e-3e66-a3b8-87e4dfac21bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.5"
+    },
+    {
+      "id": "6e4387be-abed-3b96-9837-07e0d1bab34b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11659569f7202d0cb6553e81f9b8aa04dfeb94ce <5f4b2debc87b6f86b56c6e1f5d97007a330d6aac"
+    },
+    {
+      "id": "be52b416-78e7-3ced-aa9f-bd2c8284dd5b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "d74722b0-a793-33cb-97a5-f73b6176eff0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11659569f7202d0cb6553e81f9b8aa04dfeb94ce <e64707d07fcda07c71d4f1405c1bedb0787a6889"
+    },
+    {
+      "id": "e36b3f31-f82c-3d2b-802b-eea9b8a734e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "f563d5ca-bd5a-3315-9abb-8514b4e9d5dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "fb9414b4-3da5-3711-9a9b-9a28584b5adf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "fba014f0-87e6-3b00-bde7-463db0ca3e67",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

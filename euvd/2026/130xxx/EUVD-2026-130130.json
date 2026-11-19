@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130130",
+  "enisaUuid": "f970b0fc-b9ec-3dde-bf43-86efef124362",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/rmap: don't discard lazyfree THPs at PMD level\n\n__discard_anon_folio_pmd_locked() clears a lazyfree THP's PMD before it\ndetermines whether the folio can be discarded, and restores it if the\nfolio is dirty or has extra references.  It is done under only the PMD\nlock and the anon_vma read lock inside try_to_unmap_one() and no mmap lock\nis held.  The temporarily none PMD causes UAF.\n\nA parallel munmap() or mremap() is supposed to serialize with it on the\nPMD lock, but zap_pmd_range() (called by munmap()) and move_page_tables()\n(called by mremap()) do not take the lock when they see the temporarily\nnone PMD and skip the PMD.  There is no more page table walk after the\nnone PMD is restored:\n\n- munmap(): free_pgtables() waits in unlink_anon_vmas() for the anon_vma\n  lock, then free_pmd_range() drops the restored PMD as bad without\n  removing the rmap, so the folio keeps a stale mapcount.\n\n- whole-VMA MREMAP_DONTUNMAP: dontunmap_complete() unlinks the source VMA\n  from its anon_vma while the restored PMD still maps the folio.\n\n- plain mremap(): the THP is not moved but unmapped, so the THP's data is\n  lost.\n\nIn the first two cases, the folio stays mapped, but no VMA that maps it is\nlinked to its anon_vma.  When the anon_vma is freed, it is still reachable\nwhen one rmap walks the folio.  Racing lazyfree reclaim against\nMREMAP_DONTUNMAP as an unprivileged user reproduces a KASAN use-after-free\nin folio_lock_anon_vma_read() as reported in the Closes link.\n\nOne solution is to use an invalidated PMD instead of a cleared one until\nthe discard is committed, but it needs arch fixes first.\n1. GUP-fast still follows an invalidated PMD on riscv, LoongArch and s390.\n2. sparc64 miscounts thp_pte_count when an invalidated PMD is set again or\n   cleared.\n\nTo keep the fix simple for backport, stop discarding lazyfree THPs at PMD\nlevel instead. try_to_unmap_one() splits the PMD and discards the folio at\nPTE level.\n\nunmap_huge_pmd_locked() and __discard_anon_folio_pmd_locked() are left in\nplace, unused, to minimize this fix for backport and the invalidated PMD\napproach is planned as a follow-up series to use them again.",
+  "datePublished": "Nov 19, 2026, 2:42:16 PM",
+  "dateUpdated": "Nov 19, 2026, 2:42:16 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/8cf9517996067cfbfc5abdb4cfb3d7e15a7b34a3",
+    "https://git.kernel.org/stable/c/3594027c292b09d9301b4be80fa8e0c815ffaf2a",
+    "https://git.kernel.org/stable/c/b8c683bd548268453d50e933aab2e7d50a7ac2be",
+    "https://git.kernel.org/stable/c/984c0700854e35779a2bcce6b02783e709b6efa2"
+  ],
+  "aliases": [
+    "CVE-2026-99463"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0d8abbcd-fa29-38e7-98f5-f55453288a40",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "103de5ee-a4c1-3777-99ec-8b91c23aeffa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.11"
+    },
+    {
+      "id": "1ea20a16-26d1-3f2c-b0f2-afb7fcfd4fdc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "735ecdfaf4e802209caf34b7ac45adf448c54ccc <8cf9517996067cfbfc5abdb4cfb3d7e15a7b34a3"
+    },
+    {
+      "id": "24f23af1-107b-3168-84ec-05892c90b24a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "32179666-b9e8-39f3-a6ef-6d05a37a3bc4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "7b8154c4-8724-34bf-adf9-1c72e748f5b0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "86167ce7-bfd5-3c14-ad84-71eb143ff6bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "735ecdfaf4e802209caf34b7ac45adf448c54ccc <b8c683bd548268453d50e933aab2e7d50a7ac2be"
+    },
+    {
+      "id": "89ba82c8-1946-362a-a52c-7c60ad3bd54f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "735ecdfaf4e802209caf34b7ac45adf448c54ccc <984c0700854e35779a2bcce6b02783e709b6efa2"
+    },
+    {
+      "id": "c988766e-3e9f-3154-9c96-48a5112e4e0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "f1a86c16-cc14-312a-a9c1-fce080a05c4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "735ecdfaf4e802209caf34b7ac45adf448c54ccc <3594027c292b09d9301b4be80fa8e0c815ffaf2a"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a11a6cdf-12a1-386e-b544-76a814cf686a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

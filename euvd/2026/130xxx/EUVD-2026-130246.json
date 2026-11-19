@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-130246",
+  "enisaUuid": "6349fb90-4476-37be-922b-13bab0cba5c1",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsched_ext: Fix use-after-free of a local reenq node left on an inactive cpu\n\nA local DSQ reenq is queued on the rq through a per-sched node and run from\ndeferred work. When the reenq is requested from dispatch, the work is a\nbalance callback queued once dispatch is done. A cpu going down installs\nbalance push early in its teardown, and queue_balance_callback() refuses new\ncallbacks from then on. ops.dispatch() keeps running on that cpu until the\nrq goes offline after an RCU grace period, so a reenq it requests in that\nwindow may never run. The IMMED handling in dispatch_one() requests one the\nsame way.\n\nA reenq requested from elsewhere for a cpu that is already offline goes\nthrough irq_work_queue_on(), which warns, and its work doesn't run until the\ncpu comes back.\n\nEither way the node stays on the rq's list. When the scheduler is freed,\nscx_sched_free_rcu_work() warns and frees the pcpu with the node still\nlinked, and the list is walked again once the cpu comes back.\n\nAn inactive cpu's local DSQ holds only tasks that are bound to it or are\nbeing moved off, so the reenq is pointless. Ignore reenqs of an inactive\ncpu's local DSQ.\n\nThe test is lockless. The hotplug thread of a cpu going down runs on that\ncpu, and it marks the cpu inactive before it installs balance push. A\ndispatch on the cpu runs to completion before that thread can run there, so\na dispatch that saw the cpu active has queued its callback by then. Requests\nfrom outside dispatch run from the wakeup path or through irq_work, which\nbalance push doesn't affect. The grace period after the cpu goes inactive\nwaits for any requester that saw it active, so that irq_work is queued while\nthe cpu is online.",
+  "datePublished": "Nov 19, 2026, 2:44:36 PM",
+  "dateUpdated": "Nov 19, 2026, 2:44:36 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0b5282963734a51b6dad978ccfe0fa22c4d4fb17",
+    "https://git.kernel.org/stable/c/43e1ef14a47257ebf7e3bb3ab9a6df9c6f817c5f"
+  ],
+  "aliases": [
+    "CVE-2026-99524"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "04f7e241-ca4e-3abb-9dae-156e3634a1dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "0761cbf6-c659-3ffd-9e59-46690c02185e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "238eba8c210d02ec2908d9c9143db4edcea3bfa1 <0b5282963734a51b6dad978ccfe0fa22c4d4fb17"
+    },
+    {
+      "id": "14a6e989-06cd-3a34-93c8-fa5a39505e31",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7287c092-9491-3167-8e1b-a1b11c4cffe3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "238eba8c210d02ec2908d9c9143db4edcea3bfa1 <43e1ef14a47257ebf7e3bb3ab9a6df9c6f817c5f"
+    },
+    {
+      "id": "9230885c-fc98-3679-8c48-cbdb119560ae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "931439e9-c9c4-3bc7-a454-45053f165c40",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5e31fa01-feb6-3e0e-a4d1-4e186e823ff0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

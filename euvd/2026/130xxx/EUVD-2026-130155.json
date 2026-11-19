@@ -1,0 +1,179 @@
+{
+  "id": "EUVD-2026-130155",
+  "enisaUuid": "b0c09e69-df80-3b00-a9fb-33b965bc6bf5",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: hci_vhci: Pin module for debugfs file operations\n\nAn open debugfs file retains its file_operations pointer in the\ndebugfs proxy state. However, force_suspend_fops, force_wakeup_fops,\naosp_capable_fops, and force_devcoredump_fops have no .owner set to\nTHIS_MODULE. As a result, full_proxy_open_regular() calls fops_get()\nwhich succeeds without taking a reference to the hci_vhci module.\n\nWhen userspace opens any of these debugfs files and later closes\nthe /dev/vhci file descriptor (triggering vhci_release() and\ndebugfs file removal), the open debugfs file descriptor remains valid\nin userspace. Because the module refcount was not incremented,\nthe hci_vhci module can be unloaded via delete_module (rmmod hci_vhci).\n\nWhen the userspace process subsequently closes the debugfs file\ndescriptor, full_proxy_release() accesses the already unmapped\nfile_operations structure, resulting in a kernel page fault / oops:\n\n  BUG: unable to handle page fault for address: fffffbfff846f18b\n  #PF: supervisor read access in kernel mode\n  #PF: error_code(0x0000) - not-present page\n  Oops: Oops: 0000 [#1] SMP KASAN NOPTI\n  RIP: 0010:full_proxy_release+0x8e/0x140\n  Call Trace:\n   <TASK>\n   __fput+0x39f/0xa60\n   fput_close_sync+0xff/0x200\n   __x64_sys_close+0x8c/0xf0\n   do_syscall_64+0xc3/0x590\n   entry_SYSCALL_64_after_hwframe+0x76/0x7e\n   </TASK>\n  Modules linked in: ... [last unloaded: hci_vhci(E)]\n\nThe issue was discovered via manual code audit of\ndrivers/bluetooth/hci_vhci.c and verified on a Linux 7.3-rc6 test VM\nwith CONFIG_BT_VHCI=m by keeping a debugfs file open across controller\nteardown and module unload.\n\nSet .owner = THIS_MODULE on all four file_operations structures so that\ndebugfs pins the module until all file descriptors are closed.",
+  "datePublished": "Nov 19, 2026, 2:43:16 PM",
+  "dateUpdated": "Nov 19, 2026, 2:43:16 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a82b3dec02bd42eedbc2733b092910f3b6bc4948",
+    "https://git.kernel.org/stable/c/d5cc1f1333d47593fcc71b73d1fade556c8ece76",
+    "https://git.kernel.org/stable/c/19502449eeeafbf48ad1626cc356d178d549fcc0",
+    "https://git.kernel.org/stable/c/645ee6b176c958579cff1c783413d5cff65c8197"
+  ],
+  "aliases": [
+    "CVE-2026-99481"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0cc27a6f-b639-3778-b8b1-bc23f91ad882",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "1c1f257a-efd3-3ce7-a82d-65cd99217960",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "28758b2c-6a6e-30bc-a69f-4b2154a34d43",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "2b3bd13a-ff8e-3e75-a9cf-93526c20a4b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.17"
+    },
+    {
+      "id": "356f2049-d69a-3e35-b150-6b4ffff9338c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.105 <6.7"
+    },
+    {
+      "id": "3d1ddf9e-d82f-39e8-b8ce-22b1a4932e07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bd75eba88e88d7b896b0c737b02a74a12afc235f"
+    },
+    {
+      "id": "6142eb22-2b7a-3035-ade5-fab46374a582",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "28010791193a4503f054e8d69a950ef815deb539 <645ee6b176c958579cff1c783413d5cff65c8197"
+    },
+    {
+      "id": "707f41b4-db85-3d0b-8681-95b95c06d64b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "74d80e94-763c-31da-922e-d1ce501ebd53",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "7bb80e3b-11ce-3f16-bddf-5af19be97590",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.16.6 <6.17"
+    },
+    {
+      "id": "87daf6f0-1c54-39b9-b68a-d2a9a0343216",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1503756fffe76d5aea2371a4b8dee20c3577bcfd <a82b3dec02bd42eedbc2733b092910f3b6bc4948"
+    },
+    {
+      "id": "b1437f25-a2a8-3a5e-bd34-a2c5d051ce07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "28010791193a4503f054e8d69a950ef815deb539 <d5cc1f1333d47593fcc71b73d1fade556c8ece76"
+    },
+    {
+      "id": "bfab5f1b-250e-3f7a-aa6b-d371d901b307",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "28010791193a4503f054e8d69a950ef815deb539 <19502449eeeafbf48ad1626cc356d178d549fcc0"
+    },
+    {
+      "id": "cefba048-c2a2-31fe-bee3-3a61248f1e59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7cc08f2f127b9a66f46ea918e34353811a7cb378"
+    },
+    {
+      "id": "e0f9d5fa-fd92-38bb-bb05-d2a1c6889b57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12.46 <6.12.117"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0fec2626-2767-349b-a077-25b95f05a39c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

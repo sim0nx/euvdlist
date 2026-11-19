@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130150",
+  "enisaUuid": "9e320d5d-dc7b-3179-8edd-271a2135c85a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs/proc/task_mmu: pin mm_users in do_pagemap_scan()\n\nThe PAGEMAP_SCAN ioctl takes mmap_read_lock() on an mm obtained from\n/proc/<pid>/pagemap without holding a reference to mm_users.\n\nproc_mem_open() deliberately grabs only mm_count, so a consumer that\ntouches the address space has to call mmget_not_zero() first.  Every other\nconsumer in this file does -- m_start(), do_procmap_query(),\nshow_smaps_rollup() and pagemap_read() -- but do_pagemap_scan() does not.\n\nWithout that reference the target can reach exit_mmap() concurrently, and\nexit_mmap() calls unmap_vmas() while holding mmap_lock only for reading,\nwhich does not exclude the scanner.  For ordinary VMAs this is harmless,\nas free_pgtables() and remove_vma() run afterwards under mmap_write_lock. \nA shared hugetlb VMA is different: __hugetlb_zap_end() frees the VMA's\nhugetlb_vma_lock inside the read-locked phase.\n\nwalk_hugetlb_range() can therefore load vma->vm_private_data, have the\nlock freed underneath it, and then down_read() a freed rw_semaphore.  The\nload happens before the freeing side clears the pointer, so this is a\nuse-after-free and not a NULL dereference.  Any unprivileged user can\nreach it with no huge pages configured, as hugetlb_reserve_pages()\nallocates the lock before the VM_NORESERVE early return.\n\nPin mm_users across the scan, the way the other consumers do.  mmput()\nfrom the exiting task can then no longer reach exit_mmap() while a walk is\nin progress.\n\n[akpm@linux-foundation.org: remove unneeded & undesirable test for !mm]",
+  "datePublished": "Nov 19, 2026, 2:43:11 PM",
+  "dateUpdated": "Nov 19, 2026, 2:43:11 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6e2299a9356de3364e193d6eaf123b90d7698c1d",
+    "https://git.kernel.org/stable/c/abc9c0f4f850d23e55f4230cd0f54938a64267bf",
+    "https://git.kernel.org/stable/c/14a853bf3e6f0dd62ff479a36613411237dec24c",
+    "https://git.kernel.org/stable/c/4fb975471717c953f912776bb60301add1ffae11"
+  ],
+  "aliases": [
+    "CVE-2026-99477"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "03f996a7-af8f-3f8c-ada0-902133a0072a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "52526ca7fdb905a768a93f8faa418e9b988fc34b <abc9c0f4f850d23e55f4230cd0f54938a64267bf"
+    },
+    {
+      "id": "087c9394-8294-37e3-9a19-bf18f79046b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "52526ca7fdb905a768a93f8faa418e9b988fc34b <14a853bf3e6f0dd62ff479a36613411237dec24c"
+    },
+    {
+      "id": "18360d68-54ec-3a82-91c2-28dd146187be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "3cc08eb4-1086-385f-9b9d-f9f9eb443f4f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "52526ca7fdb905a768a93f8faa418e9b988fc34b <6e2299a9356de3364e193d6eaf123b90d7698c1d"
+    },
+    {
+      "id": "67482526-a988-30b9-991f-47059788db2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.7"
+    },
+    {
+      "id": "73440265-e761-31bf-9a87-5011af424eb9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "52526ca7fdb905a768a93f8faa418e9b988fc34b <4fb975471717c953f912776bb60301add1ffae11"
+    },
+    {
+      "id": "82fc72b9-6fc2-3068-b0ce-c9ad22dcd43d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "9deec3f6-eb1b-351f-8e49-436be327a4ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "c71c28a4-9921-3c44-b34b-165e9257e7f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "ffb4e1a7-d43a-3fe5-ae4a-65008342e269",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5a811af3-24f3-34f3-8a63-8eac0db3abb0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

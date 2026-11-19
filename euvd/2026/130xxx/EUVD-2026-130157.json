@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130157",
+  "enisaUuid": "aad14ade-dcb5-3d9a-9771-1a07aa24c4e9",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: pcmtest: handle multiple wraps in random capture fill\n\nThe random capture helpers assume that the data generated for one timer\ntick wraps the DMA ring at most once. However, b_rw describes 200 ms of\naudio because the timer runs at 5 Hz, so it can be several times larger\nthan a small ring.\n\nFor 48 kHz, S16_LE, four-channel capture with a 512-frame buffer, the DMA\nring is 4096 bytes while one tick generates 76800 bytes. After filling the\n4096-byte tail, the existing code issues a second 72704-byte write from the\nring base, writing 68608 bytes beyond the ring. Both interleaved and\nnon-interleaved capture are affected.\n\nKASAN reports the first write into the adjacent free page as a\nuse-after-free in the random-byte generator. The underlying defect is an\nout-of-bounds write from the live DMA ring, not a stale DMA allocation.\n\nSplit each random write repeatedly at the interleaved ring or per-channel\nblock boundary. Keep the hardware-pointer update exactly once after the\ncomplete logical write.\n\nThe issue reproduced on three of three clean boots. With this change, the\nsame vulnerable geometry completed six times without a sanitizer finding.\nBoundary, pattern-fill, no-timer, open/close, and module-reload controls\nalso completed normally.\n\nsnd-pcmtest is a test driver, and selecting random fill requires an\nadministrator-controlled module parameter. The written values come from the\nkernel random generator; no privilege escalation or attacker-controlled\nwrite primitive was demonstrated.",
+  "datePublished": "Nov 19, 2026, 2:43:18 PM",
+  "dateUpdated": "Nov 19, 2026, 2:43:18 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/8f8555e03bb2596b0d521c5b95c72cbd76e7d9af",
+    "https://git.kernel.org/stable/c/5cb07a5941b1e3dbe655110618869a81af68907e",
+    "https://git.kernel.org/stable/c/76319a56f069bb950d9cebbc1a291cbfa94a1c1f",
+    "https://git.kernel.org/stable/c/6541871e8e63e721733cd120af4d9cd22c5ef62f"
+  ],
+  "aliases": [
+    "CVE-2026-99483"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "31565655-199e-336d-bf84-f04454b19f91",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "315a3d57c64c55901d6fe5a5eef3b3e51d215381 <6541871e8e63e721733cd120af4d9cd22c5ef62f"
+    },
+    {
+      "id": "61a9e942-d0f7-32de-bbdf-cc825e861096",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "315a3d57c64c55901d6fe5a5eef3b3e51d215381 <8f8555e03bb2596b0d521c5b95c72cbd76e7d9af"
+    },
+    {
+      "id": "6bc53561-801b-33b2-9f57-08a592ca4d81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "315a3d57c64c55901d6fe5a5eef3b3e51d215381 <76319a56f069bb950d9cebbc1a291cbfa94a1c1f"
+    },
+    {
+      "id": "79b6c974-11ef-31dc-a88c-1acb5c250021",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "816d53a9-8c94-3cb9-8d76-a141b8fa78c2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "8fa77ecf-486c-395b-ac67-ed63f7b3dc13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "952736bd-31ca-340a-9249-529d3a9f6845",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.5"
+    },
+    {
+      "id": "9b74f26f-48a8-311d-889a-15a01ba13993",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "bb217895-050e-3e2f-95b8-c2325edb731a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "315a3d57c64c55901d6fe5a5eef3b3e51d215381 <5cb07a5941b1e3dbe655110618869a81af68907e"
+    },
+    {
+      "id": "da232555-1c11-3920-b77a-fc5ee69fe67f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2b4de964-0dfa-346f-801f-5aaa43848f77",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

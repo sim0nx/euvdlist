@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130272",
+  "enisaUuid": "235ae0fa-3732-3cb2-bba7-55391650c4b4",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: fix early procfs exposure race\n\nCurrently, init_cifs() calls cifs_proc_init() near the beginning of\nthe function, before INIT_LIST_HEAD, leading to a momentarily\nuninitialized, but exposed, procfs. If a userspace process reads this\nempty procfs, iterating over a zeroed list_head leads to a NULL\npointer dereference and a kernel oops/panic.\n\nFor example, if a delay is added between cifs_proc_init() and\nINIT_LIST_HEAD, and a userspace process is polling\n/proc/fs/cifs/DebugData, the following oops occurs:\n\nBUG: kernel NULL pointer dereference, address: 0000000000000608\nOops: Oops: 0000 [#1] SMP PTI\nCPU: 0 UID: 0 PID: 3477 Comm: cat Not tainted\n7.3.0-02212-g4df4d2a577db-dirty #6 PREEMPT(lazy)\nRIP: 0010:cifs_debug_data_proc_show+0x103/0xd80 [cifs]\nCall Trace:\n<TASK>\n ? seq_read_iter+0x86/0x400\n ? seq_read_iter+0x86/0x400\n seq_read_iter+0x183/0x400\n proc_reg_read_iter+0x62/0x90\n copy_splice_read+0x215/0x310\n splice_file_to_pipe+0xec/0x1c0\n do_splice+0x4b8/0x780\n __se_sys_splice+0x18f/0x250\n do_syscall_64+0x109/0x330\n entry_SYSCALL_64_after_hwframe+0x77/0x7f\n</TASK>\n\nFix this by moving cifs_proc_init() down in init_cifs(), ensuring it runs\nonly after all internal lists, locks, counters, and workqueues are fully\nready, but before registering the filesystem. Update the error cleanup\nladder and exit_cifs() to maintain proper LIFO order.",
+  "datePublished": "Nov 19, 2026, 2:45:11 PM",
+  "dateUpdated": "Nov 19, 2026, 2:45:11 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/cfaec5094017bd9d41a0572325ec2cec4f7d5e31",
+    "https://git.kernel.org/stable/c/4d6e1b44d1fbfa70b045a670b18200dc4824226b",
+    "https://git.kernel.org/stable/c/31209411c4f98158b41508b7f90583e8cf5d6076",
+    "https://git.kernel.org/stable/c/7b1afb631395c958993cda4631002258ef4151ea"
+  ],
+  "aliases": [
+    "CVE-2026-99548"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0294b8ec-65ce-3677-a192-397d64351c23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4d6e1b44d1fbfa70b045a670b18200dc4824226b"
+    },
+    {
+      "id": "1b92466f-a893-3cd0-a391-00a5ab94c17c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "1c0486c6-400b-331f-8979-590928a5ac6f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "2c497720-1623-389d-b49e-935a18c5f038",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <31209411c4f98158b41508b7f90583e8cf5d6076"
+    },
+    {
+      "id": "4f846b34-545e-3ede-aa02-12805b1300a8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <cfaec5094017bd9d41a0572325ec2cec4f7d5e31"
+    },
+    {
+      "id": "77cf2b65-9e39-3488-9b81-db0034d5a748",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "7c220339-9534-36ad-bbb8-1dc29b95ef06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <7b1afb631395c958993cda4631002258ef4151ea"
+    },
+    {
+      "id": "91c11512-6566-3b47-9d6b-7cfd09b97764",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "b550ab86-619b-3dad-94d5-e3c90fb2e020",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "d663470d-18e2-39a9-afcc-988c5e6edeb7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f57bd8cb-8fb9-3014-8c90-7637fa2498e3",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

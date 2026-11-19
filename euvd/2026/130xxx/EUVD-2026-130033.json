@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130033",
+  "enisaUuid": "d167a8f7-e7ca-3e2b-939c-a68fb45e54a2",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nNFSv4/flexfiles: fail I/O to the data server once a lock is lost\n\nWhen a client loses a byte-range lock, because its lease expired and it\nmay not recover the lock (nfs.recover_lost_locks=0) or because reclaim\nfailed, it marks the lock state NFS_LOCK_LOST and fails further I/O by\nthat lock owner.  Otherwise an application that believes it holds a\nlock over a range is never told that the lock is gone, and can\noverwrite data that another client has since written under its own\nlock on that range.\n\nThe NFSv4 READ/WRITE and file layout I/O paths apply this in\nrpc_call_prepare, where nfs4_set_rw_stateid() returns -EIO for a lost\nlock.  The flexfiles data server I/O path does not: the NFSv3 data\nserver path never checked, and the check on the NFSv4 path was removed\nwhen the data server stateid began to be taken from the layout.\n\nFail read and write RPCs to the data server in rpc_call_prepare when the\nlock is lost.  The data server path has no use for the stateid that\nnfs4_set_rw_stateid() selects, and selecting it looks up a delegation\nor open stateid on every I/O.\nInstead add nfs4_lock_context_lost(), which only tests NFS_LOCK_LOST,\nand check it alongside the open state.  Its lookup,\n__nfs4_lookup_lock_state(), is split out of __nfs4_find_lock_state()\nand takes no reference: a lock state is only unlinked from\nstate->lock_states under state->state_lock, so one found while holding\nthat lock cannot be freed before it is released.  Use it in\nnfs4_copy_lock_stateid() as well, which only reads the lock state under\nthat lock.  That drops a reference get and put from stateid selection\nfor all NFSv4 I/O without changing the stateid selected.\n\nTerminating the RPC in rpc_call_prepare is not enough on its own.  The\ndone callback reads the -EIO as a data server connection error, forgets\nthe device ID, and resets the I/O to pNFS (or, for an NFSv4 data\nserver, possibly to the MDS).  After a reset to pNFS a new LAYOUTGET is\ngranted and rpc_call_prepare fails the I/O again, without end.  The\nexisting NFS_CONTEXT_BAD check does not loop, since the open state is\nthen invalid and pnfs_update_layout() fails the reset I/O, but it still\nforgets the device ID.\n\nSo when an RPC that was never sent fails and the open context is bad,\nthe open state is invalid, or the lock is lost, complete it with -EIO\nwithout error handling.  An RPC that was sent and failed is handled as\nbefore, so a real data server error is still reported to the MDS.",
+  "datePublished": "Nov 19, 2026, 2:23:11 PM",
+  "dateUpdated": "Nov 19, 2026, 2:38:09 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/88f3916a239fc945362eaac13ca2e29f59539f42",
+    "https://git.kernel.org/stable/c/938f374ec83912d1383810a1d31aa7ac1940b11e",
+    "https://git.kernel.org/stable/c/fe52fa5319458d3d5f04046422b4cf954024a26f",
+    "https://git.kernel.org/stable/c/7fa2ad367abe6d3155daefb57331e7fce1a17afd"
+  ],
+  "aliases": [
+    "CVE-2026-99375"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0ab3ab09-0cf2-3fbc-8bbd-307a795d46cf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.0"
+    },
+    {
+      "id": "0f87ac1b-beaa-34ed-9faa-4816d05caed5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6548f10e-3ad1-30d5-b9d6-9f27d29741cb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "8e9b6341-f2ba-3fa9-ad2f-c43e31139699",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d67ae825a59d639e4d8b82413af84d854617a87e <fe52fa5319458d3d5f04046422b4cf954024a26f"
+    },
+    {
+      "id": "a751c99c-52b1-3d3c-874f-07c298755e7b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "aed1200c-5e56-33ee-b163-43a8f006377f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d67ae825a59d639e4d8b82413af84d854617a87e <88f3916a239fc945362eaac13ca2e29f59539f42"
+    },
+    {
+      "id": "ce90a5a9-0abe-372a-9101-47ab1ebb14ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d67ae825a59d639e4d8b82413af84d854617a87e <7fa2ad367abe6d3155daefb57331e7fce1a17afd"
+    },
+    {
+      "id": "d09203c8-4d35-37f6-a863-066ab0eda233",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d67ae825a59d639e4d8b82413af84d854617a87e <938f374ec83912d1383810a1d31aa7ac1940b11e"
+    },
+    {
+      "id": "d3365e7d-c16e-30ac-ab55-37908fadd111",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "f7f2940d-a463-3533-9dda-bd70d80802d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3759b19a-0bba-30b4-bde1-8ee9d0d361ee",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

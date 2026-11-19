@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-130241",
+  "enisaUuid": "00555ccc-8488-30b2-96be-8110a3e3951f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npps: generators: fix use-after-free when closing a removed device\n\nThe cdev of a PPS generator is embedded in struct pps_gen_device, but\nnothing ties the lifetime of that structure to the cdev: pps_gen is\nfreed by the release function of its device, and an open file holds a\ndevice reference only until pps_gen_cdev_release() drops it.\n\nWhen the generator is unregistered while /dev/pps-genN is open, that\nput_device() drops the last reference and frees pps_gen, and __fput()\nthen calls cdev_put() on the freed cdev:\n\n  BUG: KASAN: slab-use-after-free in cdev_put+0x53/0x60\n  Read of size 8 at addr ffff88801383e138 by task ppsgen64/149\n  Call Trace:\n   cdev_put+0x53/0x60\n   __fput+0x745/0xad0\n   fput_close_sync+0xd9/0x1b0\n   __x64_sys_close+0x86/0xf0\n  ...\n  Freed by task 149:\n   kfree+0x25a/0x6d0\n   device_release+0xca/0x3c0\n   kobject_put+0x169/0x320\n   pps_gen_cdev_release+0x51/0x80\n   __fput+0x36a/0xad0\n\npps.c had the same bug, fixed in commit c79a39dc8d06 (\"pps: Fix a\nuse-after-free\").\n\nFix it the usual way: embed the struct device in pps_gen_device and\nregister both with cdev_device_add(). This makes the device the parent\nof the cdev, so the cdev holds a device reference until the last file\nis closed.",
+  "datePublished": "Nov 19, 2026, 2:44:25 PM",
+  "dateUpdated": "Nov 19, 2026, 2:44:25 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/63dc56500a91591ad9b42e09ca4646b0a4d03406",
+    "https://git.kernel.org/stable/c/3c94478114384d97795029160ceb539ade38cc43",
+    "https://git.kernel.org/stable/c/d19552611cb2eb6329826871565e5309bec2f288"
+  ],
+  "aliases": [
+    "CVE-2026-99520"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1fc34374-4af6-3ff4-b8fe-5896f1488073",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.14"
+    },
+    {
+      "id": "41636cb4-7418-3ac1-ac3a-a3a4411eae29",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "86b525bed2758878e788c9fb6b8fb281fd61bdb0 <3c94478114384d97795029160ceb539ade38cc43"
+    },
+    {
+      "id": "5edb7090-070d-3b53-bab0-4cc8ec8b3796",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "86b525bed2758878e788c9fb6b8fb281fd61bdb0 <d19552611cb2eb6329826871565e5309bec2f288"
+    },
+    {
+      "id": "98550f7c-69db-3203-956b-32755a5a5d25",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "a81844f0-35df-3d0c-b92f-d2d5e6b0f5dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b32209f2-f2eb-30ff-8de6-c8fd6fc20697",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "bd92eef2-5c99-3ad7-a9e3-8f0fc7983485",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "86b525bed2758878e788c9fb6b8fb281fd61bdb0 <63dc56500a91591ad9b42e09ca4646b0a4d03406"
+    },
+    {
+      "id": "e09edf3c-4267-39c2-b2e4-843015b828d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2370effa-a110-3b30-aa33-8485886c38ac",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

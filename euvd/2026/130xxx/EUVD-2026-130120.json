@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130120",
+  "enisaUuid": "1e5eaddf-dd9b-33b5-b48c-262da63ba98b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nstaging: rtl8723bs: fix protected RX frame validation in decrypt path\n\nThe RX software decrypt path mishandles crafted protected frames from a\nmalicious AP in two ways:\n\n1) decryptor() never checks that a protected frame is long enough to\nhold the 802.11 header plus the per-cipher trailer.  All of\nrtw_wep_decrypt(), rtw_tkip_decrypt() and rtw_aes_decrypt() compute\n\n\tlength = hdr.len - hdrlen - iv_len;\n\nand act on the result, and recvframe_chkmic() similarly computes\n\n\tdatalen = hdr.len - hdrlen - iv_len - icv_len - 8;\n\nfor TKIP (the 8-byte Michael MIC is not accounted for in icv_len).\nA frame shorter than hdrlen + iv_len + icv_len (+ 8 for TKIP) underflows\nthese unsigned subtractions, turning into a ~4 GiB iteration count in\naes_decipher()/arc4_crypt()/rtw_seccalctkipmic() or a ~4 GiB crc32_le()\nlength, causing out-of-bounds reads/writes of up to ~4 GiB starting from\nthe rx skb.  Reject such frames in decryptor() before touching the IV;\nthis covers all three ciphers and the TKIP MIC check, and also keeps the\nunconditional iv[3] access within the frame.\n\n2) validate_80211w_mgmt() keeps using the frame - two memcpys through\nthe stale rx_data pointer and a pkt_len update - before checking\nwhether decryptor() returned NULL.  On decrypt failure (e.g. a unicast\nprotected deauth/disassoc/action frame with a bad MIC, which this path\nalways software-decrypts) the skb has already been freed, so this is a\nuse-after-free read/write, and the caller's error path frees the frame\na second time, drifting free_recvframe_cnt.  Bail out immediately when\ndecryptor() fails, freeing the temporary mgmt_DATA buffer first.\n\nDiscovered by Atuin - Automated Vulnerability Discovery Engine.",
+  "datePublished": "Nov 19, 2026, 2:41:54 PM",
+  "dateUpdated": "Nov 19, 2026, 2:41:54 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/60e3352593f224306dfab578bf586b301642265f",
+    "https://git.kernel.org/stable/c/33e8f5740319996788395d85a4c100f61593cb75",
+    "https://git.kernel.org/stable/c/b0e79d0ed03ee2e2b9bc0b637fcb87567ff46112",
+    "https://git.kernel.org/stable/c/495cb31c791bdf3f9efef255a9587b05b0526c9d"
+  ],
+  "aliases": [
+    "CVE-2026-99454"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "14bb61e9-9ebe-33c5-bea2-3a76cf707dc1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "2627f389-3ab6-3e92-b048-d0e39a22cd44",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.63"
+    },
+    {
+      "id": "47d0de4a-6d13-3a29-bf12-330b1f746176",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "554c0a3abf216c991c5ebddcdb2c08689ecd290b <60e3352593f224306dfab578bf586b301642265f"
+    },
+    {
+      "id": "627b8cf6-5272-30f8-aea1-5527e5adfea0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "554c0a3abf216c991c5ebddcdb2c08689ecd290b <b0e79d0ed03ee2e2b9bc0b637fcb87567ff46112"
+    },
+    {
+      "id": "632ae02b-ced6-3b60-be73-dddef5b1d789",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.12"
+    },
+    {
+      "id": "6a481e10-e015-3310-9974-c4bc1780a90c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "7d227af9-950e-3cbd-8c48-0ff1cb84c7da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "80c61447-4bc7-34ac-a374-610c46eca4ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "554c0a3abf216c991c5ebddcdb2c08689ecd290b <33e8f5740319996788395d85a4c100f61593cb75"
+    },
+    {
+      "id": "ea1fd730-1f37-39f6-9e09-a4ea9da61ff1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "f26fae9e-d050-30cb-af89-faa9cb3b1974",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "554c0a3abf216c991c5ebddcdb2c08689ecd290b <495cb31c791bdf3f9efef255a9587b05b0526c9d"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7b46e04c-3767-3050-b5d2-23071ff99aa6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

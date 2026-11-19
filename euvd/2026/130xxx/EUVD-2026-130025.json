@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130025",
+  "enisaUuid": "a5786c7b-0bb2-3745-b945-ff874aab931c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nNFSD: Don't complete a cld upcall the daemon has not read\n\ncld_pipe_downcall() matches a reply to its upcall on the xid alone.\nA write that arrives before the daemon has read that upcall\ncompletes __cld_pipe_upcall() while its struct rpc_pipe_msg is still\nqueued on the pipe. The waiter returns, its stack frame goes away,\nand the pipe keeps a list_head that points into it. The next\nrpc_queue_upcall() walks that pointer:\n\n  BUG: KASAN: vmalloc-out-of-bounds in __list_add_valid_or_report\n  Read of size 8 at addr ffffc90007027950 by task syz.0.96/13066\n   __list_add_valid_or_report+0x6a/0x130\n   rpc_queue_upcall\n   cld_pipe_upcall\n   nfsd4_cld_grace_start\n   nfsd4_cld_tracking_init\n\nThe pipe is mode 0600 in rpc_pipefs, so the trigger is a broken or\nhostile nfsdcld rather than an unprivileged task.\n\nRecord whether the daemon has consumed the whole message and\ncomplete only when it has. cld_pipe_destroy_msg() runs on every path\nby which the pipe releases a message, so it can maintain that flag\nunder cn_lock. nfsdcld sends its -EINPROGRESS downcalls only after\nreading the upcall, so the new check does not break the GraceStart\nrecord stream.",
+  "datePublished": "Nov 19, 2026, 2:22:58 PM",
+  "dateUpdated": "Nov 19, 2026, 2:37:52 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e058341ceb177226fdb20a36d48fa827851d9c81",
+    "https://git.kernel.org/stable/c/f6d1f1072243a1adb1ae15425f6e36f86be94078",
+    "https://git.kernel.org/stable/c/226c11eb20042ce4251f50870ce61f86581f8152",
+    "https://git.kernel.org/stable/c/7f4bf851aca4e18940ebf2bddf4ba6783802ee81"
+  ],
+  "aliases": [
+    "CVE-2026-99367"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "04f8f005-f465-3afd-86c6-7dfa679236aa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3f8014862d813cca81a597c83bd1dbf0fb2b8f6 <226c11eb20042ce4251f50870ce61f86581f8152"
+    },
+    {
+      "id": "1165b61c-7cef-3493-a7cb-4069b7be5c7b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3f8014862d813cca81a597c83bd1dbf0fb2b8f6 <f6d1f1072243a1adb1ae15425f6e36f86be94078"
+    },
+    {
+      "id": "13b42515-c9ce-318d-9543-b2e913296bbd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.4"
+    },
+    {
+      "id": "7b6df598-ff72-32cc-914e-ed8212144749",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "913f2a58-9978-31ec-a46a-33fbc84d03ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "9eedc796-7f40-3a93-a55c-391e78112fb8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "a67a8433-e479-33d2-8815-b6070bb061ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "a91936f3-09ae-33ca-8a6b-90081f869cb3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e90b8b40-a7bb-3cd3-b5c2-4672a90128e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3f8014862d813cca81a597c83bd1dbf0fb2b8f6 <e058341ceb177226fdb20a36d48fa827851d9c81"
+    },
+    {
+      "id": "f09bb0a9-c5f0-3cc5-93c1-f2f6761709c2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3f8014862d813cca81a597c83bd1dbf0fb2b8f6 <7f4bf851aca4e18940ebf2bddf4ba6783802ee81"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7df9d24e-372c-357b-9c52-4fe3f029e26b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

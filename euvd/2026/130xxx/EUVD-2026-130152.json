@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-130152",
+  "enisaUuid": "488ab685-a6bb-3086-92ab-0bd03c893fd2",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfilelock: keep superblock active through delegation wait\n\nA caller may drop its path after try_break_deleg() returns a delegated\ninode but before break_deleg_wait() finishes. The extra inode reference\nheld in struct delegated_inode does not keep the superblock active.\n\nAfter a lazy unmount, closing the delegation holder can release the last\nmount reference and shut down the superblock while another task waits for\nthe delegation break. The waiter's final iput() can then enter the\nfilesystem's eviction code after its superblock-private state was freed.\nThis has been observed as a KASAN use-after-free in shmem_evict_inode().\n\nWhen try_break_deleg() saves a delegated inode, take an active reference\nto its superblock while the caller still pins the mount. Keep that\nreference through break_deleg_wait() and the final iput(), then release\nit with deactivate_super(). This protects every caller of the helpers,\nincluding the mknod, mkdir, symlink and rmdir paths that drop their path\nbefore waiting.",
+  "datePublished": "Nov 19, 2026, 2:43:12 PM",
+  "dateUpdated": "Nov 19, 2026, 2:43:12 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a6e222f1d75bce8de430ba4d0f8c6a1e923f9acd",
+    "https://git.kernel.org/stable/c/c206cdfee6c037b829178bb7e17e6e37ddc9aa35"
+  ],
+  "aliases": [
+    "CVE-2026-99478"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "072277b8-c7df-37b6-bbd9-280ebeb81b10",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e12d203b8c880061c0bf0339cad51e5851a33442 <a6e222f1d75bce8de430ba4d0f8c6a1e923f9acd"
+    },
+    {
+      "id": "21763f1b-1c91-3a99-aa0c-191c2fd28d84",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    },
+    {
+      "id": "5b7d94bb-70c1-398a-a68b-10faca873f31",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "7b849394-7da3-39aa-9e65-d894e9927132",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "d0528dae-4d59-3b68-8308-d1475589d3d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e12d203b8c880061c0bf0339cad51e5851a33442 <c206cdfee6c037b829178bb7e17e6e37ddc9aa35"
+    },
+    {
+      "id": "ef9ce564-3ee6-3e9b-b556-c2f03f662aae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "55e91192-1951-3142-8077-bf0c70e2d54c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130163",
+  "enisaUuid": "416ea9dd-f6c6-3766-a7bf-14dc71499149",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nklist: avoid accesses after waking klist_remove()\n\nklist_remove() waits until a node is unreferenced so that its caller can\nfree the containing object.  klist_release() currently publishes\nwaiter->woken and wakes the waiter before its final accesses to the waiter\nand node.  klist_remove() can then return, allowing its stack waiter and\nthe containing object to be freed or reused while klist_release() is still\nrunning.  In particular, bus_remove_driver() can free drv->p while\n__device_attach() walks the same bus klist with bus_for_each_drv().\n\nOn an arm64 Cortex-A72 system, an unpatched 7.2.0-rc3 kernel with\nCONFIG_PREEMPT_RT=y and CONFIG_KASAN=y reproduced the bug through the\nin-tree I2C/at24 path.  KASAN reported a use-after-free in\nklist_dec_and_del() reached from klist_next()/bus_for_each_drv() while\nat24 was being unregistered.\n\nClear n_klist and take a task reference before publishing woken.  Use\nrelease/acquire accesses for that publication and wake the referenced\ntask.  The task reference keeps the waiter task alive if it returns and\nexits before wake_up_process().",
+  "datePublished": "Nov 19, 2026, 2:43:27 PM",
+  "dateUpdated": "Nov 19, 2026, 2:43:27 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/3fee2a5ef405f08ea3d87d2014ae7d38e61dd06f",
+    "https://git.kernel.org/stable/c/d655ef174056457d1c3bc06b4405097e0a9b3bf5",
+    "https://git.kernel.org/stable/c/7d3df012573523cb2f38a65e3e00125d9869b390",
+    "https://git.kernel.org/stable/c/732e3e10234cbe302d0dcbaa98c91c66628209cb"
+  ],
+  "aliases": [
+    "CVE-2026-99488"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "039afca8-9269-3181-b579-98785aad96ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "0c1c9ed8-b602-3391-8f3f-33fac811d0bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8b0c250be489dcbf1a3a33bb4ec4c7f33735a365 <732e3e10234cbe302d0dcbaa98c91c66628209cb"
+    },
+    {
+      "id": "440a6581-e14f-38d5-bc61-2bbfdf522258",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8b0c250be489dcbf1a3a33bb4ec4c7f33735a365 <3fee2a5ef405f08ea3d87d2014ae7d38e61dd06f"
+    },
+    {
+      "id": "583ac531-3c93-339b-9d4a-867284bf9914",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8b0c250be489dcbf1a3a33bb4ec4c7f33735a365 <d655ef174056457d1c3bc06b4405097e0a9b3bf5"
+    },
+    {
+      "id": "76ebcbda-036a-3b6b-9c9e-c8aa59756f8b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "96fa2055-5ea7-3e2f-acc0-07dc82d67d0e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.13"
+    },
+    {
+      "id": "b594f923-ba65-38da-a04d-e40e99d059c3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "d616319f-3e98-3d02-ab17-fb9ecf0207d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8b0c250be489dcbf1a3a33bb4ec4c7f33735a365 <7d3df012573523cb2f38a65e3e00125d9869b390"
+    },
+    {
+      "id": "d6905421-c6b7-3cb3-9ab5-c90d96d977e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "e8bc4830-206a-3613-9ed4-8a60107cfebb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f70638f3-9185-317f-86aa-7b8fc4eb191d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

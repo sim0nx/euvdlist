@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-130129",
+  "enisaUuid": "f7d9a6ab-efba-3a8e-8847-b509a61c9e40",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/truncate: look up the end-edge straddler by index\n\nIn truncate_inode_partial_folio(), after the first split at the start\nedge, folio_split() unlocks and drops the refcount of the after-split\nsub-folios.  The sub-folio straddling the end of the truncation range is\ntherefore unlocked and only transiently ref'd in the page cache while the\ncode still derives it from a page pointer inside the original folio.\n\nBetween the first split finishing and page_folio() resolving split_at2,\nthat tail page can be reclaimed, freed and reallocated as a new large\nfolio in the same mapping at a different file offset.  folio2 then points\nat a folio that does not cover the end boundary, yet folio2->mapping ==\nfolio->mapping still holds, so the stale pointer passes the mapping check\nand folio_split_or_unmap() splits a folio at a wrong position (or, with a\ntransient refcount, a use-after-free window opens between try_get and the\nsplit).  __folio_split()'s own folio != page_folio(split_at) check cannot\ncatch this either since split_at2 has been reallocated as part of the new\nfolio, so page_folio(split_at2) resolves back to folio2.\n\nLook the straddler up by its page index instead.  __filemap_get_folio()\nreturns the folio currently covering the boundary, ref'd and locked, with\nthe mapping validated under the lock, so the split target is always the\nreal folio at the end edge.",
+  "datePublished": "Nov 19, 2026, 2:42:12 PM",
+  "dateUpdated": "Nov 19, 2026, 2:42:12 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0fab93d241cfb6f3aae29530a9a214157bb64087",
+    "https://git.kernel.org/stable/c/863ecacdae9ebac39e25a3e90e6cec3e86bc856a",
+    "https://git.kernel.org/stable/c/f47dee903b9f0f1e4e7181e8a398a7678cabf0a5"
+  ],
+  "aliases": [
+    "CVE-2026-99462"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0323105c-9925-3fb5-932b-4b9011577e5a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "302d2d99-fb97-3e40-a47a-2cba5afd4ce3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7460b470a131f985a70302a322617121efdd7caa <f47dee903b9f0f1e4e7181e8a398a7678cabf0a5"
+    },
+    {
+      "id": "46eff01a-1861-3b5d-932e-d57275efabd5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.63"
+    },
+    {
+      "id": "4b9518fe-1776-3884-b2b7-fd767fe0ab5a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7460b470a131f985a70302a322617121efdd7caa <0fab93d241cfb6f3aae29530a9a214157bb64087"
+    },
+    {
+      "id": "7fe7de1f-8422-3941-8c6b-9852f053ad8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.15"
+    },
+    {
+      "id": "b4d6254f-b2cf-3c14-8d8f-696efb11f62e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "c4c84688-b43c-3bbd-99cf-be7287e02e73",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "cda7fb8a-c7a3-39ae-bfe4-98189d4dff0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7460b470a131f985a70302a322617121efdd7caa <863ecacdae9ebac39e25a3e90e6cec3e86bc856a"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "278107c5-fbc5-3ac8-9ffb-237b426ae008",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130131",
+  "enisaUuid": "bd9ad7de-b49a-32d1-8e31-67cee8f2ff0e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: redrat3: fix UAF in probe error path leaving rc device registered\n\nredrat3 stores its device name and phys path inside the main rr3\nstructure, and the rc device's device_name and input_phys point into\nrr3. When the RC device is registered, it keeps those pointers.\n\n  KASAN: slab-use-after-free in string_nocheck lib/vsprintf.c:648\n  Read of size 1 at addr ffff888051fda758 by task udevd/7464\n  Call Trace:\n   string_nocheck lib/vsprintf.c:648 [inline]\n   string+0x216/0x2d0 lib/vsprintf.c:730\n   vsnprintf+0x74a/0xef0 lib/vsprintf.c:2945\n   vscnprintf+0x41/0x90 lib/vsprintf.c:3014\n   sysfs_emit+0x10e/0x180 fs/sysfs/file.c:761\n   input_dev_show_name+0x58/0x70 drivers/input/input.c:1282\n\n  Allocated by task 10:\n   redrat3_dev_probe+0x477/0x2570 drivers/media/rc/redrat3.c:1023\n  Freed by task 10:\n   redrat3_delete drivers/media/rc/redrat3.c:466 [inline]\n   redrat3_dev_probe+0x1bf4/0x2570 drivers/media/rc/redrat3.c:1124\n\nSyzkaller triggers this via usb probing. It probes the RedRat3 USB\ninterface, which calls redrat3_dev_probe() in redrat3.c. That function\nallocates rr3, then builds an rc device whose name points into rr3 via\nredrat3_init_rc_dev() in redrat3.c, and registers it with\nrc_register_device().\n\nWhen the detector enable fails after the RC device is registered, the\nprobe jumps to the led_free path. That path unregisters the LED but does\nnot unregister the RC device before freeing rr3 via redrat3_delete() in\nredrat3.c. The RC device still holds device_name = rr3->name which is now\nfreed.\n\nLater udevd reads /sys/.../input device name via sysfs_emit() in file.c,\nwhich calls input_dev_show_name() in input.c, which emits dev->name which\nis the freed rr3->name.\n\nWhen the detector enable fails after the RC device is registered, the\nerror path must not leave the RC device registered. Make the probe error\npath clean up the same way redrat3_dev_disconnect() does.\n\nThis change should be safe because the RC device is fully registered at\nthis point and its teardown via rc_unregister_device() is protected by\nthe input device mutex, and rr3 is still alive during unregister so\ndevice_name remains valid until after unregister. The URBs are killed\nbefore rc_free, so no completion can run after rc is freed. No new lock\nordering is introduced.",
+  "datePublished": "Nov 19, 2026, 2:42:18 PM",
+  "dateUpdated": "Nov 19, 2026, 2:42:18 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d8f44a9e4820797067b8cdf1b6a4cb0c0ae3d143",
+    "https://git.kernel.org/stable/c/98e3df13c9fd57cc4051e9ee1717cfc65ee04c7d",
+    "https://git.kernel.org/stable/c/e0e12b25b102e22f17ec3d0c00eb22ef7b792489",
+    "https://git.kernel.org/stable/c/af452b9e01331b5338a1e5141624f17607239207"
+  ],
+  "aliases": [
+    "CVE-2026-99464"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "432bbd4d-7cb7-3801-80c9-773c87795912",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "5054429c-2718-36cc-82c3-4f3cee71fafa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "79d78961-53a8-3e1e-a1a5-7926f9524eb5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "86ef6087-1678-36e9-83fb-8dc576b75b17",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2154be651b90ab0e6b5e9b9cf127a75429f9e90c <98e3df13c9fd57cc4051e9ee1717cfc65ee04c7d"
+    },
+    {
+      "id": "93939f75-4931-36c3-a308-eed215620353",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2154be651b90ab0e6b5e9b9cf127a75429f9e90c <e0e12b25b102e22f17ec3d0c00eb22ef7b792489"
+    },
+    {
+      "id": "ae3c05f7-1379-370e-9e88-d736600239c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.0"
+    },
+    {
+      "id": "b83d5937-1635-3d21-bb41-e1adece9f4f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "c5355acd-c678-34f6-b27e-14e3e5de0bf4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "d79a7a92-adb9-3878-bc1c-f9cac6eb3706",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2154be651b90ab0e6b5e9b9cf127a75429f9e90c <d8f44a9e4820797067b8cdf1b6a4cb0c0ae3d143"
+    },
+    {
+      "id": "e62e544c-5d9a-3f9e-982a-f83b0fae954c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2154be651b90ab0e6b5e9b9cf127a75429f9e90c <af452b9e01331b5338a1e5141624f17607239207"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4011f741-5168-3713-9927-45363f0f3c2f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130011",
+  "enisaUuid": "a33b0e4c-f6ac-3856-922f-d704ddc75ba3",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nSUNRPC: Reject a socket that already has an svc_sock attached\n\nWriting the same socket descriptor to /proc/fs/nfsd/portlist twice\nattaches a second svc_sock to one socket. svc_setup_socket() saves\nthe socket's callbacks before installing its own, so the second\nattach records svc_write_space() as the old write_space callback.\nsvc_udp_init() invokes that callback by way of svc_sock_setbufsize(),\nand svc_write_space() then calls itself until the kernel stack is\nexhausted:\n\n  BUG: TASK stack guard page was hit at ffffc900037d7ff8\n   svc_write_space+0x90/0x2b0 net/sunrpc/svcsock.c:429\n   svc_write_space+0xe6/0x2b0 net/sunrpc/svcsock.c:430\n   ... 700 more ...\n   svc_sock_setbufsize+0x18d/0x220 net/sunrpc/svcsock.c:386\n   svc_udp_init net/sunrpc/svcsock.c:854 [inline]\n   svc_setup_socket+0xb2f/0x1090 net/sunrpc/svcsock.c:1498\n   svc_addsock+0x2fd/0x760 net/sunrpc/svcsock.c:1547\n   __write_ports_addfd fs/nfsd/nfsctl.c:742 [inline]\n   write_ports+0xa5b/0xcc0 fs/nfsd/nfsctl.c:861\n   nfsctl_transaction_write+0x106/0x1a0 fs/nfsd/nfsctl.c:112\n\nsvc_data_ready() and svc_tcp_state_change() chain through their saved\ncallbacks the same way, so a TCP descriptor added twice recurses on\nthe next incoming segment instead. Reaching any of this takes a\nwriter on portlist, and the nfsd filesystem sets no FS_USERNS_MOUNT,\nso the reproducer needs CAP_SYS_ADMIN in the initial user namespace.\n\nReject a socket that already carries sk_user_data. svc_setup_socket()\noverwrites that field unconditionally, so a socket some other\nconsumer has claimed is one NFSD would corrupt whether or not the\ncallbacks recurse.",
+  "datePublished": "Nov 19, 2026, 2:22:14 PM",
+  "dateUpdated": "Nov 19, 2026, 2:37:04 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/514ce838b4f26780fa31da7d7f1e30d696ea6a9e",
+    "https://git.kernel.org/stable/c/f44daa50489fede01012c575d9f5e7b11a212fe4",
+    "https://git.kernel.org/stable/c/42923e0fc817a7e78d1a5e7cb82966d27919e332",
+    "https://git.kernel.org/stable/c/0995447b8059c4d23853cdcddbe789c4a2b6bb88"
+  ],
+  "aliases": [
+    "CVE-2026-99353"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "06262316-f623-39a6-8f5a-7a1dbbfeba18",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "1b2c4deb-6be2-3f18-a9e9-964b42faa13c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b41b66d63c730cc45a1024e1f1e67439e507e40f <0995447b8059c4d23853cdcddbe789c4a2b6bb88"
+    },
+    {
+      "id": "385846ef-adae-3a5e-8b52-2dbfff7ca2a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b41b66d63c730cc45a1024e1f1e67439e507e40f <514ce838b4f26780fa31da7d7f1e30d696ea6a9e"
+    },
+    {
+      "id": "4d533416-1941-3d3a-874e-cbae96508fc4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.19"
+    },
+    {
+      "id": "97ac779e-a718-3fd7-9c15-aed2617dfd5c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "adba1419-c904-3452-b31a-7badf63795b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "ba8b09cf-5703-3037-a7f2-65349cfcd146",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b41b66d63c730cc45a1024e1f1e67439e507e40f <f44daa50489fede01012c575d9f5e7b11a212fe4"
+    },
+    {
+      "id": "e6176753-2f7c-3095-a001-0dacb0678f64",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b41b66d63c730cc45a1024e1f1e67439e507e40f <42923e0fc817a7e78d1a5e7cb82966d27919e332"
+    },
+    {
+      "id": "ead034c0-c6f9-38cd-abb6-0e4518d14ea3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "f2a0ee2a-951e-3953-9b90-db941b415432",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ed9a4958-6b6c-3ff7-a162-1c45d34ba2a5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130156",
+  "enisaUuid": "e04f923c-358e-366b-bf02-de14b08bda8d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nASoC: amd: ps: fix snd_acp63_remove() teardown ordering\n\nThe ACP IRQ handlers dereference the SoundWire, SoundWire DMA, and PDM\nchild platform devices, but snd_acp63_remove() unregisters them while\nthe interrupt is still held by devres, which frees it only after remove\nreturns. An interrupt in this window is a use-after-free.\n\nMask the ACP interrupt sources and call devm_free_irq() before the\nfirst child device is unregistered. The masking goes through the new\nacp_hw_ops->disable_interrupts callback, keeping the remove path\nplatform-agnostic. The interrupt line is shared, and acp_hw_deinit()\nclears the sources only after the children are gone, which would\nleave the line raised with no handler left to ack it. The window\npredates the tagged refactor, which only reshaped the dereferences.\n\ndevm_free_irq() waits for in-flight handlers, but not for work the\nhardirq has already queued: acp63_irq_handler() schedules\namd_sdw_irq_thread on the SoundWire manager. Draining that work in\nthe manager's remove path is a soundwire-side change and follows\nseparately.\n\nThis issue was found by an in-house static analysis tool.",
+  "datePublished": "Nov 19, 2026, 2:43:17 PM",
+  "dateUpdated": "Nov 19, 2026, 2:43:17 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/be66694b2f818d7b14eb5022382b15df837459d8",
+    "https://git.kernel.org/stable/c/2ff55599528d7712c46956c038665a4d5a5160e5",
+    "https://git.kernel.org/stable/c/01ab732291bb05cc60952cbb365f4523b747ccfb",
+    "https://git.kernel.org/stable/c/c53791d673ed4da6759d276078627ec4d0c6536b"
+  ],
+  "aliases": [
+    "CVE-2026-99482"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "017f5801-67f1-3d18-bcbe-e9d03f6d1421",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eaf825037d6df89811d43391be920bf6ad731463 <c53791d673ed4da6759d276078627ec4d0c6536b"
+    },
+    {
+      "id": "1a3d8570-6717-34f3-84ac-5422619ec6e5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "1c80850a-5c09-31c9-83fe-17f52890e4d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eaf825037d6df89811d43391be920bf6ad731463 <2ff55599528d7712c46956c038665a4d5a5160e5"
+    },
+    {
+      "id": "27a32c7f-e615-3d20-b928-73c662f46a1a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "47f91471-1e2a-3fa3-865c-8b320efccee8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.9"
+    },
+    {
+      "id": "4805c682-8ae8-3d9f-87e8-e4671f91e303",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "cdc2fdf2-76a8-3dd1-819d-63297f2d47ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eaf825037d6df89811d43391be920bf6ad731463 <be66694b2f818d7b14eb5022382b15df837459d8"
+    },
+    {
+      "id": "e09228db-e43c-34ff-9e56-fb74a2bb79c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "e91db172-85e0-3959-9b14-24b2f637f686",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e9a91ba8-598f-30ec-af90-edc614178698",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eaf825037d6df89811d43391be920bf6ad731463 <01ab732291bb05cc60952cbb365f4523b747ccfb"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4a256e1e-9827-3862-b4fe-a8f712e3d8e0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
