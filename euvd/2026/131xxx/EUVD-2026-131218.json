@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-131218",
+  "enisaUuid": "b10b8039-0363-3f14-a1cb-4dda0c0507b7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/bpf-ops: clear bpf_ctx while submitting SQEs\n\nbpf_io_uring_submit_sqes() calls io_submit_sqes() from inside the loop\nprogram, with current->bpf_ctx set, and requests issued inline run with\nit set too. The socket code uses has_current_bpf_ctx() to recognize\ncalls from bpf_setsockopt() and friends, where the caller holds the\nsocket lock and has already been vetted, and skips both.\n\nSo a SOCKET_URING_OP_SETSOCKOPT from the SQ passes sockopt_capable()\nwithout the capability, and runs without lock_sock(). A task with no\ncapability can set SO_MARK, IP_TRANSPARENT or TCP_REPAIR, and two\nthreads changing IP_OPTIONS on one socket, one through the ring, double\nfree in no time. SOCK_DESTROY via IORING_OP_SENDMSG ends up in\ntcp_abort() without the lock the same way.\n\nClear the run context around io_submit_sqes(). The SQEs come from\nuserspace and must be issued like those of any other ring. They still\nrun inside the program's RCU tasks trace read section, so a request\nthat sleeps there holds up that grace period, but other request types\ndo that already.",
+  "datePublished": "Nov 20, 2026, 7:02:23 AM",
+  "dateUpdated": "Nov 20, 2026, 7:02:23 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/521861b17a107875c884df9474e7746617f256d5",
+    "https://git.kernel.org/stable/c/8543a39f03db8816a2d80d0c92c132a19f2afb48"
+  ],
+  "aliases": [
+    "CVE-2026-99801"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2ffcb5e1-10c3-3f04-8adb-97ae18074505",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
+    {
+      "id": "30c09ae4-ea6b-3062-8633-8204d054ee7d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "890819248a8616558fe12e6c06c918ee1c3a2bc6 <8543a39f03db8816a2d80d0c92c132a19f2afb48"
+    },
+    {
+      "id": "69b0611c-e841-3dfe-9ca5-b88e66cc9b54",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "70797b57-ac64-3207-abff-c81e8c5b8c5f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "83333f6b-3afa-3319-bbe6-d5d59479773d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "890819248a8616558fe12e6c06c918ee1c3a2bc6 <521861b17a107875c884df9474e7746617f256d5"
+    },
+    {
+      "id": "c4bf8a97-05e1-385f-9f62-dd8e02a597e4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0fc47cdd-dd7a-3396-bded-7003ded9f472",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

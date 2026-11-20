@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-131217",
+  "enisaUuid": "2de84bfa-17cb-3561-8ac4-07b5522e7c8f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring: free the task context after a grace period\n\nA task other than the owner can free a request, io_ring_exit_work()\nrunning the local task_work of a DEFER_TASKRUN ring for example, or\nio_do_iopoll() reaping completions. io_put_task() then takes the else\nbranch:\n\n    percpu_counter_sub(&tctx->inflight, 1);\n    if (unlikely(atomic_read(&tctx->in_cancel)))\n            wake_up(&tctx->wait);\n    put_task_struct(tctx->task);\n\nThe first line is what lets the owner leave io_uring_cancel_generic(),\nand on exec it frees the tctx right after. Nothing holds that off for\nthe remaining three lines, the task reference only covers a tctx freed\nalong with the task_struct. It used to work out because\nio_uring_del_tctx_node() took the uring_lock that the freeing side holds\nacross io_put_task(), until that moved to tctx_lock.\n\nFree the tctx with kfree_rcu(), and enter an RCU read section in\nio_put_task() before the count is dropped.",
+  "datePublished": "Nov 20, 2026, 7:02:22 AM",
+  "dateUpdated": "Nov 20, 2026, 7:02:22 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/953174dcb862a7a364efdb65e178dcd3aea5562e",
+    "https://git.kernel.org/stable/c/9f5315d3f4368590c9fe06d4313b7247470bcf15"
+  ],
+  "aliases": [
+    "CVE-2026-99800"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "06b1ffcf-add1-34fc-831d-63642b1e8182",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "0f148ec1-5671-3724-a3d6-b54d12d076d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5623eb1ed035f01dfa620366a82b667545b10c82 <9f5315d3f4368590c9fe06d4313b7247470bcf15"
+    },
+    {
+      "id": "248e402b-2f8c-3549-ae59-f28028768f24",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.19"
+    },
+    {
+      "id": "3176053e-9487-3de8-a6e6-2dc99aa58388",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7d7309f1-c937-32be-aaa2-3214e394d0c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "f6921c4a-9ce0-352f-b0c6-9ef323ec3386",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5623eb1ed035f01dfa620366a82b667545b10c82 <953174dcb862a7a364efdb65e178dcd3aea5562e"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b923e24f-ee6c-31ea-af84-b2733ce8d08e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

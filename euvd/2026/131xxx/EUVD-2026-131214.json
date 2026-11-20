@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-131214",
+  "enisaUuid": "2cb2f311-ec00-3dc3-bd97-ad6d5c579064",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/cancel: drop sqd->lock while SQPOLL waits\n\nAn exiting SQPOLL thread calls io_uring_cancel_generic() with sqd->lock\nheld, and keeps it across cond_resched() and the sleep until nothing is\nin flight anymore. A zero-copy send notification can't be canceled and\nstays pending as long as the peer doesn't read, so the lock is held for\nas long as a user cares to. io_ring_exit_work() needs it to park the\nthread, and so do IORING_REGISTER_IOWQ_AFF and IOWQ_MAX_WORKERS. With\n64 such rings sharing the thread, every iou_exit slot sleeps on the lock\nand no ring gets freed for anyone.\n\nDrop the lock around cond_resched() and the sleep, like the main loop of\nthe thread does. Each walk of ctx_list is still under one hold, and\nnothing is kept across the unlock. The thread drops its io-wq, frees its\ntctx and clears sqd->thread under one hold after the loop, so whoever\nholds the lock and finds sqd->thread set can still use them.\n\n[axboe: adapted to the schedule_timeout() based loop]",
+  "datePublished": "Nov 20, 2026, 7:02:20 AM",
+  "dateUpdated": "Nov 20, 2026, 7:02:20 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/9ebfcc60793a46eaf60fc34792486c9a6e114460",
+    "https://git.kernel.org/stable/c/96ba960a6099935cfc5ea17aef056553f0c8e647",
+    "https://git.kernel.org/stable/c/682a8804640b6266a4b7fae5a131c57dd8711f70",
+    "https://git.kernel.org/stable/c/cb0306c52ffae083a86fb283de67875ae7a9500e"
+  ],
+  "aliases": [
+    "CVE-2026-99797"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1be67815-e850-34ad-99ab-18c39b143f47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "29b78078-e46d-3395-b4d5-008cace4bc93",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "3fb7366b-6b8d-35fb-a682-3de7b97efb1a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "623b2320-6ac7-31a0-99f4-ede6d2c9592e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63809137ebb58f0aa2ce359117422686e3304f45 <cb0306c52ffae083a86fb283de67875ae7a9500e"
+    },
+    {
+      "id": "6a667d8d-0cc0-350b-972b-6d1ddd38883f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63809137ebb58f0aa2ce359117422686e3304f45 <9ebfcc60793a46eaf60fc34792486c9a6e114460"
+    },
+    {
+      "id": "905ab235-ab63-3813-a575-704e53c475c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63809137ebb58f0aa2ce359117422686e3304f45 <96ba960a6099935cfc5ea17aef056553f0c8e647"
+    },
+    {
+      "id": "b2776e30-76b8-3c16-906d-138c081ba656",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63809137ebb58f0aa2ce359117422686e3304f45 <682a8804640b6266a4b7fae5a131c57dd8711f70"
+    },
+    {
+      "id": "c9a66b13-0c22-36bd-adec-20312488d7fa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "d83beeae-974b-3f4c-99d7-6c6bcf3815bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.0"
+    },
+    {
+      "id": "f21c1fcc-9bb9-31fd-a6dc-9d5c8947f4f4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a14c51e4-7f72-30d1-ac2d-eb7e0e2a1203",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
