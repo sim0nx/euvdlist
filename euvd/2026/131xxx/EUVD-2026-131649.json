@@ -1,0 +1,29 @@
+{
+  "id": "EUVD-2026-131649",
+  "enisaUuid": "9419d612-cca9-38a9-8e8b-eb846193ff06",
+  "description": "In `github.com/eclipse-keypont/crypto11/v2` versions `<= 2.0.0-rc8` (and the deprecated v1 module paths `github.com/eclipse-keypont/crypto11 <= 1.6.8`, `github.com/ThalesGroup/crypto11 <= 1.7.0-rc1` and `github.com/ThalesIgnite/crypto11 <= 1.2.5`), the `cipher.AEAD` returned by `SecretKey.NewGCM()` passes whatever nonce it is given straight to `CK_GCM_PARAMS` without checking its length against `NonceSize()`, and accepts an empty nonce. On a token that accepts a zero-length GCM IV \u2014 SoftHSM2 does \u2014 every `Seal` with an empty nonce encrypts under the same IV, reusing the keystream and exposing the GHASH authentication key, which allows forgeries. Separately, `Config.UseGCMIVFromHSM` sends a NULL IV with length zero to the token unless `GCMIVFromHSMControl.SupplyIvForHSMGCMEncrypt` is also set, so the token has nowhere to write the IV it generates: a `Seal` with a non-empty nonce panics after the plaintext has already been encrypted, and a `Seal` with an empty nonce returns ciphertext under an empty IV without error. On the v1 line HSM-IV mode additionally never copies the token-generated IV back to the caller, so the caller keeps its own nonce while the data was encrypted under another one.",
+  "datePublished": "Nov 20, 2026, 4:10:45 PM",
+  "dateUpdated": "Nov 20, 2026, 4:10:45 PM",
+  "baseScore": 9.1,
+  "baseScoreVersion": "4.0",
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:H/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N",
+  "references": [
+    "https://github.com/eclipse-keypont/crypto11/security/advisories/GHSA-c2cp-4qw8-q4jg",
+    "https://github.com/eclipse-keypont/crypto11/commit/8d99b73c721c173ad85c0ca4e063c3da360a611d",
+    "https://gitlab.eclipse.org/security/cve-assignment/-/work_items/491"
+  ],
+  "aliases": [
+    "CVE-2026-115407"
+  ],
+  "assigner": "eclipse",
+  "epss": 0.0,
+  "enisaIdProduct": [],
+  "enisaIdVendor": [
+    {
+      "id": "a5fdc647-9607-3e72-8bcf-68026e11047c",
+      "vendor": {
+        "name": "Eclipse Foundation"
+      }
+    }
+  ]
+}

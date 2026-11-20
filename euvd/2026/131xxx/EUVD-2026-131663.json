@@ -1,0 +1,49 @@
+{
+  "id": "EUVD-2026-131663",
+  "enisaUuid": "3d8ba8de-b6a5-3f7a-9b7a-2657eb129832",
+  "description": "The IPv6 Neighbor Discovery code in subsys/net/ip/ipv6_nbr.c flushes a neighbour's queued packets at the end of handle_ra_input(). The Source Link-Layer Address Option (SLLAO) is optional in a Router Advertisement; when it is absent, handle_ra_input() still obtains (or creates) a neighbour cache entry for the RA source via net_ipv6_nbr_add() with a NULL link-layer address, so the entry stays in NET_IPV6_NBR_STATE_INCOMPLETE with nbr->idx == NET_NBR_LLADDR_UNKNOWN. The pending-packet drain loop was entered unconditionally for that unresolved entry.\n\nEach net_send_data() in the drain loop runs synchronously into net_ipv6_prepare_for_send(), which finds the neighbour still unresolved and hands the packet to net_ipv6_send_ns(), which puts it straight back onto the same pending_queue. The loop therefore never sees an empty queue. With a single queued packet it transmits a fresh Neighbor Solicitation on every iteration; with two or more queued packets it rotates the queue with no allocation and no transmission at all. The loop runs in the network RX thread with the global IPv6 neighbour mutex held.\n\nAn unauthenticated attacker on the same link can trigger this deterministically: advertise itself as a router, induce the victim to queue off-link traffic toward that router (for example by sending echo requests with an off-link source address) while leaving the solicitation unanswered, then send a second Router Advertisement without an SLLAO option. Spoofing an SLLAO-less RA from the legitimate router's link-local address has the same effect whenever traffic is queued for it. Router Advertisements are processed with no authentication whenever CONFIG_NET_IPV6_ND is enabled, which is the default for IPv6-capable builds.\n\nThe result is a permanent denial of service: the RX thread spins forever holding the neighbour lock, so all IPv6 transmission and every other user of the neighbour cache blocks, and the Neighbor Advertisement that would resolve the entry can no longer be processed. The ipv6_ns_reply_timer work item that would normally drop the pending packets also blocks on the same mutex. In the single-packet variant the loop additionally floods the link with Neighbor Solicitations. The fix restricts the flush to resolved entries (nbr->idx != NET_NBR_LLADDR_UNKNOWN), leaving the packets queued for the NS reply timeout. There is no memory-safety impact.",
+  "datePublished": "Nov 20, 2026, 4:56:11 PM",
+  "dateUpdated": "Nov 20, 2026, 4:56:11 PM",
+  "baseScore": 6.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/60c33b682b4254c82466baf2c5a4f9a48bfc2e68",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-4vjh-7rhp-982m"
+  ],
+  "aliases": [
+    "CVE-2026-95824"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3a378e06-1e16-3516-9794-f7df48e1afb6",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.3.0 <4.3.2"
+    },
+    {
+      "id": "7a8f50e8-3f2f-3ee0-9fad-f253cbef6853",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.4.0 <4.5.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "932781fa-9b7f-304a-a298-4357da35dfe4",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}
