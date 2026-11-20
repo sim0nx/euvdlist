@@ -1,0 +1,147 @@
+{
+  "id": "EUVD-2026-131021",
+  "enisaUuid": "64eaebd0-ddd1-34ee-b75f-bf3591d1e627",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnvme-tcp: Validate the queue state under the queue lock in the address attribute\n\nReading the \"address\" sysfs attribute calls kernel_getsockname() on the\nadmin queue socket, which can race with the queue teardown during\nconnection error recovery: a reader can observe NVME_TCP_Q_LIVE set,\nthen block on the queue lock while nvme_tcp_free_queue() releases the\nsocket and clears queue->sock without holding the lock.  Once the\nreader acquires the lock it dereferences the NULL socket pointer.\n\nCommit 76d54bf20cdc (\"nvme-tcp: don't access released socket during\nerror recovery\") had the queue liveness check inside the lock.\nCommit 782373ba2766 (\"nvme: tcp: avoid race between queue_lock lock\nand destroy\") moved it back out because the lock itself is destroyed\nin nvme_tcp_free_queue(), so a reader arriving late trips\nmutex_destroy().\n\nCheck the queue liveness inside the queue lock, and clear queue->sock\nunder the same lock.  The teardown clears NVME_TCP_Q_LIVE under the\nlock well before the socket is released, so a reader either sees the\nbit cleared or a socket that cannot be released while it holds the\nlock.  To also close the lock lifetime race, the queue locks are now\nowned by the controller: they are initialized with the queue array and\nonly destroyed when the controller is freed, which cannot happen while\na sysfs attribute read is still in progress.  The queue count is\ncomputed by the NVME_TCP_OPT_NR_QUEUES() macro from the original\nconnect options for both initialization and destruction, as reconnects\nmay shrink ctrl->queue_count.",
+  "datePublished": "Nov 20, 2026, 5:49:05 AM",
+  "dateUpdated": "Nov 20, 2026, 5:49:05 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0af6a8aede3121bc9662111665294731daddb13a",
+    "https://git.kernel.org/stable/c/2eeeaa9c1ff0c429096acc2947c296db6a56f96d"
+  ],
+  "aliases": [
+    "CVE-2026-99571"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "5a3785b3-3f55-37ed-ad23-b2d32f15a438",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.11.9 <6.12"
+    },
+    {
+      "id": "5eddfead-9ef9-3735-bf71-26e6515261e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4f946479b326a3cbb193f2b8368aed9269514c35"
+    },
+    {
+      "id": "661d706f-1fbb-364c-83d0-64947488ede6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "782373ba27660ba7d330208cf5509ece6feb4545 <0af6a8aede3121bc9662111665294731daddb13a"
+    },
+    {
+      "id": "819da27a-af86-3774-93a1-750b0c8a3e6f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "782373ba27660ba7d330208cf5509ece6feb4545 <2eeeaa9c1ff0c429096acc2947c296db6a56f96d"
+    },
+    {
+      "id": "8552505f-60df-34c4-b86c-456eef2887e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.62 <6.7"
+    },
+    {
+      "id": "8d45dba5-ba75-3ec6-bd43-49f53121cb70",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.118 <6.2"
+    },
+    {
+      "id": "a0413070-872f-3904-a88a-833ce347599f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12"
+    },
+    {
+      "id": "a17650a1-a88c-33ed-acd7-a4c201543743",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "975cb1d2121511584695d0e47fdb90e6782da007"
+    },
+    {
+      "id": "c6acd9d9-80b6-377f-a02a-c334433f0555",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "d6202e40-411d-3bb9-a513-90b8657e71ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e15cebc1b21856944b387f4abd03b66bd3d4f027"
+    },
+    {
+      "id": "da77dc77-738e-39e1-911b-567e2f6473a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "f9fe0486-930c-35ea-875e-604fbbf5311f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e1ed6223-100d-3c0c-ac79-6ef809c78533",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

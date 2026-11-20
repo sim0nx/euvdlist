@@ -1,0 +1,149 @@
+{
+  "id": "EUVD-2026-130928",
+  "enisaUuid": "30cbb698-8022-3917-a67f-b875fef37207",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvhost/vsock: size receive SKBs from declared payload\n\nvhost_vsock_alloc_skb() sizes the skb from iov_length(), the total guest\ndescriptor length.  virtio_transport_inc_rx_pkt() instead adds hdr->len to\nrx_bytes and buf_used, and budgets each queued skb as SKB_TRUESIZE(0).  The\nguest controls the descriptor length and hdr->len independently.\n\nA guest can therefore provide a 64 KiB descriptor while declaring a zero\npayload.  The descriptor-sized skb remains queued, rx_bytes and buf_used\nremain unchanged, and only the fixed queue-entry budget limits retention.\nThis is not a lifetime leak: the skb is freed when dequeued or at socket\nteardown.  Repeating this across connections can nevertheless exhaust host\nmemory.  On Linux v7.2, 455 such descriptors retained 30,255,680 bytes for\na 262,144-byte receive buffer; a full-payload control retained 265,984\nbytes.\n\nVhost previously read hdr->len and allocated pkt->buf from that value.  The\nconversion from virtio_vsock_pkt to sk_buff instead allocated receive skbs\nfrom the descriptor length, introducing the allocation-accounting mismatch.\n\nCopy the header into a stack object and validate hdr->len before allocating\nthe skb.  Size the allocation as sizeof(hdr) + payload_len so descriptor\ncapacity no longer determines queued memory.  Check payload_len against\nlen - sizeof(hdr) to avoid addition overflow on 32-bit hosts.",
+  "datePublished": "Nov 20, 2026, 5:49:52 AM",
+  "dateUpdated": "Nov 20, 2026, 5:49:52 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/92ac18f7de67c7cb35b71e9872b08fb9ba9a6bf8",
+    "https://git.kernel.org/stable/c/89a2f2251a06751ddabbd6a39c207236b8bd42d5",
+    "https://git.kernel.org/stable/c/9819add3aeb66dc823db0a82337f55481ad463be",
+    "https://git.kernel.org/stable/c/d5e912448cd98b261eba8e35ab838f2dc69a79f5"
+  ],
+  "aliases": [
+    "CVE-2026-99635"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0bca4efe-2d2e-3dac-8d5f-e5886cf99572",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "71dc9ec9ac7d3eee785cdc986c3daeb821381e20 <d5e912448cd98b261eba8e35ab838f2dc69a79f5"
+    },
+    {
+      "id": "167da18f-7acd-3c23-b9ae-0acab7aa664e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "baddcc2c71572968cdaeee1c4ab3dc0ad90fa765"
+    },
+    {
+      "id": "16f7809a-d7f1-39fa-8a8f-4dafb644dea9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.3"
+    },
+    {
+      "id": "300073b5-5fee-3e66-b65a-d888f0991cca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "71dc9ec9ac7d3eee785cdc986c3daeb821381e20 <89a2f2251a06751ddabbd6a39c207236b8bd42d5"
+    },
+    {
+      "id": "3e547b18-b5ac-37b8-a4ad-dd56ab46c117",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "3f022427-14f0-3c34-abd8-be69f682a12f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "4829c9d4-a277-305d-b0a1-a2be3ab4ef04",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "71dc9ec9ac7d3eee785cdc986c3daeb821381e20 <92ac18f7de67c7cb35b71e9872b08fb9ba9a6bf8"
+    },
+    {
+      "id": "6a10eeb0-2f2f-3ecd-895e-b8c1ffcd0fab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "987a4309-9de6-3d93-811c-e68b6fcb560a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "71dc9ec9ac7d3eee785cdc986c3daeb821381e20 <9819add3aeb66dc823db0a82337f55481ad463be"
+    },
+    {
+      "id": "c4a422e1-7a65-3019-9310-774d0853be22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "ef639328-2de7-3330-9c80-228865750940",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.63 <6.2"
+    },
+    {
+      "id": "f4d993e0-9c55-3b5b-ad19-ae3607b7d6b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "8cf0932d-91b5-3867-8cc8-61d57930bb49",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

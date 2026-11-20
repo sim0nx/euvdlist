@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130965",
+  "enisaUuid": "61a2a170-65d0-3514-9666-84ec6f84bf29",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncan: protect the receive lists with a per-device lock\n\nThe receive lists of a CAN device are located in the device's\ncan_ml_priv and travel with the device when it is moved to another\nnetwork namespace. But they are protected by the per-netns\nrcvlists_lock. So can_rx_unregister() needs dev_net(dev) to pick the\nright lock and silently returns when the passed namespace does not\nmatch dev_net(dev) anymore.\n\nisotp_release() and bcm_release() leave their notifier list before they\ntake any lock that serializes against the netdev notifier, which runs\nunder RTNL. When the bound device is moved to another namespace in this\nwindow, the notifier skips the socket and the release path has to remove\nthe filters itself. isotp_release() passes the socket's namespace, which\ndoes not match dev_net(dev) anymore. bcm_rx_unreg() passes dev_net(dev),\nwhich can_rx_unregister() reads again for its check, so a namespace\nchange between both reads makes the check fail as well. In both cases\ncan_rx_unregister() silently returns. As can_rx_register() stores\nrcv->sk without a reference, the remaining receivers point to the freed\nsocket (isotp) or the freed op (bcm):\n\n  BUG: KASAN: use-after-free in isotp_rcv+0x1570/0x24d0\n  Read of size 1 at addr ffff888118130552 by task isotp_ns_uaf/578\n   can_rcv_filter+0x4af/0x8c0\n   can_receive+0x28d/0x3c0\n   can_rcv+0x2a9/0x310\n   __netif_receive_skb_one_core+0x21a/0x260\n   process_backlog+0x210/0x760\n\nBesides this, the lists of a device are protected by the rcvlists_lock\nof the namespace that is passed in. Callers which pass dev_net(dev) read\nit at different times, so the same lists may be modified under the locks\nof different namespaces while the device is moved.\n\nTaking RTNL in these release paths is no option: raw_bind(),\nraw_setsockopt() and raw_release() already hold RTNL while adding and\nremoving up to CAN_RAW_FILTER_MAX filters per socket, which unprivileged\nusers can trigger repeatedly and which makes RTNL a global bottleneck.\n\nInstead fix the root cause and add a spinlock to struct\ncan_dev_rcv_lists, which protects the receive lists of a CAN device or\nthe 'any' CAN device lists of a namespace. It is initialized in\ncan_set_ml_priv(), which is used by all CAN network devices. With this,\ncan_rx_unregister() finds the subscription independently of the\ncurrent namespace of the device. The protocols keep the device valid\nwith their tracked references. The per-netns rcvlists_lock only protects\nthe receive list statistics anymore, and CAN_RAW, CAN_BCM and CAN_ISOTP\npass the namespace that has been used for can_rx_register().\n\nSo isotp_release() and bcm_release() now remove their filters correctly\nwithout RTNL, and raw_release(), raw_setsockopt(), raw_bind() and\nisotp_bind() do not need RTNL anymore and add and remove their filters\nunder lock_sock(). To serialize bind() with NETDEV_UNREGISTER, bind()\npublishes the device inside the RCU section of its lookup, and\nraw_notify() and isotp_notify() recheck the bound device under lock_sock().\nAs RTNL does not keep NETDEV_DOWN out of bind() anymore, bind() checks\nIFF_UP after publishing the bound device, with a barrier pair against\nraw_notify() and isotp_notify(), so a down transition during bind() is\nstill reported with ENETDOWN.",
+  "datePublished": "Nov 20, 2026, 5:50:21 AM",
+  "dateUpdated": "Nov 20, 2026, 5:50:21 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/59d91f555ada337458c48316987b8ef46487f885",
+    "https://git.kernel.org/stable/c/4b625dde57c0a40a933bf017ff93a64a7306aa43",
+    "https://git.kernel.org/stable/c/228e795ec650c33ebbce8ba81ce983c84d64d889",
+    "https://git.kernel.org/stable/c/0f3ad9ab40e3dad06d5c0693806e07935ceedbc3"
+  ],
+  "aliases": [
+    "CVE-2026-99672"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0b05b2d7-fff5-375d-84c3-0a3c497ca1d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "17204464-35bf-34cd-be3c-f72cbe3080c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "4cb6d49d-6176-398b-90d2-6b536d94291d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "7511fc91-3c43-34ef-a187-cd2c7ebab2c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "9ab4c2fc-a1d4-3a1b-afd9-3c3c89ead4d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e8cda6d737d356054c9eeef642aec0e8ae7e6bc <4b625dde57c0a40a933bf017ff93a64a7306aa43"
+    },
+    {
+      "id": "b14a1eb7-19cd-3975-936d-9840e8fc2fa2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "b51f831f-af99-3be5-a00f-012b90cf09a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.12"
+    },
+    {
+      "id": "c0a363c6-459f-38a2-998d-b8f1bca9fe33",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e8cda6d737d356054c9eeef642aec0e8ae7e6bc <228e795ec650c33ebbce8ba81ce983c84d64d889"
+    },
+    {
+      "id": "c1c1b81a-d50b-3e0f-ba61-ef734147d712",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e8cda6d737d356054c9eeef642aec0e8ae7e6bc <0f3ad9ab40e3dad06d5c0693806e07935ceedbc3"
+    },
+    {
+      "id": "fd36aaa0-7e4b-3895-b62a-8b203fa0c5b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e8cda6d737d356054c9eeef642aec0e8ae7e6bc <59d91f555ada337458c48316987b8ef46487f885"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a25d974c-2581-375f-96a3-694628d4ce9c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

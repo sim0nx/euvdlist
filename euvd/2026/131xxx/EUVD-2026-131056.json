@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-131056",
+  "enisaUuid": "13822268-502e-3566-978c-fc5b3f4b4b5d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/smc: don't spin in smc_rx_recvmsg() while a pipe holds spliced data\n\nWhile bytes spliced off the RMB are still in a pipe, recvmsg() waits\nfor the pipe to release them before it copies the data behind them.\nThe path to that wait skips the timeout and signal checks, and\nsmc_rx_wait() returns at once on RCV_SHUTDOWN. With a signal pending,\nafter SHUT_RD, or once the peer closes or shuts down writing,\nrecvmsg() spins on a CPU until the pipe is drained, and SIGKILL cannot\nstop it. MSG_DONTWAIT and an expired SO_RCVTIMEO wait there too\ninstead of returning -EAGAIN.\n\nCheck the timeout and signals before that wait, and end it when the\npipe releases the data or the connection is killed, not on RCV_SHUTDOWN.\nA zero-length read returns 0 without waiting for the pipe; a\nnon-blocking one returns -EAGAIN while poll() still reports the socket\nreadable (splice() can still take those bytes). The wait sets\nSOCKWQ_ASYNC_WAITDATA like smc_rx_wait(), so a byte arriving behind\nthe pipe raises no SIGIO on a reader already asleep for it, and a full\nbarrier orders its wait queue entry before its read of splice_pending,\nso no wake is lost.",
+  "datePublished": "Nov 20, 2026, 5:49:30 AM",
+  "dateUpdated": "Nov 20, 2026, 5:49:30 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/16bbd8c8381c01598ae91bc72e62f617353d9bd9",
+    "https://git.kernel.org/stable/c/f97e7bce1cb1f2c7fc3c0afb1818c7e568624ef7",
+    "https://git.kernel.org/stable/c/883b66d11ee3ed89cc22599280d3c319cf38903f",
+    "https://git.kernel.org/stable/c/8288ba942cfd20621c05e16978b7c3da91513ae1"
+  ],
+  "aliases": [
+    "CVE-2026-99606"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0adfec4a-21e9-3cfc-93dc-88d71e832b2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "12f054f3-de1b-37f8-be27-5f4c80b40986",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "40e21d52-0f36-3c37-a772-9c321c9d87a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.18"
+    },
+    {
+      "id": "418ed134-844a-3ee2-8317-8ad1efdfecf6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9014db202cb764b8e14c53e7bacc81f9a1a2ba7f <f97e7bce1cb1f2c7fc3c0afb1818c7e568624ef7"
+    },
+    {
+      "id": "7137b1b1-e8e6-33bb-86b4-ec90020014c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "a372431a-651d-3061-a583-49648ccbce48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9014db202cb764b8e14c53e7bacc81f9a1a2ba7f <883b66d11ee3ed89cc22599280d3c319cf38903f"
+    },
+    {
+      "id": "c6a65b51-6b99-36c7-96e3-aea04fa5d6d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9014db202cb764b8e14c53e7bacc81f9a1a2ba7f <8288ba942cfd20621c05e16978b7c3da91513ae1"
+    },
+    {
+      "id": "e3bbc866-019b-3761-bf9b-b5f4fe1c2a34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e6a25983-ba18-3a43-bc0b-ab12ca784819",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "ef4937a3-fa59-35dd-b2cc-4069439bda85",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9014db202cb764b8e14c53e7bacc81f9a1a2ba7f <16bbd8c8381c01598ae91bc72e62f617353d9bd9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0d7dbff8-e8c7-364b-83e0-91f5d48d22e6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

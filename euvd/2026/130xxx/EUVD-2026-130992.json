@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-130992",
+  "enisaUuid": "73e5c6d2-1ce7-3d48-bc57-35b0356ca4b7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/cma: accept memory of multi-range CMA areas\n\nPatch series \"mm/cma: accept memory of CMA areas reserved with\nmemblock_reserve()\", v1.\n\nPages of allocated CMA areas are released to the buddy allocator with\n__free_pages(), which does not check for unaccepted memory.\n\nThis usually works because memblock accepts the memory it allocates.\n\nHowever, multi-range CMA areas, used by hugetlb_cma, and fixed CMA areas\nrequested with cma=<size>@<base> are reserved with memblock_reserve() and\ntheir memory is never accepted.\n\nOn TDX and SEV-SNP guests the first access to such a page is fatal.\n\nTo ease the backporting, each case is addressed by a separate patch:\n- patch 1 accepts the memory of multi-range CMA areas\n- patch 2 does the same for the fixed CMA areas\n\nThe second patch won't apply cleanly to 6.6 and 6.12, but I believe the\nstable team LLMs will take care of that :)\n\n\nThis patch (of 2):\n\nOn systems with unaccepted memory, memblock allocations accept the\nallocated range, but when cma_declare_contiguous_multi() uses open coded\nallocation of multiple ranges, it reserves them with memblock_reserve()\nand they are never accepted.\n\nThese pages are released to the buddy allocator by cma_activate_area()\nwith __free_pages() that does not check for unaccepted memory, so the\nfirst access to such a page in a TDX or SEV-SNP guest is fatal.\n\nAccept the memory of each range when it is reserved.",
+  "datePublished": "Nov 20, 2026, 5:50:41 AM",
+  "dateUpdated": "Nov 20, 2026, 5:50:41 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/8e2dcdc9806546b4bda6f5904c96f1e5c20d477e",
+    "https://git.kernel.org/stable/c/89b722ba00b0a6efd3ea14c1fc7996eb3b5a22c1",
+    "https://git.kernel.org/stable/c/5d002001601a163b6c3500cdc098ff66c34f62d8"
+  ],
+  "aliases": [
+    "CVE-2026-99699"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1783177f-08ea-3feb-8572-01f16f1f7288",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "4ddeeb6e-a8b6-31ed-b49e-f483672ab4f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "56f012e1-0a8d-3b35-88e5-32f8a8458efe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c009da4258f9885c5a3749fc004870db9c0e7a99 <89b722ba00b0a6efd3ea14c1fc7996eb3b5a22c1"
+    },
+    {
+      "id": "88fcb276-a2c3-3233-bebc-b16c18fbbb7a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.15"
+    },
+    {
+      "id": "8b343076-775f-3b6f-80da-1232297c1379",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "a4ace90c-625a-36bb-a6ec-a3960a87c858",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a4ec138a-c34a-3cdb-8790-1e658f2b6cb7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c009da4258f9885c5a3749fc004870db9c0e7a99 <8e2dcdc9806546b4bda6f5904c96f1e5c20d477e"
+    },
+    {
+      "id": "cef0ae3c-fb0b-375e-a510-c93a7d33a33d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c009da4258f9885c5a3749fc004870db9c0e7a99 <5d002001601a163b6c3500cdc098ff66c34f62d8"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2a9569ab-b370-3f48-8345-2a629b1e1659",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

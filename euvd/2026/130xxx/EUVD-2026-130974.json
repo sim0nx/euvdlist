@@ -1,0 +1,128 @@
+{
+  "id": "EUVD-2026-130974",
+  "enisaUuid": "af0678e1-1e20-366f-bb9f-a9175a77486e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nblk-mq: fix out-of-bounds read in blk_mq_free_rqs\n\nA KASAN slab-out-of-bounds read can occur in blk_mq_free_rqs() when there\nis a mismatch between the number of hardware queues allocated for the IO\nscheduler (et->nr_hw_queues) and the number of hardware queues in the block\ntag set (set->nr_hw_queues).\n\nThis mismatch can happen if blk_mq_update_nr_hw_queues() fails halfway\nthrough (e.g., due to memory pressure during\nblk_mq_prealloc_tag_set_tags()). In this error path, the elevator is\nrestored with a larger number of hardware queues than the block tag set\nactually has.\n\nWhen the elevator is later freed, blk_mq_free_sched_tags() iterates up to\nthe new et->nr_hw_queues and calls blk_mq_free_rqs(). In blk_mq_free_rqs(),\nit attempts to access set->tags[hctx_idx] to get the driver tags. Because\nset->nr_hw_queues was not updated due to the earlier failure, set->tags\nstill has the old (smaller) size, leading to an out-of-bounds read.\n\nBUG: KASAN: slab-out-of-bounds in blk_mq_free_rqs+0xde/0x680\nRead of size 8 at addr ffff88818d67fc28 by task syz-executor117/5839\nCall Trace:\n blk_mq_free_rqs+0xde/0x680\n blk_mq_free_map_and_rqs+0x40/0xf0\n blk_mq_free_sched_tags\n blk_mq_free_sched_res+0xeb/0x280\n elevator_change_done+0x1d2/0x5c0\n elevator_change+0x34f/0x480\n elv_iosched_store+0x504/0x630\n queue_attr_store+0x207/0x2b0\n\nTo fix this, explicitly check if hctx_idx < set->nr_hw_queues before\naccessing set->tags[hctx_idx]. If hctx_idx >= set->nr_hw_queues, the\nhardware queue doesn't exist in the tag set, meaning there are no driver\ntags to clear mappings from. In this case, safely set drv_tags to NULL. The\nsubsequent call to blk_mq_clear_rq_mapping() already handles a NULL\ndrv_tags pointer and will safely return.",
+  "datePublished": "Nov 20, 2026, 5:50:27 AM",
+  "dateUpdated": "Nov 20, 2026, 5:50:27 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a66d71dddc041ddf02c0476778573c5dba30f758",
+    "https://git.kernel.org/stable/c/92ea40ca224ca9909dc7a5ac80dfb3e7cb0e6cae",
+    "https://git.kernel.org/stable/c/894e4e6084924cfd590968d45fad20908e02ddae"
+  ],
+  "aliases": [
+    "CVE-2026-99681"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3a974cfd-6a80-3d5d-a021-af5566866f44",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "41f325d9-a14b-338f-b802-575172b6a3e4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "04225d13aef11b2a539014def5e47d8c21fd74a5 <92ea40ca224ca9909dc7a5ac80dfb3e7cb0e6cae"
+    },
+    {
+      "id": "76458c33-f769-31d3-b28b-4142ba7c6cfb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "04225d13aef11b2a539014def5e47d8c21fd74a5 <a66d71dddc041ddf02c0476778573c5dba30f758"
+    },
+    {
+      "id": "9383a2f6-5c11-34ca-b1b4-25776f015d11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "04225d13aef11b2a539014def5e47d8c21fd74a5 <894e4e6084924cfd590968d45fad20908e02ddae"
+    },
+    {
+      "id": "b3f70932-0dd0-3c4c-b926-eea748690ee7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.17"
+    },
+    {
+      "id": "beea367d-11ca-3ad0-8428-dd1ccc96b4c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "dcd5bed1-5e8e-336e-9c82-6506015f4b7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "de4d8b57-f3bb-30ec-b94a-80deefc80b51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e01facfb54a9b2e1ad7bbb00601a42b16d276d81"
+    },
+    {
+      "id": "dfec45fe-b65a-32d4-b19b-9d6dff3824d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "ea62428d-5391-3642-8f0b-70d7131fbabf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.16.4 <6.17"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7b4f5f8d-b19e-3f53-b29a-823c245a607d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

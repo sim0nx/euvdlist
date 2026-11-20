@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-130967",
+  "enisaUuid": "090d67f9-41bd-3ddd-b4ed-3c4c78c0037a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncan: dev: can_dropped_invalid_skb: drop CAN XL frames on non-CAN XL devices\n\nSending a PF_PACKET bypasses the CAN framework logic and can directly\nreach a CAN driver's xmit() function. The PF_PACKET framework only\nchecks that skb->len does not exceed the net_device MTU.\n\nFor a CAN device that is not CAN XL capable, anything above CANFD_MTU\n(72 bytes) is therefore dropped before it reaches the driver. However,\nCAN XL frames are variable length. can_is_canxl_skb() accepts lengths in\nthe range CANXL_HDR_SIZE + CANXL_MIN_DLEN up to CANXL_MTU, i.e. 13 to\n2060 bytes.\n\nAs a result, an ETH_P_CANXL skb with a length between 13 and 72 bytes\ncan pass both the MTU and the can_dropped_invalid_skb() checks.\n\nA driver that does not support CAN XL will interpret canxl_frame->flags\nas a length because of the overlap with can_frame->len. And because\nCANXL_XLF is set, the resulting length is between 128 and 255. For\ndrivers that do not check can_frame->len before copying can_frame->data,\nas most drivers do, this results in a buffer overflow of up to 247\nbytes.\n\nDrop ETH_P_CANXL skbs if the device does not have the CAN_CAP_XL\ncapability. Keep can_is_canxl_skb() for the validation of CAN XL skbs.",
+  "datePublished": "Nov 20, 2026, 5:50:22 AM",
+  "dateUpdated": "Nov 20, 2026, 5:50:22 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/2de9c3df452e159f82ef14ca497e5be407c66493",
+    "https://git.kernel.org/stable/c/0fce44e29fce4b07642491b098afb41bd571e4f2"
+  ],
+  "aliases": [
+    "CVE-2026-99674"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "2db99d6b-0204-34ed-ae1c-ada975cba5ea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb08cba12b52cba4366e858932307649dc5304e2 <0fce44e29fce4b07642491b098afb41bd571e4f2"
+    },
+    {
+      "id": "3fdeb43b-a460-38f4-a71e-4d32539f0cbd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "b5866be1-e964-32ea-bd41-4a8da525c291",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "dced0c8d-7741-3066-ab84-abc44b7c982b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb08cba12b52cba4366e858932307649dc5304e2 <2de9c3df452e159f82ef14ca497e5be407c66493"
+    },
+    {
+      "id": "e810ac66-6a82-3859-bcc3-21421c49184e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "ed809f14-0226-3831-990e-5600a718d6b5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "96f65e08-3b61-3db9-bdf4-c0fd8703d154",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

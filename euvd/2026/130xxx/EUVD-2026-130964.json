@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130964",
+  "enisaUuid": "759b5fbe-07ef-3708-b037-a726b42d1d9d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncan: raw, isotp: copy socket options outside of lock_sock()\n\nThe CAN_RAW and CAN_ISOTP specific socket options are copied from and\nto user space while holding lock_sock(). A copy that faults or stalls,\ne.g. on a userfaultfd or FUSE backed mapping, holds lock_sock() for its\nwhole duration.\n\nraw_notify() and isotp_notify() take lock_sock() of a socket that is\nbound to the vanishing device while holding RTNL. As the CAN_RAW\noptions can also be changed on a bound socket, a stalled copy can block\nRTNL on an unregistration or namespace change of the bound device.\nBefore \"can: protect the receive lists with a per-device lock\",\nraw_setsockopt() even held RTNL itself during the copy. CAN_ISOTP only\ncopies its options for unbound sockets, which isotp_notify() skips\nwithout taking lock_sock().\n\nKeep the user space copies out of the locked sections: Check the option\nname and length and copy the option values, including the CAN_RAW_FILTER\nfilters, to kernel memory before lock_sock(). raw_setsockopt_locked()\nand isotp_setsockopt_locked() get the copied values directly and drop\ntheir now redundant length checks and copies. As a side effect, a\nfailing copy can not leave partially overwritten options behind\nanymore. In raw_getsockopt() duplicate the filters under lock_sock() and\ncopy them to user space after release_sock().\n\nAs the option name and length are now checked before lock_sock(), the\norder of the checks in isotp_setsockopt() and accordingly the order of\nthe returned error values changes. This is in line with POSIX, which\ndoes not define an order in which multiple error conditions are\ndetected and reported.\n\nThe generic SOL_SOCKET options in sk_setsockopt() are not affected by\nthis patch.",
+  "datePublished": "Nov 20, 2026, 5:50:20 AM",
+  "dateUpdated": "Nov 20, 2026, 5:50:20 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ecc81d48ae70513db45de567ae164a1993b792c5",
+    "https://git.kernel.org/stable/c/233eb0922c17063911dd4e947ef91ef5125b9665",
+    "https://git.kernel.org/stable/c/12b2ddd7d01b7e5ec466c128ff862197d59c2440",
+    "https://git.kernel.org/stable/c/43c973a0887d3d7b2ee0a446603c97bf0f38c58e"
+  ],
+  "aliases": [
+    "CVE-2026-99671"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "39f11e5e-a56b-39e0-9082-f3d9bc013c6e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c18ce101f2e47d97ace125033e2896895a6db3dd <233eb0922c17063911dd4e947ef91ef5125b9665"
+    },
+    {
+      "id": "484a7ec4-b5a5-3121-a366-8df7717a653f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "6527b65a-8993-37aa-9de8-bc0f0ab681c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "74570afe-fd08-32f3-afcc-9e56ad21e638",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c18ce101f2e47d97ace125033e2896895a6db3dd <12b2ddd7d01b7e5ec466c128ff862197d59c2440"
+    },
+    {
+      "id": "97ffe8e7-fd93-3c30-abb8-55f41519598f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c18ce101f2e47d97ace125033e2896895a6db3dd <43c973a0887d3d7b2ee0a446603c97bf0f38c58e"
+    },
+    {
+      "id": "b0dae8dc-70a3-3ece-95b4-19f08b15681f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c18ce101f2e47d97ace125033e2896895a6db3dd <ecc81d48ae70513db45de567ae164a1993b792c5"
+    },
+    {
+      "id": "b27e1fb1-20f3-386d-90b8-cc01610c762a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "b860dfd0-c6d4-3916-94c8-1ad5c205d1c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "bebf1204-9466-3c5c-9fd2-a718c1fbb7df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ceab3521-c448-3374-acc7-1163dfc4bb9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.25"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "1ae789b2-5693-3e61-8bdb-1f8f9c67dc64",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

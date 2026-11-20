@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-130936",
+  "enisaUuid": "aeedb735-d442-3624-821f-c532f56bb6a6",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nkhugepaged: fix readahead lock inversion in collapse_file()\n\ncollapse_file() can call page_cache_sync_readahead() while still holding\nsource folios locked. If truncate holds mapping->invalidate_lock\nexclusively and waits for one of those folios, readahead waits for\ninvalidate_lock and neither side can make progress.\n\nWe need to release those folio locks before starting readahead. On a page\ncache miss, roll back first, populate the collapse range, and retry once.\nDoing readahead after rollback avoids an extra pass when all folios are\nalready present. If another miss occurs on retry, give up rather than keep\nretrying while truncate or reclaim removes folios.\n\nKeep page_cache_sync_readahead() and wait for read I/O with\nfilemap_lock_folio(), releasing each folio before moving to the next. The\nexisting uptodate check during collapse still handles read errors.\n\nShmem uses shmem_get_folio() for swapin and fallocated folios without\ntaking mapping->invalidate_lock, so it is unaffected.",
+  "datePublished": "Nov 20, 2026, 5:49:58 AM",
+  "dateUpdated": "Nov 20, 2026, 5:49:58 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/b9b3c367faf1929fb8192a846b3604ad7eced008",
+    "https://git.kernel.org/stable/c/eadce52a9ef657d561b3e76c9b5f178bd99735f5"
+  ],
+  "aliases": [
+    "CVE-2026-99643"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "5b5d320b-dd33-31df-9020-61c59e3c8102",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "64f1774c-1711-3b32-ae3c-a38e8a6bf344",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "730633f0b7f951726e87f912a6323641f674ae34 <b9b3c367faf1929fb8192a846b3604ad7eced008"
+    },
+    {
+      "id": "6b7e1932-fe09-3a6d-a4c4-6e82bca85202",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "72ba3a71-0836-3b72-91b8-50c145ca467e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c8a9ce8f-53cb-3d39-b1de-014178175158",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15"
+    },
+    {
+      "id": "d6f3ff90-bfe1-3f75-9c35-c34fd1137ebb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "730633f0b7f951726e87f912a6323641f674ae34 <eadce52a9ef657d561b3e76c9b5f178bd99735f5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e4c7a28c-ad93-320f-a9b3-654a8f311328",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

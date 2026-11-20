@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130867",
+  "enisaUuid": "6b184a26-4c2d-3b50-9401-6eb0c996f2d6",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix skb_pull() BUG in __bpf_redirect_neigh()\n\nThe issue:\nThis is a follow-up to the short link-layer header fixes from Eric.\nAfter vlan pop_eth, a privileged SCHED_ACT BPF program can call\nbpf_skb_change_head(skb, 1, 0) and then bpf_redirect_neigh().\n\n__bpf_redirect_neigh() calls skb_pull(skb, sizeof(*ethh)) after checking\nonly that mac_header < network_header.  Nothing verifies that the MAC\nheader is long enough, that it is linear, or that the IP header the\nredirect goes on to read is linear either.\n\nA SCHED_ACT BPF program can do:\n\n    bpf_skb_change_head(skb, 1, 0);\n    bpf_redirect_neigh(lo, NULL, 0, 0);\n\nafter vlan pop_eth.  The skb then has mac_len == 1 and only one byte of\nlinear data; skb_pull(ETH_HLEN) trips the skb->len < skb->data_len BUG in\n__skb_pull():\n\n    kernel BUG at ./include/linux/skbuff.h:2839!\n    RIP: skb_pull+0x40/0x50\n    Call Trace: skb_do_redirect -> packet_xmit -> packet_sendmsg\n    Kernel panic - not syncing: Fatal exception in interrupt\n\nThe v4 and v6 paths read ip_hdr() and ipv6_hdr() as soon as the MAC\nheader is gone.  On the AF_PACKET frame below that leaves headlen == 0\nafter the pull, so the network header sits at skb->tail and the route\nlookup reads ip4h->protocol, ip4h->saddr and ip4h->daddr past the linear\narea.\n\nThe Fix:\nUse skb_network_offset(), which is the MAC header span, instead of\nskb->mac_len.  mac_len is zero for locally generated tc egress and netkit\npackets, while the span still rejects the one-byte header produced by\npop_eth + bpf_skb_change_head(skb, 1, 0).  The single check also covers\nthe mac_header >= network_header test it replaces.\n\nUse pskb_may_pull() to make the Ethernet header linear before it is read\nor pulled, and to make the IP header linear in both the v4 and the v6\npath before ip_hdr()/ipv6_hdr() is read.  The header pointers are taken\nafter the pull, since pskb_may_pull() may reallocate skb->head.\n\nConditions to recreate the bug:\nOn x86-64 with 4 KiB pages, enable CONFIG_PACKET, CONFIG_BPF_SYSCALL,\nCONFIG_NET_SCH_INGRESS, CONFIG_NET_CLS_MATCHALL, CONFIG_NET_ACT_VLAN and\nCONFIG_NET_ACT_BPF.  Run as root with BPF loading, network administration\nand raw-packet privileges.  Bring lo up and attach a SCHED_ACT program\nthat calls bpf_skb_change_head(skb, 1, 0), then returns\nbpf_redirect_neigh(skb->ifindex, NULL, 0, 0):\n\n  ip link set lo up\n  tc qdisc add dev lo clsact\n  tc filter add dev lo egress matchall action vlan pop_eth pipe \\\n      action bpf object-file neigh_chghead.o section action\n\nSend an untagged ETH_P_IP frame of ETH_HLEN + 8192 bytes through an\nAF_PACKET/SOCK_RAW socket bound to lo, without PACKET_VNET_HDR or\nPACKET_QDISC_BYPASS.  Use a unicast destination MAC.  The sender's skb\nhas a 14-byte linear Ethernet prefix and a fragmented payload; pop_eth\nremoves that prefix and change_head restores only one linear byte.\nThe unfixed neighbor redirect then tries to pull 14 bytes and BUGs.\n\nSending the same frame without pop_eth and change_head leaves the IP\nheader in the frags, which is the route lookup reading past skb->tail.",
+  "datePublished": "Nov 20, 2026, 5:51:21 AM",
+  "dateUpdated": "Nov 20, 2026, 5:51:21 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a725401dd629c6fdda47e3a02efed539ac0ed6d0",
+    "https://git.kernel.org/stable/c/2009032471be8b9622bf2496ce9c6b06a1015905",
+    "https://git.kernel.org/stable/c/890fd9c4e02bc9e477e6365fef4ac8c2262a3b3c",
+    "https://git.kernel.org/stable/c/23503acb214cbefaf3945d05ab9667ff11ae3de9"
+  ],
+  "aliases": [
+    "CVE-2026-99751"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "13af57ee-54ec-3c0d-9b84-057312ceaafb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "17e43895-1b6c-3d42-871b-9fe8731648ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b4ab31414970a7a03a5d55d75083f2c101a30592 <23503acb214cbefaf3945d05ab9667ff11ae3de9"
+    },
+    {
+      "id": "2f05b0d8-192d-3a98-983c-615041ff6c1e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "36154833-5394-3b9e-8250-0434865168ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b4ab31414970a7a03a5d55d75083f2c101a30592 <a725401dd629c6fdda47e3a02efed539ac0ed6d0"
+    },
+    {
+      "id": "8507f7f9-143f-3c90-88a6-5cceb7babe36",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b4ab31414970a7a03a5d55d75083f2c101a30592 <890fd9c4e02bc9e477e6365fef4ac8c2262a3b3c"
+    },
+    {
+      "id": "93b9cf2b-f47d-3ef9-bec1-b74cde9016f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "96bd9bf2-0f1a-3da4-a6d0-9c500268b6fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10"
+    },
+    {
+      "id": "c2477a46-deff-3a45-8d0c-f231414d4d26",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "e5cdcf50-053b-3b45-86c9-ed6fb4f246c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "e6e33d17-afb3-35d6-a521-d3ebb077ea45",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b4ab31414970a7a03a5d55d75083f2c101a30592 <2009032471be8b9622bf2496ce9c6b06a1015905"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c8fadc8d-f402-3941-8150-a8a9e5b7548b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

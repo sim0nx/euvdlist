@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2026-131017",
+  "enisaUuid": "c7e4e5b7-6e9d-3e87-bc50-724aeb106bc7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nassoc_array: don't chain a new shortcut onto an existing one\n\nWhen a full node's leaves and the new key all share the node's segment,\nassoc_array_insert_into_terminal_node() replaces the node with a\nshortcut to a pair of new nodes.  If the node is itself the target of a\nshortcut, the new shortcut is installed as that shortcut's next node,\nand a shortcut leading to a shortcut is something nothing expects:\nassoc_array_walk() indexes the second one as a node, and\nassoc_array_apply_edit() hits the BUG_ON() in the loop that adjusts\nnr_leaves_on_branch, on that same insertion.\n\nDeletion gets a node there.  When the subtree below a shortcut shrinks\nenough, assoc_array_delete() collapses it into one node below the\nshortcut, and the leaves it collects can all share that node's segment.\nThe next key that shares it too takes this path.  Eighteen insertions\nand a deletion are enough: sixteen keys that agree on bits 0-11, one\nthat leaves them at bit 8 and is deleted again, and one more that agrees\nwith the sixteen.\n\nHave the new shortcut replace the one in front of the node as well.\nassoc_array_insert_shortcut() gives it that shortcut's back pointer and\nparent slot, so the caller installs it where that one was, and excises\nthe old shortcut along with the node, which takes a second entry in\nexcised_meta[].  The new shortcut's index key comes from the new key up\nto the new skip level, so it covers what the old one did.\n\nFound by a userspace test doing random insertions and deletions on keys\nthat share long prefixes; a targeted case builds a shortcut, deletes\ndown to the collapse and inserts one more key.",
+  "datePublished": "Nov 20, 2026, 5:49:03 AM",
+  "dateUpdated": "Nov 20, 2026, 5:49:03 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/517e7bbfaf5381d47e8d393ff54c61107f8fb1bb",
+    "https://git.kernel.org/stable/c/258745fea55ba057c062e0e680a54fde26630e95",
+    "https://git.kernel.org/stable/c/a7990a72267f264f5284f6bcb90d397b29ac00ed"
+  ],
+  "aliases": [
+    "CVE-2026-99567"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1f6d9ef3-c931-33ad-bcf3-35dcac228ed8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3cb989501c2688cacbb7dc4b0d353faf838f53a1 <517e7bbfaf5381d47e8d393ff54c61107f8fb1bb"
+    },
+    {
+      "id": "475c287b-d6bf-3a2b-b763-85bac6a1c8fa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "8d907b0c-01d7-3534-95ad-50f4b284810b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3cb989501c2688cacbb7dc4b0d353faf838f53a1 <258745fea55ba057c062e0e680a54fde26630e95"
+    },
+    {
+      "id": "aa7a900b-f0c7-3895-8bb8-55f1f431ec20",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "e20eb071-370e-30d7-8162-37e76eeb9c1e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e656d6cb-366c-3659-8058-617fd02ff8cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.13"
+    },
+    {
+      "id": "ee6e6bdf-a66a-3bb6-ad19-bed4fb5039c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "f73c47f9-a849-3db4-b1c0-53406a785ac3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3cb989501c2688cacbb7dc4b0d353faf838f53a1 <a7990a72267f264f5284f6bcb90d397b29ac00ed"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "cf62ffa3-2b12-35e2-b90d-074aed1c0088",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

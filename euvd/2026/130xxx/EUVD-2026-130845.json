@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2026-130845",
+  "enisaUuid": "f0bd455a-0863-3b6b-bab5-b4c0f95cbdaa",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/rmap: handle device-exclusive entries in folio_referenced_one()\n\npage_vma_mapped_walk() can return non-present device-exclusive entries,\nbut folio_referenced_one() passes them to PTE young-bit accessors that\nrequire present PTEs.\n\nWe must neither call clear_flush_young_ptes_notify() nor\nfolio_pte_batch() with non-present entries. For example, clearing the\nyoung bit on non-present PTEs can corrupt the entry: on arm64\nPTE_AF overlaps the swap type, so clearing it turns a device-exclusive\nentry into an ordinary swap entry.\n\nfolio_pte_batch() will VM_WARN_ON_FOLIO.\n\nApply the same approach as the previous fixes to e.g., damon_ptep_mkold():\ntreat these entries as old from the CPU's perspective and obtain their\nyoung state through the MMU notifier.\n\nSkip PTE batching and MGLRU look-around for non-present entries, and\ndon't modify non-present PTEs.",
+  "datePublished": "Nov 20, 2026, 5:51:04 AM",
+  "dateUpdated": "Nov 20, 2026, 5:51:04 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/9075e5fbad71e00a73cddef901a2a08ad7b51af5",
+    "https://git.kernel.org/stable/c/f3c493d2f42b5f44a5c134d8d7ea7f960caf5e2c"
+  ],
+  "aliases": [
+    "CVE-2026-99729"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "1fab82ab-a21f-3382-96bc-7146926c4a8a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b756a3b5e7ead8f6f4b03cea8ac22478ce04c8a8 <f3c493d2f42b5f44a5c134d8d7ea7f960caf5e2c"
+    },
+    {
+      "id": "3e86cba3-4ca9-3b75-80a1-4d3b63c183d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "55cb52da-a74e-3e53-99e1-5d5ff421de92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.14"
+    },
+    {
+      "id": "5c82c080-ba90-3c7b-8af6-2ea32dcaaf14",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "846fea5d-ebbc-3373-b8a6-c8ce1bb55c21",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "fef2cc45-b83f-3f8c-8924-8e309a2aeca0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b756a3b5e7ead8f6f4b03cea8ac22478ce04c8a8 <9075e5fbad71e00a73cddef901a2a08ad7b51af5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "72c92139-016e-3702-91df-9353f36df11b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

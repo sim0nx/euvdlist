@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130876",
+  "enisaUuid": "02e872d0-6467-3d10-92ce-22c9037abc88",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbatman-adv: tt: don't drop local events queued during TVLV update\n\nbatadv_tt_tvlv_container_update() read the number of local changes without\nholding changes_list_lock. batadv_tt_local_event() is not serialized by\nthe commit_lock and can queue new events before the changes_list is\nflushed:\n\n  CPU0                          CPU1\n  batadv_tt_tvlv_container_update()\n    num = ...local_changes;\n                                batadv_tt_local_event()\n                                  list_add_tail(...);\n                                  ...local_changes++;\n    spin_lock_bh(&...changes_list_lock);\n    /* only num events copied but all freed */\n\nThe additional events were freed without ever being sent. Other nodes will\nonly notice this via a CRC mismatch and must request the full table.\n\nThe number of changes and the changes_list must therefore be taken\natomically. Events queued afterwards then stay in the tt.changes_list for\nthe next TT round.\n\nThe changes can no longer be kept for the next round when the TVLV buffer\nallocation fails. But they would be sent with a skipped TTVN anyway, so the\nother nodes have to request the full table in this case either way. The\nlast changeset is only dropped in this case when the TTVN was incremented.\nWithout new changes, it still describes the current TTVN.\n\nPreviously, the unconsumed changes caused a retry of the TVLV container\nupdate in the next commit round. Since the changes are now consumed, the\nnext round would only take the path without changes and wait for\nBATADV_TT_OGM_APPEND_MAX rounds before updating the container again. Until\nthen, the outdated container with the previous TTVN would still be\nannounced. The ogm_append_cnt is therefore reset on failure to retry the\nupdate in the next OGM interval.\n\nThis doesn't make the CRC consistent with the announced changeset. The\nlocal table modifications are still not serialized with the commit and\nbatadv_tt_local_transition_new() can still make a client part of the CRC\nfor which the event is only part of the next TT round. Such an\ninconsistency is detected by the CRC check of the other nodes and solved\nvia a full table request.",
+  "datePublished": "Nov 20, 2026, 5:51:27 AM",
+  "dateUpdated": "Nov 20, 2026, 5:51:27 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/9c456c887ad9c8950097473590923ce8b553d488",
+    "https://git.kernel.org/stable/c/5bfa79a27aee75e3f1d84f9b4d4358dbeb9b7505",
+    "https://git.kernel.org/stable/c/cd2ff491c8eed4773f4f50ae10c942e09db1f6c4",
+    "https://git.kernel.org/stable/c/ed7a0dfdd370acb48be7a281df732c1bebcc7f1d"
+  ],
+  "aliases": [
+    "CVE-2026-99759"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "114c1f05-ea65-3716-8584-9f1e43b3c61d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "13c99ee4-4bb7-3c0e-96ea-7e105e47e6f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.1"
+    },
+    {
+      "id": "4c4b6a76-41cc-36d5-8afe-14383b956363",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a73105b8d4c765d9ebfb664d0a66802127d8e4c7 <cd2ff491c8eed4773f4f50ae10c942e09db1f6c4"
+    },
+    {
+      "id": "4ebb70e7-4398-37ed-935f-771867fd2a66",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "505534e5-29ef-3239-b37e-5aec7fb7749a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a73105b8d4c765d9ebfb664d0a66802127d8e4c7 <5bfa79a27aee75e3f1d84f9b4d4358dbeb9b7505"
+    },
+    {
+      "id": "578bc022-14bd-3c94-a6e4-e8ca85e7dffc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "8b3ae2fc-ab75-3e09-a11d-1fde83ac5956",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a73105b8d4c765d9ebfb664d0a66802127d8e4c7 <ed7a0dfdd370acb48be7a281df732c1bebcc7f1d"
+    },
+    {
+      "id": "b13cb9b7-cbcc-3e7c-b84d-c6306b24da6f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "e8261cb3-31cf-3c38-9bb7-65edd6643960",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a73105b8d4c765d9ebfb664d0a66802127d8e4c7 <9c456c887ad9c8950097473590923ce8b553d488"
+    },
+    {
+      "id": "fa10a739-8aee-3721-b91f-aa196c6bfc24",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4c0c4cc1-2ea7-302f-9616-8a247aca4d77",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130896",
+  "enisaUuid": "4ae00afc-a9d8-3261-b837-e1cd86b0ae18",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/9p/usbg: call disable_usb9pfs() from usb9pfs_disable()\n\nusb9pfs_disable() is the usb_function ->disable callback, invoked by\nthe composite gadget core whenever the host resets or unconfigures\nthe gadget. The gadget function API requires this callback to disable\nits endpoints; every other in-tree function driver does so from its\n->disable hook.\n\nusb9pfs_disable() never called disable_usb9pfs(), so the IN/OUT\nendpoints and their usb_request objects were left active and\nallocated across a host-driven disable. When the host later\nreconfigures the device, enable_usb9pfs() calls alloc_requests() again\nand unconditionally overwrites usb9pfs->in_req/out_req, permanently\nleaking the previous allocations, while the endpoints themselves are\nleft enabled underneath the function's own idea of being disabled.\n\nCall disable_usb9pfs() before reinit_completion(&usb9pfs->send),\nmirroring the same sequence already used in p9_usbg_close(). Placing\nit before the reinit_completion() also ensures usb_ep_disable() has\nsynchronously flushed any requests still queued in hardware before the\ncompletion is reset, closing the same race that motivated resetting\nthe completion here in the first place.",
+  "datePublished": "Nov 20, 2026, 5:51:42 AM",
+  "dateUpdated": "Nov 20, 2026, 5:51:42 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/2d2e942cd9a8fc1f11e3e8e0340a0bb4ec1e9b9c",
+    "https://git.kernel.org/stable/c/52544826f345280beb13d150c3bc41e61353fa0c",
+    "https://git.kernel.org/stable/c/277167375d269e411e2c5ce79527ff3ebf57a0bc",
+    "https://git.kernel.org/stable/c/cd1988cf723c2eae87112b198bf90b0aebfeaf31"
+  ],
+  "aliases": [
+    "CVE-2026-99779"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "0b050d85-724a-3938-ab77-ec76126a578d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a3be076dc174d9022a71a12554feb4c97b5c4d5c <cd1988cf723c2eae87112b198bf90b0aebfeaf31"
+    },
+    {
+      "id": "149dee27-2db7-3358-bfcb-a4ca788f4ef6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "19e429a0-cd90-3edb-9613-b4be2c755547",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "40bca0f5-77b2-376f-b054-2e11274f79f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "48801f34-03d1-3c5a-8ca0-9d394ee5efd3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7e58e51e-ba9c-3973-9c23-68ce81afedbf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "c638a833-a243-3279-ae68-d5818f803971",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a3be076dc174d9022a71a12554feb4c97b5c4d5c <277167375d269e411e2c5ce79527ff3ebf57a0bc"
+    },
+    {
+      "id": "d3a71f3e-822f-34f0-9507-3bb5f73a09e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a3be076dc174d9022a71a12554feb4c97b5c4d5c <52544826f345280beb13d150c3bc41e61353fa0c"
+    },
+    {
+      "id": "fc218b9c-efd0-3ea3-a9e2-68772f7f605e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a3be076dc174d9022a71a12554feb4c97b5c4d5c <2d2e942cd9a8fc1f11e3e8e0340a0bb4ec1e9b9c"
+    },
+    {
+      "id": "ff725e8d-94e0-3c89-a95e-3cb268d6353a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d4956c4d-47d6-3e77-b805-0d3ebb59a481",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

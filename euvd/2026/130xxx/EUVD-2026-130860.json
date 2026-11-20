@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2026-130860",
+  "enisaUuid": "ee5572ef-b91b-3acf-b5f4-f9f0080920ff",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: atl1c: drop oversized RX frames instead of panicking\n\natl1c sizes its receive buffers from the netdev MTU plus a fixed set of L2\noverheads, which comes to 1522 bytes at the default MTU.  A link partner\nthat sends a longer frame - in practice a MikroTik CCR2004-1G-2XS-PCIe,\nwhose RouterOS side defaults to l2mtu 1600 while the host stays at MTU 1500\n- makes the length reported by the RX return descriptor exceed what the\nhardware wrote, and skb_put() then either includes bytes that were never\nreceived or trips skb_over_panic and takes the host down.\n\nCompare the descriptor length against buffer_info->length, the length the\nhardware was given, rather than against skb_tailroom(): the skb carries 64\nbytes of slack for the DMA erratum, so tailroom is larger than the DMA\nbuffer and a frame in between would pass the check and still be delivered\nwith a tail the device never wrote.  The same test rejects frames shorter\nthan ETH_HLEN + ETH_FCS_LEN; before this change a reported length below\nETH_FCS_LEN underflowed in skb_put().\n\nThe frame is dropped with kfree_skb_reason(SKB_DROP_REASON_PKT_TOO_BIG) so\ndrop_monitor and the kfree_skb tracepoint see it, and counted through\ndev_core_stats_rx_dropped_inc(), which survives atl1c_get_stats()\noverwriting the hardware counters on every read.  It also counts as work:\natl1c_clean_rfd() has already recycled the RFD, and the refill at the end\nof the poll only runs when work_done is non-zero, so sustained oversized\ntraffic would otherwise drain the ring and stop RX.\n\nTested on a MikroTik CCR2004-1G-2XS-PCIe (4x AR8151) in a Proxmox VE host,\nwith atl1c built from a DKMS tree carrying this change: the l2mtu-1600\ntraffic that panics the stock driver is dropped and counted with the patch\napplied, and received normally once the host MTU is raised to match.\n\nThis complements commit 36c2009d90f2 (\"net: atl1c: fix soft lockup on\nout-of-range tpd_cons read\"), which fixed the TX side of the same\n\"host dies while the card resets\" problem.",
+  "datePublished": "Nov 20, 2026, 5:51:16 AM",
+  "dateUpdated": "Nov 20, 2026, 5:51:16 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/11c873d6e6a497b5ee3699c63b57b49a882aa580",
+    "https://git.kernel.org/stable/c/655463ba1de62e7f4893cabfc89fe70d0e33f55d",
+    "https://git.kernel.org/stable/c/18ca06b36c4da8b46859dcd1c9aec557d05bc23a",
+    "https://git.kernel.org/stable/c/c4ba1716853de5178a9df785844ebb5e397a80e6"
+  ],
+  "aliases": [
+    "CVE-2026-99744"
+  ],
+  "assigner": "Linux",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "31d8fada-3da6-3ea0-a4b0-65c715ef9b2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "421e192d-591a-37cf-8a60-e665a6a7298f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "43250ddd75a35d1f7926d989a10fefd30c37eaa7 <11c873d6e6a497b5ee3699c63b57b49a882aa580"
+    },
+    {
+      "id": "591a69f3-2cc3-3417-9e88-210d54bf3fa7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "43250ddd75a35d1f7926d989a10fefd30c37eaa7 <c4ba1716853de5178a9df785844ebb5e397a80e6"
+    },
+    {
+      "id": "5d6bc797-a856-3d21-a2b6-6fbffd9ba501",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7a3d5221-8900-3c70-af9b-94eeb4eb961b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "43250ddd75a35d1f7926d989a10fefd30c37eaa7 <18ca06b36c4da8b46859dcd1c9aec557d05bc23a"
+    },
+    {
+      "id": "948f7758-49e6-3e32-8e6b-1e03f137b7e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "b6810cf1-72e4-3a55-a372-b062dd962f81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.29"
+    },
+    {
+      "id": "c8fa123f-1d78-3c6f-a408-1d1b531f6423",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "d89bbbe3-7ef4-3f66-b7b2-085685fb1050",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "43250ddd75a35d1f7926d989a10fefd30c37eaa7 <655463ba1de62e7f4893cabfc89fe70d0e33f55d"
+    },
+    {
+      "id": "ff682bad-7f2e-3a4a-bbac-c7b13c1bfbda",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "06cb28d4-f9c2-3bb1-b598-135b4cebdc3b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}
