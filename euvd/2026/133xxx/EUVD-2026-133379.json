@@ -1,0 +1,49 @@
+{
+  "id": "EUVD-2026-133379",
+  "enisaUuid": "a6629209-f8ad-3e79-b1a8-465a3d645a6a",
+  "description": "The Intel SEDI I2C controller driver (drivers/i2c/i2c_sedi.c, used on Intel ISH platforms) waits for each asynchronous transfer with k_sem_take() on a per-controller completion semaphore and a 1 s timeout. When the wait times out, i2c_sedi_api_full_io() aborts the transfer via SEDI_I2C_ABORT_TRANSFER, but if the controller's completion interrupt fires between the timeout expiring and the abort masking interrupts, the callback k_sem_give()s the semaphore and the token is never discarded.\n\nThe next transfer on that bus then takes the stale token immediately and returns success (the stale context->err is usually 0) while the controller is still executing it. The HAL interrupt handler (or DMA) keeps copying received bytes into the caller's msgs[i].buf. Since I2C callers typically pass stack buffers, this writes into a stack frame that has already been returned from, and the caller also consumes incomplete data. The desynchronization can persist across later transfers.\n\nTriggering the race requires a transfer to complete just after the 1 s timeout. A device on the I2C bus that controls clock stretching (for example a malicious or tampered peripheral) can steer this timing, and it also supplies the bytes that get written. Exploitation therefore needs physical access to the bus and is timing-dependent. The impact is corruption of kernel or thread stack memory with data the peripheral controls, which can lead to a crash or potentially to code execution. The fix calls k_sem_reset() and clears context->err after the abort, while the transfer mutex is still held.",
+  "datePublished": "Nov 23, 2026, 6:02:45 PM",
+  "dateUpdated": "Nov 23, 2026, 6:41:56 PM",
+  "baseScore": 6.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:P/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/628c432817b08e43ffa032876f37efd1bc946c13",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-cq29-vfwj-ph7w"
+  ],
+  "aliases": [
+    "CVE-2026-102949"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "13dd1cf7-4979-3658-abcb-b5d3fc10f692",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.4.0 <4.5.0"
+    },
+    {
+      "id": "47e35975-4dbc-39a6-9ba6-ac4e7dc12570",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "3.5.0 <4.3.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "fb194b0d-a938-357d-a7ed-a784aad8d512",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}
