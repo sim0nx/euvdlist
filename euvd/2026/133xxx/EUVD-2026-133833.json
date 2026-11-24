@@ -1,0 +1,59 @@
+{
+  "id": "EUVD-2026-133833",
+  "enisaUuid": "2571de5c-5799-3f51-94e5-7daf689df4ef",
+  "description": "Issue summary: A QUIC peer that sends many small out-of-order STREAM fragments\nwhile withholding the first byte of the stream may cause OpenSSL to buffer\na large number of reassembly nodes occupying much larger memory than\nthe actual data sent.\n\nImpact summary: A remote peer can pin large amounts of memory on a server that\naccepts incoming QUIC streams, potentially exhausting memory and causing\nDenial of Service.\n\nCWE: CWE-770: Allocation of Resources Without Limits or Throttling\n\nDescription: QUIC receive flow control limits the highest byte offset a peer\nmay reach on a stream. It does not limit how many out-of-order fragments the\nreceiver buffers. OpenSSL allocates a reassembly node for each non-adjacent\nSTREAM fragment and never caps the count. A peer that opens a stream and sends\nmany one-byte fragments at increasing offsets, while withholding the first\nbyte, makes the receiver retain one node per fragment without delivering any\ndata.\n\nOnly applications that accept incoming streams are exposed. With the default\npolicy, which rejects peer-initiated streams, the stream is torn down before\nstate accumulates. Because the read side never advances past the missing\nprefix, the flow control window never slides and the nodes stay pinned for the\nlife of the connection.\n\nThe per-stream window bounds the highest offset, so the memory one stream can\npin is finite, but it can reach tens of megabytes and, across many streams and\nconnections, drive memory pressure and Denial of Service. The severity is\nlimited because the exhaustion is bounded by flow control and requires a\nnon-default configuration.\n\nFIPS impact: no\nThe affected code is outside the FIPS module boundary.",
+  "datePublished": "Nov 24, 2026, 11:30:07 AM",
+  "dateUpdated": "Nov 24, 2026, 11:30:07 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://openssl-library.org/news/secadv/20261124.txt",
+    "https://github.com/openssl/openssl/commit/fead004f52d6e5efffa62019ea451218c0aa79e9",
+    "https://github.com/openssl/openssl/commit/05bfccf68184665b989dc7001fc5f1f885f84194",
+    "https://github.com/openssl/openssl/commit/7a14b6e410c881365881596231ea6f88e7d27c6e"
+  ],
+  "aliases": [
+    "CVE-2026-84785"
+  ],
+  "assigner": "openssl",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "390537b0-a438-3f65-9929-7ac93fe4254b",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "4.1.0 <4.1.1"
+    },
+    {
+      "id": "9b43b60f-fac8-336b-8abf-95bf77032996",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "3.5.0 <3.5.10"
+    },
+    {
+      "id": "b1b53779-3dae-3cdf-b673-9e50c940252e",
+      "product": {
+        "name": "OpenSSL",
+        "vendor": {
+          "name": "OpenSSL"
+        }
+      },
+      "product_version": "4.0.0 <4.0.4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5378d0fb-2dbc-37b8-9b0b-9829b29d3e4f",
+      "vendor": {
+        "name": "OpenSSL"
+      }
+    }
+  ]
+}
