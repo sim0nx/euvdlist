@@ -3,20 +3,45 @@
   "enisaUuid": "91fb87ca-ab30-358d-ac57-9f770f84cbb7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: do not index before the entry array when dividing an empty bucket\n\nocfs2_divide_xattr_bucket() appends an empty bucket carrying a sentinel\nhash when the source bucket has no divide position, taking that hash\nfrom xh_entries[start - 1].  ocfs2_xattr_find_divide_pos() returns count\nwhen every entry shares one hash, and its loop does not run at all for\ncount < 2, so an empty bucket comes back with start == count == 0 and\nthe read is xh_entries[-1].\n\nThat is outside the __counted_by_le(xh_count) bounds of xh_entries[] and\nlands on the header, so the value picked up is\nxh_count | xh_free_start << 16.  One above it is written into the new\nbucket's xh_entries[0] and committed, which leaves a bucket whose first\nhash does not follow the bucket before it.  ocfs2_xattr_bucket_find()\nbinary searches on xh_entries[0], so the broken key hides the range the\nsentinel was meant to cover: getxattr() answers -ENODATA for an\nattribute that is stored, and an insert can go to the wrong bucket and\nleave two copies of a name.  The cross cluster divide hands the same\nvalue back as a tree record's e_cpos, which then claims a hash range it\ndoes not cover.\n\nRead xh_entries[0] instead.  The branch is only reached when every entry\nshares one hash, so for a non-empty bucket it holds the same value, and\nfor an empty one it is the slot that carries the bucket key.\n\nAn empty bucket reaches the divide from\nocfs2_check_xattr_bucket_collision(), which reports no collision for\none, through ocfs2_add_new_xattr_bucket() and\nocfs2_extend_xattr_bucket().  It does not take a failed set to get\nthere: a divide that finds no position is itself what leaves an empty\nsentinel bucket behind, and a later extend can pick it as the target.",
   "datePublished": "Nov 20, 2026, 5:50:38 AM",
-  "dateUpdated": "Nov 20, 2026, 5:50:38 AM",
+  "dateUpdated": "Nov 23, 2026, 8:06:09 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/da4c7fd9935904f53456ee4c902257732bafa61b",
+    "https://git.kernel.org/stable/c/593d7d770b0cb43ec2706d0cc70e69936bd4bea0",
+    "https://git.kernel.org/stable/c/f9c03a6b2d822b93e672f6e76c33a721d460dcda",
+    "https://git.kernel.org/stable/c/b813e2771f1a52e06c70db1790c602f6e6929eaf",
     "https://git.kernel.org/stable/c/58308e76c036822c78947efbbdcb800c1df6f6b2",
     "https://git.kernel.org/stable/c/7148fa383fb000d3125989ff3e63f3458a33591d",
     "https://git.kernel.org/stable/c/b710975d07b049c957ba6b93985b1cf9b169ad6e",
     "https://git.kernel.org/stable/c/7133a0d0954c109f1764ebf8ab32d7e757a6c587"
   ],
   "aliases": [
+    "GHSA-9gfv-8gvj-92g3",
     "CVE-2026-99694"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
+    {
+      "id": "153295fb-f2cb-3dd1-89a0-7997fb76fdec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "1a5783b4-12fb-36a9-92f2-1c4be4dad3ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
     {
       "id": "370b777c-d0a8-337f-8fe7-6b67ac4c5827",
       "product": {
@@ -26,6 +51,46 @@
         }
       },
       "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "50cd67f0-1c99-363c-a403-063ae29ca63a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "51dcc26a-121d-3198-bd7f-63c2c2a8dd59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "80bcaf3469b8aefd316d4ceb27d9af7cfbb0b913 <b813e2771f1a52e06c70db1790c602f6e6929eaf"
+    },
+    {
+      "id": "59d491c9-5e21-3daf-932e-fca18563e8fa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "80bcaf3469b8aefd316d4ceb27d9af7cfbb0b913 <f9c03a6b2d822b93e672f6e76c33a721d460dcda"
+    },
+    {
+      "id": "6119bff1-54de-3cbd-963b-f1982bb95d77",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "80bcaf3469b8aefd316d4ceb27d9af7cfbb0b913 <da4c7fd9935904f53456ee4c902257732bafa61b"
     },
     {
       "id": "6e812855-930b-37cd-a2bc-53f9a44089f6",
@@ -98,6 +163,16 @@
       "product_version": "patch: 7.4-rc2"
     },
     {
+      "id": "c108efe5-14be-3b1b-9575-71d313e62f58",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "80bcaf3469b8aefd316d4ceb27d9af7cfbb0b913 <593d7d770b0cb43ec2706d0cc70e69936bd4bea0"
+    },
+    {
       "id": "c98dd033-7200-31f3-aaee-dfbe65fb9da0",
       "product": {
         "name": "Linux",
@@ -106,6 +181,16 @@
         }
       },
       "product_version": "80bcaf3469b8aefd316d4ceb27d9af7cfbb0b913 <b710975d07b049c957ba6b93985b1cf9b169ad6e"
+    },
+    {
+      "id": "cc5a824e-651f-3aa0-8b0f-6c3441f805a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "e462fd53-e31b-3956-abe0-05a884e906cf",

@@ -3,18 +3,21 @@
   "enisaUuid": "f7d9a6ab-efba-3a8e-8847-b509a61c9e40",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/truncate: look up the end-edge straddler by index\n\nIn truncate_inode_partial_folio(), after the first split at the start\nedge, folio_split() unlocks and drops the refcount of the after-split\nsub-folios.  The sub-folio straddling the end of the truncation range is\ntherefore unlocked and only transiently ref'd in the page cache while the\ncode still derives it from a page pointer inside the original folio.\n\nBetween the first split finishing and page_folio() resolving split_at2,\nthat tail page can be reclaimed, freed and reallocated as a new large\nfolio in the same mapping at a different file offset.  folio2 then points\nat a folio that does not cover the end boundary, yet folio2->mapping ==\nfolio->mapping still holds, so the stale pointer passes the mapping check\nand folio_split_or_unmap() splits a folio at a wrong position (or, with a\ntransient refcount, a use-after-free window opens between try_get and the\nsplit).  __folio_split()'s own folio != page_folio(split_at) check cannot\ncatch this either since split_at2 has been reallocated as part of the new\nfolio, so page_folio(split_at2) resolves back to folio2.\n\nLook the straddler up by its page index instead.  __filemap_get_folio()\nreturns the folio currently covering the boundary, ref'd and locked, with\nthe mapping validated under the lock, so the split target is always the\nreal folio at the end edge.",
   "datePublished": "Nov 19, 2026, 2:42:12 PM",
-  "dateUpdated": "Nov 19, 2026, 2:42:12 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 22, 2026, 11:08:24 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/0fab93d241cfb6f3aae29530a9a214157bb64087",
     "https://git.kernel.org/stable/c/863ecacdae9ebac39e25a3e90e6cec3e86bc856a",
     "https://git.kernel.org/stable/c/f47dee903b9f0f1e4e7181e8a398a7678cabf0a5"
   ],
   "aliases": [
-    "CVE-2026-99462"
+    "CVE-2026-99462",
+    "GHSA-j63m-mh54-g9wg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "0323105c-9925-3fb5-932b-4b9011577e5a",

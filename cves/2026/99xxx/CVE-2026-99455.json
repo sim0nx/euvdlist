@@ -3,19 +3,24 @@
   "enisaUuid": "8db30697-d4a5-36dd-a74e-d14003257de4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nserial: core: shut down initialized port on removal\n\nWhen a serial port configured as a console is opened and subsequently\nclosed, tty_port_shutdown() skips invoking port->ops->shutdown() because\nport->console is true. As a result, tty_port_initialized() remains true\nand the port's interrupt handler stays registered in the irq subsystem.\n\nIf the underlying device is later unbound or removed (e.g. via sysfs\ndriver unbind or device hot-unplug), serial_core_remove_one_port()\nunregisters the console, frees uport->name via kfree(), and tears down\nthe port without shutting it down or freeing its IRQ. Consequently, the\nirqaction descriptor remains registered in genirq with action->name\npointing to freed memory.\n\nThis triggers a use-after-free read whenever genirq accesses action->name,\nsuch as when reading /proc/interrupts:\n\n  BUG: KASAN: slab-use-after-free in string+0x476/0x570\n  Call Trace:\n   string+0x476/0x570\n   vsnprintf+0x422/0x1300\n   seq_printf+0x...\n   show_interrupts+...\n\nFix this by acquiring port->mutex in serial_core_remove_one_port() after\nconsole unregistration, clearing port->console under the mutex to prevent\ndata races with concurrent tty_port_shutdown(), and invoking\nuart_shutdown(NULL, state) if the port remains initialized. This ensures\nthat port->ops->shutdown() is called and the IRQ is freed before\nkfree(uport->name).",
   "datePublished": "Nov 19, 2026, 2:41:55 PM",
-  "dateUpdated": "Nov 19, 2026, 2:41:55 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:03 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/ab8b95daebb4109e454e1f10364aa38d978ca330",
+    "https://git.kernel.org/stable/c/8afa64b162759edfd491d1d768e0a020fcd05853",
+    "https://git.kernel.org/stable/c/fe1ed96339693654e96d99c980b122b6c4d65712",
+    "https://git.kernel.org/stable/c/1dcfb3e31d56deafddb8d0fea849838497581e62",
     "https://git.kernel.org/stable/c/b05d5ed61e84ad15536e4e51db79a1d1c221c6f1",
     "https://git.kernel.org/stable/c/0f332cce4d592d751aad89b404f68463099167c8",
     "https://git.kernel.org/stable/c/928335263daf58e8c0e14d860091e57791693ea0",
     "https://git.kernel.org/stable/c/810d467c11f0c85107874d08dfdd11acba6aa0c0"
   ],
   "aliases": [
-    "CVE-2026-99455"
+    "CVE-2026-99455",
+    "GHSA-qmcq-gjpg-537p"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "09e9216f-6b9f-3e57-be4e-576ef2e78483",
@@ -26,6 +31,26 @@
         }
       },
       "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "0ac2a390-86b3-353a-b2ee-37b2381c54fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "761ed4a94582ab291aa24dcbea4e01e8936488c8 <1dcfb3e31d56deafddb8d0fea849838497581e62"
+    },
+    {
+      "id": "1e024ec8-c30f-387e-b028-75f0f4e7018d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "761ed4a94582ab291aa24dcbea4e01e8936488c8 <8afa64b162759edfd491d1d768e0a020fcd05853"
     },
     {
       "id": "23bebc55-1f62-3ea2-a56d-8e33cf60dd93",
@@ -46,6 +71,26 @@
         }
       },
       "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "30defb62-5406-3a8f-80b1-81291e63dcd2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "761ed4a94582ab291aa24dcbea4e01e8936488c8 <fe1ed96339693654e96d99c980b122b6c4d65712"
+    },
+    {
+      "id": "37de52f1-5ac3-38f9-a1a3-754c5ea22df9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "42477402-a0d4-3912-a06d-2c4e5f98e754",
@@ -78,6 +123,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "6708c878-573f-3df9-847e-5df3c192ad8c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "7bba9d43-fede-314b-9e79-67bd52cdfe93",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "7e235d2d-7ac7-3863-994f-c698afe8ac98",
       "product": {
         "name": "Linux",
@@ -86,6 +151,16 @@
         }
       },
       "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "bb353e12-1556-3335-9744-25558463c260",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "761ed4a94582ab291aa24dcbea4e01e8936488c8 <ab8b95daebb4109e454e1f10364aa38d978ca330"
     },
     {
       "id": "c000c612-7001-3fe6-b318-c62dbbcc3372",
@@ -116,6 +191,16 @@
         }
       },
       "product_version": "761ed4a94582ab291aa24dcbea4e01e8936488c8 <0f332cce4d592d751aad89b404f68463099167c8"
+    },
+    {
+      "id": "ffff054b-336a-322a-9ba3-6e6b257fa8ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     }
   ],
   "enisaIdVendor": [

@@ -3,19 +3,24 @@
   "enisaUuid": "b6938f90-0bde-33c7-9599-0df274d47673",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: fix use-after-free infoleak via the readdir resume name\n\nCIFSFindNext() copies the resume name that cifs_save_resume_key()\nrecorded from the last entry of the previous response into its request;\npsrch_inf->presume_name points into the response buffer that entry came\nfrom, and nothing ever clears it. find_cifs_entry() records a new\nname only from a response with a usable last entry, and cifs_readdir()\nonly from an entry it walks to, so a response that carries no entries\nand leaves last_entry NULL, because CIFSFindFirst() or CIFSFindNext()\nrejected LastNameOffset, refreshes neither and presume_name keeps\npointing into the previous response. That buffer has already been\nreleased: by CIFSFindNext() before it installs the new response, or by\nfind_cifs_entry() when it rewinds the search, which does not drop the\nname either and can then fail in initiate_cifs_search() before a new\nresponse replaces it. The next CIFSFindNext() then copies up to\nPATH_MAX - 1 bytes of the resume name out of the released buffer into\nits request and sends them to the server: a use-after-free read\nthat leaks kernel memory to a malicious or compromised server, which\ncan provoke it with a single FindNext response that carries no entries\nand a LastNameOffset above CIFSMaxBufSize, which is all the existing\ncheck rejects.\n\nWith KASAN enabled, a server that answers a listing that way gives:\n\n CIFS: VFS: ignoring corrupt resume name\n ==================================================================\n BUG: KASAN: slab-use-after-free in CIFSFindNext+0x8ca/0x14c0\n Read of size 4080 at addr ffff88807c823f98 by task ls/83\n\n CPU: 0 UID: 0 PID: 83 Comm: ls Tainted: G    B               7.3.0-rc4-00457-gf14572c203d5 #69 PREEMPT(lazy)\n Tainted: [B]=BAD_PAGE\n Call Trace:\n  <TASK>\n  kasan_report+0xdf/0x1a0\n  kasan_check_range+0x10f/0x1e0\n  __asan_memcpy+0x23/0x60\n  CIFSFindNext+0x8ca/0x14c0\n  cifs_readdir+0xf51/0x29c0\n  iterate_dir+0x1c0/0x570\n  __x64_sys_getdents64+0x133/0x270\n  do_syscall_64+0x109/0x5d0\n  entry_SYSCALL_64_after_hwframe+0x77/0x7f\n  </TASK>\n\n Allocated by task 83 on cpu 1 at 13.497119s:\n  cifs_buf_get+0x36/0x90\n  smb_init+0x4f/0x110\n  CIFSFindNext+0xf7/0x14c0\n  cifs_readdir+0xf51/0x29c0\n\n Freed by task 83 on cpu 0 at 13.584018s:\n  cifs_buf_release+0x41/0x80\n  CIFSFindNext+0xfce/0x14c0\n  cifs_readdir+0xf51/0x29c0\n\n The buggy address is located 16280 bytes inside of\n  freed 16588-byte region [ffff88807c820000, ffff88807c8240cc)\n ==================================================================\n\nThe same memcpy() first reads past the end of that object while it is\nstill live, a slab-out-of-bounds read that the following patches\nbound; that is the taint the report above carries.\n\nSMB1 is not negotiated by default; reaching this code requires an\nexplicit vers=1.0 mount.\n\nClear presume_name and resume_name_len whenever a new response is\ninstalled and when the rewind path releases the search buffer, so that\nthe name never outlives the buffer it points into, and reset\nresume_key with them, since it was taken from the same entry and would\notherwise be sent with an empty name. A response without a usable\nlast entry then continues the search with an empty resume name rather\nthan a stale one; CIFSFindNext() skips the copy of a zero-length name\nso that it never runs on the NULL pointer.\n\nThe next patch in the series leaves last_entry NULL for a response\nthat carries no entries, and bounds LastNameOffset against the\nreceived response rather than against CIFSMaxBufSize. Responses that\nare given a last entry today then take the path fixed here, so that\npatch must not be applied without this one.",
   "datePublished": "Nov 19, 2026, 2:44:38 PM",
-  "dateUpdated": "Nov 19, 2026, 2:44:38 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:51 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/6386f2f406ccebfb66997b288a694e35e61d2d54",
+    "https://git.kernel.org/stable/c/44deaa4a4cbd8c9e4cd0c577ac78090c3372428e",
+    "https://git.kernel.org/stable/c/d065da30398162e477d427c7b3cb83589f043614",
+    "https://git.kernel.org/stable/c/24e83a84521e2812a31eba38ee7c1285af2b3ab1",
     "https://git.kernel.org/stable/c/8c8f8029fe07634b626e96472b584b29a33993b8",
     "https://git.kernel.org/stable/c/6c4c12b0fadcb71e4e6616e6c1ca529c772f2a15",
     "https://git.kernel.org/stable/c/a3481ed0aea2fc41a6d892a586b6eb7a97662034",
     "https://git.kernel.org/stable/c/59131dd72f62b198fc9ea1489ad9d3573154f684"
   ],
   "aliases": [
-    "CVE-2026-99526"
+    "CVE-2026-99526",
+    "GHSA-vwg2-524x-vx4v"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "1ad991ba-6fa7-3229-92aa-6c6bf9fca962",
@@ -38,6 +43,36 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <8c8f8029fe07634b626e96472b584b29a33993b8"
     },
     {
+      "id": "2b23674d-e85a-313a-98f9-237f46c53066",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d065da30398162e477d427c7b3cb83589f043614"
+    },
+    {
+      "id": "3461d6ad-0dc3-35bd-98c5-85e76822df5c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "35bb2a71-8f93-3502-a640-a6b025a6e7be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "3722e77b-ed58-304b-aa58-6aea5128207f",
       "product": {
         "name": "Linux",
@@ -46,6 +81,16 @@
         }
       },
       "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "435f59a3-3503-3920-95ff-43d20b3d5ec4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "80fcf159-8aa4-3ccc-97af-163115d65b8b",
@@ -58,6 +103,16 @@
       "product_version": "patch: 6.12.117"
     },
     {
+      "id": "a3aab794-5867-3610-b9e1-82c08c1b653e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <44deaa4a4cbd8c9e4cd0c577ac78090c3372428e"
+    },
+    {
       "id": "b2f97ae4-a844-3967-bdeb-5edac5a85e6c",
       "product": {
         "name": "Linux",
@@ -66,6 +121,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a3481ed0aea2fc41a6d892a586b6eb7a97662034"
+    },
+    {
+      "id": "b741f0df-0c8b-3976-bd16-89a0c4b56ad3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <24e83a84521e2812a31eba38ee7c1285af2b3ab1"
     },
     {
       "id": "c55359da-5791-3b59-b4cb-ce4560c95b8b",
@@ -98,6 +163,16 @@
       "product_version": "2.6.12"
     },
     {
+      "id": "dab7df06-af7c-38d4-890c-c2ea9689d92b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "e1360e79-cd1b-3d52-945e-a09e11a422ed",
       "product": {
         "name": "Linux",
@@ -106,6 +181,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6c4c12b0fadcb71e4e6616e6c1ca529c772f2a15"
+    },
+    {
+      "id": "ed517b70-4412-3cb0-844e-03d73f9af995",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6386f2f406ccebfb66997b288a694e35e61d2d54"
     },
     {
       "id": "f343fa99-4c77-3ef2-8377-9f6a5399dc99",

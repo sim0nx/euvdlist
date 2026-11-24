@@ -3,19 +3,23 @@
   "enisaUuid": "96df09ec-6049-3af1-bf6e-3721210fa0f1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: au0828: fix use-after-free in bulk_timeout timer on disconnect\n\nstart_urb_transfer() arms dev->bulk_timeout, whose callback\nau0828_bulk_timeout() queues dev->restart_streaming; that work in turn\ncalls start_urb_transfer() and re-arms the timer.\n\nau0828_dvb_unregister() cancels restart_streaming on disconnect but does\nnot sync bulk_timeout. au0828_usb_release() then frees dev with kfree(),\nso a timer still armed or pending at that point can fire after the free\nand dereference dev through timer_container_of().\n\nSync the timer with timer_shutdown_sync() before cancel_work_sync().  The\ntimer callback queues the work, so the timer must be stopped first; the\nshutdown variant is needed because the work re-arms the timer through\nstart_urb_transfer().  The dvb->frontend == NULL early return guards the\nregister-failure path where the timer was never set up.\n\nThis bug was found by static analysis.",
   "datePublished": "Nov 19, 2026, 2:44:10 PM",
-  "dateUpdated": "Nov 19, 2026, 2:44:10 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:44 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/f6828fdabb07a9738419792273886d5b7d096757",
+    "https://git.kernel.org/stable/c/ca99be2c3c5e8794444fd4a5ce324c7672b0aa68",
+    "https://git.kernel.org/stable/c/cb104ec7111aec9f9c19775422d70f917b39e947",
     "https://git.kernel.org/stable/c/0cfc8c1884451c4c3839dfeb1e0e2b008bc00efc",
     "https://git.kernel.org/stable/c/95a1f45a82e51ff23bd82c0529bfd817c8ec437f",
     "https://git.kernel.org/stable/c/5e30e92df3a0fb3985f3686536065219c28dd65d",
     "https://git.kernel.org/stable/c/521030837bee352515d5ea57cc6a29581db3506e"
   ],
   "aliases": [
+    "GHSA-vc9m-pwhf-h4pp",
     "CVE-2026-99512"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.24,
   "enisaIdProduct": [
     {
       "id": "2080dd76-ca6b-3f2e-ad50-87f9429ce1e1",
@@ -38,6 +42,36 @@
       "product_version": "patch: 6.18.61"
     },
     {
+      "id": "3cd8be4c-6b6c-36e8-9edc-8048c98dd333",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "759869d0-c9ad-3400-ba81-71f717540751",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "53460c53b7619c14e8564a3ba2c60fc27f303f6b <f6828fdabb07a9738419792273886d5b7d096757"
+    },
+    {
+      "id": "79516034-08a1-3917-b653-84d2b8e2895f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "53460c53b7619c14e8564a3ba2c60fc27f303f6b <cb104ec7111aec9f9c19775422d70f917b39e947"
+    },
+    {
       "id": "8fcd70ea-e33f-36d3-8783-26b4e21bdbf9",
       "product": {
         "name": "Linux",
@@ -46,6 +80,26 @@
         }
       },
       "product_version": "53460c53b7619c14e8564a3ba2c60fc27f303f6b <5e30e92df3a0fb3985f3686536065219c28dd65d"
+    },
+    {
+      "id": "9e7102a7-5967-31e7-af0e-2392f65c9d35",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "53460c53b7619c14e8564a3ba2c60fc27f303f6b <ca99be2c3c5e8794444fd4a5ce324c7672b0aa68"
+    },
+    {
+      "id": "ad9bff19-3ec2-34f3-99e8-f28022c3e285",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "b131bdb9-9fb4-30f8-8c7b-ffbf7b35e864",
@@ -76,6 +130,16 @@
         }
       },
       "product_version": "53460c53b7619c14e8564a3ba2c60fc27f303f6b <0cfc8c1884451c4c3839dfeb1e0e2b008bc00efc"
+    },
+    {
+      "id": "b9e8b4bc-985c-3496-b421-2869472aa076",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "c7bfd854-97db-3a46-993b-d0a21be9f562",

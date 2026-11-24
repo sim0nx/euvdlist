@@ -3,19 +3,24 @@
   "enisaUuid": "b9b60dc7-3595-3bca-8096-b17d900e93a1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncan: dev: can_fill_info(): don't wake up controller if interface is down\n\nIf the interface is down, the CAN controller might be powered down and\nits clocks gated. Don't call do_get_berr_counter() to read the bus error\ncounters if the interface is down, and adjust can_get_size() to match.\n\nThis removes one trigger for a synchronous external abort seen on\ni.MX8QXP when \"ip link show\" is run on a flexcan interface that was\nnever brought up. The underlying cause is platform-specific: on i.MX8QXP\nthe CAN clocks are gated through the SCU LPCG and the subsystem shares\nthe IMX_SC_R_CAN_0 power domain, and there is a window after\npm_runtime_resume_and_get() returns where the clock has not reached the\nmodule yet. This patch avoids the netlink query path while the interface\nis down, but does not root-cause the LPCG window itself.\n\nAs a result, IFLA_CAN_BERR_COUNTER is no longer reported for down\ninterfaces. Userspace must treat the attribute as optional.\n\nThe issue was triggered on an i.MX8QXP board by running \"ip link show\"\nwithout ever bringing the interface up:\n\n    Internal error: synchronous external abort: 0000000096000210\n\n    pc : flexcan_read_le+0x0/0x18\n    lr : flexcan_get_berr_counter+0x4c/0x8c\n    Call trace:\n     flexcan_read_le+0x0/0x18\n     flexcan_get_berr_counter+0x4c/0x8c\n     can_fill_info+0x1f8/0x434\n     rtnl_fill_ifinfo+0x8fc/0xbb4\n     rtnl_dump_ifinfo+0x364/0x448\n\nThis is the same class of problem fixed for m_can in\ncommit 91a55c72a821 (\"can: m_can: m_can_get_berr_counter(): don't\nwake up controller if interface is down\").",
   "datePublished": "Nov 20, 2026, 5:50:19 AM",
-  "dateUpdated": "Nov 20, 2026, 5:50:19 AM",
+  "dateUpdated": "Nov 23, 2026, 8:05:45 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/ff9776f252168e7c06f8b7bf5b23730dd15ae65e",
+    "https://git.kernel.org/stable/c/2c0f27f5a3175cba269b552283f8429fe18bba15",
+    "https://git.kernel.org/stable/c/e7f62b7a9592f4eb2723c23ad69acb3fc3a17a28",
+    "https://git.kernel.org/stable/c/5715bdda4e192fff91f2bd09f35be39f8d62c772",
     "https://git.kernel.org/stable/c/d2fd689214afa0a983f4f0833075f167b9f4eddf",
     "https://git.kernel.org/stable/c/07521636bb0cfeccb44125a7fc39ee97c36d2e37",
     "https://git.kernel.org/stable/c/0a6f6dcf4c9c03c74de17453bef21697cbff4dc3",
     "https://git.kernel.org/stable/c/75332c410c8190d61499001c5516af977ca426c3"
   ],
   "aliases": [
+    "GHSA-898v-5gm6-cp2m",
     "CVE-2026-99670"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0ce61aba-92cb-3fce-ab54-4db60f0e533b",
@@ -38,6 +43,16 @@
       "product_version": "ec56acfef2af184ca485ffeba16adbd56c110c94 <75332c410c8190d61499001c5516af977ca426c3"
     },
     {
+      "id": "4f6f1ce2-c82a-33a2-8dd9-32079a7afdb2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ec56acfef2af184ca485ffeba16adbd56c110c94 <e7f62b7a9592f4eb2723c23ad69acb3fc3a17a28"
+    },
+    {
       "id": "57ec0a35-7557-3aae-a380-e86cede546f2",
       "product": {
         "name": "Linux",
@@ -46,6 +61,16 @@
         }
       },
       "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "71e44719-9870-32aa-9195-f8778a1474af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "753217f3-71a4-3cc4-8d94-e94077ec0565",
@@ -78,6 +103,26 @@
       "product_version": "patch: 6.18.64"
     },
     {
+      "id": "910e1bcf-e7af-3ae1-9e55-8dd35f8cb787",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ec56acfef2af184ca485ffeba16adbd56c110c94 <5715bdda4e192fff91f2bd09f35be39f8d62c772"
+    },
+    {
+      "id": "96e04b12-63a4-3c53-a533-8f98987cb533",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "9cbe2b6b-7d87-3341-a6c0-115c1811fbea",
       "product": {
         "name": "Linux",
@@ -98,6 +143,36 @@
       "product_version": "patch: 7.3.5"
     },
     {
+      "id": "c0d8da42-ec22-32e0-982a-17854a3d6736",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ec56acfef2af184ca485ffeba16adbd56c110c94 <2c0f27f5a3175cba269b552283f8429fe18bba15"
+    },
+    {
+      "id": "c11da472-73fa-3c02-93e3-4bb7a7fc9ce4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "c28a509e-cf8e-3ad1-9cec-ed128e6463e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ec56acfef2af184ca485ffeba16adbd56c110c94 <ff9776f252168e7c06f8b7bf5b23730dd15ae65e"
+    },
+    {
       "id": "cd8cd064-e3e6-306f-a22b-7a7fb5e8f88b",
       "product": {
         "name": "Linux",
@@ -116,6 +191,16 @@
         }
       },
       "product_version": "3.18"
+    },
+    {
+      "id": "eb978245-dc13-39af-b4d8-0273e81b8645",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     }
   ],
   "enisaIdVendor": [

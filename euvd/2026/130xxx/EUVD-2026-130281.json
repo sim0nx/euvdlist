@@ -3,19 +3,24 @@
   "enisaUuid": "80293cfd-d483-3f76-9f44-3f7d382cf58f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nceph: fail readdir when the MDS reply carries no dirfrag\n\nA ceph mount oopses in ceph_readdir() when the MDS answers a READDIR\nrequest with a reply whose extra blob is empty.  parse_reply_info()\nskips reply blobs whose length is zero, so parse_reply_info_readdir()\nnever runs, r_reply_info.dir_dir stays NULL, and the reply still\nparses as successful.  ceph_mdsc_do_request() returns 0 and\nceph_readdir() then reads rinfo->dir_dir->frag with no NULL check:\n\n\t/* extra */\n\tceph_decode_32_safe(&p, end, len, bad);\n\tif (len > 0) {\n\t\t...\n\t\terr = parse_reply_info_extra(&p, p + len, req, features, s);\n\t\t...\n\t}\n\nThe oops on v7.3.0-rc4-00537-ga3ff15db6820, one getdents64(2) on the\nmount root after an ms_mode=legacy mount, trimmed:\n\nBUG: KASAN: null-ptr-deref in range [0x0000000000000000-0x0000000000000007]\nOops: general protection fault, probably for non-canonical address 0xdffffc0000000000: 0000 [#1] SMP KASAN NOPTI\nCPU: 1 UID: 0 PID: 266 Comm: ls Tainted: G                 N  7.3.0-rc4-00537-ga3ff15db6820 #1 PREEMPT(lazy)\nRIP: 0010:ceph_readdir+0xbff/0x3ea0\nCall Trace:\n <TASK>\n ? __pfx_ceph_readdir+0x10/0x10\n wrap_directory_iterator+0xa2/0xe0\n iterate_dir+0x1da/0x5d0\n __x64_sys_getdents64+0x13b/0x2a0\n do_syscall_64+0xdd/0x4a0\n entry_SYSCALL_64_after_hwframe+0x77/0x7f\n </TASK>\n\nThe unconditional frag read came in with 81c6aea5275ea (\"ceph: handle\nfrag mismatch between readdir request and reply\"), so the bug is old.\n\nTreat a reply with no dirfrag as a protocol violation: warn once,\ndrop the request and return -EIO, the same way ceph_readdir() already\nhandles the two malformed-reply cases later in the function.\n\nTested on v7.3.0-rc4-00537-ga3ff15db6820 (KASAN).  Unpatched, the\ngetdents64(2) above takes the machine down (oops=panic) on the first\nREADDIR reply.  With the patch it warns once and getdents64(2)\nreturns -EIO, no oops, no hang.  A conformant reply for an empty\ndirectory \u2014 dirfrag present, zero entries, FRAG_END|FRAG_COMPLETE \u2014\nstill lists \".\" and \"..\" and returns EOF on both kernels, so normal\nreaddir behavior is unchanged.  The oops is still present in\nv7.3-rc5 (72d3fcf802c45).",
   "datePublished": "Nov 19, 2026, 2:45:28 PM",
-  "dateUpdated": "Nov 19, 2026, 2:45:28 PM",
+  "dateUpdated": "Nov 23, 2026, 8:04:22 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/500d7e85af3116803d2cdae9f3a8319e782b84e2",
+    "https://git.kernel.org/stable/c/ba0a9ccfd717a603ac10520f723cf4a4881e61b6",
+    "https://git.kernel.org/stable/c/12646a00f8549c9f17e5213c30bd608e81fee8f9",
+    "https://git.kernel.org/stable/c/4ec54ab76c627e4ff8dc29a18237f923ee1f2bee",
     "https://git.kernel.org/stable/c/37d01a684e6087e264895ab34b829d2267ad607c",
     "https://git.kernel.org/stable/c/49d7c1beac3810983869ed9260dcd444b6a51c8e",
     "https://git.kernel.org/stable/c/d129cfc783b5ff091f5edcccf8129608ec50c000",
     "https://git.kernel.org/stable/c/728c856d7da04fb79f7aa00e974ffb6f55e55995"
   ],
   "aliases": [
+    "GHSA-5439-wpx5-8grf",
     "CVE-2026-99557"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "27c59d3e-d31e-3676-9740-e747ac0bf9ea",
@@ -28,6 +33,16 @@
       "product_version": "patch: 6.18.61"
     },
     {
+      "id": "28846355-b080-3c1f-a458-367a903ac7d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "32268ba9-6fcd-3121-bc98-cc4d88e81291",
       "product": {
         "name": "Linux",
@@ -36,6 +51,36 @@
         }
       },
       "product_version": "81c6aea5275eae453719d7f3924da07e668265c5 <728c856d7da04fb79f7aa00e974ffb6f55e55995"
+    },
+    {
+      "id": "3512e677-1233-3ccd-a3e5-abe40d052fa7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "42328af4-26b5-32b9-ad17-d5c3f3ccbb59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "5b04fa64-a34c-3acc-b8d4-20474e540c38",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "81c6aea5275eae453719d7f3924da07e668265c5 <500d7e85af3116803d2cdae9f3a8319e782b84e2"
     },
     {
       "id": "635f660f-b710-3ab4-9098-55f9634b1be8",
@@ -78,6 +123,36 @@
       "product_version": "patch: 7.4-rc1"
     },
     {
+      "id": "9f2a5a87-f16f-3e05-9ad8-7433ec54b320",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "a7fe7bc1-d000-3ee1-9bf3-bc80015a8148",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "81c6aea5275eae453719d7f3924da07e668265c5 <ba0a9ccfd717a603ac10520f723cf4a4881e61b6"
+    },
+    {
+      "id": "a9808069-b729-3b58-8236-a706e88df3b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "81c6aea5275eae453719d7f3924da07e668265c5 <4ec54ab76c627e4ff8dc29a18237f923ee1f2bee"
+    },
+    {
       "id": "aa255d59-7777-3844-8498-6b0dc8a099e8",
       "product": {
         "name": "Linux",
@@ -86,6 +161,16 @@
         }
       },
       "product_version": "81c6aea5275eae453719d7f3924da07e668265c5 <49d7c1beac3810983869ed9260dcd444b6a51c8e"
+    },
+    {
+      "id": "bd4cc0d7-7992-3ec4-a4c4-bd4e01b3125b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "81c6aea5275eae453719d7f3924da07e668265c5 <12646a00f8549c9f17e5213c30bd608e81fee8f9"
     },
     {
       "id": "bef9eecd-e574-3d92-bd8a-9391bb808519",

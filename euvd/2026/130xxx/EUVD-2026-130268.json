@@ -3,19 +3,26 @@
   "enisaUuid": "ae14dd5a-edbe-3493-b42f-7b55966a2647",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nDrivers: hv: vmbus: Bounds check the shared ring buffer indices\n\nIn a CoCo VM the host is untrusted. Since the VMBus ring buffer read and\nwrite indices live in shared memory, the guest has to treat both as\npotentially malicious.\n\nhv_ringbuffer_write() copies into the ring at write_index with no bounds\nchecking, so the host can make the guest write packet data at any offset\nup to 4 GiB past the start of the ring buffer. read_index matters too:\nthe available space derived from both indices is the only bound on how\nmuch is copied, and an out-of-range index can make it far larger than\nthe ring.\n\nThe fix is to validate both indices before use and to use the validated\nsnapshot instead of re-accessing. For invalid indices,\nhv_ringbuffer_write() logs and returns -EIO.\n\nOne re-read of write_index is left unchecked in this patch:\nhv_get_ring_bufferindices() fetches it again for the prev_indices\ntrailer. The value is only returned to the host and is not used as an\noffset or length for indexing. Since this is not a security issue, it is\naddressed later in the series.\n\nOpen-coding the bytes available arithmetic keeps the fix free of\nprerequisites; a later patch refactors it into a helper function.",
   "datePublished": "Nov 19, 2026, 2:45:02 PM",
-  "dateUpdated": "Nov 19, 2026, 2:45:02 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:04:07 AM",
+  "baseScore": 9.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/97b0aa62197b4ffb4d6a9c3905ce581ac9ec4a2c",
+    "https://git.kernel.org/stable/c/c2657e0671fae29e66204da3201c0eb51dd42744",
+    "https://git.kernel.org/stable/c/2955188276124e71d540dc7f5e9ce369b664b5a5",
+    "https://git.kernel.org/stable/c/4bc0832dfbddec0440152ee3ec7e7dd31857e231",
     "https://git.kernel.org/stable/c/cdb9126a79b608b4331dfdc03beb05be8d2563be",
     "https://git.kernel.org/stable/c/f204bb7c5d10482067e095af567c391bc88ecb44",
     "https://git.kernel.org/stable/c/1611ce4dc6cbace75f27db6a559af8d391a06118",
     "https://git.kernel.org/stable/c/1d287c17cc5bfd6386fe0770999be410b248d021"
   ],
   "aliases": [
+    "GHSA-8c3c-2hvv-f3jx",
     "CVE-2026-99544"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "1986168b-39d9-3371-bf0e-b7225ffc051d",
@@ -36,6 +43,26 @@
         }
       },
       "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "4c293f9b-6d63-3899-baa7-bca978b8f6e5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "4c54f699-4d28-336d-9db9-4d7f43cbc144",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3e7ee4902fe6996048f03433dd111426db3cfa92 <2955188276124e71d540dc7f5e9ce369b664b5a5"
     },
     {
       "id": "4d7a887f-e8c8-3d7c-a285-eeae242e2060",
@@ -78,6 +105,36 @@
       "product_version": "2.6.32"
     },
     {
+      "id": "76c0f121-a2da-3489-bbd2-93d2ed1cadb0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "92bc54c6-4191-34da-9e8f-b422d7e76650",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "977f9c3d-a089-360e-87f2-78a98c596035",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3e7ee4902fe6996048f03433dd111426db3cfa92 <97b0aa62197b4ffb4d6a9c3905ce581ac9ec4a2c"
+    },
+    {
       "id": "a5ff780c-496c-361a-b5c5-055680f9306c",
       "product": {
         "name": "Linux",
@@ -86,6 +143,16 @@
         }
       },
       "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "a6d1a940-cca8-32f9-a741-1eefc45d362c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3e7ee4902fe6996048f03433dd111426db3cfa92 <c2657e0671fae29e66204da3201c0eb51dd42744"
     },
     {
       "id": "b64a9956-c74f-3381-893c-53a19db13a21",
@@ -116,6 +183,26 @@
         }
       },
       "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "f8ca9eae-0ffe-3970-ad11-983b183c03c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "f9414e09-6562-3975-bafa-5683c8a11b75",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3e7ee4902fe6996048f03433dd111426db3cfa92 <4bc0832dfbddec0440152ee3ec7e7dd31857e231"
     }
   ],
   "enisaIdVendor": [

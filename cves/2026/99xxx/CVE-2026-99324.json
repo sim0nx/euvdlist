@@ -3,19 +3,23 @@
   "enisaUuid": "d9ff9372-04a4-3afc-82b9-28999fc79043",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: fix out-of-bounds read when padding the final compound response\n\nCompound response handling pads the last response of a compound to an\n8-byte boundary by growing the final iov and the RFC1002 length.\nsmb2_allocate_rsp_buf() allocates exactly response_sz. A command can\nfill the response buffer to within 7 bytes of its end, for example a\nQUERY_INFO whose output is bounded only by the space left. The padding\ncan then run past the allocation, and ksmbd_tcp_writev() reads those\nbytes when it sends the response.\n\n  BUG: KASAN: slab-out-of-bounds in _copy_from_iter+0x744/0x10e0\n  Call Trace:\n   _copy_from_iter+0x744/0x10e0\n   tcp_sendmsg_locked+0x2290/0x3f80\n   ksmbd_tcp_writev+0x10c7/0x1ab0 [ksmbd]\n\nAllocate room for the padding when the request is a compound, as\nsmb2_read() and smb2_read_pipe() do for their payloads. response_sz is\nunchanged, so commands still fill only up to it, and kvzalloc() zeroes\nthe padding.",
   "datePublished": "Nov 19, 2026, 2:21:32 PM",
-  "dateUpdated": "Nov 19, 2026, 2:33:21 PM",
+  "dateUpdated": "Nov 23, 2026, 8:01:27 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/002e425ef1ff1f6135e08ac866ee807e1f59c7d1",
+    "https://git.kernel.org/stable/c/b663b29e3eb76f4c0923d1408be4c8e33fb54c6c",
+    "https://git.kernel.org/stable/c/79b12c8b00410ca268ef0c9be65df526fcf567f1",
     "https://git.kernel.org/stable/c/f4d6f211be04c9b018ce4cfb9793ea1f48c150c3",
     "https://git.kernel.org/stable/c/3092d8a596efaeccdebe0804bf263e5e6eef39d7",
     "https://git.kernel.org/stable/c/52bda0cf91b62bf679d67d6a3adc20b0be8ff4f7",
     "https://git.kernel.org/stable/c/714f27729121d59f103ca4dad7b0c2d1c125cd71"
   ],
   "aliases": [
-    "CVE-2026-99324"
+    "CVE-2026-99324",
+    "GHSA-mq46-86xq-mq4f"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "201ee0e9-80ba-3c33-b5a7-f3fd160c8517",
@@ -26,6 +30,16 @@
         }
       },
       "product_version": "5.15"
+    },
+    {
+      "id": "3cebac60-a494-3ebf-84bf-8551fa060621",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "41388c35-0641-38ed-8594-bc2d594a18e3",
@@ -48,6 +62,16 @@
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <3092d8a596efaeccdebe0804bf263e5e6eef39d7"
     },
     {
+      "id": "614875fc-ceb7-3cb5-8b5a-29a315442e1e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "62e19b9e-b5ce-3dda-a08a-6477fc776e4f",
       "product": {
         "name": "Linux",
@@ -68,6 +92,16 @@
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <714f27729121d59f103ca4dad7b0c2d1c125cd71"
     },
     {
+      "id": "6381e20d-6bf1-394f-8d42-69e54d9808f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "8854bd49-0508-3522-8697-087b565e04a0",
       "product": {
         "name": "Linux",
@@ -76,6 +110,16 @@
         }
       },
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <52bda0cf91b62bf679d67d6a3adc20b0be8ff4f7"
+    },
+    {
+      "id": "8bc4440c-17ad-3ec7-ba88-87533de73505",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <79b12c8b00410ca268ef0c9be65df526fcf567f1"
     },
     {
       "id": "a1547e4b-85e3-3669-b339-01bb8315eaf5",
@@ -96,6 +140,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "c345f96b-a671-31ca-a6b3-c2812b67fb2a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <002e425ef1ff1f6135e08ac866ee807e1f59c7d1"
+    },
+    {
+      "id": "d5288d1c-4b84-3a16-a341-243b58acce13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <b663b29e3eb76f4c0923d1408be4c8e33fb54c6c"
     },
     {
       "id": "d60d9385-a558-3d01-b46e-f8975c0b3831",

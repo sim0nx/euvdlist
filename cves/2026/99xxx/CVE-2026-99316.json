@@ -3,20 +3,37 @@
   "enisaUuid": "3296e8e1-d738-328a-9477-5d6079ffb13b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: usx2y: Initialize idle URBs before submitting streams\n\nusb_stream_start() submits the first two capture and playback URBs and\nonly afterwards assigns sk->idle_inurb, sk->idle_outurb,\nsk->completed_inurb and sk->completed_outurb to the remaining two URBs\nof each direction.\n\nA transfer can complete as soon as usb_submit_urb() has been called, so\nthe completion handler i_capture_start() or i_playback_start() may run\nbefore those pointers are set.  While the stream is still being\nsynchronized (state below usb_stream_sync1), stream_start() then calls\nplayback_prep_freqn(sk, sk->idle_outurb) with sk->idle_outurb still\nNULL, and the packet descriptors are written through that NULL pointer:\n\n  Oops: general protection fault, probably for non-canonical address\n  0xdffffc0000000018: 0000 [#1] SMP KASAN\n  KASAN: null-ptr-deref in range [0x00000000000000c0-0x00000000000000c7]\n  RIP: 0010:playback_prep_freqn+0x11c/0x4a0 sound/usb/usx2y/usb_stream.c:33\n  Call Trace:\n   <IRQ>\n   stream_start+0x5dc/0x8d0 sound/usb/usx2y/usb_stream.c:596\n   i_capture_start+0x3da/0x710 sound/usb/usx2y/usb_stream.c:654\n   __usb_hcd_giveback_urb+0x238/0x550 drivers/usb/core/hcd.c:1657\n   usb_giveback_urb_bh+0x20b/0x530 drivers/usb/core/hcd.c:1691\n   tasklet_hi_action+0xa/0x20 kernel/softirq.c:994\n   handle_softirqs+0x16f/0x440 kernel/softirq.c:645\n   </IRQ>\n\nThe four URBs referenced by these pointers are allocated long before and\ndo not depend on any transfer state, so assign them before the submit\nloop.  Keeping the assignment inside the retry path also restores a\nwell-defined URB rotation when the start frame mismatch handling kills\nand resubmits the streams.",
   "datePublished": "Nov 18, 2026, 8:42:08 AM",
-  "dateUpdated": "Nov 18, 2026, 8:42:08 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:01:20 AM",
+  "baseScore": 7.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/c5bb11528ece8b4ac054bb7ea48fc5879c0e3b6a",
+    "https://git.kernel.org/stable/c/b400a65c42b579708794a61f2de7ab1ae65612f9",
+    "https://git.kernel.org/stable/c/48d692f985ef4bc6d39b7243b945a8e06910e8ae",
+    "https://git.kernel.org/stable/c/61362cfa989db8761c5876f09f90c3d5d7b93fc9",
     "https://git.kernel.org/stable/c/cc826d8f6074305af7bf1d2b7c13564d194db914",
     "https://git.kernel.org/stable/c/1f32f490350fae3d64f60b5ab9b02e5254fa0a90",
     "https://git.kernel.org/stable/c/aa91b5324b5c856e18a9d356df875b29fbedd33a",
     "https://git.kernel.org/stable/c/ceb0d8c22473933099b46cec70639d0f1f7c68ad"
   ],
   "aliases": [
+    "GHSA-rpw6-x7gj-hpxv",
     "CVE-2026-99316"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
+    {
+      "id": "0623c039-594d-390d-a924-dc9e7303b26b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <48d692f985ef4bc6d39b7243b945a8e06910e8ae"
+    },
     {
       "id": "1832457a-6446-3b44-a0aa-65b7d877b28d",
       "product": {
@@ -78,6 +95,36 @@
       "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <1f32f490350fae3d64f60b5ab9b02e5254fa0a90"
     },
     {
+      "id": "3ff8a095-5782-31cf-85d7-fef49866806c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <c5bb11528ece8b4ac054bb7ea48fc5879c0e3b6a"
+    },
+    {
+      "id": "651a6227-0c49-3350-a102-a2eb89351243",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <b400a65c42b579708794a61f2de7ab1ae65612f9"
+    },
+    {
+      "id": "860cebdb-2230-33d2-af32-4b9e187fae92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <61362cfa989db8761c5876f09f90c3d5d7b93fc9"
+    },
+    {
       "id": "8bcd7e6b-f326-354a-a35b-5ac3d6b0878b",
       "product": {
         "name": "Linux",
@@ -98,6 +145,16 @@
       "product_version": "patch: 7.3.5"
     },
     {
+      "id": "9a450f76-26ce-3f06-8329-ff5d83b28989",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "ab81424a-3717-39a5-bac3-6a74701ee0c5",
       "product": {
         "name": "Linux",
@@ -108,6 +165,26 @@
       "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <ceb0d8c22473933099b46cec70639d0f1f7c68ad"
     },
     {
+      "id": "b6027abf-9f14-3463-8513-e3868542e27d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "d8422173-75c6-3de3-be10-93b121e212b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "e697a0af-92a7-3800-9f2e-b958e6bb6031",
       "product": {
         "name": "Linux",
@@ -116,6 +193,16 @@
         }
       },
       "product_version": "2.6.28"
+    },
+    {
+      "id": "f964136e-5d50-38c3-9501-db6790c19f46",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     }
   ],
   "enisaIdVendor": [

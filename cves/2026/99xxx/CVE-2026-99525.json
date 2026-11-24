@@ -3,39 +3,42 @@
   "enisaUuid": "aa2471db-b6bc-30fd-b68b-7562d548d7ce",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: fix use-after-free in cifs_ses_add_channel()\n\nThe error path of cifs_ses_add_channel() calls cifs_put_tcp_session()\nbefore cifs_chan_clear_need_reconnect().  The latter reaches\ncifs_ses_get_chan_index(), which dereferences server->terminate; if\nthe put was the final reference, TCP_Server_Info is already freed and\nthis is a use-after-free.  Same put-then-use pattern as the recently\nfixed sibling in commit 717e0a25036b (\"cifs: Fix server use-after-free\nin cifs_chan_skip_or_disable()\").\n\nMove the put last, but do not read chan->server after dropping\nchan_lock: chan points into ses->chans[], and once chan_count is\ndecremented a concurrent add_channel can reuse the slot and overwrite\nthe pointer, so the put would act on the new channel's server.  Cache\nthe pointer under chan_lock, clear the reconnect bit and decrement\nchan_count while still holding the reference, and release it after\nthe unlock.\n\nThis issue was discovered by Tencent CodeBuddy Security.",
   "datePublished": "Nov 19, 2026, 2:44:37 PM",
-  "dateUpdated": "Nov 19, 2026, 2:44:37 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:50 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/093a42a31ae8bb26da7f4a358f83300d76d0c46b",
+    "https://git.kernel.org/stable/c/4bc20a4ccdbdbe14e8628073109c52a22d7512d1",
     "https://git.kernel.org/stable/c/d88e3e844fad0f6b9fbeb8c8862f9272a7c26a99",
     "https://git.kernel.org/stable/c/8069935474b1502459ab50f75a67d7394a93cd5d",
     "https://git.kernel.org/stable/c/72367dacb5c9d8bd486b2fcaf56b6d3086d57250",
     "https://git.kernel.org/stable/c/031278577380e7875d95aed81a2b2bcac39be923"
   ],
   "aliases": [
-    "CVE-2026-99525"
+    "CVE-2026-99525",
+    "GHSA-qh6g-qxvv-cw7g"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
-      "id": "3302109c-1370-3a99-8ee6-7c99a7450179",
+      "id": "054f3e4f-2916-3784-ac94-b4ef79bf27bf",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "3e1615361b6fa6e6e0bfae0efb3a8c2255ac101f"
+      "product_version": "patch: 6.1.193"
     },
     {
-      "id": "48df4b43-82b5-3a6a-883d-66195a25b94a",
+      "id": "1df8360e-42c1-32db-9807-c55d7108fbb4",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.6.15 <6.7"
+      "product_version": "3e1615361b6fa6e6e0bfae0efb3a8c2255ac101f <4bc20a4ccdbdbe14e8628073109c52a22d7512d1"
     },
     {
       "id": "571dd4eb-aff1-3ad9-ae6e-396d4c9484fb",
@@ -48,24 +51,14 @@
       "product_version": "ee1d21794e55ab76505745d24101331552182002 <d88e3e844fad0f6b9fbeb8c8862f9272a7c26a99"
     },
     {
-      "id": "573f55b3-50fe-33d5-a33e-2c3ee7190c8b",
+      "id": "5f84b72a-0bd4-3560-817b-3831ad8642a7",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "e341b7975bd72d3ebda92b8d747d0aad15ce8717"
-    },
-    {
-      "id": "617be8f3-490f-3681-97a6-fca811273df3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "6.1.178 <6.2"
+      "product_version": "6.1.178 <6.1.193"
     },
     {
       "id": "6afd5088-12eb-3019-845f-cfa1298d893a",
@@ -76,6 +69,26 @@
         }
       },
       "product_version": "ee1d21794e55ab76505745d24101331552182002 <8069935474b1502459ab50f75a67d7394a93cd5d"
+    },
+    {
+      "id": "6de9c8a5-947b-3450-8f14-2547999754cd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e341b7975bd72d3ebda92b8d747d0aad15ce8717 <093a42a31ae8bb26da7f4a358f83300d76d0c46b"
+    },
+    {
+      "id": "74644b30-5b93-353b-b504-96657a327a57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "9352db38-4c15-3846-9963-0d45b78eb15e",
@@ -96,6 +109,16 @@
         }
       },
       "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "98c7ea01-12ac-338b-97ee-ca2c5cbbb986",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.15 <6.6.163"
     },
     {
       "id": "a3986613-4c8a-3059-aeb5-4677ced38dbc",

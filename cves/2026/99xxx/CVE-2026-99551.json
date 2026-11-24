@@ -3,19 +3,24 @@
   "enisaUuid": "e3d6cc2e-400b-38ac-b551-cde89b474131",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: drain quorum work before removing the cluster\n\nThe configured cluster must remain available until an in-flight quorum\ndecision has finished using its fencing method.  o2quo_make_decision()\ndrops qs_lock before calling o2quo_fence_self(), which marks heartbeat\nregions for unclean stop and then reads\no2nm_single_cluster->cl_fence_method.  Cluster removal clears the\nsingleton without waiting for this independent system-workqueue item.\n\nWhen a failed-quorum decision overlaps removal of the heartbeat regions,\nnodes and cluster through configfs, the worker can be preempted after\nmarking the regions and resume after the singleton has been cleared:\n\n  Quorum worker                     Configfs removal\n  select fence; drop qs_lock\n  o2hb_stop_all_regions()\n                                    remove regions; join heartbeat threads\n                                    remove nodes; stop o2net\n                                    clear singleton; release cluster\n  read cl_fence_method\n\nThe resumed read dereferences NULL instead of applying the configured\nfencing method. The heartbeat thread's dependency protects the local\nnode only until the thread exits, and draining o2net does not wait for\nqs_work.\n\nAdd o2quo_flush_work() to drain pending or running quorum decisions\nbefore clearing the singleton in o2nm_cluster_group_drop_item(). By\nthis point the heartbeat regions and nodes have been removed, so their\nwork publishers are stopped. The worker can finish while the cluster\nand its configured fencing method remain available. It does not acquire\nthe configfs mutex held by the removal path.\n\nKeep o2quo_exit() as the counterpart of o2quo_init() for module teardown\nand initialization failure, and have it call the same drain helper.\nCluster removal uses only the explicitly named drain operation.\n\nKASAN report as below:\n\n    Oops: general protection fault, probably for non-canonical address 0xdffffc000000011b: 0000 [#1] SMP KASAN NOPTI\n    KASAN: null-ptr-deref in range [0x00000000000008d8-0x00000000000008df]\n    CPU: 0 UID: 0 PID: 72 Comm: kworker/0:2 Not tainted 7.3.0-rc4-next-20260921-pmb-ocfs2-functional-v1+ #1 PREEMPT(lazy)\n    Hardware name: QEMU Ubuntu 24.04 PC v2 (i440FX + PIIX, arch_caps fix, 1996), BIOS 1.16.3-debian-1.16.3-2 04/01/2014\n    Workqueue: events o2quo_make_decision\n    RIP: 0010:o2quo_fence_self+0x65/0x200\n\nRegister dump omitted.\n\n    Call Trace:\n     <TASK>\n     o2quo_make_decision+0x345/0x3a0\n     ? __pfx_o2quo_make_decision+0x10/0x10\n     ? process_one_work+0x834/0x1b40\n     ? srso_alias_return_thunk+0x5/0xfbef5\n     ? lock_release+0xc8/0x290\n     ? srso_alias_return_thunk+0x5/0xfbef5\n     process_one_work+0x9a8/0x1b40\n     ? __pfx_process_one_work+0x10/0x10\n     ? lock_acquire+0x190/0x300\n     ? lock_is_held_type+0x8f/0x100\n     ? srso_alias_return_thunk+0x5/0xfbef5\n     worker_thread+0x65c/0xe40\n     ? srso_alias_return_thunk+0x5/0xfbef5\n     ? __kthread_parkme+0x177/0x220\n     ? srso_alias_return_thunk+0x5/0xfbef5\n     ? __pfx_worker_thread+0x10/0x10\n     kthread+0x351/0x460\n     ? srso_alias_return_thunk+0x5/0xfbef5\n     ? __pfx_kthread+0x10/0x10\n     ret_from_fork+0x659/0x940\n     ? __pfx_ret_from_fork+0x10/0x10\n     ? srso_alias_return_thunk+0x5/0xfbef5\n     ? __switch_to+0x74f/0xf70\n     ? __pfx_kthread+0x10/0x10\n     ret_from_fork_asm+0x1a/0x30\n     </TASK>\n    Modules linked in:\n    ---[ end trace 0000000000000000 ]---",
   "datePublished": "Nov 19, 2026, 2:45:16 PM",
-  "dateUpdated": "Nov 19, 2026, 2:45:16 PM",
+  "dateUpdated": "Nov 23, 2026, 8:04:16 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/f93fa8a7e5f8ccecaf32e308080304eac06f93ab",
+    "https://git.kernel.org/stable/c/6f79eeab76fcc22082996235e6ebda80959744ac",
+    "https://git.kernel.org/stable/c/52a229f6ad8bcd9f8019f92e9d96fc556800e6c9",
+    "https://git.kernel.org/stable/c/04b958506a00e6506e0c05acc794972e39378498",
     "https://git.kernel.org/stable/c/102ebaf4db4c81668db6a85d88273826dc94e539",
     "https://git.kernel.org/stable/c/1c77b387fc305c9c314f29cd034a490bff7f81bd",
     "https://git.kernel.org/stable/c/ef1a59804c07e2e17885cd6c723c4638489cf58a",
     "https://git.kernel.org/stable/c/b584c45b6066fd9799c44ffb9badcb5db351c8a6"
   ],
   "aliases": [
+    "GHSA-hwx7-vx44-6p7q",
     "CVE-2026-99551"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "20623be0-5844-3d1f-b117-3f88c4f84932",
@@ -26,6 +31,16 @@
         }
       },
       "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "2ce57f15-36b8-31cb-94c7-487bb48f5b1f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "380b5ce3-1dc6-3441-a956-2325a1c1ad8b",
@@ -78,6 +93,46 @@
       "product_version": "f6656d26d17b2598f43cd41be088853fa2a03397 <102ebaf4db4c81668db6a85d88273826dc94e539"
     },
     {
+      "id": "605ed0be-e3ff-39ef-9688-362755375374",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f6656d26d17b2598f43cd41be088853fa2a03397 <6f79eeab76fcc22082996235e6ebda80959744ac"
+    },
+    {
+      "id": "6a48d256-dd21-30a7-8f18-1b998d18592d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "6ce4e04c-a284-38e6-92cb-c24d51cbaec3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f6656d26d17b2598f43cd41be088853fa2a03397 <04b958506a00e6506e0c05acc794972e39378498"
+    },
+    {
+      "id": "71cfe8b4-bade-3cea-a58d-a9f859e5f1ea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "84685684-19ba-3e7e-b951-a541ce02b0b0",
       "product": {
         "name": "Linux",
@@ -86,6 +141,36 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "a11b993e-677c-30e0-9749-8cff5be8f48a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f6656d26d17b2598f43cd41be088853fa2a03397 <f93fa8a7e5f8ccecaf32e308080304eac06f93ab"
+    },
+    {
+      "id": "a1bad135-3433-3bee-b747-599d23a5e73f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f6656d26d17b2598f43cd41be088853fa2a03397 <52a229f6ad8bcd9f8019f92e9d96fc556800e6c9"
+    },
+    {
+      "id": "a62ec73b-906e-3390-8339-dec9da308fd4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "af44687b-09be-3e09-9e2e-9d64fdf78a27",

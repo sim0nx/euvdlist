@@ -3,19 +3,21 @@
   "enisaUuid": "018b04e3-9e44-3dd0-beaa-ce5d4de8fdbe",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: mcp2200: validate READ_ALL response length\n\nThe HID core invokes raw_event callbacks before validating the report\nlength.  mcp2200_raw_event() casts a READ_ALL response to struct\nmcp_read_all_resp and reads fields through offset ten without checking that\nthe response contains the structure.\n\nA one-byte READ_ALL response reproduced the issue under KASAN:\n\n  BUG: KASAN: slab-out-of-bounds in mcp2200_raw_event+0x24b/0x3a0\n  Read of size 1 by task hidtrigger/89\n  Call Trace:\n   mcp2200_raw_event+0x24b/0x3a0\n   kasan_report+0x139/0x170\n\nReject an incomplete READ_ALL response with a protocol error before reading\nits fields.  The common completion path then wakes the command waiter with\nthe error instead of leaving it to time out.\n\nCommit 47669bec44fe (\"HID: asus: refactor the two workqueues and init\nsequence\") added the same kind of raw_event length validation to hid-asus.",
   "datePublished": "Nov 19, 2026, 2:21:37 PM",
-  "dateUpdated": "Nov 19, 2026, 2:33:53 PM",
+  "dateUpdated": "Nov 23, 2026, 8:01:30 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/591352a66dab5d55ae30721500e82472268ea99b",
     "https://git.kernel.org/stable/c/0210fd34232c8450fcaa5a68ff4360f275c755f2",
     "https://git.kernel.org/stable/c/47f50fbfd664ceede78f502950eb5638b537ed74",
     "https://git.kernel.org/stable/c/6ee339f14d81da30909075f2dc88926dd317591a",
     "https://git.kernel.org/stable/c/26ce0e6bf0b27fc6a2f490f38555dfd0a27c9605"
   ],
   "aliases": [
+    "GHSA-wgp2-2m67-c26j",
     "CVE-2026-99330"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0c2e0b51-ec8c-3d35-88b2-90f8fa77a309",
@@ -78,16 +80,6 @@
       "product_version": "patch: 6.12.117"
     },
     {
-      "id": "27e28f6b-1e1e-3e5a-96d4-d20501e614d4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "b289b83409a6edd262840a6bac4d990e1ef87971"
-    },
-    {
       "id": "28abbcf8-dc45-398d-8804-4cac8f1e3f4b",
       "product": {
         "name": "Linux",
@@ -118,6 +110,36 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "9c3cc086-8aee-33d7-8133-4d38d0890c01",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "cbdaef12-b005-367d-aae2-3b39a48accd9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b289b83409a6edd262840a6bac4d990e1ef87971 <591352a66dab5d55ae30721500e82472268ea99b"
+    },
+    {
+      "id": "ceb13c58-8596-307b-bac0-6d8e01d5a847",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.57 <6.6.163"
+    },
+    {
       "id": "de85a513-1612-3be0-a58f-69ed963fa5db",
       "product": {
         "name": "Linux",
@@ -126,16 +148,6 @@
         }
       },
       "product_version": "patch: 6.18.61"
-    },
-    {
-      "id": "e5e32f86-f581-39b4-ac93-040384f89268",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "6.6.57 <6.7"
     }
   ],
   "enisaIdVendor": [

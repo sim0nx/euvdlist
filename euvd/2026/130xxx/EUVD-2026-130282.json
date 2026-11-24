@@ -3,19 +3,22 @@
   "enisaUuid": "1549308d-25c5-3ef6-bd47-737c36f5bb01",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nblk-crypto: fix NULL deref and UAF in __blk_crypto_evict_key()\n\nSashiko reported a possible NULL pointer dereference, triggered by the\nfollowing flow:\n\n  dm-inlinecrypt ctor            # first use of the fallback\n   \u251c\u2500 blk_crypto_init_key()      # succeeds, ctx->key.size != 0\n   \u251c\u2500 blk_crypto_start_using_key()\n   \u2502   \u251c\u2500 hw-wrapped key: -EOPNOTSUPP\n   \u2502   \u2502    # profile never allocated (NULL)\n   \u2502   \u2514\u2500 raw key: fallback_start_using_mode()\n   \u2502      \u2514\u2500 blk_crypto_fallback_init() fails\n   \u2502         \u2514\u2500 kfree(profile)   # not NULLed\n   \u251c\u2500 goto bad\n   \u2514\u2500 inlinecrypt_dtr()          # evicts whenever key.size is set\n      \u2514\u2500 blk_crypto_evict_key()\n         \u2514\u2500 blk_crypto_config_supported_natively() = false\n            \u2514\u2500 blk_crypto_fallback_evict_key()\n               \u2514\u2500 __blk_crypto_evict_key(blk_crypto_fallback_profile)\n                  \u2514\u2500 profile->num_slots # BOOM!!!\n\nThis issue can be reproduced using the following commands:\n\n  dd if=/dev/zero of=/tmp/backing bs=1M count=64\n  LOOP=$(losetup -f --show /tmp/backing)\n  SZ=$(blockdev --getsz $LOOP)\n  KEY=$(head -c 64 /dev/urandom | od -An -tx1 | tr -d ' \\n')\n  dmsetup create ic --table \"0 $SZ inlinecrypt aes-xts-plain64 \\\n    $KEY 0 $LOOP 0 1 keytype:hw-wrapped\"\n\nAnd the following oops is triggered:\n\n  ==================================================================\n  blk-crypto: loop0: no support for wrapped keys\n  Oops: general protection fault, probably for non-canonical address\n        0xdffffc000000000b: 0000 [#1] SMP KASAN PTI\n  KASAN: null-ptr-deref in range [0x0000000000000058-0x000000000000005f]\n  CPU: 5 UID: 0 PID: 901 Comm: dmsetup 7.3.0-rc3 #1 PREEMPT(lazy)\n  RIP: 0010:__blk_crypto_evict_key+0x2e/0x3b0\n  Call Trace:\n   blk_crypto_evict_key+0x24c/0x320\n   inlinecrypt_dtr+0xf6/0x160\n   inlinecrypt_ctr+0x2d3/0xbd0\n   dm_table_add_target+0x661/0xf40\n   table_load+0x1c4/0x490\n   ctl_ioctl+0x32f/0x5f0\n   dm_ctl_ioctl+0xe/0x20\n  ==================================================================\n\ndm-inlinecrypt is the only caller that can evict a key that was never\nstarted, as fscrypt frees such a key without evicting it.\n\nFix this by returning early from blk_crypto_fallback_evict_key() when\ntfms_inited[] is not set for the key's mode.  tfms_inited[] is only set\nafter blk_crypto_fallback_init() has successfully initialized the\nprofile, so the crash above is no longer reachable.\n\nThe bug has been latent since commit c984ff1423ae (\"blk-crypto:\ndynamically allocate fallback profile\") was merged in v6.5, and only\nbecame actually triggerable when commit e7f57d2c47e2 (\"dm-inlinecrypt:\nadd target for inline block device encryption\") was merged in v7.2.",
   "datePublished": "Nov 19, 2026, 2:45:29 PM",
-  "dateUpdated": "Nov 19, 2026, 2:45:29 PM",
+  "dateUpdated": "Nov 23, 2026, 8:04:23 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/0965c6f8b196a18072b498528521de85971d694f",
+    "https://git.kernel.org/stable/c/178c924e42afb0bf496af01727bac8ad9745f544",
     "https://git.kernel.org/stable/c/6304b40fdc8bdde881e2bf7b7cbe501261e4abd3",
     "https://git.kernel.org/stable/c/37c957fbc8ac0bfd85259b37f03e47006c8e35e8",
     "https://git.kernel.org/stable/c/11e9f0c8b30a7cf3ba0869ecea7bf784c3f81dab",
     "https://git.kernel.org/stable/c/c8c53d669d4e45b3a804013251a34387d7e11bfb"
   ],
   "aliases": [
-    "CVE-2026-99558"
+    "CVE-2026-99558",
+    "GHSA-953q-c43g-ch7x"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "01289516-ae48-3b3d-b00a-5d511fffe8ce",
@@ -28,14 +31,14 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "087fe8b2-0077-36a0-90f9-5d7ceed89222",
+      "id": "0a2f4c8a-0a7f-397d-a936-a93e75bd9cce",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.1.47 <6.2"
+      "product_version": "c984ff1423ae9f70b1f28ce811856db0d9c99021 <178c924e42afb0bf496af01727bac8ad9745f544"
     },
     {
       "id": "0fb4287a-bdaa-3d89-8a0d-79c0b3caf71c",
@@ -66,6 +69,16 @@
         }
       },
       "product_version": "531c6ed342d9cbfbf55ef1f293fbf11db8d10835"
+    },
+    {
+      "id": "2bca9b1a-e76c-3fa1-a2ba-7dfd45763b1b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "65156119-9d88-30cb-b25d-e01bff39fc17",
@@ -108,16 +121,6 @@
       "product_version": "patch: 7.4-rc1"
     },
     {
-      "id": "b5b1456e-7f44-32b7-9683-ac4745f70a2a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "8ad3bfdd227e0f644e0c528c9d80d108a74c0f0f"
-    },
-    {
       "id": "c74359cd-4970-3c70-be55-b938ffd210d9",
       "product": {
         "name": "Linux",
@@ -138,6 +141,16 @@
       "product_version": "c984ff1423ae9f70b1f28ce811856db0d9c99021 <c8c53d669d4e45b3a804013251a34387d7e11bfb"
     },
     {
+      "id": "e5a0743f-2369-359f-918c-47c94949d6eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8ad3bfdd227e0f644e0c528c9d80d108a74c0f0f <0965c6f8b196a18072b498528521de85971d694f"
+    },
+    {
       "id": "e8b93d56-999b-3be3-a1d1-a4ea2f6b3d8f",
       "product": {
         "name": "Linux",
@@ -148,6 +161,16 @@
       "product_version": "6.4.12 <6.5"
     },
     {
+      "id": "f5c6d2bb-1108-33d9-9e13-3892ab0b0f00",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.47 <6.1.193"
+    },
+    {
       "id": "f973f8b0-31fa-3e41-b6e0-93fc60261ffe",
       "product": {
         "name": "Linux",
@@ -156,6 +179,16 @@
         }
       },
       "product_version": "6.5"
+    },
+    {
+      "id": "fb8aaace-8c9e-3fa1-b9a1-ae3e98cd519f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     }
   ],
   "enisaIdVendor": [

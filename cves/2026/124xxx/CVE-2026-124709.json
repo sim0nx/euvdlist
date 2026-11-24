@@ -3,8 +3,10 @@
   "enisaUuid": "738c668c-cedd-337d-a1c7-59309cd9f2c6",
   "description": "Issue summary: A QUIC server that rejects a stream opened by the peer may\nretain that stream's state for the lifetime of the connection if the peer\nresets the stream before the rejection is signalled, even though the peer's\nstream credit is returned.\n\nImpact summary: A remote client that completes a QUIC handshake can repeatedly\nopen and reset streams, causing server memory to grow without bound until the\nprocess runs out of memory and every connection on it is lost. This is a\nDenial of Service.\n\nCWE: CWE-401: Missing Release of Memory after Effective Lifetime\n\nDescription: QUIC servers track each stream the peer opens. When the incoming\nstream policy rejects a stream, OpenSSL schedules a STOP_SENDING frame, marks\nthe stream deleted and returns the peer's stream credit. A deleted stream is\ncollected only once its receive part is fully drained, which for a rejected\nstream means the STOP_SENDING has been acknowledged. If the peer sends\nRESET_STREAM first, the reset cancels the pending STOP_SENDING, so it is never\nsent or acknowledged and the stream is never collected.\n\nThe default configuration reaches this path. Once a connection has a default\nstream, meaning the application has read from or written to the connection as\nthe tutorial server does, the effective incoming stream policy rejects streams\nthe application does not accept. Applications that set the REJECT policy\nexplicitly are affected too.\n\nEach retained stream costs about 300 bytes, and the peer's stream credit\nwindow paces how quickly they accumulate. A client that keeps the connection\nopen and keeps opening and resetting streams grows server memory without\nbound. The severity is Low because growth is slow, needs a long-lived\nconnection, and causes no memory corruption or disclosure.\n\nFIPS impact: no\nThe affected code is outside the FIPS module boundary.",
   "datePublished": "Nov 17, 2026, 8:14:35 AM",
-  "dateUpdated": "Nov 17, 2026, 8:14:35 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 17, 2026, 4:50:38 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://openssl-library.org/news/secadv/20261117.txt",
     "https://github.com/openssl/openssl/commit/ead311df1037e7994a6d86c7e862d71ad59c52c7",
@@ -12,10 +14,11 @@
     "https://github.com/openssl/openssl/commit/f3acb0a3328046741479482c51cec815839e1b05"
   ],
   "aliases": [
+    "GHSA-v2xh-2vwr-xq7g",
     "CVE-2026-124709"
   ],
   "assigner": "openssl",
-  "epss": 0.0,
+  "epss": 0.67,
   "enisaIdProduct": [
     {
       "id": "513e5677-2b7c-3053-9571-09ac5ff15022",

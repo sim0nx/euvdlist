@@ -3,19 +3,26 @@
   "enisaUuid": "9476d4a4-1e8b-3905-b853-6c9ee20e68cf",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: target: Verify the iSCSI ISID is null-terminated\n\niscsi_parse_pr_out_transport_id() returns the ISID of a FORMAT CODE 01b\nTransportID as a pointer into the PERSISTENT RESERVE OUT parameter list,\nlowercased in place and never null-terminated.  spc4r37 Table 508 requires\nthe field to be null-terminated, but a non-conforming initiator can omit\nthe NULL; when the ISID ends at the end of the received buffer, the pointer\nis not a C string.\n\nThe registration code still consumes it as one: strcmp() in\n__core_scsi3_locate_pr_reg() and in the REGISTER AND MOVE path, and\nsnprintf(\"%s\") in __core_scsi3_do_alloc_registration(), which also reads\nits first 8 bytes unconditionally with get_unaligned_be64() - a NUL check\ndoes not bound that read.\n\nWhen the parameter list spans more than one page, transport_kmap_data_sg()\nmaps it with vmap(), and the over-read walks off the end of the mapping\ninto the vmalloc() guard page and oopses.  Reproduced with a PR OUT\nREGISTER + SPEC_I_PT parameter list of exactly 8192 bytes whose final\nTransportID carries a 12-byte ISID without a terminating NUL:\n\n  BUG: unable to handle page fault for address: ffffc9000138c000\n  RIP: 0010:strcmp+0xc/0x30\n  Call Trace:\n   __core_scsi3_locate_pr_reg+0xd3/0x120 [target_core_mod]\n   core_scsi3_decode_spec_i_port+0x8fc/0x13a0 [target_core_mod]\n   core_scsi3_emulate_pro_register+0x73c/0x900 [target_core_mod]\n   ...\n   iscsi_target_rx_thread+0xef/0x1d0 [iscsi_target_mod]\n\nWith a single-page parameter list the buffer is a kmap() direct mapping, so\nthe over-read continues into the physically adjacent page instead of\nfaulting.  snprintf(\"%s\") then copies whatever follows the ISID in memory\ninto pr_reg_isid, and PR IN READ FULL STATUS reports the registration back\nto any initiator, turning the over-read into an info leak of kernel heap\ncontents.  Reproduced with a 4096-byte parameter list whose last\nTransportID ends at the end of the buffer with a 4-byte ISID and no NUL,\ninterleaved with I/O to populate adjacent pages: the READ FULL STATUS\nresponse returned the ISID as \"0xleak\" followed by raw bytes that were not\npart of the parameter list.  The snprintf() into\npr_reg_isid[PR_REG_ISID_LEN] caps the echoed ISID at 15 characters, so at\nmost 11 bytes past the buffer are leaked per command, but the PR OUT\ncommand is not rate limited.\n\nAny initiator that can send PR OUT to an iSCSI-exported LUN can trigger\neither variant, including a guest via vhost-scsi.\n\nRequire 8 bytes to remain after the \",i,0x\" separator, and a NUL inside the\nrest of the descriptor, before the ISID pointer is returned.  REGISTER AND\nMOVE fails with TCM_INVALID_PARAMETER_LIST; on SPEC_I_PT no target port\nclaims the malformed TransportID, and the command fails the same way.",
   "datePublished": "Nov 20, 2026, 5:51:23 AM",
-  "dateUpdated": "Nov 20, 2026, 5:51:23 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:07:01 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/7cc1ed496b739e0f57c10dd61e289a0b27ca7158",
+    "https://git.kernel.org/stable/c/c8f8c568a73d1ba6b045dcb94e23ab50633da9e5",
+    "https://git.kernel.org/stable/c/54bf2d26275efaa9caad854880ebba1a42f9a2ad",
+    "https://git.kernel.org/stable/c/a5ebdf5b5a2105557a22c00b5e678a8d753a1f8c",
     "https://git.kernel.org/stable/c/29c5ce6465b5696fbdf8126fcd0a6946b005c8b7",
     "https://git.kernel.org/stable/c/8a71f25a34439e99e094fabb619f787d15aaf9ae",
     "https://git.kernel.org/stable/c/d1db24c32bbe7b998573392070c3a6bdd9f4066c",
     "https://git.kernel.org/stable/c/cdf4b87a18cb6a0ee26865cb1b7b5660a491d302"
   ],
   "aliases": [
-    "CVE-2026-99754"
+    "CVE-2026-99754",
+    "GHSA-q7q6-xgmr-g782"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.39,
   "enisaIdProduct": [
     {
       "id": "0c09da88-0a5f-301b-a6bf-3bc7b8395a64",
@@ -28,6 +35,16 @@
       "product_version": "patch: 7.3.5"
     },
     {
+      "id": "120cd743-afee-3271-aa41-2be8ad451e5c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "165ea583-fe5a-33be-baf0-770a1c684550",
       "product": {
         "name": "Linux",
@@ -36,6 +53,16 @@
         }
       },
       "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "1667f2c1-4758-35ff-982d-beeeeaa92070",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "24c305d8-58a4-33bd-b5ec-139f43148243",
@@ -58,6 +85,16 @@
       "product_version": "patch: 6.18.64"
     },
     {
+      "id": "55e2a89b-3497-3163-a044-7270732a5e55",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c66ac9db8d4ad9994a02b3e933ea2ccc643e1fe5 <a5ebdf5b5a2105557a22c00b5e678a8d753a1f8c"
+    },
+    {
       "id": "575fed2d-928f-3c25-bf58-b62125f08df9",
       "product": {
         "name": "Linux",
@@ -76,6 +113,46 @@
         }
       },
       "product_version": "c66ac9db8d4ad9994a02b3e933ea2ccc643e1fe5 <29c5ce6465b5696fbdf8126fcd0a6946b005c8b7"
+    },
+    {
+      "id": "72cd7564-2996-3d58-8fd5-c7fb5c5a6a8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c66ac9db8d4ad9994a02b3e933ea2ccc643e1fe5 <54bf2d26275efaa9caad854880ebba1a42f9a2ad"
+    },
+    {
+      "id": "87944596-128d-3669-86cd-d0c14f734f28",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c66ac9db8d4ad9994a02b3e933ea2ccc643e1fe5 <7cc1ed496b739e0f57c10dd61e289a0b27ca7158"
+    },
+    {
+      "id": "8c9c22d6-1466-3742-8ffa-04e1225aef12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "986ec406-4478-36c8-a7f1-a412a18bf201",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c66ac9db8d4ad9994a02b3e933ea2ccc643e1fe5 <c8f8c568a73d1ba6b045dcb94e23ab50633da9e5"
     },
     {
       "id": "a6d7ebb8-670d-3d8c-a91d-030b3b224527",
@@ -106,6 +183,16 @@
         }
       },
       "product_version": "c66ac9db8d4ad9994a02b3e933ea2ccc643e1fe5 <d1db24c32bbe7b998573392070c3a6bdd9f4066c"
+    },
+    {
+      "id": "de26b91a-381c-3129-9141-3f181324c9e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "ed9143f0-9c00-3eb7-bcc7-0ceec494d41b",

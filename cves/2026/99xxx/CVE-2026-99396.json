@@ -3,20 +3,35 @@
   "enisaUuid": "1a0069f3-c945-38cb-8fbc-5ddd30564f7d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfs: bound da-node entry count against the correct geometry\n\nxfs_da3_node_verify() bounds the node entry count against the larger of\nthe directory and attribute geometries because, as a buffer verifier, it\ncannot tell whether the block belongs to the directory or the attribute\ntree. When the directory block size exceeds the fs block size (e.g.\nmkfs.xfs -n size=64k -b size=4k), an attribute node buffer is a single fs\nblock that holds only m_attr_geo->node_ents entries, yet a crafted attr\nnode may claim a count up to m_dir_geo->node_ents and still pass the\nverifier.\n\nxfs_da3_node_lookup_int() then indexes btree[] up to that count during\nits binary search -- an out-of-bounds read via getxattr/listxattr on a\nmounted crafted image.\n\nThe buffer verifier is the wrong place to tighten this: it has no fork\ncontext, and the transaction-less read path used by getxattr does not run\nxfs_da3_node_set_type() either. xfs_da3_node_lookup_int(), on the other\nhand, always runs on that path and holds args->geo, the geometry of the\nfork actually being searched. Bound the entry count against\nargs->geo->node_ents there, before walking the entries.",
   "datePublished": "Nov 19, 2026, 2:23:34 PM",
-  "dateUpdated": "Nov 19, 2026, 2:39:28 PM",
+  "dateUpdated": "Nov 23, 2026, 8:02:19 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/cb0c634fd6de2cf3daf3d6f91ffec3873497f404",
+    "https://git.kernel.org/stable/c/83cb680ad9154a3ebf1a22b793b6932e1abc7c47",
+    "https://git.kernel.org/stable/c/84ceb84e83aff1eb6043a247a70543c1b5a81e54",
+    "https://git.kernel.org/stable/c/3619d3f206ae62ca9354e521b82e02d3438d2c4d",
     "https://git.kernel.org/stable/c/aaeb3e51052c94959bbc286ccda0c6f2feb3cd69",
     "https://git.kernel.org/stable/c/5909f2935ca2897b51800d00f58a48605253ef4b",
     "https://git.kernel.org/stable/c/229c4478a35663582893916250ebcdfc7b845b85",
     "https://git.kernel.org/stable/c/3df5e5aaa3bc0913236c48ab29b7df3a785aa29f"
   ],
   "aliases": [
+    "GHSA-3h9m-hcgv-xjgc",
     "CVE-2026-99396"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.24,
   "enisaIdProduct": [
+    {
+      "id": "079e99bf-d6d9-361f-a577-c4a110ec91b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
     {
       "id": "0db6baa5-6fe5-36fd-a9d3-488e7bc9d788",
       "product": {
@@ -58,6 +73,36 @@
       "product_version": "7ab610f9e0f1701b7b319bdc946b9804fb79e780 <229c4478a35663582893916250ebcdfc7b845b85"
     },
     {
+      "id": "469f65a1-bc91-3c75-afca-ccfe7a46c1fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ab610f9e0f1701b7b319bdc946b9804fb79e780 <83cb680ad9154a3ebf1a22b793b6932e1abc7c47"
+    },
+    {
+      "id": "547c47b2-685a-37cd-bc01-e45fbc703336",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ab610f9e0f1701b7b319bdc946b9804fb79e780 <cb0c634fd6de2cf3daf3d6f91ffec3873497f404"
+    },
+    {
+      "id": "63b61dc1-804b-330f-b092-6c4ab1e01aa7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ab610f9e0f1701b7b319bdc946b9804fb79e780 <84ceb84e83aff1eb6043a247a70543c1b5a81e54"
+    },
+    {
       "id": "6aeb4aee-4df1-3f28-a8c4-f032af819ac2",
       "product": {
         "name": "Linux",
@@ -88,6 +133,26 @@
       "product_version": "7ab610f9e0f1701b7b319bdc946b9804fb79e780 <3df5e5aaa3bc0913236c48ab29b7df3a785aa29f"
     },
     {
+      "id": "9f967495-74dc-32fc-aef7-c43ed0c7beb1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ab610f9e0f1701b7b319bdc946b9804fb79e780 <3619d3f206ae62ca9354e521b82e02d3438d2c4d"
+    },
+    {
+      "id": "a42ef3d8-574e-30e0-8725-85c5d32d05d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
       "id": "a9060829-dfae-3d22-ae17-0d339882ce67",
       "product": {
         "name": "Linux",
@@ -96,6 +161,26 @@
         }
       },
       "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "b868aa53-1e0b-3245-91a7-296a2742a7bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "b9b5b768-c0b8-3c49-bee8-47b9adc21e07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "e53c7dad-6ea1-3884-8307-8306a64cad33",

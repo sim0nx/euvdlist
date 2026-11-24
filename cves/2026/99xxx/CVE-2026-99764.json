@@ -3,19 +3,24 @@
   "enisaUuid": "1fe9a44c-2f7c-30f0-81c9-be8c8d340361",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\n9p/xen: validate the response size from the backend\n\np9_xen_response() takes the length of an incoming response from the ring\n-- the first field of the 9p header, which the Xen transport reuses as\nits framing header -- and uses it to advance the consumer index, but\nnever checks that it is at least the header size or no larger than the\nnumber of bytes the backend has actually produced.\n\nA malicious or buggy backend can post a response whose size is smaller\nthan the header (for example 0). The consumer index then never advances,\nso the response work re-reads the same ring contents instead of making\nprogress. In testing this raced with the teardown that the malformed\nreply triggers and dereferenced a freed p9_client:\n\n  9pfs 9pfs-0: Wrong req tag=ffff\n  BUG: kernel NULL pointer dereference, address: 0000000000000060\n  #PF: supervisor read access in kernel mode\n  #PF: error_code(0x0000) - not-present page\n  PGD 0 P4D 0\n  Oops: Oops: 0000 [#1] SMP NOPTI\n  CPU: 0 UID: 0 PID: 11 Comm: kworker/0:1 Not tainted 7.2.0-rc5 #6 PREEMPT(lazy)\n  Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org 04/01/2014\n  Workqueue: events p9_xen_response\n  RIP: 0010:idr_find+0x4/0x10\n  RSP: 0018:ffffbf5d80063de8 EFLAGS: 00010202\n  RAX: 0000000000000001 RBX: ffffa229c21195a0 RCX: ffffa229c2400000\n  RDX: ffffa229c11c2200 RSI: 000000000000ffff RDI: 0000000000000050\n  RBP: 000000000000ffff R08: 3fffffffffffdfff R09: ffffffffffffffff\n  R10: 3fffffffffffdfff R11: ffffffff87a60e80 R12: 0000000000000050\n  R13: 0000000000000000 R14: 000000000000ffff R15: 0000000000100000\n  FS:  0000000000000000(0000) GS:ffffa22a7661c000(0000) knlGS:0000000000000000\n  CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033\n  CR2: 0000000000000060 CR3: 000000003ac34002 CR4: 0000000000770ef0\n  PKRU: 55555554\n  Call Trace:\n   <TASK>\n   p9_tag_lookup+0x2b/0x90\n   p9_xen_response+0x17c/0x2e0\n   process_one_work+0x16a/0x3a0\n   worker_thread+0x172/0x2e0\n   kthread+0xdd/0x110\n   ret_from_fork+0x18b/0x240\n   ret_from_fork_asm+0x1a/0x30\n   </TASK>\n  Modules linked in:\n  CR2: 0000000000000060\n  ---[ end trace 0000000000000000 ]---\n\nReject a response whose size is outside [sizeof(header), queued] before\nusing it, matching the validation the backend already applies to\nincoming requests.",
   "datePublished": "Nov 20, 2026, 5:51:31 AM",
-  "dateUpdated": "Nov 20, 2026, 5:51:31 AM",
+  "dateUpdated": "Nov 23, 2026, 8:07:11 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/13bf56cea3953de1af727bda5fa7c922f0df4940",
+    "https://git.kernel.org/stable/c/bc445b78cb28825f5788ad21dd95272df244e999",
+    "https://git.kernel.org/stable/c/b36f4cc60dd1141e13e3c3921f3d12be6e3d986e",
+    "https://git.kernel.org/stable/c/5574c6dbf2425210598cf21eb313ac65bbb83be8",
     "https://git.kernel.org/stable/c/79a3d1bfd5b25bd0da01df4a364c113715146970",
     "https://git.kernel.org/stable/c/0ca38f8aeca45f47123cbf65710b889078558f8a",
     "https://git.kernel.org/stable/c/c342fef95252c92c46531da676784c833806fd9a",
     "https://git.kernel.org/stable/c/9b4cf60c6b739461c5b4ec9c52587da6b2608786"
   ],
   "aliases": [
-    "CVE-2026-99764"
+    "CVE-2026-99764",
+    "GHSA-cr2m-pf3h-3449"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "06adeb07-2c2c-3b8d-8a22-896bd3e391c4",
@@ -28,6 +33,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "0b79f2ce-13e6-3b93-96bc-0da3e4a90dc5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f66c72bea1293786b9916894019f96bcd729505b <b36f4cc60dd1141e13e3c3921f3d12be6e3d986e"
+    },
+    {
+      "id": "2d2bb1e9-b2d1-3eff-a927-4367441b1116",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f66c72bea1293786b9916894019f96bcd729505b <5574c6dbf2425210598cf21eb313ac65bbb83be8"
+    },
+    {
       "id": "2dc54eff-d13c-33bd-a8e6-91b2cc6fb861",
       "product": {
         "name": "Linux",
@@ -36,6 +61,16 @@
         }
       },
       "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "3d7cdbed-07d4-3f0b-a6a0-622e0ba957d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "4e56ffe8-c0e0-3bb4-a2a9-eefc9de491fc",
@@ -68,6 +103,36 @@
       "product_version": "patch: 7.4-rc2"
     },
     {
+      "id": "5fdeb7b9-b163-34e6-a63f-8ff6e8e88a1c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f66c72bea1293786b9916894019f96bcd729505b <bc445b78cb28825f5788ad21dd95272df244e999"
+    },
+    {
+      "id": "694989ab-f504-3652-9550-e84ec20eb11b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "8152643b-cbda-3d72-abba-2fe87dbc19ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "84dab7c5-4026-3a71-b14e-4f5cf2e74799",
       "product": {
         "name": "Linux",
@@ -76,6 +141,16 @@
         }
       },
       "product_version": "f66c72bea1293786b9916894019f96bcd729505b <79a3d1bfd5b25bd0da01df4a364c113715146970"
+    },
+    {
+      "id": "94f370f2-e180-370a-b2d9-df04319b1a65",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "bdaf729d-fcad-32ba-9b12-b8c57eeabba7",
@@ -116,6 +191,16 @@
         }
       },
       "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "ffcfaff5-8111-3474-92c8-74e746c2bdc6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f66c72bea1293786b9916894019f96bcd729505b <13bf56cea3953de1af727bda5fa7c922f0df4940"
     }
   ],
   "enisaIdVendor": [

@@ -3,20 +3,35 @@
   "enisaUuid": "120b07fb-9c46-382a-8258-70c974e970df",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: usx2y: Guard the playback copy\n\nusx2y_urb_play_prepare() sums the packet lengths of a whole URB, copies\nthat many frames with a single wrap, and sizes each playback packet from\nthe capture packet's actual_length. Three things are unchecked: that the\nURB fits in the ring buffer, that a packet fits in the playback\nendpoint's maxpacksize, from which tmpbuf is allocated, and that\nactual_length is a whole number of frames. The ISO descriptors take the\nraw actual_length while transfer_buffer_length and the copies take\ncount * stride, so a packet that is not a multiple of the stride makes\nthe descriptors add up to more than the buffer, by up to stride - 1\nbytes per packet.\n\nReturn -EPIPE, as the existing packet-size check does, when the URB is\nlarger than the buffer or a packet is larger than maxpacksize, and size\neach descriptor from whole frames, so the descriptors add up to\ntransfer_buffer_length and each stays within maxpacksize. The buffer\ncase is prevented by the previous patch and this is the guard for it;\nthe other two depend only on the device.\n\nThe first case is reachable on the unpatched driver with ordinary\npackets: on 7.3-rc7, a USB/IP device presenting the US-122 interface\nlayout and sending 48-frame packets, with a 100-frame playback buffer\n(two 50-frame periods, inside the stock constraints), KASAN reports:\n\n  BUG: KASAN: out-of-bounds in i_usx2y_urb_complete+0x79b/0x1ac0\n  Read of size 18446744073709551280 at addr ffff88800e6b02e0 by task vhci_rx/80\n\nWith both patches, the same device and a 200-frame playback buffer is\nrefused at hw_params with EINVAL, and a 400-frame buffer plays for 30 s\nwith the position advancing inside the buffer, no KASAN report and\nneither guard message. The maxpacksize check is not exercised: the\nemulated device reports the same wMaxPacketSize on both endpoints.\n\nThe descriptor case is visible with capture packets of 195 bytes at\nstride 4 (48 frames and 3 bytes): without this change the four\ndescriptors add up to 780 bytes for 768 bytes of data, and USB/IP's\ncompletion check refuses the URB (\"total length of iso packets 780 not\nequal to actual length of buffer 768\", -EPROTO), after which the driver\nstops the streams. With this patch every descriptor is 192 bytes, the\ndescriptors add up to the data in every URB for 30 s, the position\nadvances inside the buffer and KASAN reports nothing. The 48-frame\nplayback run above is unchanged.",
   "datePublished": "Nov 20, 2026, 5:49:31 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:31 AM",
+  "dateUpdated": "Nov 23, 2026, 8:05:01 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/bf8da18fce0c5a5281be4849c7706b17d490f37a",
+    "https://git.kernel.org/stable/c/df1f1a0c808f4ef43c4fdd03d7e79f062d46ebce",
+    "https://git.kernel.org/stable/c/3b75d7b1fd9f1f9b4f2f0dbe030c057a089fcaf9",
+    "https://git.kernel.org/stable/c/812873e093ab6557939348a9119c19fd1c057556",
     "https://git.kernel.org/stable/c/116f158a6f6820a93faa12d46d5a2956cae4e4d2",
     "https://git.kernel.org/stable/c/38bb5df007a80f81861a79228f7dae29e4e263c6",
     "https://git.kernel.org/stable/c/deeccc01999ed8982507945e5ca750e75f0437dc",
     "https://git.kernel.org/stable/c/e2c6de52ffacb2c0f4076884ee3fdb744735a4cb"
   ],
   "aliases": [
+    "GHSA-w3q6-pwh3-xr75",
     "CVE-2026-99608"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
+    {
+      "id": "289794f1-1d4f-3b80-bb6f-29ea9cb049eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
     {
       "id": "2bc27535-cfa8-3f19-92b5-620385e2dfd7",
       "product": {
@@ -28,6 +43,16 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e2c6de52ffacb2c0f4076884ee3fdb744735a4cb"
     },
     {
+      "id": "3044a0d0-c3ef-3d5d-bcca-ae39c2f4fe88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <df1f1a0c808f4ef43c4fdd03d7e79f062d46ebce"
+    },
+    {
       "id": "38ddc3fe-be5b-3526-b684-bf8025365fac",
       "product": {
         "name": "Linux",
@@ -36,6 +61,46 @@
         }
       },
       "product_version": "2.6.12"
+    },
+    {
+      "id": "55ecbf9f-7f31-3b5d-b8f4-a2988e3e9a69",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <3b75d7b1fd9f1f9b4f2f0dbe030c057a089fcaf9"
+    },
+    {
+      "id": "6c2dc494-517b-35e5-8166-f3768c419b21",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "7b58ca9e-3d7d-3129-8676-1ca83f619369",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <bf8da18fce0c5a5281be4849c7706b17d490f37a"
+    },
+    {
+      "id": "86b237ed-f858-3741-85e3-581b6c56bd68",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "96e8afa6-aec8-3792-bef6-760789d9ebae",
@@ -98,6 +163,16 @@
       "product_version": "patch: 6.18.64"
     },
     {
+      "id": "f437d358-56b1-3295-8d26-20c2e10a3663",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
       "id": "f6d595a8-dd3f-30b9-932c-583ac39406cb",
       "product": {
         "name": "Linux",
@@ -106,6 +181,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <116f158a6f6820a93faa12d46d5a2956cae4e4d2"
+    },
+    {
+      "id": "f8bdaf06-2b3d-3b27-87ad-e9b77d0611d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <812873e093ab6557939348a9119c19fd1c057556"
     },
     {
       "id": "fd94515e-9400-3589-afcb-89ab29f7df05",

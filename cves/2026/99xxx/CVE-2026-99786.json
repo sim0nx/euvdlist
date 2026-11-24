@@ -3,19 +3,24 @@
   "enisaUuid": "884beee5-cbbc-3fa6-9999-ba31156ee79d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: retry inexact policy lookup after node reinsertion\n\nAn inexact policy lookup first records pointers to candidate hlist heads\nand then traverses the lists.  A concurrent policy insertion can merge\ninexact tree nodes between those operations:\n\n  lookup                         policy insertion\n  ------                         ----------------\n  find inexact candidates\n    save obsolete hlist head\n                                 write_seqcount_begin(&bin->count)\n                                 merge inexact tree nodes\n                                   hlist_del_rcu(&policy->bydst)\n                                   reinsert policy->bydst in survivor\n                                 write_seqcount_end(&bin->count)\n  evaluate saved candidate list\n    miss the moved policy\n\nThe merge immediately reinserts the same hlist node into the surviving\ntree node.  RCU keeps the policy alive, but it does not provide a\nconsistent view while its list node is moved.  A lookup that selected the\nobsolete list can observe it empty.  A lookup already traversing a moved\npolicy can instead follow the next pointer rewritten by the reinsertion.\nEither case can return an incorrect IPsec policy result.\n\nThe per-bin sequence counter already brackets calls to\nxfrm_policy_inexact_insert_node(), including node merges.  The read side,\nhowever, currently validates the counter only while searching an\nindividual rb-tree.  A successful search returns without validation, and\nthe later candidate-list traversal is outside that read-side section.\n\nSnapshot the per-bin sequence before discovering candidate heads and\nvalidate it after evaluating all candidate lists.   Retry the lookup if\nthe inexact policy tree changes while it is being searched.",
   "datePublished": "Nov 20, 2026, 5:51:47 AM",
-  "dateUpdated": "Nov 20, 2026, 5:51:47 AM",
+  "dateUpdated": "Nov 23, 2026, 8:07:23 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/a8595be59bd8b4efe12febe24e88be8aaf30408a",
+    "https://git.kernel.org/stable/c/e89a27224b3018177a4410042a1a9d77aafc70d1",
+    "https://git.kernel.org/stable/c/0dd6f109432ad24422f2b021c05782f06f66fcd9",
+    "https://git.kernel.org/stable/c/de8314052f753a6f500c1613c92107709a072575",
     "https://git.kernel.org/stable/c/f10bd6c317cef7aa15e185e514513e8548f9ce77",
     "https://git.kernel.org/stable/c/6f66839895b7e9c2673df5bd9dd8d5a82033c825",
     "https://git.kernel.org/stable/c/50d8f2c52093320c70676e9f8af686ff6740abd0",
     "https://git.kernel.org/stable/c/868f63c8bfafa9b827168c9126f85264c39c02ec"
   ],
   "aliases": [
-    "CVE-2026-99786"
+    "CVE-2026-99786",
+    "GHSA-44vj-jj35-j8g2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "16610bb3-3ab0-326c-a6e5-896880f561b4",
@@ -28,6 +33,26 @@
       "product_version": "patch: 6.18.64"
     },
     {
+      "id": "1b250dfe-ffee-39bb-9367-6f4a62e94d58",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9cf545ebd591da673bb6b6c88150212ad83567a9 <e89a27224b3018177a4410042a1a9d77aafc70d1"
+    },
+    {
+      "id": "1e8d510e-7957-3543-9a2c-834065d20e31",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9cf545ebd591da673bb6b6c88150212ad83567a9 <0dd6f109432ad24422f2b021c05782f06f66fcd9"
+    },
+    {
       "id": "2c3796a2-e686-3ce0-837c-a0272c17a484",
       "product": {
         "name": "Linux",
@@ -36,6 +61,36 @@
         }
       },
       "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "39360d06-20d1-3f2d-a16e-3638aa522878",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "39cf3ff2-dc11-308d-a27c-29c5dc1ba0e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9cf545ebd591da673bb6b6c88150212ad83567a9 <de8314052f753a6f500c1613c92107709a072575"
+    },
+    {
+      "id": "3d779397-a051-3358-8da4-59b0713e47cd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9cf545ebd591da673bb6b6c88150212ad83567a9 <a8595be59bd8b4efe12febe24e88be8aaf30408a"
     },
     {
       "id": "3e599eef-7d7a-3502-bd00-da6deb7510b8",
@@ -56,6 +111,26 @@
         }
       },
       "product_version": "9cf545ebd591da673bb6b6c88150212ad83567a9 <50d8f2c52093320c70676e9f8af686ff6740abd0"
+    },
+    {
+      "id": "5a6369a9-e9a2-3705-8960-0bfc305c490f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "5a73baed-228d-31b6-8d73-efd3bd8423c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "a60d2c60-21da-3b51-bfab-e5bdd9b82a71",
@@ -106,6 +181,16 @@
         }
       },
       "product_version": "9cf545ebd591da673bb6b6c88150212ad83567a9 <868f63c8bfafa9b827168c9126f85264c39c02ec"
+    },
+    {
+      "id": "eb2cb83d-7df1-32f0-af61-7181d8ff5b1b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "f5883fd9-7394-34e5-9c30-e7d1ec1276c1",

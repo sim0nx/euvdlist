@@ -3,8 +3,10 @@
   "enisaUuid": "da3d88b8-1ba3-346c-b8fb-878a5a33ea21",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdgpu/gfx12: disallow GFXOFF while updating the SPM VMID\n\ngfx_v12_0_update_spm_vmid() does a read-modify-write of RLC_SPM_MC_CNTL\nover MMIO without keeping GFX powered, unlike gfx11. When GFX is in\nGFXOFF at that point the update doesn't stick, and with the SPM VMID\nprogrammed on submission again, the job of a process with a reserved\nVMID can still run with the SPM writing through VMID 0.\n\nOn navi48, after a few other submissions and a VM fault on the same VM,\na COPY_DATA of RLC_SPM_MC_CNTL from such a job reads 0 although the\nupdate was called for it:\n\n  $ amd_uapi_regression --run-subtest cs-secure-ib-compute,gem-mapping-info-high-va,gpuvm-fault-high-va,reserved-vmid-spm-vmid\n  amdgpu 0000:03:00.0: [gfxhub] page fault (src_id:0 ring:40 vmid:7 pasid:185)\n  amdgpu 0000:03:00.0: \t Faulty UTCL2 client ID: SDMA1 (0xe)\n  RLC_SPM_MC_CNTL in the job: 0x00000000\n\nWith GFXOFF disallowed around the update it reads the reserved VMID 15.\n\n(cherry picked from commit 907aebc5578ae09fa5c0e2f0784201295837e60b)",
   "datePublished": "Nov 20, 2026, 5:49:46 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:46 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 22, 2026, 11:09:20 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/117e6ac89e730d647aeaf53b77420efece331f4d",
     "https://git.kernel.org/stable/c/cd38a2b45edf84324ee9572c09c279fd4ebec5fc",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/d1551515a3258b43cba60bd7f45bbdd1f4e9e60a"
   ],
   "aliases": [
-    "CVE-2026-99627"
+    "CVE-2026-99627",
+    "GHSA-23v5-2h3w-j9hf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "0ec4cdef-cae1-3672-a046-2e23b0d33594",

@@ -3,18 +3,55 @@
   "enisaUuid": "090d67f9-41bd-3ddd-b4ed-3c4c78c0037a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncan: dev: can_dropped_invalid_skb: drop CAN XL frames on non-CAN XL devices\n\nSending a PF_PACKET bypasses the CAN framework logic and can directly\nreach a CAN driver's xmit() function. The PF_PACKET framework only\nchecks that skb->len does not exceed the net_device MTU.\n\nFor a CAN device that is not CAN XL capable, anything above CANFD_MTU\n(72 bytes) is therefore dropped before it reaches the driver. However,\nCAN XL frames are variable length. can_is_canxl_skb() accepts lengths in\nthe range CANXL_HDR_SIZE + CANXL_MIN_DLEN up to CANXL_MTU, i.e. 13 to\n2060 bytes.\n\nAs a result, an ETH_P_CANXL skb with a length between 13 and 72 bytes\ncan pass both the MTU and the can_dropped_invalid_skb() checks.\n\nA driver that does not support CAN XL will interpret canxl_frame->flags\nas a length because of the overlap with can_frame->len. And because\nCANXL_XLF is set, the resulting length is between 128 and 255. For\ndrivers that do not check can_frame->len before copying can_frame->data,\nas most drivers do, this results in a buffer overflow of up to 247\nbytes.\n\nDrop ETH_P_CANXL skbs if the device does not have the CAN_CAP_XL\ncapability. Keep can_is_canxl_skb() for the validation of CAN XL skbs.",
   "datePublished": "Nov 20, 2026, 5:50:22 AM",
-  "dateUpdated": "Nov 20, 2026, 5:50:22 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:05:50 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/3b9a1de970054b31958cefc3ac870ce9be00a37f",
+    "https://git.kernel.org/stable/c/cf888ce290b79831a6029860d772fd128bc798f6",
+    "https://git.kernel.org/stable/c/2980a293b4d210ca7cfa89f7d4a9bab4f50ecc19",
+    "https://git.kernel.org/stable/c/561e44524ef1e0b62675b75c1fc57997ee49431d",
     "https://git.kernel.org/stable/c/2de9c3df452e159f82ef14ca497e5be407c66493",
     "https://git.kernel.org/stable/c/0fce44e29fce4b07642491b098afb41bd571e4f2"
   ],
   "aliases": [
+    "GHSA-f6h3-jpxj-r8ww",
     "CVE-2026-99674"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
+    {
+      "id": "1735cc61-346d-36a5-8cdc-57929c8a9bfa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "1e8167ef-4744-3500-8081-3937a1f106d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb08cba12b52cba4366e858932307649dc5304e2 <cf888ce290b79831a6029860d772fd128bc798f6"
+    },
+    {
+      "id": "2acbc3ec-44c7-31b2-b919-d26b2725241d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.65"
+    },
     {
       "id": "2db99d6b-0204-34ed-ae1c-ada975cba5ea",
       "product": {
@@ -34,6 +71,46 @@
         }
       },
       "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "6b16cfb6-925f-32ee-98dc-8896ed21816f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb08cba12b52cba4366e858932307649dc5304e2 <3b9a1de970054b31958cefc3ac870ce9be00a37f"
+    },
+    {
+      "id": "79db348b-6c42-3f65-a667-bbeefcd52ffc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb08cba12b52cba4366e858932307649dc5304e2 <561e44524ef1e0b62675b75c1fc57997ee49431d"
+    },
+    {
+      "id": "8853e722-6f3c-33a6-94ab-f956416083f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "aebeaeea-1b29-3cad-8713-5756c0716d93",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.119"
     },
     {
       "id": "b5866be1-e964-32ea-bd41-4a8da525c291",
@@ -74,6 +151,16 @@
         }
       },
       "product_version": "6.1"
+    },
+    {
+      "id": "ffb729cb-ed8c-30fd-919d-f7eb566f802d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb08cba12b52cba4366e858932307649dc5304e2 <2980a293b4d210ca7cfa89f7d4a9bab4f50ecc19"
     }
   ],
   "enisaIdVendor": [

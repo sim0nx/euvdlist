@@ -3,49 +3,31 @@
   "enisaUuid": "40e0323e-0aca-3426-98a9-abcd94e41eba",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: rtw88: usb: bound what the driver feeds the after-DTIM queue\n\nFrames routed to the high queue are transmitted right after DTIM beacons\nonly, inside the ATIM window, while they wait in the shared TX page pool.\nThe driver puts no limit on how many it hands over, so as long as one\nstation dozes, any sustained broadcast or multicast traffic outruns the\ndrain and empties the pool: measured on an RTL8822BU AP with a single\nclient in power save and ~40 frames/s of mDNS chatter, the free page\ncount at 0x240 goes from 1803 to 16 in about 100 seconds and stays there\nfor as long as the traffic lasts. From that point every other transmit\nqueues behind the backlog, authentication responses arrive too late for\nanyone to join, and the reserved page download fails (\"error beacon\nvalid\"). The AP keeps beaconing and only a reboot recovers.\n\nFeed the high queue through a small budget that refills below the\nmeasured drain rate (about 3 frames per DTIM, ~15/s at dtim_period 2 on\nthe default 2 TU ATIM window); whatever exceeds the budget leaves on its\naccess category queue right away. The high queue backlog is now bounded\nby the burst size under any load, so the page pool cannot run dry, at\nthe price that a dozing station may miss part of a broadcast storm.",
   "datePublished": "Nov 20, 2026, 5:49:10 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:10 AM",
+  "dateUpdated": "Nov 23, 2026, 8:04:35 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/7749af899a1882a17c934c035d30d0870875b0f8",
     "https://git.kernel.org/stable/c/9f7c09a830398003de105004035ed7aa0185b65f",
     "https://git.kernel.org/stable/c/0bd2548fee3ae403550a394b5270d914bc2b76e9",
     "https://git.kernel.org/stable/c/99085c31b8521eb588b66b726ca6d08338e3a14e",
     "https://git.kernel.org/stable/c/04cc8c59a3d79ef7ec2341f1c7aef1d40a0ce7df"
   ],
   "aliases": [
-    "CVE-2026-99577"
+    "CVE-2026-99577",
+    "GHSA-38gg-9q39-jjq9"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
-      "id": "1174c2b8-96ee-32e3-9890-9c3160ecf119",
+      "id": "23aa4b97-91e5-399e-b369-beb060d530ae",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.3.5"
-    },
-    {
-      "id": "151bc21a-143e-3ba8-aad9-5bab998b5d19",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <04cc8c59a3d79ef7ec2341f1c7aef1d40a0ce7df"
-    },
-    {
-      "id": "3e2240fa-93e7-381d-803a-21c07927fb7f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <9f7c09a830398003de105004035ed7aa0185b65f"
+      "product_version": "6.5"
     },
     {
       "id": "3e917bbc-8903-382f-adfb-5fcf83a8894f",
@@ -58,34 +40,54 @@
       "product_version": "patch: 6.18.64"
     },
     {
-      "id": "690ea7cf-bf57-334d-9638-b429d30f11f2",
+      "id": "4d31d7ac-8aee-345a-816e-4d0fa949a7fd",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.18.64"
+      "product_version": "076f786a0ae14a81f40314b96a2d815e264bc213 <7749af899a1882a17c934c035d30d0870875b0f8"
     },
     {
-      "id": "708108d7-7cf2-3173-99e3-5024d874bead",
+      "id": "52b871e1-557b-3a01-9a7e-abef42af891c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0bd2548fee3ae403550a394b5270d914bc2b76e9"
+      "product_version": "patch: 0"
     },
     {
-      "id": "b0cbb484-6cac-36bb-8170-038af2d212d4",
+      "id": "7c37abf7-95d8-3147-9192-24ca6149a977",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <99085c31b8521eb588b66b726ca6d08338e3a14e"
+      "product_version": "076f786a0ae14a81f40314b96a2d815e264bc213 <9f7c09a830398003de105004035ed7aa0185b65f"
+    },
+    {
+      "id": "9de79e4a-ed1a-3bf7-bfa5-839021b74bc9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "076f786a0ae14a81f40314b96a2d815e264bc213 <04cc8c59a3d79ef7ec2341f1c7aef1d40a0ce7df"
+    },
+    {
+      "id": "b071a9f9-cd4c-39f3-87d7-66361036c2ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "b9d6988f-d709-3b4b-8c8f-60520e620d96",
@@ -96,6 +98,16 @@
         }
       },
       "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "c4970bc0-5f16-36b4-ad17-ec4716b6c5fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "076f786a0ae14a81f40314b96a2d815e264bc213 <99085c31b8521eb588b66b726ca6d08338e3a14e"
     },
     {
       "id": "ce6d17f3-32f0-3d67-8af0-8819ca393f5e",
@@ -118,14 +130,14 @@
       "product_version": "patch: 6.12.118"
     },
     {
-      "id": "df6030df-ed34-34c2-b791-dfd308368037",
+      "id": "eb103d46-e5dc-3f26-aee6-8ca7231acff4",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.12.118"
+      "product_version": "076f786a0ae14a81f40314b96a2d815e264bc213 <0bd2548fee3ae403550a394b5270d914bc2b76e9"
     }
   ],
   "enisaIdVendor": [

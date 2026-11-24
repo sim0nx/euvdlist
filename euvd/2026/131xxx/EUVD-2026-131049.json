@@ -3,20 +3,45 @@
   "enisaUuid": "ca0ddde1-ecab-33de-a741-19e46b543f8a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nudf: don't use eloc after the end of the unallocated space table\n\nWhen udf_next_aext() returns 0, its eloc, elen and etype outputs hold\nno defined value.  Two walks of the unallocated space table still use\neloc after the walk has reached the end of the table.\n\nudf_table_prealloc_blocks() looks for a free extent starting at\nfirst_block and decides whether it found one by comparing eloc with\nfirst_block after the walk.  If the table's list ends in a continuation\ndescriptor that leads to an empty allocation extent, eloc is then the\nblock of that allocation extent, which is in use, and if that is\nfirst_block, the block is handed out as preallocation.  Once\nudf_discard_prealloc() no longer frees the wrong block, this is what\nstill makes fsx in generic/091 and generic/263 read back bad data on a\ntable, in about one run in four.  Only take the extent if the walk\nstopped at it.\n\nWhen udf_table_free_blocks() cannot merge the freed blocks into an\nexisting extent, it appends a new one and sets only its block number,\nso the partition reference comes from whatever eloc held after the\nwalk, and with long allocation descriptors it is written to disk.  For\na table without extents, eloc was never set.  Take the partition\nreference from the freed blocks instead.  Short allocation descriptors\ndo not store the partition reference, which is why this half remains a\nlatent long-descriptor fix rather than a reproduced failure.",
   "datePublished": "Nov 20, 2026, 5:49:25 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:25 AM",
+  "dateUpdated": "Nov 23, 2026, 8:04:52 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/f0800bc874077d48a3e7e2c689ac0dcbab805164",
+    "https://git.kernel.org/stable/c/28c14f0297aa03259460825de8712942f25d1e8f",
+    "https://git.kernel.org/stable/c/41fe9bee3e6bf5942a97e5ab64696ea1d5784118",
+    "https://git.kernel.org/stable/c/82c92d7772d58d0d2f49328b7b846b79db33de91",
     "https://git.kernel.org/stable/c/0ceb311c0f7af4f4b38fc1066178b84a60d61a05",
     "https://git.kernel.org/stable/c/812d49a09ce0a8fcc784349d6a95e975a4af51cf",
     "https://git.kernel.org/stable/c/9ecd3d7ed7d7a57ee6af27dc22be0b3fdc9526f7",
     "https://git.kernel.org/stable/c/94401199df90e1c2a50c6e4b73618ac5a4ba83ba"
   ],
   "aliases": [
-    "CVE-2026-99599"
+    "CVE-2026-99599",
+    "GHSA-hcv8-3hr7-7x3x"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
+    {
+      "id": "0ab54991-34b8-39f0-9d68-83613a4bea73",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <82c92d7772d58d0d2f49328b7b846b79db33de91"
+    },
+    {
+      "id": "18bbcee8-8a59-3a38-b738-c5920479dd51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f0800bc874077d48a3e7e2c689ac0dcbab805164"
+    },
     {
       "id": "232a80d3-e140-355f-a7a8-ec86e81c0a77",
       "product": {
@@ -36,6 +61,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <812d49a09ce0a8fcc784349d6a95e975a4af51cf"
+    },
+    {
+      "id": "2630579a-2c61-3423-91c2-a491c504356b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <28c14f0297aa03259460825de8712942f25d1e8f"
     },
     {
       "id": "2a3972b7-a417-35c2-9a88-b3b8a6858ea9",
@@ -78,6 +113,36 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "451bee41-ac90-31f1-9e84-9c4444acd66c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "503858f5-0e84-3b78-9a54-33c0e964f6b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "96ce6861-19f8-3445-9dc7-e67cb0dba7ed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "973e5af6-6b38-3ce8-bcf6-6f8dc1befebd",
       "product": {
         "name": "Linux",
@@ -98,6 +163,16 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <94401199df90e1c2a50c6e4b73618ac5a4ba83ba"
     },
     {
+      "id": "c438393e-81d7-316f-be10-d2b6c4acbde8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "d25bdff7-9de4-3bab-aebc-078cf1227808",
       "product": {
         "name": "Linux",
@@ -106,6 +181,16 @@
         }
       },
       "product_version": "2.6.12"
+    },
+    {
+      "id": "d789a717-a114-3a29-9d01-615c71588264",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <41fe9bee3e6bf5942a97e5ab64696ea1d5784118"
     },
     {
       "id": "e7e443d3-ceef-313a-b6b7-aaedca630a68",

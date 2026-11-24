@@ -3,19 +3,24 @@
   "enisaUuid": "a0a8bc3b-5826-367c-a216-d7b9d17ee968",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nSUNRPC: Copy the deferred RPC Call from the head buffer\n\nsvc_defer() snapshots the RPC Call for replay once a pending cache\nupcall resolves. It copies the Call starting (rq_arg.len -\nhead[0].iov_len) bytes before head[0].iov_base, a back-up that once\ncovered a transport header. No transport has had one since commit\n983084b2672c (\"SUNRPC: Remove svc_rqst::rq_xprt_hlen\"), so the two\nlengths are meant to be equal.\n\nAn RPCSEC_GSS Call breaks that assumption. Unwrapping the integrity\nservice truncates rq_arg.len by the length of the trailing checksum,\nand unwrapping the privacy service leaves rq_arg.len short by an\namount the client sets with trailing bytes after the wrap token.\nNeither adjusts head[0].iov_len. Both lengths are size_t, so the\nsubtraction underflows and the copy starts past head[0].iov_base.\nEvery deferred integrity Call replays a shifted snapshot.\n\nA deferred replay skips GSS verification, so a shifted snapshot runs\nas an authenticated Call. With the privacy service the offset is\nclient-chosen. A forged Call placed in that window, naming another\nuser's GSS context handle, runs under that identity.\n\nCopy the Call from head[0].iov_base. Refuse to defer a Call whose\nlength runs past the head buffer, so the copy cannot read out of\nbounds.",
   "datePublished": "Nov 19, 2026, 2:22:23 PM",
-  "dateUpdated": "Nov 19, 2026, 2:37:16 PM",
+  "dateUpdated": "Nov 23, 2026, 8:01:52 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/2df839cb84c87063328fbde7ed596ebfcd90f5c1",
+    "https://git.kernel.org/stable/c/de4c9b2daac9e0e9bcf2f63b4c2c61f59c63a3e7",
+    "https://git.kernel.org/stable/c/a56ec5e117238c45d66be6f1125b4d5d0e715241",
+    "https://git.kernel.org/stable/c/6ba5228ca9ec4adf24c1d1ac50620556993ac6bd",
     "https://git.kernel.org/stable/c/629a17cc81fe0b749bbee8303797b6c99a3e776b",
     "https://git.kernel.org/stable/c/d514dd81771aff1192e84a57ae60428c13f07ccb",
     "https://git.kernel.org/stable/c/70614e41d379e5b9b1893ac65b49ae4cea6c36eb",
     "https://git.kernel.org/stable/c/2192a56b0686599358909c3e12e9a366f5b5d452"
   ],
   "aliases": [
-    "CVE-2026-99357"
+    "CVE-2026-99357",
+    "GHSA-5w2v-mr5m-xc73"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "061f1bfe-3f7e-36f8-ad10-2ab98d3241cc",
@@ -68,6 +73,66 @@
       "product_version": "patch: 7.3.2"
     },
     {
+      "id": "32449d91-3bc3-3978-a82f-911d5a3c69be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "260c1d1298f6703d38fdccd3dd5a310766327340 <6ba5228ca9ec4adf24c1d1ac50620556993ac6bd"
+    },
+    {
+      "id": "5c1743c6-230f-3aba-9aa8-219188b75ed4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "5ed60693-8f5e-3494-ba7a-af2d407865a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "260c1d1298f6703d38fdccd3dd5a310766327340 <a56ec5e117238c45d66be6f1125b4d5d0e715241"
+    },
+    {
+      "id": "72dd178f-c095-3b11-abac-bdf57925ee23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "260c1d1298f6703d38fdccd3dd5a310766327340 <de4c9b2daac9e0e9bcf2f63b4c2c61f59c63a3e7"
+    },
+    {
+      "id": "7fd21546-3a10-33b1-82c5-827be3cb4132",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "9fbab912-15df-3b4a-8b36-fc40104c05f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "bd91b4f0-c51c-3a5b-aeac-f0d8d0d0304c",
       "product": {
         "name": "Linux",
@@ -106,6 +171,26 @@
         }
       },
       "product_version": "260c1d1298f6703d38fdccd3dd5a310766327340 <d514dd81771aff1192e84a57ae60428c13f07ccb"
+    },
+    {
+      "id": "e82d527d-00c2-3041-9f61-5c5a0863c65f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "ea1e7a21-d12c-3ad0-b6a3-24fa19f2da6b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "260c1d1298f6703d38fdccd3dd5a310766327340 <2df839cb84c87063328fbde7ed596ebfcd90f5c1"
     },
     {
       "id": "f06ba81f-45a4-35dd-955f-07907eb72557",

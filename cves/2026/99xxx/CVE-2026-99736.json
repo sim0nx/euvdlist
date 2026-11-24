@@ -3,18 +3,63 @@
   "enisaUuid": "16546878-8284-3a4e-b5ca-c4b9014bfe27",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/shmem: fix accounting of swapin-error markers\n\nA failed swap read replaces the swap entry with a swapin-error marker in\nthe page-cache and subtracts its pages from \"alloced\" and \"swapped\";\nhowever, it leaves their block charge in place.\n\nRemoving the marker during truncate then subtracts from \"swapped\" again.\nThis can underflow the counters or make swapped reach zero while other\npages remain swapped out, causing swapoff to loop without finding them.\n\nWhen installing the marker, subtract only from \"swapped\" and let\nshmem_recalc_inode() reduce \"alloced\" and release the block charge.\n\nMake shmem_free_swap() report successful removal separately from the\nnumber of swap pages freed, so removing a swapin-error marker does not\nsubtract from \"swapped\" again.\n\nIt's a bit confusing, but replacing a swapped out page by a swapin-error\nmarker in shmem_set_folio_swapin_error() behaves as follows:\n\nInitially:\n\talloced=1, swapped=1, nrpages=0\nCalling shmem_recalc_inode(inode, 0, -1)\n\t-> swapped = 0\n\t-> freed =  1 - 0 - 0 = 1\n\t-> alloced -= freed\n\t-> alloced=0, swapped=0, block charge released",
   "datePublished": "Nov 20, 2026, 5:51:09 AM",
-  "dateUpdated": "Nov 20, 2026, 5:51:09 AM",
+  "dateUpdated": "Nov 23, 2026, 8:06:44 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/00e3efd5d74d18447438edfd2532cd4100fd5756",
+    "https://git.kernel.org/stable/c/5e09340badaf982a2cb73e41da715fcdd0e2eb7f",
+    "https://git.kernel.org/stable/c/77ad4ac35977d081f2b69f1c73ae3b210124b1fc",
+    "https://git.kernel.org/stable/c/f49d40a699bdaf68bbb307f1fa207512520ce982",
     "https://git.kernel.org/stable/c/d4bc03eaeef281c460370dfd57e1a671b787edd4",
     "https://git.kernel.org/stable/c/66ce68a249f4ac56cd6968aa6d8ded20fb4b7d09"
   ],
   "aliases": [
-    "CVE-2026-99736"
+    "CVE-2026-99736",
+    "GHSA-52wv-694g-rq98"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "055f0606-da83-3d26-9db3-e6a37e46618d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6cec2b95dadf77cdc1256fae1c5dfd4a2b467e61 <77ad4ac35977d081f2b69f1c73ae3b210124b1fc"
+    },
+    {
+      "id": "094be17a-8e98-3f8f-ad7d-1e664423c077",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6cec2b95dadf77cdc1256fae1c5dfd4a2b467e61 <5e09340badaf982a2cb73e41da715fcdd0e2eb7f"
+    },
+    {
+      "id": "1504c7d5-1110-3f17-ac78-fd479e313d6e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "228caf20-2f8b-3030-95b7-21e481b2b93f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6cec2b95dadf77cdc1256fae1c5dfd4a2b467e61 <00e3efd5d74d18447438edfd2532cd4100fd5756"
+    },
     {
       "id": "2eec1d49-26ad-3438-a819-6d5e229ea235",
       "product": {
@@ -46,6 +91,16 @@
       "product_version": "6cec2b95dadf77cdc1256fae1c5dfd4a2b467e61 <d4bc03eaeef281c460370dfd57e1a671b787edd4"
     },
     {
+      "id": "448633ea-8f8a-3064-829d-7b6bc171d942",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6cec2b95dadf77cdc1256fae1c5dfd4a2b467e61 <f49d40a699bdaf68bbb307f1fa207512520ce982"
+    },
+    {
       "id": "4afa1213-98ae-3e5c-8ac6-9312952dfdd4",
       "product": {
         "name": "Linux",
@@ -64,6 +119,36 @@
         }
       },
       "product_version": "5.19"
+    },
+    {
+      "id": "992833d2-e8dd-39b5-9673-897a530610b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "ab0b9e6b-fa6c-35d2-9bc6-95d908750646",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.119"
+    },
+    {
+      "id": "b87efdde-cc3d-3677-9c7d-36191a7ab8e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.65"
     },
     {
       "id": "cf641061-59c0-3c68-b399-abf0929a4ce4",

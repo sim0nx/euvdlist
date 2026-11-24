@@ -3,20 +3,35 @@
   "enisaUuid": "e77fa65d-ed3b-3be9-9def-97fb86a3e5b8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: serialize directory emptiness checks with readdir\n\nSMB2 QUERY_DIRECTORY holds fp->readdir_lock while it calls iterate_dir()\non fp->filp. An SMB2 SET_INFO request with FILE_DISPOSITION_INFORMATION\ncan resolve the same FileId and call ksmbd_vfs_empty_dir() on the same\nfilp without that lock.\n\niterate_dir()'s inode read lock permits concurrent readers and does not\nserialize per-file iterator state. ext4 stores its dx readdir cursor and\nfname RB tree in file->private_data. Concurrent reset or refill can\ntherefore free a fname node while the other worker still traverses it or\nretains its RB-tree link, resulting in use-after-free accesses.\n\nAn authenticated SMB client with list and delete rights on a directory in\na writable KSMBD share backed by ext4 can trigger this when the directory\ntakes the dx readdir path. The client overlaps an SMB2 QUERY_DIRECTORY\nrequest with an SMB2 SET_INFO request carrying FILE_DISPOSITION_INFORMATION\non one live FileId.\n\nIn one x86_64 SMP KASAN multi-shot guest using ksmbd-for-next at\n171df27077fb, the unmodified kernel reported a cross-worker use-after-free\nbefore a panic. The first report's access and free stacks show the two\nrequest paths directly (trimmed):\n\n  BUG: KASAN: slab-use-after-free in ext4_htree_store_dirent+0x488/0x550\n  Read of size 8 by task kworker/2:0/29\n  Workqueue: ksmbd-io handle_ksmbd_work\n  Call Trace:\n   ext4_htree_store_dirent+0x488/0x550\n   htree_dirblock_to_tree+0x535/0x990\n   ext4_htree_fill_tree+0x319/0xba0\n   ext4_readdir+0x175a/0x2f40\n   iterate_dir+0x1b6/0x630\n   smb2_query_dir+0x1003/0x1cc0\n\n  Freed by task 279:\n   free_rb_tree_fname+0x67/0xc0\n   ext4_readdir+0x13a9/0x2f40\n   iterate_dir+0x1b6/0x630\n   ksmbd_vfs_empty_dir+0xa2/0x100\n   smb2_set_info+0x2ffa/0x45d0\n\nTake fp->readdir_lock across the entire emptiness check. This places both\niterators over that handle's filp in the same lock domain while\npreserving the disposition status handling. The exact code change\ncompleted a warning-free x86_64 KASAN bzImage build. Tracing three request\npairs showed that the two iterate_dir() calls no longer overlapped and the\nexpected statuses were preserved. A further 1,600 reproducer iterations\ncompleted with expected statuses and no KASAN report, Oops, or panic.\n\nThe reproducer and complete guest configuration are available privately\nto maintainers on request.",
   "datePublished": "Nov 19, 2026, 2:45:27 PM",
-  "dateUpdated": "Nov 19, 2026, 2:45:27 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:04:21 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/67683a6cfbab82bb022d7d89390216c855fa6786",
+    "https://git.kernel.org/stable/c/068c3a2a70c2c342bb84b882bb1f45f5a8c5a42c",
     "https://git.kernel.org/stable/c/5ad61a34963f32fc1637d26e88cf6e02a3b99d08",
     "https://git.kernel.org/stable/c/818a9fd779443b931b05c025d85f29680efb26c2",
     "https://git.kernel.org/stable/c/2a4b6ae380a9f5175f002c1921cf9cbc7ca536ba",
     "https://git.kernel.org/stable/c/7220980b2423d06a0604516129bfa4cec8a697ae"
   ],
   "aliases": [
-    "CVE-2026-99556"
+    "CVE-2026-99556",
+    "GHSA-5r2v-2338-v6xf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.45,
   "enisaIdProduct": [
+    {
+      "id": "05297aa9-f8ef-3a42-9400-59de3c9a1233",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <068c3a2a70c2c342bb84b882bb1f45f5a8c5a42c"
+    },
     {
       "id": "2936ee89-5bd6-307d-be7c-364dee44c05f",
       "product": {
@@ -26,6 +41,16 @@
         }
       },
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <5ad61a34963f32fc1637d26e88cf6e02a3b99d08"
+    },
+    {
+      "id": "502fd1df-a8dc-3e19-84dd-b78fc048de58",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "58e7fb2b-5296-34be-8070-e4b373aa8b27",
@@ -76,6 +101,26 @@
         }
       },
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <818a9fd779443b931b05c025d85f29680efb26c2"
+    },
+    {
+      "id": "c21f916f-fcfb-3aca-a14b-75a0107f01b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "c358c1a7-972b-336c-bc45-64fcc82ceb18",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <67683a6cfbab82bb022d7d89390216c855fa6786"
     },
     {
       "id": "daaa9fd1-a61f-347f-98e4-b771a5998e81",

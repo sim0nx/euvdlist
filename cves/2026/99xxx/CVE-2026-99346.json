@@ -3,20 +3,56 @@
   "enisaUuid": "c2c1a53b-e349-3bd2-b857-a04a16db99ea",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: SVM: Trigger new ASID allocation in both VMCBs on pCPU switch\n\nWhen the pCPU where the VMCB was most recently used is switched, reset\nthe ASID generation in both VMCBs, triggering new ASID allocation for\nthe immediate VMRUN as well as the next VMRUN on the other VMCB.\n\nThe ASID is shared between vmcb01 and vmcb02, and gets flushed on every\nnested transition. However, since pCPU tracking is done per VMCB, it is\npossible for one VMCB to allocate a new ASID when migrated to a new\npCPU, and then the other VMCB reuses that ASID on the old pCPU. This can\nresult in the same ASID being used by multiple vCPUs on the old pCPU.\n\nExample scenario:\n- vCPU runs on pCPU A, vmcb01 is active, asid=1.\n- vCPU migrates to pCPU B, vmcb01 pCPU changes, new asid=2.\n- Another vCPU runs on pCPU A and allocates asid=2 as well.\n- vCPU migrates back to pCPU A, and then switches to vmcb02 before it\n  runs again with vmcb01.\n- No pCPU switch is detected for vmcb02, so VMRUN is done with asid=2.\n- Two vCPUs end up using asid=2 on the same pCPU.\n\nKeep the VMCB dirtying to the active VMCB only. Clean bits are tracked\nby a pCPU for each VMCB, so do not unnecessarily dirty a VMCB if its\npCPU does not change.\n\nAdditionally, initialize the tracked pCPU for vmcb02 to -1 on nested\nenablement as hardening, so that a new ASID allocation is always\ntriggered when nested is disabled and re-enabled.\n\nNo performance regression was noticed when overcommitting L1 vCPUs in L0\n(to force rescheduling), pinning L1 <-> L2 vCPUs, and running CPUID in a\ntight loop bouncing between 2 vCPUs in L2.\n\nAn alternative (and perhaps more proper) fix would be tracking the ASID\nper-VMCB instead (e.g. [1]). However, that's a more involved change, and\nit would result in having different ASIDs for L1 and L2 without actually\nproperly maintaining them. It would probably work because all TLB\nflushes target the current VMCB, and the other VMCB is always flushed on\nnested transitions, but the code ends up in an arguably more fragile\nstate. Punt a proper clean fix to an incoming (and overdue) overhaul of\nSVM's ASID usage [2].\n\n[1] https://lore.kernel.org/lkml/20250205182402.2147495-2-yosry.ahmed@linux.dev\n[2] https://lore.kernel.org/kvm/20260728003557.1136583-1-yosry@kernel.org",
   "datePublished": "Nov 19, 2026, 2:22:01 PM",
-  "dateUpdated": "Nov 19, 2026, 2:36:24 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:01:41 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/57cecf976ba4abea93b6ce2c6e3d2ad2f0be94dd",
+    "https://git.kernel.org/stable/c/d953b0eb5191e3c8811d747d08e72eac157747ae",
+    "https://git.kernel.org/stable/c/5a329cebca79bfdb42210798686d4d36dfb693b1",
     "https://git.kernel.org/stable/c/5636d57b61068918085360aaad18ab57872e5800",
     "https://git.kernel.org/stable/c/058173bce103b6ac405b2bbf61e29a7f3767348f",
     "https://git.kernel.org/stable/c/7d787fb34e825218702496fb0d5892529bea9366",
     "https://git.kernel.org/stable/c/bf260dc9e7b8bfcd06c1a8e739797b1cf0917c72"
   ],
   "aliases": [
+    "GHSA-vmh6-434h-9mpm",
     "CVE-2026-99346"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
+    {
+      "id": "052dc4aa-543f-3f22-9abb-f0475f27ca3a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "193015adf40d0465c240d4e9a7b6e4b84b531f8b <5636d57b61068918085360aaad18ab57872e5800"
+    },
+    {
+      "id": "072aed0d-a733-39d3-a2a5-13476c45759e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "193015adf40d0465c240d4e9a7b6e4b84b531f8b <d953b0eb5191e3c8811d747d08e72eac157747ae"
+    },
+    {
+      "id": "19c62d5a-a574-34d2-8603-a41d94cc704d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
     {
       "id": "49e234e0-ebe7-3d3e-b87c-d67d6a0986c1",
       "product": {
@@ -28,44 +64,44 @@
       "product_version": "patch: 6.12.117"
     },
     {
-      "id": "6269cb09-a7dd-321a-b73a-7a9d60db1f30",
+      "id": "4cba37a7-0d61-35e6-b2de-cef54012ed9e",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <058173bce103b6ac405b2bbf61e29a7f3767348f"
+      "product_version": "patch: 6.1.193"
     },
     {
-      "id": "66d93dba-e0c0-3a85-bd99-ee2fd60a1b9c",
+      "id": "6da6be8d-2574-3882-9647-ee74d46e7356",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <bf260dc9e7b8bfcd06c1a8e739797b1cf0917c72"
+      "product_version": "193015adf40d0465c240d4e9a7b6e4b84b531f8b <5a329cebca79bfdb42210798686d4d36dfb693b1"
     },
     {
-      "id": "72c95065-ca0a-30ac-a82a-3b54cf5f17b3",
+      "id": "7108fa88-72f2-3691-b53c-2fa3198a7abd",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.3.2"
+      "product_version": "patch: 5.15.226"
     },
     {
-      "id": "7315c8af-ab5b-3460-8d5d-fcb1756d5fc0",
+      "id": "75984d51-a5ba-3e09-9e7d-13fed4c55c13",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <7d787fb34e825218702496fb0d5892529bea9366"
+      "product_version": "193015adf40d0465c240d4e9a7b6e4b84b531f8b <7d787fb34e825218702496fb0d5892529bea9366"
     },
     {
       "id": "7c034fff-4ecc-3368-b232-c829366840da",
@@ -88,24 +124,24 @@
       "product_version": "patch: 6.18.61"
     },
     {
-      "id": "91402387-03f3-3d05-b031-b6ae516d2491",
+      "id": "b7c8fa1a-dff3-3e2d-89fc-cb89ecd740ab",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.18.61"
+      "product_version": "patch: 0"
     },
     {
-      "id": "97b5476c-4e38-3368-9101-fc7fca2b6ba0",
+      "id": "ba2dfa02-2e86-3483-8904-2a75f04305cb",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.12.117"
+      "product_version": "193015adf40d0465c240d4e9a7b6e4b84b531f8b <bf260dc9e7b8bfcd06c1a8e739797b1cf0917c72"
     },
     {
       "id": "cab06108-85b7-3abf-ab9a-e6063dc007d5",
@@ -118,14 +154,34 @@
       "product_version": "patch: 7.3.2"
     },
     {
-      "id": "d6e77032-c7a5-3aee-a7e8-27cd56a1c3d3",
+      "id": "cb00290f-70b1-3111-8b6c-1366875cd265",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <5636d57b61068918085360aaad18ab57872e5800"
+      "product_version": "5.13"
+    },
+    {
+      "id": "d0cf2c7a-d011-3d85-bdfd-b7e73441f89c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "193015adf40d0465c240d4e9a7b6e4b84b531f8b <058173bce103b6ac405b2bbf61e29a7f3767348f"
+    },
+    {
+      "id": "f15d68ec-4642-38ab-a326-e5181fca3de7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "193015adf40d0465c240d4e9a7b6e4b84b531f8b <57cecf976ba4abea93b6ce2c6e3d2ad2f0be94dd"
     }
   ],
   "enisaIdVendor": [

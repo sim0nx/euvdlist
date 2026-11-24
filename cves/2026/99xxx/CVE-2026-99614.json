@@ -3,19 +3,21 @@
   "enisaUuid": "9c561608-1a6d-373f-94f5-8348a8135c48",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/nouveau/nvkm: clear use.enabled when subdev init fails\n\nOn Kepler boards without the video decode falcon firmware installed\n(msvld/mspdec/msppp), every other VA-API decode attempt binds to an\nengine with no ucode loaded. The submitted work never completes, which\nleads to a context switch timeout, a channel recovery that cannot reset\nthe engine, and eviction waits on fences that never signal. The process\nends up stuck in D state, or killed by SIGBUS when it touches a buffer\nevicted after the wait times out:\n\n  msvld: unable to load firmware data\n  msvld: init failed, -19\n  fifo: SCHED_ERROR 0a [CTXSW_TIMEOUT]\n  vo[5444]: channel 14 killed!\n  WARNING: drivers/gpu/drm/nouveau/nvkm/engine/fifo/runl.c:117 at nvkm_runl_rc+0x2a4/0x3b0 [nouveau]\n  [TTM] Buffer eviction failed\n  WARNING: drivers/gpu/drm/nouveau/nouveau_bo.c:1092 at nouveau_bo_move_ntfy.part.0+0x9b/0x100 [nouveau]\n\nTracing nvkm_subdev_ref() and nvkm_subdev_init_() shows the pattern:\na reference taken with enabled=0 runs nvkm_falcon_init(), which\nreturns -ENODEV; the next reference sees enabled=1 and succeeds\nwithout running it.\n\nClear use.enabled when init() fails, so that every later reference\nretries init and fails cleanly.  The other readers of use.enabled are\nfini() handlers that use it to skip teardown, which they now also do\nafter a failed init().\n\nOn a GK107 (Quadro K1100M) without video firmware, playing H.264 with\nmpv --hwdec=auto: without this patch the GPU channel is killed within a\nminute and mpv hangs; with it, VA-API decoder creation fails, mpv falls\nback to software decoding, and no faults are logged.",
   "datePublished": "Nov 20, 2026, 5:49:36 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:36 AM",
+  "dateUpdated": "Nov 23, 2026, 8:05:10 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/4d81a0a292953fd4c8c24e9793b25d9bb82c3fa9",
     "https://git.kernel.org/stable/c/58899bfd5cf688733c909adb6aa34929c44c8842",
     "https://git.kernel.org/stable/c/8d642da3ec15d0c169948c0af60c6e94cf31a539",
     "https://git.kernel.org/stable/c/765b4f3fe5003b91d8ad8a47a4d3f62dba5d9e3d",
     "https://git.kernel.org/stable/c/a1f7f37417bacf2eaf80a8ce6b598b1fa56f8906"
   ],
   "aliases": [
+    "GHSA-549v-hqp3-fgwf",
     "CVE-2026-99614"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "4f2562c0-4e5a-3e95-89f4-c09ef4c15d3f",
@@ -46,6 +48,16 @@
         }
       },
       "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "6210fd4c-dd2b-3faa-bd20-9c9025f39da4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8478cd5a740a092163c8ad5b6da1a1b488eb42bd <4d81a0a292953fd4c8c24e9793b25d9bb82c3fa9"
     },
     {
       "id": "62e884fa-11ae-395b-9586-b6b97b5408ce",
@@ -96,6 +108,16 @@
         }
       },
       "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "abb52b09-eca9-3c84-8228-1486735e708d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "bc727f23-681d-340f-8aac-514832e2c98d",

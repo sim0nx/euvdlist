@@ -3,18 +3,21 @@
   "enisaUuid": "9a15b65f-8d5e-3ae8-85a3-410b4e84763e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: reclaim credits for decrypted reads with no matching mid\n\nWhen a decrypted SMB2 READ response carries a MessageId that matches no\noutstanding request, both the inline receive_encrypted_read() and the\noffloaded smb2_decrypt_offload() paths drop the frame without accounting\nthe credits the server granted in it.  The plaintext unknown-frame path in\ncifs_demultiplex_thread() already reclaims them with\nsmb2_add_credits_from_hdr(), so encrypted reads leak credits that the\nplaintext path would not.\n\nThis also happens for legitimate frames - e.g. a reply that arrives after\nthe client has timed out and dropped the mid - so over a long-lived\nconnection the client's credit count drifts down and can eventually starve\nit of the ability to issue requests.  The frame is AEAD-authenticated, so\nthe granted credits in the decrypted header come from the real server and\nare safe to apply.\n\nReclaim the credits from the decrypted header before dropping the frame,\nand export smb2_add_credits_from_hdr() so the SMB2 receive paths can use it.",
   "datePublished": "Nov 19, 2026, 2:23:23 PM",
-  "dateUpdated": "Nov 19, 2026, 2:38:32 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 22, 2026, 11:07:57 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/9b3473e7bc5ec104c37faa7f7c9092914d97f076",
     "https://git.kernel.org/stable/c/b3f511aa7f45ff9ab1abc38d133e05b919563aaf",
     "https://git.kernel.org/stable/c/78f73985846465a25a7bd1d89904053661f3ca92"
   ],
   "aliases": [
+    "GHSA-hjf5-2wmc-pmmg",
     "CVE-2026-99383"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.64,
   "enisaIdProduct": [
     {
       "id": "14172a2c-9508-3ed2-8134-6718aaec8a9d",

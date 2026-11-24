@@ -3,29 +3,34 @@
   "enisaUuid": "0d4fd169-8a89-38bf-85e7-ca6b49d47a88",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: x86/mmu: Cap number of parent PTEs per SP at 1000 (the arbitrary rmap limit)\n\nWhen potentially reusing a shadow page, zap the shadow page if its number\nof parent PTEs exceeds KVM's (mostly) arbitrary rmap recycling threshold.\nLetting the guest create a (mostly) unbounded number of parent PTEs allows\nthe guest to coerce KVM into creating lists containing millions of PTEs,\neffectively bounded only by the maximum number of shadow pages.\n\nBecause PTE lists are simple singly linked lists, removal is O(n).  Even\nworse, if a list is constructed just so, teardown can be O(n^2), e.g. if\nSPTEs are built such that zapping child SPTEs always zaps the last entry\nin the list.  To cap things off, all paths that walk PTE lists do so\nwhile holding mmu_lock, without conditionally rescheduling.\n\nUsing a doubly linked list would not address the issue, as removal would\nremain O(n) since KVM still wouldn't know where in the list to remove from.\nRemoval could be made O(1) by storing a per-SPTE pointer, but that would\nlargely defeat the purpose of reusing SPs, and would penalize well-behaved\nguests, especially for nested TDP where aliasing page tables is uncommon.\n\nSo, cap the maximum number of parent PTEs at the rmap limit.  In practice,\nwell-behaved guests will likely never run afoul of the limit.  E.g. when\nrunning Linux as L1 with TDP, the number of parent PTEs for a single SP\ntops out at under 200 (though undoubtedly obscure workloads can push it\nhigher).  Deliberately use a \"greater than or equal\" as opposed to rmap's\nstrictly \"greater than\", as the rmap code checks the threshold immediately\n*after* inserting into the list, i.e. the limit is 1000 for rmaps, KVM just\nvery briefly blows past it.\n\nApply the check to both indirect and direct SPs, because while a fully\ndirect MMU naturally limits the number of parent PTEs to '1', direct SPs in\nindirect MMUs have no such constraint.  E.g. if the guest maps a huge PTE\ninto many locations in its page tables, and KVM is backing the hugepage\nwith a direct SP, i.e. with a series of smaller pages, then KVM could end\nup with a direct SP with many parents.\n\nNote, shadow_mmu_try_split_huge_pages() always restarts the rmap walk or\nbails entirely if it gets to the point where it tries to grab a SP, i.e.\nthere is *no* pre-existing bug that would be tripped by zapping a SP and\nthus rmaps when getting a SP.",
   "datePublished": "Nov 20, 2026, 5:50:50 AM",
-  "dateUpdated": "Nov 20, 2026, 5:50:50 AM",
+  "dateUpdated": "Nov 23, 2026, 8:06:21 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/4559e4cccd75e7bf65daaf170a2f7100df0c0c03",
+    "https://git.kernel.org/stable/c/c7ad798a8ca0231696ea1ce40a7ccdb9afac66d9",
+    "https://git.kernel.org/stable/c/863810abac0e6dc3dba554e0dabe449442351c98",
+    "https://git.kernel.org/stable/c/d358a3e5b7d11b4213c77a96ab5951983210be65",
     "https://git.kernel.org/stable/c/edf87e07376054eedcd5306e0794a26e3004d97b",
     "https://git.kernel.org/stable/c/e0752f3e543c1b67fc9115251ae6b8f151ba9f04",
     "https://git.kernel.org/stable/c/72238066aacc400df69cef4b602f083ae4737762",
     "https://git.kernel.org/stable/c/e4558c3d7198ed9a0adc3304681f561f4e4d80e1"
   ],
   "aliases": [
-    "CVE-2026-99710"
+    "CVE-2026-99710",
+    "GHSA-hqqf-mx5q-g7pm"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
-      "id": "1a52a4cb-a2c0-3e31-b297-0caf21bc5c84",
+      "id": "26d5dde8-8ee9-3d63-81bc-faebd1641589",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.3.5"
+      "product_version": "cea0f0e7ea54753c3265dc77f605a6dad1912cfc <72238066aacc400df69cef4b602f083ae4737762"
     },
     {
       "id": "3313498d-3abb-3891-a0b8-cb43164692e8",
@@ -38,14 +43,34 @@
       "product_version": "patch: 6.18.64"
     },
     {
-      "id": "3e4a35be-b9a0-317d-b702-db5531dce248",
+      "id": "3fa8694d-2386-32f2-be34-aa4d4f68f358",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e0752f3e543c1b67fc9115251ae6b8f151ba9f04"
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "4520cf76-54c0-36f4-97d2-af9411ff6279",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "506304fa-9352-3275-9dc3-81dcdd708760",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "57f3bcb8-aae7-3662-91c3-f3c990598672",
@@ -58,14 +83,14 @@
       "product_version": "patch: 7.4-rc2"
     },
     {
-      "id": "6c13df79-8eda-3531-aa84-cc56b4ce5510",
+      "id": "6b4ae11a-b957-3118-a2f4-82d8a00e90c3",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <72238066aacc400df69cef4b602f083ae4737762"
+      "product_version": "cea0f0e7ea54753c3265dc77f605a6dad1912cfc <863810abac0e6dc3dba554e0dabe449442351c98"
     },
     {
       "id": "75af9ffc-6073-319d-9a3e-a04884277b4d",
@@ -88,44 +113,94 @@
       "product_version": "patch: 7.3.5"
     },
     {
-      "id": "89dccbba-317b-3b3b-8674-e8a200c01fec",
+      "id": "9516a4f2-376b-3f3e-805a-414f6e87800b",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <edf87e07376054eedcd5306e0794a26e3004d97b"
+      "product_version": "patch: 5.10.275"
     },
     {
-      "id": "9943a193-4064-3d44-8f26-23b2981aeab9",
+      "id": "a5bc2193-c463-3efe-8427-e0b1edecab9f",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.18.64"
+      "product_version": "2.6.20"
     },
     {
-      "id": "d9b353ec-c1be-340b-9e3a-6f8dd1320886",
+      "id": "a929a31e-df37-3586-b193-56b95b488ac2",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.12.118"
+      "product_version": "cea0f0e7ea54753c3265dc77f605a6dad1912cfc <d358a3e5b7d11b4213c77a96ab5951983210be65"
     },
     {
-      "id": "e6e6bb68-480c-3744-b0df-e35f06a5f2fb",
+      "id": "ae330fd8-6351-38d3-94c6-949943eab2dc",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e4558c3d7198ed9a0adc3304681f561f4e4d80e1"
+      "product_version": "cea0f0e7ea54753c3265dc77f605a6dad1912cfc <c7ad798a8ca0231696ea1ce40a7ccdb9afac66d9"
+    },
+    {
+      "id": "bc5e1c35-84da-3c11-b51e-7fc7bf0a1543",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cea0f0e7ea54753c3265dc77f605a6dad1912cfc <edf87e07376054eedcd5306e0794a26e3004d97b"
+    },
+    {
+      "id": "c8bee78f-7884-303f-bbfb-2627ad6f3cec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "ccb71fac-3330-3ae3-86d4-c7a3d1fedd52",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cea0f0e7ea54753c3265dc77f605a6dad1912cfc <e4558c3d7198ed9a0adc3304681f561f4e4d80e1"
+    },
+    {
+      "id": "d58a1ee2-7b53-3d8c-81d5-d802fac146ea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cea0f0e7ea54753c3265dc77f605a6dad1912cfc <4559e4cccd75e7bf65daaf170a2f7100df0c0c03"
+    },
+    {
+      "id": "d6bee277-3135-3b41-b917-430da4a5e9e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cea0f0e7ea54753c3265dc77f605a6dad1912cfc <e0752f3e543c1b67fc9115251ae6b8f151ba9f04"
     }
   ],
   "enisaIdVendor": [

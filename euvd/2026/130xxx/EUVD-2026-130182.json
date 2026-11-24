@@ -3,19 +3,24 @@
   "enisaUuid": "037f1c38-2ddb-35e7-b5ad-136124beeef1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\napparmor: fix a use-after-free in aa_lookupn_ns()\n\naa_lookupn_ns() takes a reference on the namespace it finds with\naa_get_ns(), which is kref_get() on the reference count that the\nnamespace is released through, without checking whether the namespace\nis still in use.  A concurrent removal of a \":\"-prefixed namespace\nlooks the same namespace up and only then takes the parent lock to\nremove it, so the last reference can be dropped between the lookup and\nthe aa_get_ns() call: the reference count then reports the increment on\na zero count and the kernel classifies the following use of the object\nas a use-after-free.  A user with CAP_MAC_ADMIN can trigger this by\nwriting a \":<name>\" removal and a \":<name>/<profile>\" removal to\n/sys/kernel/security/apparmor/.remove concurrently.\n\nrefcount_t: addition on 0; use-after-free.\nWARNING: lib/refcount.c:25 at refcount_warn_saturate+0xc0/0xe0, CPU#6\nCall Trace:\n <TASK>\n aa_lookupn_ns+0xa9/0xc0\n aa_remove_profiles+0x4fb/0x730\n ? __kvmalloc_node_noprof+0x219/0x5c0\n ? __pfx_aa_remove_profiles+0x10/0x10\n ? aa_loaddata_alloc+0x65/0x1f0\n ? _copy_from_user+0x2d/0x80\n ? aa_loaddata_alloc+0x111/0x1f0\n profile_remove+0x2ee/0x4a0\n vfs_write+0x21e/0xcf0\n ? rcu_core+0x29c/0x1740\n ? timerqueue_linked_add+0x1f4/0x3d0\n ? __pfx_vfs_write+0x10/0x10\n ? mutex_lock+0x81/0xe0\n ? __pfx_mutex_lock+0x10/0x10\n ? __pfx_rcu_core+0x10/0x10\n ? __pfx_hrtimer_update_next_event+0x10/0x10\n ? mutex_unlock+0x7b/0xd0\n ? fdget_pos+0x24d/0x4b0\n ksys_write+0xf7/0x1c0\n ? __pfx_ksys_write+0x10/0x10\n ? restore_fpregs_from_fpstate+0x37/0xc0\n do_syscall_64+0xf9/0x540\n entry_SYSCALL_64_after_hwframe+0x77/0x7f\n </TASK>\n\nFix by rejecting a namespace whose reference count is zero.",
   "datePublished": "Nov 19, 2026, 2:43:55 PM",
-  "dateUpdated": "Nov 19, 2026, 2:43:55 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:36 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/87124024b0a7c46e04f5588808fd2c0e95ce567a",
+    "https://git.kernel.org/stable/c/df8685e4f9da816927395c456a62c1043ecdd99a",
+    "https://git.kernel.org/stable/c/ba45d73f8782e3e9d521ec2bd4c4b4b4dc548f2b",
+    "https://git.kernel.org/stable/c/1f09cc23d1cdf440ff03d4a0cf3ed8100134d9d3",
     "https://git.kernel.org/stable/c/2588c5693f4535e856841976cb1e1532bae77109",
     "https://git.kernel.org/stable/c/174b4b90ec6731934cf84eb267a86ad7152267fa",
     "https://git.kernel.org/stable/c/8db1a8614b4f8f3da11c568e2b5af4fe56eef360",
     "https://git.kernel.org/stable/c/f292873ceb4bd3a1a0f75f884361cd556e457692"
   ],
   "aliases": [
+    "GHSA-qh37-3xh4-c3q4",
     "CVE-2026-99505"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0091b5d7-077b-3c4e-8a07-7dea6d46c3dc",
@@ -26,6 +31,46 @@
         }
       },
       "product_version": "3664268f19ea07bec55df92fe53ff9ed28968bcc <8db1a8614b4f8f3da11c568e2b5af4fe56eef360"
+    },
+    {
+      "id": "1575278e-3dd4-3301-83af-e99910b98298",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "2a474c70-beb2-33ce-aae9-a6ac4d96599d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3664268f19ea07bec55df92fe53ff9ed28968bcc <1f09cc23d1cdf440ff03d4a0cf3ed8100134d9d3"
+    },
+    {
+      "id": "2aebd3d9-a826-3f3e-b6b8-de70d904ff0e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "32e021fc-ae92-3f97-b313-3827d8f51a43",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "336a5648-e17f-3885-af19-4bf443d16b41",
@@ -88,6 +133,26 @@
       "product_version": "patch: 7.4-rc1"
     },
     {
+      "id": "77733a9e-f684-31aa-aee3-6277d1f9369e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "7b32a5f3-6e76-3976-ad21-43890f7fc665",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3664268f19ea07bec55df92fe53ff9ed28968bcc <87124024b0a7c46e04f5588808fd2c0e95ce567a"
+    },
+    {
       "id": "89a0057a-e8a4-32b1-b977-bced396c0643",
       "product": {
         "name": "Linux",
@@ -108,6 +173,16 @@
       "product_version": "3664268f19ea07bec55df92fe53ff9ed28968bcc <2588c5693f4535e856841976cb1e1532bae77109"
     },
     {
+      "id": "a4a3e913-276b-3447-a802-18efb3e6cc12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3664268f19ea07bec55df92fe53ff9ed28968bcc <df8685e4f9da816927395c456a62c1043ecdd99a"
+    },
+    {
       "id": "bd9d2687-c3e4-3a85-939e-7641f6cd931b",
       "product": {
         "name": "Linux",
@@ -116,6 +191,16 @@
         }
       },
       "product_version": "4.13"
+    },
+    {
+      "id": "e5376b21-8bd6-30cb-a160-bb32c2b9d8bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3664268f19ea07bec55df92fe53ff9ed28968bcc <ba45d73f8782e3e9d521ec2bd4c4b4b4dc548f2b"
     }
   ],
   "enisaIdVendor": [

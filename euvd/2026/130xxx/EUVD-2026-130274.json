@@ -3,20 +3,35 @@
   "enisaUuid": "5f6e21b9-e323-34ca-a9a5-ddd9e984e09d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: pin owning modules for open debugfs files\n\nThe OCFS2 debugfs file operation tables do not set owner. The\nfull debugfs proxy obtains real_fops with fops_get() at open and\nkeeps it until final release. Without an owner, this does not acquire\na reference to the module containing the table and its callbacks.\nRemoving the debugfs entries does not drain retained open files.\n\nAn open connected_nodes file can therefore outlive ocfs2_nodemanager\nand make full_proxy_release() read real_fops->release from freed\nmodule memory. Heming also reproduced the issue with fs_state and\nasked for the other OCFS2 debugfs operation tables to be checked.\n\nSet owner to THIS_MODULE in all eleven explicit debugfs operation\ntables: five in ocfs2_nodemanager, four in ocfs2_dlm, and two in\nocfs2. The existing debugfs get/put pair then holds the appropriate\nmodule until final release. Leave the open, read and release callbacks\nunchanged. The blockcheck table already sets owner through\nDEFINE_DEBUGFS_ATTRIBUTE(), so it needs no change.\n\nThe original controlled test used an unloadable OCFS2 module and\ncase-local probe filters without changing the candidate open, unload\nor release logic. Closing a retained connected_nodes file after\nnormal unload produced:\n\n  BUG: unable to handle page fault for address: fffffbfff804cfef\n  Oops: Oops: 0000 [#1] SMP KASAN NOPTI\n  RIP: 0010:full_proxy_release+0xbf/0x190\n  Call Trace:\n   <TASK>\n   __fput+0x39a/0xa60\n   fput_close_sync+0xff/0x200\n   __x64_sys_close+0x8c/0xf0\n   do_syscall_64+0x114/0x620\n   entry_SYSCALL_64_after_hwframe+0x77/0x7f\n   </TASK>\n  Modules linked in: [last unloaded: ocfs2_nodemanager]",
   "datePublished": "Nov 19, 2026, 2:45:14 PM",
-  "dateUpdated": "Nov 19, 2026, 2:45:14 PM",
+  "dateUpdated": "Nov 23, 2026, 8:04:15 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/e0d62a6d9f8052f7300e0413d32a24fad50c014a",
+    "https://git.kernel.org/stable/c/97ed524d264baebc632e381422585f95cf8cb4c9",
+    "https://git.kernel.org/stable/c/0e573d9b0c5ccf1dd9b62deeb52641fca8e0dcd4",
+    "https://git.kernel.org/stable/c/8c8f39e55c962fef805846a2ab2257ba4d82cd0a",
     "https://git.kernel.org/stable/c/ae5ea8ca2db9a0306c04f4777433908456ce8541",
     "https://git.kernel.org/stable/c/f5e973e238ba686a17f19dfbccccdd1c4447a2be",
     "https://git.kernel.org/stable/c/625bbfa9c160ca9d4128acddb15fd7da3ea66c17",
     "https://git.kernel.org/stable/c/26d7e34b4226709084461a07bf28d9066fa96d8c"
   ],
   "aliases": [
+    "GHSA-9ff3-c5rg-xcrm",
     "CVE-2026-99550"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
+    {
+      "id": "21d23c08-0522-38ce-81f6-7ba7383a6af7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
     {
       "id": "26906629-bad1-36fb-865f-4f73dad451c2",
       "product": {
@@ -36,6 +51,16 @@
         }
       },
       "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "7ba75365-062e-3a46-aae5-f3c1a5f422bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ccd979bdbce9fba8412beb3f1de68a9d0171b12c <e0d62a6d9f8052f7300e0413d32a24fad50c014a"
     },
     {
       "id": "85435d0b-de97-3d08-a8bc-9b5a6386a968",
@@ -58,6 +83,16 @@
       "product_version": "2.6.16"
     },
     {
+      "id": "99d5f8d0-bc06-3694-b910-b5100095194c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "a7e3ee40-1d8c-3269-85cf-333ed1b46619",
       "product": {
         "name": "Linux",
@@ -78,6 +113,26 @@
       "product_version": "ccd979bdbce9fba8412beb3f1de68a9d0171b12c <26d7e34b4226709084461a07bf28d9066fa96d8c"
     },
     {
+      "id": "b6cf18e7-18c0-3643-80ed-0fcaa23162ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ccd979bdbce9fba8412beb3f1de68a9d0171b12c <97ed524d264baebc632e381422585f95cf8cb4c9"
+    },
+    {
+      "id": "b9304f27-bf79-3f7f-ae25-73c8f5346a32",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ccd979bdbce9fba8412beb3f1de68a9d0171b12c <8c8f39e55c962fef805846a2ab2257ba4d82cd0a"
+    },
+    {
       "id": "cd9f72cc-26f4-3700-bfc6-c2ca769f21ee",
       "product": {
         "name": "Linux",
@@ -86,6 +141,26 @@
         }
       },
       "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "cda273a8-ec47-3e83-8849-66416a470598",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "d517a8d4-7ea5-3c15-9786-b7d7d4f04634",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "db0226a3-7c45-3295-8431-484924277e98",
@@ -106,6 +181,16 @@
         }
       },
       "product_version": "ccd979bdbce9fba8412beb3f1de68a9d0171b12c <625bbfa9c160ca9d4128acddb15fd7da3ea66c17"
+    },
+    {
+      "id": "e16f279e-fe8d-3834-8534-dce3a3235d31",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ccd979bdbce9fba8412beb3f1de68a9d0171b12c <0e573d9b0c5ccf1dd9b62deeb52641fca8e0dcd4"
     },
     {
       "id": "f70a5713-6563-323e-9e5d-795866de6f2b",

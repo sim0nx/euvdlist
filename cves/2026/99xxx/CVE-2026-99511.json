@@ -3,19 +3,24 @@
   "enisaUuid": "6446e674-016a-3095-af02-78c700c2410f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: cx23885: Fix use-after-free in cx23885_finidev due to race condition\n\nIn cx23885_v4l2_dev_notify_init, &dev->cx25840_work is bound with\ncx23885_av_work_handler, and &dev->ir_rx_work and &dev->ir_tx_work\nare bound with cx23885_ir_rx_work_handler and\ncx23885_ir_tx_work_handler. cx23885_irq can schedule these works on\nsystem_wq when an AV_CORE interrupt is received, and the IR subdevice\ncan also schedule the IR works from its interrupt service routine via\nthe v4l2_device notify callback.\n\nIf we remove the device, cx23885_finidev makes cleanup and the memory\nallocated for dev is released by kfree(dev), while the works mentioned\nabove may still be pending or running. The sequence of operations that\nmay lead to a UAF bug is as follows:\n\nCPU0                                      CPU1\n\n                                          | cx23885_irq\n                                          | schedule_work(&dev->cx25840_work)\ncx23885_finidev                           |\ncx23885_input_fini(dev)                   |\ncx23885_ir_fini(dev)                      |\ncx23885_shutdown(dev)                     |\nfree_irq(pci_dev->irq, dev)               |\npci_disable_device(pci_dev)               |\ncx23885_dev_unregister(dev)               |\nv4l2_device_unregister(v4l2_dev)          |\nkfree(dev)                                |\n// dev is freed                           |\n                                          | cx23885_av_work_handler\n                                          | // use dev (use-after-free)\n\nFix it by canceling the works after the IRQ handler that can schedule\nthem has been stopped, and before proceeding with the remaining\ncleanup in cx23885_finidev.\n\nNote that the flush_work() calls in cx23885_input_ir_stop() do not\nclose this race: they only wait for works that are already queued or\nrunning at that moment, they do not prevent the IRQ handler, which is\nstill registered at that point, from scheduling the works again\nafterwards, and they are skipped entirely when dev->sd_ir is NULL.\nThe cancel_work_sync() calls are therefore placed after free_irq(),\nthe only point at which no new work can be scheduled.",
   "datePublished": "Nov 19, 2026, 2:44:07 PM",
-  "dateUpdated": "Nov 19, 2026, 2:44:07 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:43 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/bdcd99f5d47bdc0104cc816dd1885121321803a8",
+    "https://git.kernel.org/stable/c/094e57f65751c99b5e7a88b9d6f199b3c11ef134",
+    "https://git.kernel.org/stable/c/58dba8af3a48e5c9799941194fcb022192e6702d",
+    "https://git.kernel.org/stable/c/a791e659029244c94d16bb662884cab832231e62",
     "https://git.kernel.org/stable/c/4c28161c8893bf7a396bda1ba9d8fa6e528c1a21",
     "https://git.kernel.org/stable/c/2344922abe2ad811003794092931bf454b556109",
     "https://git.kernel.org/stable/c/544b575ba44d566cfd4f82e3d8faee5db01addf5",
     "https://git.kernel.org/stable/c/75016a992d9b03f5cc6df1414d1da35840d4feeb"
   ],
   "aliases": [
-    "CVE-2026-99511"
+    "CVE-2026-99511",
+    "GHSA-hmhh-6p2c-cr6v"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.23,
   "enisaIdProduct": [
     {
       "id": "07c302b7-47ce-3f6d-8e65-4ca124f1acd0",
@@ -26,6 +31,16 @@
         }
       },
       "product_version": "2.6.36"
+    },
+    {
+      "id": "0fc89698-827c-3b49-927c-34dee5374b50",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "1a32ddab-c960-3f04-b7cd-6be4afc35428",
@@ -58,6 +73,16 @@
       "product_version": "patch: 6.18.61"
     },
     {
+      "id": "2e82068d-a238-3fc3-bb11-48e89dac89db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
       "id": "4bb98d90-ca31-3a2a-9252-d547249bfe6a",
       "product": {
         "name": "Linux",
@@ -78,6 +103,16 @@
       "product_version": "patch: 6.12.117"
     },
     {
+      "id": "69371899-f830-32a2-aa24-373b47e78a01",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e5514f104d875b3d28cbcd5d4f2b96ab2fca1e29 <a791e659029244c94d16bb662884cab832231e62"
+    },
+    {
       "id": "9218b2d4-6e06-314b-b0c3-0780ea169c83",
       "product": {
         "name": "Linux",
@@ -86,6 +121,26 @@
         }
       },
       "product_version": "e5514f104d875b3d28cbcd5d4f2b96ab2fca1e29 <544b575ba44d566cfd4f82e3d8faee5db01addf5"
+    },
+    {
+      "id": "95f8c371-9504-300d-b7a1-9015ab1686db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e5514f104d875b3d28cbcd5d4f2b96ab2fca1e29 <bdcd99f5d47bdc0104cc816dd1885121321803a8"
+    },
+    {
+      "id": "9e518b1f-a168-31b7-9c31-864c75d64977",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e5514f104d875b3d28cbcd5d4f2b96ab2fca1e29 <58dba8af3a48e5c9799941194fcb022192e6702d"
     },
     {
       "id": "aca30346-5192-3380-9988-2a088ad4dbdb",
@@ -108,6 +163,16 @@
       "product_version": "patch: 7.4-rc1"
     },
     {
+      "id": "cd137b48-222e-3eb4-b9da-de40cc19790b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "d773c76f-b558-39e4-a823-0905b5f2354b",
       "product": {
         "name": "Linux",
@@ -116,6 +181,26 @@
         }
       },
       "product_version": "e5514f104d875b3d28cbcd5d4f2b96ab2fca1e29 <2344922abe2ad811003794092931bf454b556109"
+    },
+    {
+      "id": "eff7224f-b16a-345e-afbf-89b18d327559",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "fbc8c582-9267-3ae6-8641-cd23107e6be1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e5514f104d875b3d28cbcd5d4f2b96ab2fca1e29 <094e57f65751c99b5e7a88b9d6f199b3c11ef134"
     }
   ],
   "enisaIdVendor": [

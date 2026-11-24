@@ -3,20 +3,35 @@
   "enisaUuid": "88eb008f-4fdf-36fa-bd4d-bd51e03dfa65",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: x86: hdmi: fix chmap array missing terminator entry\n\nhad_build_channel_allocation_map() allocates a single struct\nsnd_pcm_chmap_elem via kzalloc() and stores it as\nintelhaddata->chmap->chmap. struct snd_pcm_chmap.chmap is expected to\nbe a zero-terminated array (see snd_pcm_std_chmaps[]), but\nhad_register_chmap_ctls() never overrides the TLV callback installed\nby snd_pcm_add_chmap_ctls(), so the generic pcm_chmap_ctl_tlv() from\nALSA core is left in place.\n\npcm_chmap_ctl_tlv() is reachable by any local user via\nSNDRV_CTL_IOCTL_TLV_READ on the \"Playback Channel Map\" control and\nwalks the array with \"for (map = info->chmap; map->channels; map++)\".\nSince the driver's single element is never terminated, this walks\npast the allocation. The same pointer is also freed on hot-unplug and\nrebuilt on hot-plug under intelhaddata->mutex, while the TLV callback\nruns under card->controls_rwsem without that mutex, so the walk can\nalso race a concurrent free of the array.\n\nFix this by allocating a second, zeroed element so the array is\nproperly terminated, and by dropping the inherited TLV callback\nentirely at registration time, since the driver never implements one\nof its own.",
   "datePublished": "Nov 19, 2026, 2:22:04 PM",
-  "dateUpdated": "Nov 19, 2026, 2:36:29 PM",
+  "dateUpdated": "Nov 23, 2026, 8:01:43 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/0ec83d9adc4ee09df7afedacacadd86258f31bec",
+    "https://git.kernel.org/stable/c/d7eb7812f258b488950b2cd28f352c79d10a8f27",
+    "https://git.kernel.org/stable/c/9fa311daa6c836b93ebf1464050d977a419d05a1",
+    "https://git.kernel.org/stable/c/210cb53b0365b484b74e546f6c5b208049f4c7d6",
     "https://git.kernel.org/stable/c/a0b1f32f912faaad0ed3ee98a04367d9a6e3a737",
     "https://git.kernel.org/stable/c/29fdc91fb672da4532cc9da6d53aa9b3c396ec63",
     "https://git.kernel.org/stable/c/92f77936554b01ed5bff3175e511111b5aa57976",
     "https://git.kernel.org/stable/c/f5e1a9a3fddab8421416b68bb132ae9626d07156"
   ],
   "aliases": [
-    "CVE-2026-99347"
+    "CVE-2026-99347",
+    "GHSA-f298-5prp-hhvv"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
+    {
+      "id": "0a9c81eb-8bed-3df0-8c2c-c1f88db4bcbc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5dab11d89777230b3ff38f19ee1b6fbba9688b23 <d7eb7812f258b488950b2cd28f352c79d10a8f27"
+    },
     {
       "id": "1f120185-5305-3e42-8115-aff371324e79",
       "product": {
@@ -26,6 +41,26 @@
         }
       },
       "product_version": "5dab11d89777230b3ff38f19ee1b6fbba9688b23 <29fdc91fb672da4532cc9da6d53aa9b3c396ec63"
+    },
+    {
+      "id": "283bc4a5-49e4-31d4-9416-4107cb0c2412",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5dab11d89777230b3ff38f19ee1b6fbba9688b23 <9fa311daa6c836b93ebf1464050d977a419d05a1"
+    },
+    {
+      "id": "28e43381-05e0-3b46-8490-ad69d0c493e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "484b3ef1-a3c1-35aa-b519-7b4ae283ee51",
@@ -56,6 +91,16 @@
         }
       },
       "product_version": "4.11"
+    },
+    {
+      "id": "5c19ab62-e968-375e-871d-ab39b4eb964c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "76548de0-8a1a-3210-8b36-4279aceaab64",
@@ -108,6 +153,36 @@
       "product_version": "5dab11d89777230b3ff38f19ee1b6fbba9688b23 <f5e1a9a3fddab8421416b68bb132ae9626d07156"
     },
     {
+      "id": "e4f9af46-e499-3994-8d84-4b28e2ef1cd2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "e57c8d90-7489-3cdb-abd4-1eeecfcac3f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5dab11d89777230b3ff38f19ee1b6fbba9688b23 <210cb53b0365b484b74e546f6c5b208049f4c7d6"
+    },
+    {
+      "id": "e66db232-27d7-3908-85e4-f67c3e5d1d48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5dab11d89777230b3ff38f19ee1b6fbba9688b23 <0ec83d9adc4ee09df7afedacacadd86258f31bec"
+    },
+    {
       "id": "ee2fed2c-9fd1-3eb8-90e0-8fcc7f8da5a9",
       "product": {
         "name": "Linux",
@@ -116,6 +191,16 @@
         }
       },
       "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "ffe16b2b-c603-3192-8809-5c4fe22904e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     }
   ],
   "enisaIdVendor": [

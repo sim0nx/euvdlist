@@ -3,8 +3,10 @@
   "enisaUuid": "ffdf319d-f822-3a03-8a1e-b391b78de2d8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: logitech-hidpp: fix race condition when accessing stale stack pointer\n\nThe driver uses hidpp->send_receive_buf to point to a stack-allocated\nbuffer in the synchronous command path (__do_hidpp_send_message_sync).\nHowever, this pointer is not cleared when the function returns.\n\nIf an event is processed (e.g. by a different thread) while the\nsend_mutex is held by a new command, but before that command has\nupdated send_receive_buf, the handler (hidpp_raw_hidpp_event) will\nobserve that the mutex is locked and dereference the stale pointer.\n\nThis results in an out-of-bounds access on a different thread's kernel\nstack (or a NULL pointer dereference on the very first command).\n\nFix this by:\n1. Clearing hidpp->send_receive_buf to NULL before releasing the mutex\n   in the synchronous command path.\n2. Moving the assignment of the local 'question' and 'answer' pointers\n   inside the mutex_is_locked() block in the handler, and adding\n   a NULL check before dereferencing.",
   "datePublished": "Nov 18, 2026, 8:42:06 AM",
-  "dateUpdated": "Nov 18, 2026, 8:42:06 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 20, 2026, 5:11:35 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/0fe696148d2c6486e52220aab822135ed7d05f38",
     "https://git.kernel.org/stable/c/88effb7680aea4fc9afaf5780a706f5f30d3de42",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/e2aaf2d3ad92ac4a8afa6b69ad4c38e7747d3d6e"
   ],
   "aliases": [
+    "GHSA-pr85-mhwv-8mh8",
     "CVE-2026-99313"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.35,
   "enisaIdProduct": [
     {
       "id": "06c843ee-dd22-3e15-8154-127e10af7f98",
@@ -41,34 +44,24 @@
       "product_version": "patch: 6.6.158"
     },
     {
-      "id": "162bd8d1-1271-3e87-b2a3-07894b20fdd7",
+      "id": "3e81ff4b-14c6-38b1-9fa7-92ac1519b572",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.1.189"
+      "product_version": "2f31c52529103d8f0e1485272064f982d14ce54a <88effb7680aea4fc9afaf5780a706f5f30d3de42"
     },
     {
-      "id": "347ce666-73bb-34e3-b56b-09b6331f447b",
+      "id": "490f3bbe-2575-3cc6-9d58-3dd13e400104",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.18.54"
-    },
-    {
-      "id": "469a2a21-82e4-328c-bb84-a50fe1aee612",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4ed6f5d94cc86af5e1d4a2f5cdaf565d4d58300d"
+      "product_version": "2f31c52529103d8f0e1485272064f982d14ce54a <e2aaf2d3ad92ac4a8afa6b69ad4c38e7747d3d6e"
     },
     {
       "id": "517058aa-85b8-3b23-8807-21480f9404a5",
@@ -81,44 +74,54 @@
       "product_version": "patch: 7.1"
     },
     {
-      "id": "5ba581c3-6762-3249-8e74-1853965dc982",
+      "id": "6be76207-cf19-3b92-8486-9e939f4dd0fd",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.12.112"
+      "product_version": "2f31c52529103d8f0e1485272064f982d14ce54a <0fe696148d2c6486e52220aab822135ed7d05f38"
     },
     {
-      "id": "5d433ba9-2679-3278-a10a-625305ebbda4",
+      "id": "6fe84baf-004d-3bc9-9130-e58de6141dfe",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <88effb7680aea4fc9afaf5780a706f5f30d3de42"
+      "product_version": "3.19"
     },
     {
-      "id": "5f111016-a4ca-36e5-a67e-76ecb2ae8777",
+      "id": "7952aa40-2a3a-3663-b2ad-31c44f3c6ef6",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e320e65900f0e3bf2874e6f5091fec29384f4a60"
+      "product_version": "2f31c52529103d8f0e1485272064f982d14ce54a <e320e65900f0e3bf2874e6f5091fec29384f4a60"
     },
     {
-      "id": "803988a6-0657-3990-b334-386ff1b0eba9",
+      "id": "79f71273-dbc8-3733-a38f-fac61ae6d311",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <5.15.222"
+      "product_version": "bd28e66ce1fb42696c351aad8f736570938a2712"
+    },
+    {
+      "id": "82abb970-3f38-3607-80b9-7ab2f5f1cd80",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
     },
     {
       "id": "83bfade1-1d5c-3b0b-aa18-a72ce6be5f2b",
@@ -131,34 +134,24 @@
       "product_version": "patch: 6.18.54"
     },
     {
-      "id": "8eb70d1f-c49a-3eee-99d7-a1b2b26e0a1e",
+      "id": "9978b8ac-3145-33db-86c3-f6fcc3a51e16",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f427383e734e95af923ac470782ad9a3d1f0c276"
+      "product_version": "3.18.17 <3.19"
     },
     {
-      "id": "8f06b610-4f4e-3055-a7dd-b74ef57f856a",
+      "id": "a1ab17e5-6740-30e6-ab80-d8a14c993cb2",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <8f282d12550e3beaf3fea782b5befa65f78b3c78"
-    },
-    {
-      "id": "9af8080b-5b6a-36c8-bffc-4eb6321326e9",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <5.10.271"
+      "product_version": "2f31c52529103d8f0e1485272064f982d14ce54a <4ed6f5d94cc86af5e1d4a2f5cdaf565d4d58300d"
     },
     {
       "id": "ab832153-4e10-3727-8356-b0b5d431a955",
@@ -171,16 +164,6 @@
       "product_version": "patch: 5.10.271"
     },
     {
-      "id": "b360c9ee-48c7-3c76-8ce9-4face4db85ed",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0fe696148d2c6486e52220aab822135ed7d05f38"
-    },
-    {
       "id": "b80ea746-1c31-3e42-a2cc-1900dd013c83",
       "product": {
         "name": "Linux",
@@ -189,16 +172,6 @@
         }
       },
       "product_version": "patch: 6.1.189"
-    },
-    {
-      "id": "d917ced2-f38e-39f7-a5c9-e33752acc9ad",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e2aaf2d3ad92ac4a8afa6b69ad4c38e7747d3d6e"
     },
     {
       "id": "dbab5500-037c-3f21-8431-5a36f516fc34",
@@ -211,14 +184,24 @@
       "product_version": "patch: 6.12.112"
     },
     {
-      "id": "e0659f79-37f8-3fe3-9eb4-0c69e6416544",
+      "id": "e8661291-b753-36b3-a52f-e60a62e7507c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.6.158"
+      "product_version": "2f31c52529103d8f0e1485272064f982d14ce54a <8f282d12550e3beaf3fea782b5befa65f78b3c78"
+    },
+    {
+      "id": "ebfd3829-bdb6-311a-96f5-25577e3cd81e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2f31c52529103d8f0e1485272064f982d14ce54a <f427383e734e95af923ac470782ad9a3d1f0c276"
     }
   ],
   "enisaIdVendor": [

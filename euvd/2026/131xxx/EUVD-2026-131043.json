@@ -3,19 +3,24 @@
   "enisaUuid": "b9c80099-be41-3ad8-91de-b38830a2e6a1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\narm64: sdei: Preserve the interrupted context's exception registers\n\nAn SDEI event is dispatched by firmware regardless of PSTATE.DAIF, so it\ncan interrupt the kernel where the exception registers are live:\n\n - exception entry, before kernel_entry has saved ELR_EL1/SPSR_EL1 and\n   before the C handler has read ESR_EL1/FAR_EL1;\n - exception return, after kernel_exit has loaded ELR_EL1/SPSR_EL1 and\n   before the ERET.\n\nAn IRQ or pseudo-NMI cannot arrive there with PSTATE.I set. Firmware\nsaves only x0-x17, PC and PSTATE around an SDEI event, so a synchronous\nexception taken by the handler overwrites the interrupted context's\nELR, SPSR, ESR and FAR. do_sdei_event() only notices that ELR changed,\nand warns.\n\nThe interrupted context then carries on with the handler's state. A\ntask interrupted on its way into the kernel can be sent SIGILL for the\nhandler's kernel data abort. A task interrupted on its way back to user\nspace ERETs to EL1, at the handler's fixup address, with user registers\nloaded.\n\nWith SDEI delivering NMI backtraces, this happens in normal operation.\nThe handler runs show_regs(), which reads through possibly-NULL pointers\nwith the _nofault() accessors. print_worker_info() faults this way for a\nkworker that is not running a work item, and a single sysrq-l warned\nonce per such kworker.\n\nSave ELR, SPSR, ESR and FAR in __sdei_handler() before\nirqentry_nmi_enter(), which can take an exception too, and restore them\nafter irqentry_nmi_exit().\n\nOnce they are restored, a nested exception is harmless if its handler is\nsafe in NMI context. That holds for EL1 data aborts on translation,\npermission and access-flag faults, which never take the mmap lock in NMI\ncontext, and for BRK. Warn once, with the syndrome, about any other\nexception class.",
   "datePublished": "Nov 20, 2026, 5:49:20 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:20 AM",
+  "dateUpdated": "Nov 23, 2026, 8:04:46 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/914665278485cd633221b637d97bfe923b5290ba",
+    "https://git.kernel.org/stable/c/6b0e6363ec642ec05a12b485a2cbdcf8dc9cc1ee",
+    "https://git.kernel.org/stable/c/c5b3ef8685cfb61635fc4b5b9ef51d9a09c4e484",
+    "https://git.kernel.org/stable/c/c1fafdf7ca618197fb26880b991f53f41a81c230",
     "https://git.kernel.org/stable/c/41069c9f124e98e0f0f4dbc859a0d1bde5aa6774",
     "https://git.kernel.org/stable/c/4eb6fe1ba6373c573e9940298092fc5d5cd08844",
     "https://git.kernel.org/stable/c/d56db59d42d03d138ab643f765c84a48876f7a6a",
     "https://git.kernel.org/stable/c/58c1eb84e97701c583605ba2fd553b69afba2245"
   ],
   "aliases": [
-    "CVE-2026-99593"
+    "CVE-2026-99593",
+    "GHSA-fgg4-pwrg-574v"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "05d02acd-4ea3-3e8c-bf26-ea40d8af3deb",
@@ -26,6 +31,16 @@
         }
       },
       "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "1c9b05c3-8de0-3d63-9160-a2aac2089ca8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f5df26961853d6809d704cedcaf082c57f635a64 <c1fafdf7ca618197fb26880b991f53f41a81c230"
     },
     {
       "id": "2a9d8275-0703-337f-90c1-3d37c70a21cc",
@@ -46,6 +61,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "6907bb01-31fa-3954-895e-40e95cd02fb0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "7187173e-e441-3c5b-a7e9-20db6ebd0d31",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "8d2bb190-478e-3586-bb15-8efe01abb046",
@@ -78,6 +113,16 @@
       "product_version": "4.16"
     },
     {
+      "id": "b9cd0310-cdbd-3150-86f6-3502184454c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f5df26961853d6809d704cedcaf082c57f635a64 <6b0e6363ec642ec05a12b485a2cbdcf8dc9cc1ee"
+    },
+    {
       "id": "ba4510ee-90ef-327f-a15c-bd1874daa372",
       "product": {
         "name": "Linux",
@@ -108,6 +153,16 @@
       "product_version": "f5df26961853d6809d704cedcaf082c57f635a64 <58c1eb84e97701c583605ba2fd553b69afba2245"
     },
     {
+      "id": "caeb2400-5b50-35cc-96f4-9d376a08c1fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "e40025ae-ddf2-3aae-92ed-3e1b010e96eb",
       "product": {
         "name": "Linux",
@@ -116,6 +171,36 @@
         }
       },
       "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "e84dc268-5a7a-3926-990a-9085ecdd7856",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "ed3ce65e-84f6-37de-8052-f13801a66352",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f5df26961853d6809d704cedcaf082c57f635a64 <c5b3ef8685cfb61635fc4b5b9ef51d9a09c4e484"
+    },
+    {
+      "id": "f7bfd2df-1ee4-3a4b-9bb9-4c72b3e742db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f5df26961853d6809d704cedcaf082c57f635a64 <914665278485cd633221b637d97bfe923b5290ba"
     }
   ],
   "enisaIdVendor": [

@@ -3,19 +3,26 @@
   "enisaUuid": "a97086d5-fd71-332d-af90-d4202f25797f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: emux: Fix UAF of soundfont zones at note-on\n\nsnd_emux_note_on() looks up the matching zones via\nsnd_soundfont_search_zone(), which takes sflist->lock only during the\nlookup and returns the raw zone pointers after releasing it.  The\ncaller then stores them in vp->zone without any protection.\nMeanwhile, a concurrent SNDRV_EMUX_IOCTL_REMOVE_LAST_SAMPLES ioctl may\nunlink and free those zones in snd_soundfont_remove_unlocked(); this\nleads to a use-after-free in snd_emux_note_on(), and later at\naccessing the cached vp->zone, e.g. in snd_emux_send_effect().\n\nFix it by holding sflist->lock in snd_emux_note_on() over the whole\nzone lookup and voice setup, and let snd_soundfont_search_zone()\nrequire the caller to hold the lock, instead.\nsnd_soundfont_lock_preset() takes sflist->lock for setting\npresets_locked, so the removal path now syncs with the note-on finish.",
   "datePublished": "Nov 19, 2026, 2:43:20 PM",
-  "dateUpdated": "Nov 19, 2026, 2:43:20 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:03:23 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/18eb027b711e8fb7b5771e78cecfb0d6b6eb023c",
+    "https://git.kernel.org/stable/c/153547a5018726fa94e2fbe964fbf060006bac92",
+    "https://git.kernel.org/stable/c/df85c9211220c7139ef6772686b0b7654b8c6cc2",
+    "https://git.kernel.org/stable/c/1f9da9df213fa13be38ad33b1a314767e43eed42",
     "https://git.kernel.org/stable/c/102b2474f4b6809be934bbf2428b4ae4f3883e32",
     "https://git.kernel.org/stable/c/af2b590be8feb62b5a0779dadd08e2ece5f370f2",
     "https://git.kernel.org/stable/c/fb5ae914176d7252c9bd6aee7ab94a64a41ebf3b",
     "https://git.kernel.org/stable/c/34e3e04b8a1731a773797542f0781e99ce7cd755"
   ],
   "aliases": [
+    "GHSA-fxq9-6qjg-462g",
     "CVE-2026-99484"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "1b592802-dfe5-3e39-97f1-bd5160926399",
@@ -48,24 +55,14 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <34e3e04b8a1731a773797542f0781e99ce7cd755"
     },
     {
-      "id": "2caaf3c8-3106-3729-a074-50f021effc35",
+      "id": "2d3bc2eb-d2bd-39ed-8839-949c48fb175c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.3.2"
-    },
-    {
-      "id": "3e39508d-271c-31e3-82c7-3d4122b4c6dc",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.12.118"
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <18eb027b711e8fb7b5771e78cecfb0d6b6eb023c"
     },
     {
       "id": "42d4b726-f034-3d08-a1bc-4a152a76d9d2",
@@ -78,14 +75,64 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <af2b590be8feb62b5a0779dadd08e2ece5f370f2"
     },
     {
-      "id": "7beaf291-9458-3742-a001-7e655cc558cd",
+      "id": "676b9592-7659-36f4-b3a3-9a5bf3272818",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.18.61"
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6de5eb4f-6c4f-3010-964c-db8291d98dbf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "8a7842ad-28e6-3587-8b25-40d9e45149bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <1f9da9df213fa13be38ad33b1a314767e43eed42"
+    },
+    {
+      "id": "9230a5d1-95d8-360a-915d-45ac86a07d8a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "99707567-a084-360e-9a4c-2caa778d1123",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <153547a5018726fa94e2fbe964fbf060006bac92"
+    },
+    {
+      "id": "9a65234a-6d9a-3baa-880e-f1d89bf4fb67",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <df85c9211220c7139ef6772686b0b7654b8c6cc2"
     },
     {
       "id": "9db0b1bc-384c-308c-93eb-4c32fbde2f1d",
@@ -108,6 +155,16 @@
       "product_version": "patch: 6.18.61"
     },
     {
+      "id": "a930c451-0912-3ea1-911c-7acfb13e0f0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "b5d38d69-3382-3a13-96dd-9ae7dc1b3e04",
       "product": {
         "name": "Linux",
@@ -126,6 +183,26 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <fb5ae914176d7252c9bd6aee7ab94a64a41ebf3b"
+    },
+    {
+      "id": "e129c8dd-8379-3861-a890-8336dbe9ac90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "f6718b71-c4dd-3877-a213-4f6ee8a527a3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     }
   ],
   "enisaIdVendor": [

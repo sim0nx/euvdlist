@@ -3,19 +3,24 @@
   "enisaUuid": "39aae2c5-2e76-307e-a125-e244831b3151",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: wacom: Redesign shared sibling data lifecycle\n\nThe Wacom driver coordinates state between sibling interfaces of\nthe same physical device using a shared structure 'wacom_shared'\ninside 'wacom_hdev_data'.  The driver kept a volatile representative\npointer 'data->dev' pointing to a sibling 'hid_device' for physical\npath comparisons during sibling matching.\n\nThis pointer management is fragile.  When the representative device\nis disconnected, wacom_remove_shared_data() failed to clear/update\n'data->dev', leading to a Use-After-Free vulnerability when\nsubsequent sibling probes dereference the dangling 'data->dev'\npointer.\n\nResolve this issue by redesigning the sibling data lifecycle:\n\n - Eliminate the volatile 'data->dev' representative pointer\n   completely\n - Redesign 'wacom_hdev_data' to store stable static copies of the\n   required attributes upon first allocation: 'phys' path string,\n   'vendor', 'product' IDs and the sibling's 'device_type'\n - Use these static attributes for stable sibling matching in\n   wacom_are_sibling() and wacom_get_hdev_data()\n\nThis ensures sibling matching remains safe and stable even if\nindividual siblings are dynamically added or removed.\n\nTo secure the lifecycle against concurrent probe/disconnect races:\n\n - Switch kref_put() to kref_put_mutex() in\n   wacom_remove_shared_data() to serialize refcount drops with list\n   traversal and lookup\n - Modify wacom_release_shared_data() to assume the list lock is\n   already held\n\nAlso, do not accumulate the 'device_type' capability flag during\nsubsequent sibling probes.  Keeping only the first probed sibling's\ndevice_type exactly preserves the original sibling matching behavior\nwithout introducing side effects.",
   "datePublished": "Nov 19, 2026, 2:43:29 PM",
-  "dateUpdated": "Nov 19, 2026, 2:43:29 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:26 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/27b12280feb489d5d69e5aab438f040f2309f4c7",
+    "https://git.kernel.org/stable/c/4e7a9a00d3912e4cd3fc5c999c06343e96884a99",
+    "https://git.kernel.org/stable/c/904a80e13e5579492b6a180ca00be84491941bbe",
+    "https://git.kernel.org/stable/c/8567f0560af6089af356b586df92c3f1d963628c",
     "https://git.kernel.org/stable/c/4eeb0a16f11c72a0a15e793310470418d1c2d3cd",
     "https://git.kernel.org/stable/c/321da540c4a2091c0e23b5f4ced0131a1c77d679",
     "https://git.kernel.org/stable/c/f1fb9f9087c76bca6de81aa38e1e9c820dc54744",
     "https://git.kernel.org/stable/c/480c9cb14ae81f8e112ff83f8778b3d7b9324dc8"
   ],
   "aliases": [
-    "CVE-2026-99489"
+    "CVE-2026-99489",
+    "GHSA-572x-m765-7v76"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0151a16b-e306-3cbd-be01-c95a6d6609da",
@@ -26,6 +31,16 @@
         }
       },
       "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "116d49e4-1b07-3bb9-82b6-d4c29e8bb843",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4492efffffeb88d87e7aa74765f3c53b3a7dd40f <27b12280feb489d5d69e5aab438f040f2309f4c7"
     },
     {
       "id": "1f471669-51ca-336d-89b0-df689b76a486",
@@ -48,6 +63,16 @@
       "product_version": "4492efffffeb88d87e7aa74765f3c53b3a7dd40f <321da540c4a2091c0e23b5f4ced0131a1c77d679"
     },
     {
+      "id": "63cb0f69-d404-3c80-a9ea-2e1fbb6b7ae8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "75ff9381-389a-353e-aa7a-e2348705dce9",
       "product": {
         "name": "Linux",
@@ -56,6 +81,46 @@
         }
       },
       "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "7cb082d5-d82e-3592-929b-d087b31c27ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "a30d2644-d088-31b9-ae2e-ad802b031113",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4492efffffeb88d87e7aa74765f3c53b3a7dd40f <8567f0560af6089af356b586df92c3f1d963628c"
+    },
+    {
+      "id": "ad0a63e0-dd99-3d3b-8315-2a727351e528",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "b81683ca-e8d7-35dd-aa57-31098b15af30",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "c085b634-9f3d-3baf-8820-848c09d06a92",
@@ -76,6 +141,16 @@
         }
       },
       "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "d691de67-5c0d-3953-b4f6-b3685076be1c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4492efffffeb88d87e7aa74765f3c53b3a7dd40f <904a80e13e5579492b6a180ca00be84491941bbe"
     },
     {
       "id": "de9a9873-c9be-38a7-9999-2c2572d1b977",
@@ -116,6 +191,16 @@
         }
       },
       "product_version": "2.6.35"
+    },
+    {
+      "id": "f66abc94-7596-3268-8069-90be1824380b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4492efffffeb88d87e7aa74765f3c53b3a7dd40f <4e7a9a00d3912e4cd3fc5c999c06343e96884a99"
     }
   ],
   "enisaIdVendor": [

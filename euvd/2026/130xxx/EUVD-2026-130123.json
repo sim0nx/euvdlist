@@ -3,20 +3,35 @@
   "enisaUuid": "2f1b349a-1ace-3f21-93b0-67e230eba396",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: dc395x: sync the waiting_timer before freeing the host\n\nThe waiting_timer callback re-arms itself and takes the host lock.\nadapter_uninit() currently stops it with timer_delete(), which does not\nwait for a callback already running on another CPU. The final\nscsi_host_put() that frees the host (and the host lock the callback\ndereferences) runs right after adapter_uninit(), so a concurrent or just\nre-armed callback can fire after the free, leaving a potential\nuse-after-free window.\n\nReplace timer_delete() with timer_shutdown_sync() at the top of\nadapter_uninit(), before the host-lock section: the timer is dequeued,\na running callback is waited for and rearming is blocked before the chip\nis halted, so it cannot fire at all once the adapter has ceased to\nfunction. Waiting outside the lock avoids the self-deadlock that would\nresult from syncing a callback blocked on the lock we still hold.\n\nNo shutdown is needed for selto_timer because it has no reachable armer\nor callback.\n\nThis issue was found by an in-house static analysis tool.",
   "datePublished": "Nov 19, 2026, 2:41:56 PM",
-  "dateUpdated": "Nov 19, 2026, 2:41:56 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:05 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/f2043f041e72a382abca83f2b2f0a39485b78e30",
+    "https://git.kernel.org/stable/c/899322bc298ff860d30dce0651ed8f8fae6898a6",
+    "https://git.kernel.org/stable/c/fd6af0272d57f85711ffd3310313fccf9fa0856d",
+    "https://git.kernel.org/stable/c/715ad3c3f53b7f4994f5d00f19a4a2de2f12d3c7",
     "https://git.kernel.org/stable/c/0b65c96e51e6aac86f2db251b5bdc5255294a107",
     "https://git.kernel.org/stable/c/a79de0e5e66bd0b69b38c855413a9e3a82926b24",
     "https://git.kernel.org/stable/c/bd04acf9b9d589d93823bfeeea9932cd9ce4ee48",
     "https://git.kernel.org/stable/c/0b1a79f2791a06f139dce5450e487307cf0e241f"
   ],
   "aliases": [
-    "CVE-2026-99456"
+    "CVE-2026-99456",
+    "GHSA-43wq-qq4p-6p5p"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "151eaae8-f86c-3af2-969d-316c2eb15d80",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <715ad3c3f53b7f4994f5d00f19a4a2de2f12d3c7"
+    },
     {
       "id": "24236bc9-9ee0-356f-bcc4-d51c4ba7c012",
       "product": {
@@ -26,6 +41,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0b65c96e51e6aac86f2db251b5bdc5255294a107"
+    },
+    {
+      "id": "3c4559c0-56db-3f57-a51b-ab9d06b3f913",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "6199442a-0fbf-3de7-942e-23171e45e2df",
@@ -38,6 +63,36 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <bd04acf9b9d589d93823bfeeea9932cd9ce4ee48"
     },
     {
+      "id": "6401d577-0bd7-3a8f-8b27-d1fc1dc9e23d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f2043f041e72a382abca83f2b2f0a39485b78e30"
+    },
+    {
+      "id": "7ff7a3f6-e790-3f8a-88ba-9ae571dbe966",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "8157484d-f05c-3b42-9b1c-45fb2074bd12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <899322bc298ff860d30dce0651ed8f8fae6898a6"
+    },
+    {
       "id": "9849ed24-5d4e-3514-8784-8da522599265",
       "product": {
         "name": "Linux",
@@ -46,6 +101,36 @@
         }
       },
       "product_version": "2.6.12"
+    },
+    {
+      "id": "9a4bb5a4-beeb-3c48-b009-8f0955247a7e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "9bd3b12b-8011-31d0-86e3-f43a910875ed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <fd6af0272d57f85711ffd3310313fccf9fa0856d"
+    },
+    {
+      "id": "9e1227fd-7c45-365d-8c01-54d1be643038",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "b41824d2-0a48-3b5c-8103-f10a0d808fce",

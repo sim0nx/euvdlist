@@ -3,20 +3,35 @@
   "enisaUuid": "1a7e14e0-d1b8-34c7-b35d-fc4f4d379a82",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nf2fs: release a removed xattr node in roll-forward recovery\n\nWhen xattrs shrink enough to fit in the inline xattr area,\nwrite_all_xattrs() truncates the xattr node and clears i_xattr_nid. If\nthe file is then fsynced without a checkpoint, only the inode block is\nwritten, with i_xattr_nid of 0.\n\nRoll-forward recovery starts from the checkpointed inode, whose\ni_xattr_nid still points to the old xattr node.\nf2fs_recover_inline_xattr() copies only the inline xattr area, and\nf2fs_update_inode() writes the old i_xattr_nid back. So the inode keeps\nthe stale xattr node:\n\n - The node block is never released, and fsck reports \"nonzero bytes in\n   xattr space after end of list\".\n - If the inline xattr list ends exactly at the end of the inline area,\n   its terminator is read from the stale node, and the removed xattrs\n   come back after recovery.\n\nWhen the fsynced inode has no xattr node but the checkpointed one has,\nrelease the old xattr node as truncate_node() does: check its block\naddress, invalidate the block and drop its node cache, which may still\nbe dirty.",
   "datePublished": "Nov 20, 2026, 5:49:04 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:04 AM",
+  "dateUpdated": "Nov 23, 2026, 8:04:30 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/bf2acd50ae2bf721f97ed108a22139078f3b60e2",
+    "https://git.kernel.org/stable/c/1b3f12d3b5799a81d70f23e74d1dfff7b3002ff2",
+    "https://git.kernel.org/stable/c/6d20439d101e1574801b05349451e87cf1447a39",
+    "https://git.kernel.org/stable/c/9dde888b2260612d05f1077042a12538187afaa4",
     "https://git.kernel.org/stable/c/246a50b23bf2042c77b167272db121d03c8dd473",
     "https://git.kernel.org/stable/c/c06cfda3b67692651438876663ae7cdc187eb214",
     "https://git.kernel.org/stable/c/6d9c89d6dd18c0cfec33bdb468bf4b86c0ca7cea",
     "https://git.kernel.org/stable/c/f5924de8867c09206ba631b9faed63862ec00a10"
   ],
   "aliases": [
-    "CVE-2026-99569"
+    "CVE-2026-99569",
+    "GHSA-q94m-6m6j-5498"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
+    {
+      "id": "261bc193-ea41-32d4-8e8a-231770ea4ac7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "28cdce0459ccea71ea734d7903d39910d1c6a05d <9dde888b2260612d05f1077042a12538187afaa4"
+    },
     {
       "id": "2770597a-eb14-3064-b800-acb3e46e4d2f",
       "product": {
@@ -38,6 +53,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "50a0ef71-1e13-335f-8839-0bd80be31921",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "28cdce0459ccea71ea734d7903d39910d1c6a05d <bf2acd50ae2bf721f97ed108a22139078f3b60e2"
+    },
+    {
+      "id": "57686ed6-5148-3058-a52c-c71dbdd8cbe7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "7548952b-b9f9-3ac3-89f2-df83600c2c5c",
       "product": {
         "name": "Linux",
@@ -48,6 +83,16 @@
       "product_version": "28cdce0459ccea71ea734d7903d39910d1c6a05d <246a50b23bf2042c77b167272db121d03c8dd473"
     },
     {
+      "id": "87876774-11af-3b29-b942-719cd34c7994",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "8b494b75-3144-32d2-89ab-9abbe0d04596",
       "product": {
         "name": "Linux",
@@ -56,6 +101,16 @@
         }
       },
       "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "a6209b45-6c67-3958-b98a-0eccdbac34b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "aa950c1e-8409-36a9-b2ea-cccd67ddce38",
@@ -108,6 +163,16 @@
       "product_version": "28cdce0459ccea71ea734d7903d39910d1c6a05d <c06cfda3b67692651438876663ae7cdc187eb214"
     },
     {
+      "id": "e4d5263b-5719-3df1-976a-250aa2073136",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
       "id": "f117dbf5-6bd9-37f8-9d2e-d9d449f3dc23",
       "product": {
         "name": "Linux",
@@ -116,6 +181,26 @@
         }
       },
       "product_version": "28cdce0459ccea71ea734d7903d39910d1c6a05d <6d9c89d6dd18c0cfec33bdb468bf4b86c0ca7cea"
+    },
+    {
+      "id": "f8c331ae-27b2-36f7-9028-9ae7d7a92f5a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "28cdce0459ccea71ea734d7903d39910d1c6a05d <6d20439d101e1574801b05349451e87cf1447a39"
+    },
+    {
+      "id": "fea7d754-a143-37e3-8b1c-54e92d6c9f2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "28cdce0459ccea71ea734d7903d39910d1c6a05d <1b3f12d3b5799a81d70f23e74d1dfff7b3002ff2"
     }
   ],
   "enisaIdVendor": [

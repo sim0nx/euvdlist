@@ -3,19 +3,35 @@
   "enisaUuid": "6c6dc4fc-09e1-3dc5-ab10-d741a9f6a8af",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: target: Fix demo-mode dynamic ACL dev-entry UAF vs LUN teardown\n\nA demo-mode (generate_node_acls=1) login that allocates a dynamic NodeACL\npopulates that ACL's per-LUN dev entries in core_tpg_add_node_to_devs()\n*before* the ACL is linked onto tpg->acl_node_list by\ntarget_add_node_acl():\n\n\tcore_tpg_check_initiator_node_acl():\n\t\t...\n\t\tcore_tpg_add_node_to_devs(acl, tpg, NULL); /* builds deves */\n\t\ttarget_add_node_acl(acl);                  /* only now listed */\n\nThe LUN teardown sweep, core_clear_lun_from_tpg(), enumerates only\ntpg->acl_node_list, so a dev entry whose ACL is still in the window above\nis invisible to the sweep and is never disabled.  It is left on the\nse_lun->lun_deve_list after core_tpg_remove_lun() frees the se_lun; when\nthe same unpacked_lun is later re-added and the se_lun is reallocated at\nthe same address, the stale dev entry is rediscovered by\ntarget_nacl_find_deve() and core_enable_device_list_for_node() corrupts\nlun_deve_list:\n\n  BUG: KASAN: slab-use-after-free ...\n   core_enable_device_list_for_node+0x5ce/0x880\n   core_tpg_add_node_to_devs+0x169/0x190\n   core_dev_add_lun+0x146/0x190\n   target_fabric_port_link+0xe9/0x1b0\n   configfs_symlink+0x381/0xae0\n   __x64_sys_symlink+0x55/0x80\n\nThe demo-mode login path that drives the ACL/dev-entry creation is\nreachable by an unauthenticated initiator; the colliding LUN add/remove is\na local configfs operation.\n\nCommit 49cb77e297dc (\"target: Avoid mappedlun symlink creation during lun\nshutdown\") introduced se_lun->lun_shutdown and guarded the *explicit* ACL\nMappedLUN path (target_fabric_mappedlun_link()), but the demo-mode\nautomatic path, core_tpg_add_node_to_devs() ->\ncore_enable_device_list_for_node(), was never given the equivalent guard,\nand the publish-after-populate ordering in\ncore_tpg_check_initiator_node_acl() was left unchanged.\n\nFix it in three cooperating parts:\n\n 1) Publish the dynamic NodeACL onto acl_node_list *before* creating its\n    dev entries, so the teardown sweep can observe them.\n\n 2) Refuse to attach a dev entry to an se_lun that is shutting down,\n    checked under nacl->lun_entry_mutex -- the same lock the sweep takes --\n    so once the sweep has passed an ACL any later enable for that LUN\n    observes lun_shutdown and skips it.\n\n 3) In core_enable_device_list_for_node(), insert the new dev entry onto\n    lun->lun_deve_list while still holding nacl->lun_entry_mutex, in both\n    the replace and the new-entry branch.  Previously the entry was added\n    to nacl->lun_entry_hlist under the mutex but to lun->lun_deve_list only\n    after dropping it; with the ACL now published early, the sweep could\n    take the mutex in that gap, find the entry on the hlist,\n    core_disable_device_list_for_node() it (list_del() on the not-yet-\n    linked lun_link succeeds and the entry is freed), and then the enable\n    would list_add_tail() the freed entry back onto lun_deve_list.  Linking\n    both lists under the mutex makes enable and the sweep mutually\n    exclusive, closing that window.\n\ncore_tpg_add_node_to_devs() already ignores the return value of\ncore_enable_device_list_for_node(), so a shutting-down LUN is simply\nskipped.",
   "datePublished": "Nov 20, 2026, 5:51:31 AM",
-  "dateUpdated": "Nov 20, 2026, 5:51:31 AM",
+  "dateUpdated": "Nov 23, 2026, 8:07:12 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/386fee5dfd771f6f4c57cc50b92afe1285b1c3d9",
+    "https://git.kernel.org/stable/c/64337616fb6edb04b799e921d1c10485af8a0c4d",
+    "https://git.kernel.org/stable/c/1131ead1d2789077105ecf1cc86cd545f39eb22a",
+    "https://git.kernel.org/stable/c/1ff3d3c6df9c1dcee185bc38ae18cbb7ab1ef072",
+    "https://git.kernel.org/stable/c/d17b0e4c7aeed9dac88f3ffe4f8823867d1b852e",
     "https://git.kernel.org/stable/c/c8b6eec86742f736a913aba7d7c1d0cedb1d7751",
     "https://git.kernel.org/stable/c/78ad4413fab0cbd42c7280b5069ed2dd3f039162",
     "https://git.kernel.org/stable/c/6a6e7d7230cd4e0a6c003bae5b85bf37a1e77b94"
   ],
   "aliases": [
+    "GHSA-7p8r-jg48-9546",
     "CVE-2026-99765"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
+    {
+      "id": "00bf902b-7c63-3e63-af8e-a7e1a8b1fcae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
     {
       "id": "0bb08f6a-852c-3033-ac41-b46df67a4487",
       "product": {
@@ -35,6 +51,16 @@
         }
       },
       "product_version": "patch: 6.18.64"
+    },
+    {
+      "id": "2147aa6b-de67-37a7-9f61-7da295cf973e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "28d98641-0e8b-39ab-89d6-70ca6ca55a9e",
@@ -77,6 +103,16 @@
       "product_version": "49cb77e297dc611a1b795cfeb79452b3002bd331 <6a6e7d7230cd4e0a6c003bae5b85bf37a1e77b94"
     },
     {
+      "id": "52556f86-90fc-3add-90ae-b9fd58e62893",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "49cb77e297dc611a1b795cfeb79452b3002bd331 <386fee5dfd771f6f4c57cc50b92afe1285b1c3d9"
+    },
+    {
       "id": "621370a6-841e-3352-91fd-0b4552369d04",
       "product": {
         "name": "Linux",
@@ -97,6 +133,16 @@
       "product_version": "8adc614240f1e2b793949d4efd9d344c970c116f"
     },
     {
+      "id": "840c9d4e-d182-3cf3-81e8-3d525c942bce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "853d89a7-95a5-3be7-a1fd-8f3d86a6424f",
       "product": {
         "name": "Linux",
@@ -105,6 +151,26 @@
         }
       },
       "product_version": "4.11"
+    },
+    {
+      "id": "8718f9f5-46b6-3d6c-9ae7-ce7d48e037a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "49cb77e297dc611a1b795cfeb79452b3002bd331 <1ff3d3c6df9c1dcee185bc38ae18cbb7ab1ef072"
+    },
+    {
+      "id": "94b3fa97-8b65-3918-90b3-c5f55d10b83b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "49cb77e297dc611a1b795cfeb79452b3002bd331 <d17b0e4c7aeed9dac88f3ffe4f8823867d1b852e"
     },
     {
       "id": "96471c39-2ed5-36b5-9253-80941db57bd9",
@@ -125,6 +191,16 @@
         }
       },
       "product_version": "49cb77e297dc611a1b795cfeb79452b3002bd331 <78ad4413fab0cbd42c7280b5069ed2dd3f039162"
+    },
+    {
+      "id": "a77d8c27-7c3e-3562-a15c-4b1269abbe87",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "49cb77e297dc611a1b795cfeb79452b3002bd331 <64337616fb6edb04b799e921d1c10485af8a0c4d"
     },
     {
       "id": "b6a60915-28be-35f7-a756-12587b1768f5",
@@ -177,6 +253,16 @@
       "product_version": "003bea4a702279fc339a0d2f1262e907364a2c73"
     },
     {
+      "id": "d491b349-96b9-394e-83f9-5acb4a9967f2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
       "id": "e875a3ae-b7fa-39b3-ab82-e0d7f3086e0d",
       "product": {
         "name": "Linux",
@@ -185,6 +271,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "e92ff463-4f4a-3047-8b9b-272f38a20495",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "49cb77e297dc611a1b795cfeb79452b3002bd331 <1131ead1d2789077105ecf1cc86cd545f39eb22a"
     },
     {
       "id": "ea1c1434-981b-3bdc-85fb-fcfe2024d588",
@@ -215,6 +311,16 @@
         }
       },
       "product_version": "2bf7791c6a5ec21228383f5a1fb5c443c3336622"
+    },
+    {
+      "id": "fb10fb12-d98b-3f67-8e85-13f3e30ee480",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.119"
     }
   ],
   "enisaIdVendor": [

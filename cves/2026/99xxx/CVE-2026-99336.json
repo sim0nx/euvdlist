@@ -3,8 +3,10 @@
   "enisaUuid": "4b22f616-b81c-30e7-93c6-9283c4c58fc1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: guest_memfd: take the invalidate lock when unbinding a dying file\n\nkvm_gmem_unbind() takes mapping->invalidate_lock only if the\nget_file_active() succeeds. When the guest_memfd file is dying, its\nreference count is already zero so get_file_active fails and the binding\nis removed without holding the invalidate lock.\n\nkvm_gmem_invalidate_{start,end}() checks f->bindings independently to\ndecide whether to begin or end KVM MMU invalidation. So, the bindings\nmust therefore remain stable between the two calls. Otherwise, unbind\ncan remove a binding after start increments mmu_invalidate_in_progress,\nbut before end finds the binding and decrements it.\nExample, unbind race with memory failure:\n\n  CPU 0: memory failure               CPU 1: memslot delete\n  ----------------------------------  ---------------------------\n                                      (guest_memfd file is dying)\n  kvm_gmem_error_folio()\n    kvm_gmem_invalidate_start()\n      finds binding\n      mmu_invalidate_in_progress++\n                                      kvm_gmem_unbind()\n                                        get_file_active() fails\n                                        removes binding\n    kvm_gmem_invalidate_end()\n      no binding found\n      counter stays elevated\n\nmmu_invalidate_retry() then returns 1 forever, so guest page faults\nretry without ever installing a mapping and the guest hangs.\n\nRemove the distinction between live and dying files in the unbind path.\nAlways use slot->gmem.file and take the invalidate lock when it's non-NULL.\nNormal unbind callers hold slots_lock, which prevents release from clearing\nthe pointer or freeing the file state until unbind completes. Final VM\nteardown can only see a NULL pointer because guest_memfd pins the KVM until\nrelease has cleared all bindings.",
   "datePublished": "Nov 19, 2026, 2:21:42 PM",
-  "dateUpdated": "Nov 19, 2026, 2:34:20 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 22, 2026, 11:07:43 AM",
+  "baseScore": 7.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/4ae4316682cdc78d8f5a856ab0712a8281f211ca",
     "https://git.kernel.org/stable/c/3af94f4e3526efdf52d84d7ba8d9fb8e8facb93a",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/0ee2c883b62deb74d8c43007e8049dc006d3a2fb"
   ],
   "aliases": [
+    "GHSA-gh4c-w75c-262g",
     "CVE-2026-99336"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "26a3c131-bd4e-31c9-9c02-0d422fc94611",

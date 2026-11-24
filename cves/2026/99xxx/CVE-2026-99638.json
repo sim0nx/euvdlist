@@ -3,20 +3,35 @@
   "enisaUuid": "ddf5bb24-c7cf-3aaf-80eb-a22268d8c37c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: clamp skb->queue_mapping before indexing the tx queue\n\nThis issue was caught by Sashiko (nipa). A producer-side path cap is\nalready merged (ea4d4b5dddb5); this patch adds the matching consumer-side\ncaps.\n\nThe issue:\nThe tx queue is picked and capped in netdev_core_pick_tx() before the\n__dev_xmit_skb() qdisc enqueue path. A tc BPF program running inside an\negress qdisc (not clsact) can then change __sk_buff->queue_mapping; that\nstore is never re-checked. bpf_convert_ctx_access() bounds it only by\nNO_QUEUE_MAPPING, not by the device's queue count.\n\nTwo consumers read the stale value:\n\n  - On dequeue, qdisc_restart() calls netdev_get_tx_queue(), which\n    indexes dev->_tx[]. netdev_get_tx_queue() guards it with just a\n    DEBUG_NET_WARN_ON_ONCE, so sch_direct_xmit() takes the out-of-bounds\n    txq->_xmit_lock and writes txq->xmit_lock_owner past the end of the\n    allocation on non-lltx devices such as ifb. Drivers that index their\n    rings from skb_get_queue_mapping() (ex: ifb) go out of range the same\n    way.\n\n  - On enqueue, taprio_enqueue() indexes q->qdiscs[] with the same value;\n    the array is sized dev->num_tx_queues. A duplicating netem on a child\n    qdisc clones the skb and re-enqueues the clone at the taprio root\n    (qdisc_root_bh()) through a direct rootq->enqueue() call, so the value\n    reaches taprio_enqueue() before any dequeue cap runs.\n\nThe Fix:\nCap the mapping at the consumers and write the capped value back, so the\nqdisc's _tx[] lookup, the taprio q->qdiscs[] lookup and any later driver\nread stay in range.\n\nOn the dequeue side the cap folds into the dequeue path instead of a\nseparate walk over the returned list: dequeue_skb() caps the head, and\neach bulk helper caps the element it appends. For a qdisc that is not\nTCQ_F_ONETXQUEUE, netdev_cap_txqueue() logs a ratelimited notice and\nselects queue 0.\n\nA TCQ_F_ONETXQUEUE qdisc is bound to a single tx queue: dequeue_skb() uses\nq->dev_queue for the frozen check, the BQL limit and the trace point, while\nqdisc_restart() transmits on the skb's queue. Capping an out-of-range\nmapping to queue 0 would therefore send a per-queue child's skb through a\ndifferent queue than the one it was dequeued for. On mq, mqprio, taprio and\nhtb offload children, a stopped queue 0 could then park the list in\nq->gso_skb, and the later wake would schedule queue 0's own child instead\nof this qdisc. Pin a TCQ_F_ONETXQUEUE mapping to the qdisc's own queue to\nkeep the documented invariant.\n\nThe pin covers every mapping, not only an out-of-range one: an in-range\nmapping that a filter sets on one of those per-queue children is rewritten\nto the child's own queue, and this path does not call netdev_cap_txqueue(),\nso it logs no notice. On a single-queue device qdisc_create() sets\nTCQ_F_ONETXQUEUE, so the one-queue trigger described below also takes this\nbranch and is corrected without a notice.\n\nThat also keeps a bulk list on one queue by construction: every element of\na TCQ_F_ONETXQUEUE qdisc, including a follower changed by a filter, is\npinned to q->dev_queue before it is appended. The fast bulk helper\ntherefore needs no head comparison and no skb_bad_txq requeue; the slow\nhelper, used only by non-ONETXQUEUE qdiscs, still compares and requeues a\nmismatched follower, where a wake on any queue reschedules q.\n\nOn the enqueue side taprio_enqueue() caps the mapping against\nreal_num_tx_queues and writes it back before selecting q->qdiscs[queue], so\na duplicating child cannot steer the clone out of the array.\n\nConditions to recreate the bug:\nThe dequeue path: load a SCHED_CLS or SCHED_ACT program that stores\n__sk_buff->queue_mapping (a tc BPF action is enough), attach it to a\ntransmit qdisc (for example a matchall filter on a prio root), and send a\npacket. With a 1-queue device a store of 1 indexes one past dev->_tx[].\nUnder KASAN with panic_on_warn=1 the unfixed kernel faults with \"BUG:\nKASAN: slab-out-\n---truncated---",
   "datePublished": "Nov 20, 2026, 5:49:54 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:54 AM",
+  "dateUpdated": "Nov 23, 2026, 8:05:26 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/8378f8af694bbebb8aeb8f6b5ee85d8776deb91a",
+    "https://git.kernel.org/stable/c/9d102a396aec33bdf4c1e92e0818e2bbdf5b0221",
+    "https://git.kernel.org/stable/c/542f917040437eef76fd45df57874541b5dd2e01",
+    "https://git.kernel.org/stable/c/4697611292458bc7ded42f50ab649d6d5dd68710",
     "https://git.kernel.org/stable/c/8182ba13500b39d75b66fe9f37e13cb325c4b17e",
     "https://git.kernel.org/stable/c/7445eccce376f7adb876c9f466d7d893344af7ce",
     "https://git.kernel.org/stable/c/7327092a678bfcb1bae033acb1be1006a1399e30",
     "https://git.kernel.org/stable/c/f19f2b308beb158d0e6f6eb806ced636e4ebf6ce"
   ],
   "aliases": [
+    "GHSA-mc2m-r8cg-frfw",
     "CVE-2026-99638"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
+    {
+      "id": "1a4d8232-ec20-3348-a55e-114676ec7a43",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
     {
       "id": "1c750331-07c5-3f3b-8c58-964b20524103",
       "product": {
@@ -26,6 +41,46 @@
         }
       },
       "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "298b9028-4c7d-3a4b-a539-b8d31e3f45f4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "29e50487-8ac3-3b9c-a893-a15b8d0208d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "4de1e6d9-bb9b-3216-9cbc-148f081aa61e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "74e31ca850c1cddeca03503171dd145b6ce293b6 <8378f8af694bbebb8aeb8f6b5ee85d8776deb91a"
+    },
+    {
+      "id": "4e17a68b-2745-39f2-a2ae-aac6ddc309d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "74e31ca850c1cddeca03503171dd145b6ce293b6 <4697611292458bc7ded42f50ab649d6d5dd68710"
     },
     {
       "id": "6c945e5c-a540-3088-8c90-6aae2985b815",
@@ -78,6 +133,16 @@
       "product_version": "74e31ca850c1cddeca03503171dd145b6ce293b6 <f19f2b308beb158d0e6f6eb806ced636e4ebf6ce"
     },
     {
+      "id": "be726b86-f264-361f-911a-1a2701998672",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
       "id": "d3acb504-8a97-3e93-880f-73fe4fb34f5b",
       "product": {
         "name": "Linux",
@@ -116,6 +181,26 @@
         }
       },
       "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "e8c373b4-4f73-340c-a5ce-2d76978d2f22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "74e31ca850c1cddeca03503171dd145b6ce293b6 <542f917040437eef76fd45df57874541b5dd2e01"
+    },
+    {
+      "id": "ff86d04f-2415-37fa-b26f-a1456b84e463",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "74e31ca850c1cddeca03503171dd145b6ce293b6 <9d102a396aec33bdf4c1e92e0818e2bbdf5b0221"
     }
   ],
   "enisaIdVendor": [

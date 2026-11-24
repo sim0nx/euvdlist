@@ -3,20 +3,55 @@
   "enisaUuid": "1ad13035-d82e-351c-a6e3-8989087c45c9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nNFSD: Map flex file layout IDs through the request's user namespace\n\nnfsd4_ff_proc_layoutget() and nfsd4_ff_encode_layoutget() translate\nthe file's owner and group with init_user_ns, but every other identity\nnfsd places on the wire goes through nfsd_user_namespace(). When the\ntransport carries a credential from a non-initial user namespace, the\nflex file layout reports host-global IDs. The client copies those IDs\ninto the AUTH_SYS credential it presents to the data server, and\nsvcauth_unix_accept() resolves that credential in the transport's\nnamespace, so data server I/O runs under an identity unrelated to the\nfile's owner.\n\nSwitching to the request's namespace introduces a second hazard.\nfrom_kuid() returns (uid_t)-1 when the target namespace has no\nmapping for the owner, and the IOMODE_READ arm adds one to that\nresult to derive an identity for which the data server denies\nwrites. The addition would wrap to zero, handing the client uid 0\ninstead of an identity distinct from the owner.\n\nTranslate both IDs in nfsd4_ff_proc_layoutget(), which has the\nsvc_rqst, and carry the wire values in struct pnfs_ff_layout.\nfrom_kuid_munged() substitutes overflowuid for an unmapped owner and\nthus never returns (uid_t)-1, so the increment cannot wrap to zero.",
   "datePublished": "Nov 19, 2026, 2:22:46 PM",
-  "dateUpdated": "Nov 19, 2026, 2:37:36 PM",
+  "dateUpdated": "Nov 23, 2026, 8:01:57 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/64b971da40273654126365d9c07405c0a5e0dddb",
+    "https://git.kernel.org/stable/c/8e496e6de043c4910f91ebad832065b84a607520",
+    "https://git.kernel.org/stable/c/184893a9c44c29c8afbf061303af3c26a665f97e",
+    "https://git.kernel.org/stable/c/f3cb478d231ca0dc9093def921189779891d8056",
     "https://git.kernel.org/stable/c/e10bf0e125ebf6b9669b3158eda5fa67b56809d4",
     "https://git.kernel.org/stable/c/76bb89e8155fe29da36ecf0121e9e98afc0f4184",
     "https://git.kernel.org/stable/c/c0dacde381e1311bba8074e660d41ecc57c3bd2b",
     "https://git.kernel.org/stable/c/f913d5d2130a584d1a027ffe3dfd88b6be2e0540"
   ],
   "aliases": [
+    "GHSA-jhh4-qhqj-c3fv",
     "CVE-2026-99363"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.24,
   "enisaIdProduct": [
+    {
+      "id": "03139487-8ead-3823-9ff5-5ab04f950ea3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9b9960a0ca4773e21c4b153ed355583946346b25 <f3cb478d231ca0dc9093def921189779891d8056"
+    },
+    {
+      "id": "08d321fa-23d5-3917-983c-cdfedb9e27f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9b9960a0ca4773e21c4b153ed355583946346b25 <184893a9c44c29c8afbf061303af3c26a665f97e"
+    },
+    {
+      "id": "104be4b1-5262-32de-a903-3c58dfe4bc2f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
     {
       "id": "10b4ad9b-d487-333c-aeed-b64df75b0700",
       "product": {
@@ -48,6 +83,26 @@
       "product_version": "patch: 6.18.61"
     },
     {
+      "id": "16adb0c8-a8f6-3144-8985-9283f1f1312c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "2447077a-8405-3afe-98e0-88209c89e56b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "2a011085-0652-362f-a7ec-6685715db527",
       "product": {
         "name": "Linux",
@@ -68,6 +123,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "5c2c092f-34ba-3c2b-9072-fb2134ae67de",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9b9960a0ca4773e21c4b153ed355583946346b25 <64b971da40273654126365d9c07405c0a5e0dddb"
+    },
+    {
       "id": "72339701-dc89-3b5f-afcf-705b8867c392",
       "product": {
         "name": "Linux",
@@ -76,6 +141,16 @@
         }
       },
       "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "92fd617d-8d3d-3a47-9534-73179886b3ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9b9960a0ca4773e21c4b153ed355583946346b25 <8e496e6de043c4910f91ebad832065b84a607520"
     },
     {
       "id": "abae55d1-448e-3479-bcc6-ed0cc617c8ce",
@@ -96,6 +171,16 @@
         }
       },
       "product_version": "9b9960a0ca4773e21c4b153ed355583946346b25 <e10bf0e125ebf6b9669b3158eda5fa67b56809d4"
+    },
+    {
+      "id": "ec3a9cce-57da-3a0d-818f-58a44018b518",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "fc2959be-56b2-3cda-9ebd-1f8dba9d6b6d",

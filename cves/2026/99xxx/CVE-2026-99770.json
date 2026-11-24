@@ -3,20 +3,55 @@
   "enisaUuid": "74cbdd38-cb44-39a5-982b-f54e82440b25",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/vc4: Publish the output fence outside of job_lock\n\njob_lock is taken by the V3D interrupt handler, so nesting an IRQ-unsafe\nlock under it creates an inversion. drm_syncobj_replace_fence() takes\ndrm_syncobj::lock, which other paths acquire with interrupts enabled. For\nexample, a thread interrupted while holding it blocks the handler on\njob_lock, and the handler can only make progress once the submit path\nreleases job_lock, which it cannot do while waiting for drm_syncobj::lock.\n\nThis is reported by lockdep:\n\n[  188.139076] ========================================================\n[  188.139086] WARNING: possible irq lock inversion dependency detected\n[  188.139096] 7.3.0-rc3-00067-gc4f3feeaf60f #67 Tainted: G         C\n[  188.139108] --------------------------------------------------------\n[  188.139116] swapper/0/0 just changed the state of lock:\n[  188.139125] ffff0000054f8ff8 (&vc4->job_lock){-...}-{3:3}, at: vc4_irq+0xa8/0x28c [vc4]\n[  188.139234] but this lock took another, HARDIRQ-unsafe lock in the past:\n[  188.139242]  (&syncobj->lock){+.+.}-{3:3}\n[  188.139256] and interrupts could create inverse lock ordering between them.\n[  188.139267] other info that might help us debug this:\n[  188.139275]  Possible interrupt unsafe locking scenario:\n[  188.139284]        CPU0                    CPU1\n[  188.139291]        ----                    ----\n[  188.139299]   lock(&syncobj->lock);\n[  188.139312]                                local_irq_disable();\n[  188.139320]                                lock(&vc4->job_lock);\n[  188.139335]                                lock(&syncobj->lock);\n[  188.139350]   <Interrupt>\n[  188.139358]     lock(&vc4->job_lock);\n[  188.139372] *** DEADLOCK ***\n\nHand the fence over after job_lock is dropped. The job can complete and\ndrop exec->fence in that window, so take a reference first and publish\nthrough the local pointer, as exec may already be gone.",
   "datePublished": "Nov 20, 2026, 5:51:35 AM",
-  "dateUpdated": "Nov 20, 2026, 5:51:35 AM",
+  "dateUpdated": "Nov 23, 2026, 8:07:15 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/7ab29cba85fb016c0921b7e22854a00117b05a1c",
+    "https://git.kernel.org/stable/c/65592d2780b97d99829cdc27168b543f39d61358",
+    "https://git.kernel.org/stable/c/6d60c8d840138e9858c45b0ce17076f4d2556633",
+    "https://git.kernel.org/stable/c/5dc3cdaee6c6ce7d20d508b9376604270ba07ceb",
     "https://git.kernel.org/stable/c/54c219a3de9439fa003b45500a7ea3ad5e2eb6a9",
     "https://git.kernel.org/stable/c/ceee27de7b9d8e9771c8ebda48b6836aa2c4466b",
     "https://git.kernel.org/stable/c/e16cc0843946e998b6dc6c4b41fee8d9e324ccec",
     "https://git.kernel.org/stable/c/9ee552a42c3905b4547e83173d46413137ec329a"
   ],
   "aliases": [
+    "GHSA-cmx2-mc37-wgj4",
     "CVE-2026-99770"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "24d5b228-2bfa-3ccb-9dce-da29bd807875",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "25a81a7a-f6c9-3452-a8a7-e0f53fc2aad6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e84fcb95e07442edd7ce3b13973523646dbc581a <5dc3cdaee6c6ce7d20d508b9376604270ba07ceb"
+    },
+    {
+      "id": "2f746631-c9ca-395d-8a5d-a8bc4f303124",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
     {
       "id": "2f7c5892-7fb9-35c3-b9c2-fd9686047719",
       "product": {
@@ -38,6 +73,16 @@
       "product_version": "4.18"
     },
     {
+      "id": "3f713923-da06-38c0-8b55-13e3d27a70ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "47caa710-fb63-3160-b7c5-27ac3320aa07",
       "product": {
         "name": "Linux",
@@ -56,6 +101,26 @@
         }
       },
       "product_version": "e84fcb95e07442edd7ce3b13973523646dbc581a <e16cc0843946e998b6dc6c4b41fee8d9e324ccec"
+    },
+    {
+      "id": "670e1c29-93a4-32a1-9a8b-9fbda74bf0c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e84fcb95e07442edd7ce3b13973523646dbc581a <7ab29cba85fb016c0921b7e22854a00117b05a1c"
+    },
+    {
+      "id": "79d55970-0c39-3012-a24f-dca89e1e5e57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e84fcb95e07442edd7ce3b13973523646dbc581a <65592d2780b97d99829cdc27168b543f39d61358"
     },
     {
       "id": "9ac8fdeb-737e-3e1e-8215-f6e168df042c",
@@ -96,6 +161,26 @@
         }
       },
       "product_version": "e84fcb95e07442edd7ce3b13973523646dbc581a <9ee552a42c3905b4547e83173d46413137ec329a"
+    },
+    {
+      "id": "cd7c8593-9550-30ac-ad2b-e09675511907",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e84fcb95e07442edd7ce3b13973523646dbc581a <6d60c8d840138e9858c45b0ce17076f4d2556633"
+    },
+    {
+      "id": "dd9ce781-2d39-3943-9e43-4f46b0ffa592",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "f5e8aa01-551e-3751-84ba-aa51bb0835a1",

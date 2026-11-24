@@ -3,19 +3,24 @@
   "enisaUuid": "5501b12e-18c0-3a61-b0aa-ec16a97c886a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/etnaviv: Flush the tile status cache through both the PE and BLT\n\nSince commit f232d9ec029c (\"drm/etnaviv: fix TS cache flushing on GPUs\nwith BLT engine\"), jobs on GPUs with a BLT engine use a BLT command to\nflush the tile status cache instead of TS_FLUSH_CACHE, which is broken\non most of these GPUs.\n\nGC7000 r6008/r6009 and GC8200 r6401 are the other way around:\nTS_FLUSH_CACHE works, but the BLT command does not flush the cache.\nThe vendor driver handles these GPUs using TS_FLUSH_CACHE, but the\netnaviv kernel driver has no way to identify them.\n\nAs a result, dirty tile status cache lines survive the end of a job.\nThey are written back by the next cache flush, using the page table of\nthe job issuing it. If that job belongs to another process, the write\ngoes to the wrong address space.\n\nOn GC7000 r6009 this causes MMU faults and GPU recoveries blamed on an\ninnocent process. I see around 1100 per run of a multisample\ndepth/stencil test running alongside two other GPU clients.\n\nEmit both flushes at the end of every job on GPUs with a BLT engine.\nWhichever does not work on a given GPU is a no-op. Since dirty lines\nare only written back once, this costs one additional state load per\njob.",
   "datePublished": "Nov 20, 2026, 5:49:29 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:29 AM",
+  "dateUpdated": "Nov 23, 2026, 8:04:58 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/8623d20c840abfd41376a0331b6446d0d992d1ae",
+    "https://git.kernel.org/stable/c/6f564c7ccb8ba741ca1fb36cac1dabf288a4e0ce",
+    "https://git.kernel.org/stable/c/e28d6255bc236776011400dbfd3bd4e76202712e",
+    "https://git.kernel.org/stable/c/50fc6899f1d66ce8b270e50168e02f58c12acedf",
     "https://git.kernel.org/stable/c/0abbe840a90d2cb568781fd031e514674c397cff",
     "https://git.kernel.org/stable/c/8cd026a2cec3e4ceb4542ba443d9049724ae4a30",
     "https://git.kernel.org/stable/c/e75d39dc2a4dbfa6064bd7e59e0cf5d3d1b89b6d",
     "https://git.kernel.org/stable/c/c1a757f8df1363032623fa9b1baaba0dcf34de6d"
   ],
   "aliases": [
-    "CVE-2026-99604"
+    "CVE-2026-99604",
+    "GHSA-3cch-w2c8-rxgj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0db7a441-6291-3eae-a38f-08b27c991afc",
@@ -48,6 +53,16 @@
       "product_version": "5.7"
     },
     {
+      "id": "12809252-4b21-317b-8c6a-9c6f790e86ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f232d9ec029ce3e2543b05213e2979e01e503408 <e28d6255bc236776011400dbfd3bd4e76202712e"
+    },
+    {
       "id": "1b020c27-fb82-345a-9bb8-94b670f289af",
       "product": {
         "name": "Linux",
@@ -56,6 +71,46 @@
         }
       },
       "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "1e7fca98-33a5-304f-be22-3951fd67230b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f232d9ec029ce3e2543b05213e2979e01e503408 <6f564c7ccb8ba741ca1fb36cac1dabf288a4e0ce"
+    },
+    {
+      "id": "1f7cdd25-ec23-3ed8-b935-9277a47fddbd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f232d9ec029ce3e2543b05213e2979e01e503408 <8623d20c840abfd41376a0331b6446d0d992d1ae"
+    },
+    {
+      "id": "236c2c0e-f02e-3736-b94b-2130a9556244",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "24b05f52-f475-3e4d-87c7-a71372e44ca1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "2915a70d-47bb-3246-bbee-47eabd04aefc",
@@ -78,6 +133,16 @@
       "product_version": "f232d9ec029ce3e2543b05213e2979e01e503408 <e75d39dc2a4dbfa6064bd7e59e0cf5d3d1b89b6d"
     },
     {
+      "id": "5f4a12c7-9841-3e0e-ac16-f7a10f9a73cb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "65e9219b-6e16-3a9f-9de4-7309ccac4799",
       "product": {
         "name": "Linux",
@@ -98,6 +163,16 @@
       "product_version": "538caddbe635d3ca18e0f02276e76c124eb3c604"
     },
     {
+      "id": "7742071a-7242-3597-8d71-9451394887ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f232d9ec029ce3e2543b05213e2979e01e503408 <50fc6899f1d66ce8b270e50168e02f58c12acedf"
+    },
+    {
       "id": "96a95031-6e04-3c38-9728-0241e4f1ba46",
       "product": {
         "name": "Linux",
@@ -106,6 +181,16 @@
         }
       },
       "product_version": "5.4.63 <5.5"
+    },
+    {
+      "id": "b960d8f9-1aab-3359-8f4e-4671b46d9473",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "e66a2277-4e6f-3a6a-87be-a8885d902621",

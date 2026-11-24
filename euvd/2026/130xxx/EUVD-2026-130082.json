@@ -3,19 +3,24 @@
   "enisaUuid": "89136fdb-3ff9-3d28-8b1d-7779fbc6cb93",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\novl: read the nlink xattr of every indexed non-dir\n\nWith nfs_export=on, data written through a file handle to a lower file,\ni.e. a file that exists only in a lower layer of the overlay, can be\nlost on the next mount. A lookup of the file by name then returns -EIO.\nAlso, a file with one name reports st_nlink 2 once it has been copied to\nthe upper layer. After such a file is removed, its file handle can still\nopen it until the next mount.\n\nBefore a lower file is changed for the first time, overlayfs copies it\nto the writable upper layer. This is called copy up.\n\nThe index directory is $workdir/index, where $workdir is the directory\ngiven by the workdir= option. Each entry is named after the file handle\nof a lower inode, so that overlayfs can get from the handle to the\ncopied up inode.\n\nWith nfs_export=on, copy up indexes every non-directory: it copies the\nfile to an entry in the index directory and then hard links that entry\ninto the upper directory. The index entry is an extra link to the upper\ninode, so overlayfs stores the link count that users should see in the\noverlay.nlink xattr.\n\nA file can also be opened by handle, either by an NFS client or by a\nprocess with CAP_DAC_READ_SEARCH calling open_by_handle_at(). If the\nfile is not in the dcache, its overlay dentry is disconnected, i.e. it\nhas no parent yet. Copy up then creates the index entry but no hard link\nin the upper directory. The index entry has i_nlink 1 and holds the only\ncopy of the data written to the file.\n\novl_get_nlink() reads the stored count. Its caller passes a default,\nwhich the function returns if there is no stored count. If the lower\ninode has i_nlink 1, the function returns the default without reading\nthe xattr. That was correct as long as only lower files with multiple\nlinks were indexed.\n\nOn the next mount, ovl_verify_index() looks for orphans, i.e. index\nentries of files whose last name was removed. For an index entry with\ni_nlink 1, it passes a default of 0 to ovl_get_nlink() and treats a\nresult of 0 as an orphan. Here the lower inode also has i_nlink 1, so\nthe result is the default. ovl_indexdir_cleanup() then replaces the\nentry with a whiteout, which in the index marks a file as deleted. The\nwritten data is lost.\n\nA lookup by name then returns -EIO, because a whiteout as the index\nentry of a lower file that still exists is a bad index.\n\novl_get_inode() gets the wrong count the same way. Its default is the\ni_nlink of the upper inode, which includes the index entry, so a copied\nup file with one name reports st_nlink 2.\n\nWhen that name is removed, the count drops to 1 rather than 0.\novl_nlink_end() replaces the index entry with a whiteout only at a count\nof 0, so the entry stays, and the handle of the removed file still opens\nit.\n\nReproduced by writing through open_by_handle_at() to an uncached lower\nfile with one link. After a remount the data was lost, and the name\nreturned EIO.\n\nFix this by adding an argument to ovl_get_nlink() that says whether the\ncaller found an index entry, and by skipping the xattr only if the\ncaller found none.\n\nKnown gaps:\n- An index entry that a kernel without this patch left behind for a\n  removed file now stays, and the handle of that file keeps working. The\n  entry has i_nlink 1 and a stored count of 1, just like the entry of a\n  file that was only written by handle. Without this patch, the next\n  mount treated it as an orphan.",
   "datePublished": "Nov 19, 2026, 2:40:14 PM",
-  "dateUpdated": "Nov 19, 2026, 2:40:14 PM",
+  "dateUpdated": "Nov 23, 2026, 8:02:28 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/3608b53735e5554b98825ee7c21cf7df489569f1",
+    "https://git.kernel.org/stable/c/358cd0602a79792dbf968478536bd6fc8151a37c",
+    "https://git.kernel.org/stable/c/8938407fd80d92f286466674e9e9ad4e1bc81e27",
+    "https://git.kernel.org/stable/c/9597ef3f028c2972d2a4a6d246161bd0736a1178",
     "https://git.kernel.org/stable/c/07b000b5b458723ca85d67dbbe5f6359c0202cfc",
     "https://git.kernel.org/stable/c/9b50f28c22c948b0c134d5c5dbd62ea0ada97fc3",
     "https://git.kernel.org/stable/c/ffe508adf85acdd57db01a234161e795b7403062",
     "https://git.kernel.org/stable/c/eb644ed5c6d9afdb1554c41cef1f39d150fbc554"
   ],
   "aliases": [
-    "CVE-2026-99416"
+    "CVE-2026-99416",
+    "GHSA-qh63-hq2w-9gm3"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "03815ee9-5293-39a8-9875-296fc015ecd0",
@@ -28,6 +33,16 @@
       "product_version": "fbd2d2074bde2e333d9a9eeda5864cd593fbe29c <9b50f28c22c948b0c134d5c5dbd62ea0ada97fc3"
     },
     {
+      "id": "0477c10e-57cd-3e38-8b3c-92279594c28b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "11088c80-0b78-303e-bb8b-d2574c20f42a",
       "product": {
         "name": "Linux",
@@ -36,6 +51,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "1c4341ba-9ac5-3527-a9ad-57bb2b1fcee8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbd2d2074bde2e333d9a9eeda5864cd593fbe29c <9597ef3f028c2972d2a4a6d246161bd0736a1178"
     },
     {
       "id": "246692e6-46a0-3eec-b740-ecec3709a038",
@@ -48,6 +73,26 @@
       "product_version": "patch: 7.4-rc1"
     },
     {
+      "id": "576ee3e4-6277-32bf-9cb5-11f4240a0054",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbd2d2074bde2e333d9a9eeda5864cd593fbe29c <8938407fd80d92f286466674e9e9ad4e1bc81e27"
+    },
+    {
+      "id": "73649a61-daba-3a3b-be60-a0b53c0dce7a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "7d9ffa1a-01b6-3c89-bca6-53538f8891ff",
       "product": {
         "name": "Linux",
@@ -56,6 +101,16 @@
         }
       },
       "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "820e9c0d-e169-3957-9e20-bda92bcc9d9d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "9347a892-e478-3616-8610-e01f9d22c67c",
@@ -106,6 +161,36 @@
         }
       },
       "product_version": "fbd2d2074bde2e333d9a9eeda5864cd593fbe29c <eb644ed5c6d9afdb1554c41cef1f39d150fbc554"
+    },
+    {
+      "id": "d5545b3e-67a7-37d5-8b24-23762fc0b3ed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "dbb6cb81-6455-32b2-bf2d-e300415f7da9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbd2d2074bde2e333d9a9eeda5864cd593fbe29c <3608b53735e5554b98825ee7c21cf7df489569f1"
+    },
+    {
+      "id": "dea74c91-9485-3eca-9425-f0e476e931fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbd2d2074bde2e333d9a9eeda5864cd593fbe29c <358cd0602a79792dbf968478536bd6fc8151a37c"
     },
     {
       "id": "f517b4aa-a066-3f63-9e57-ff1febba52c9",

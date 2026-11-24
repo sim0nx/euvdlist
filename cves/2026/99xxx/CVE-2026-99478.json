@@ -3,17 +3,20 @@
   "enisaUuid": "488ab685-a6bb-3086-92ab-0bd03c893fd2",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfilelock: keep superblock active through delegation wait\n\nA caller may drop its path after try_break_deleg() returns a delegated\ninode but before break_deleg_wait() finishes. The extra inode reference\nheld in struct delegated_inode does not keep the superblock active.\n\nAfter a lazy unmount, closing the delegation holder can release the last\nmount reference and shut down the superblock while another task waits for\nthe delegation break. The waiter's final iput() can then enter the\nfilesystem's eviction code after its superblock-private state was freed.\nThis has been observed as a KASAN use-after-free in shmem_evict_inode().\n\nWhen try_break_deleg() saves a delegated inode, take an active reference\nto its superblock while the caller still pins the mount. Keep that\nreference through break_deleg_wait() and the final iput(), then release\nit with deactivate_super(). This protects every caller of the helpers,\nincluding the mknod, mkdir, symlink and rmdir paths that drop their path\nbefore waiting.",
   "datePublished": "Nov 19, 2026, 2:43:12 PM",
-  "dateUpdated": "Nov 19, 2026, 2:43:12 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 22, 2026, 11:08:34 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/a6e222f1d75bce8de430ba4d0f8c6a1e923f9acd",
     "https://git.kernel.org/stable/c/c206cdfee6c037b829178bb7e17e6e37ddc9aa35"
   ],
   "aliases": [
-    "CVE-2026-99478"
+    "CVE-2026-99478",
+    "GHSA-x6j7-7gx4-fj4q"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.15,
   "enisaIdProduct": [
     {
       "id": "072277b8-c7df-37b6-bbd9-280ebeb81b10",

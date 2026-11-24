@@ -3,18 +3,107 @@
   "enisaUuid": "db7df591-d464-34b3-a08f-889ce05005de",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/ksm: fix use of a freed anon_vma at swap-in\n\nA folio read from a swap slot previously shared by KSM can remain in the\nswap cache after the process that first mapped it exits. Its anon_vma\ncan then be freed, so ksm_might_need_to_copy() must not dereference it\nto compare roots.\n\nDoing so can result in some false-positives, resulting in the reverse\nmapping missing the new folio mapping, preventing migration and reclaim.\n\nSLAB_TYPESAFE_BY_RCU allows individual anon_vma objects to be reused\nimmediately after freeing. A stale pointer can then refer to another\nanon_vma whose root matches, even though the target VMA is not linked\nto that anon_vma.\n\nMove the anonymous rmap compatibility checks into\nfolio_anon_rmap_compatible(). Keep the page-index check and compare the\nfolio's anon_vma pointer against the VMA's own anon_vma and root first.\n\nIf neither matches, bite the bullet and walk the VMA's anon_vma_chain.\nThe VMA keeps these anon_vmas alive, and finding a match guarantees that\nreverse mapping can find the new mapping.\n\nLorenzo Stoakes says in a private discussion:\n\n  \"This isn't quite equivalent to the existing check.\n\n  Every anon_vma in an anon_vma_chain shares the same root, but if you\n  split a VMA then fork both of them like this:\n\n                  VMA A\n               /        \\         <split>\n            VMA B      VMA C\n               \\        /\n        root <- anon_vma 1\n               ----^ ^----        <fork>\n              /   parent  \\\n        anon_vma 2   anon_vma 3\n             |            |\n           VMA D        VMA E\n\n  VMA's D and E both get their own new\n  anon_vma's such that:\n\n  VMA D: anon_vma 2 -> anon_vma 1 -> root\n  VMA E: anon_vma 3 -> anon_vma 1 -> root\n\n  And if you found a folio referencing anon_vma 2, the existing check:\n\n\tanon_vma->root == vma->anon-vma->root\n\n  Would be true for VMA's B, C, D & E.\n\n  However after your change it'd be true for VMA D only, as it's the only\n  one with anon_vma 2 in its anon_vma_chain.\n\n  Whether or not that could actually happen in practice... \ud83d\ude42 I don't\n  know.\n\n  [...] after your change it'd be true for VMA D only, as it's the only\n  one with anon_vma 2 in its anon_vma_chain. [...] I would [...] say that\n  you are making the test stricter but more correct.\n\"\n\nIf this affects performance when KSM was never even involved, we could\njust track whether KSM ever merged anything and just skip these checks.\n\nThere isn't really a lot we can do otherwise: for mapped folios we might\nbe able to use folio_get_anon_vma(), but for unmapped folios there really\nis no easy way to see if the anon_vma is still valid.\n\nDocument the (confusing) lifetime requirements of folio_anon_vma().",
   "datePublished": "Nov 20, 2026, 5:50:03 AM",
-  "dateUpdated": "Nov 20, 2026, 5:50:03 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:05:31 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/74a05dab72662bd27ade63f6f44a2ea714815de7",
+    "https://git.kernel.org/stable/c/27e31a508e4f21f2e1bbb54f8994b235fd3ee2ea",
+    "https://git.kernel.org/stable/c/21cc8f704b6aed33175ae22a4c467c5e8e2bdd9e",
+    "https://git.kernel.org/stable/c/d25821a954382d13a5dd770ee5215729e8d274d7",
+    "https://git.kernel.org/stable/c/daa1e227f972f64a8468aa0101170fadb93ab552",
+    "https://git.kernel.org/stable/c/97ce258daffd374f5403641ca892f95e31769dbb",
     "https://git.kernel.org/stable/c/85260730efefc48111603fa865d224bae1f5447a",
     "https://git.kernel.org/stable/c/4c2dec1dce368ad9e9b1814307cb5ef3832fa07e"
   ],
   "aliases": [
+    "GHSA-jrv6-2gpm-h6x6",
     "CVE-2026-99650"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
+    {
+      "id": "0200de0b-cd17-3adf-8478-4490c088555c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "0523b285-f86a-3e73-a939-e30b1c4d3ddd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba6f0ff3981e6263ab81ac512f04cca55b85ec81 <97ce258daffd374f5403641ca892f95e31769dbb"
+    },
+    {
+      "id": "1bb0bf2f-e008-3775-ad7f-7b68e8b25ac1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba6f0ff3981e6263ab81ac512f04cca55b85ec81 <27e31a508e4f21f2e1bbb54f8994b235fd3ee2ea"
+    },
+    {
+      "id": "1bb6b417-8d88-367b-9dab-86e8b3e600a8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "2d8f8e38-bc94-3f7c-b27b-22e456c0eabc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba6f0ff3981e6263ab81ac512f04cca55b85ec81 <74a05dab72662bd27ade63f6f44a2ea714815de7"
+    },
+    {
+      "id": "2dd21521-8096-3a5e-b9a3-e7ef443aeb97",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "3d9f2efd-30ff-3e13-8684-5124f9c6d6e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "5801cf15-a836-3c47-bac4-468a9d4f5c48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba6f0ff3981e6263ab81ac512f04cca55b85ec81 <d25821a954382d13a5dd770ee5215729e8d274d7"
+    },
     {
       "id": "5cd12635-8232-3385-a44a-20d3253c9eb2",
       "product": {
@@ -36,6 +125,16 @@
       "product_version": "ba6f0ff3981e6263ab81ac512f04cca55b85ec81 <85260730efefc48111603fa865d224bae1f5447a"
     },
     {
+      "id": "7f415f3b-19a8-3c0a-a430-5516cad1d5ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.119"
+    },
+    {
       "id": "ba633fd9-e01c-3444-a333-35c932b2620b",
       "product": {
         "name": "Linux",
@@ -44,6 +143,36 @@
         }
       },
       "product_version": "patch: 7.4-rc2"
+    },
+    {
+      "id": "d0972328-9e66-3731-8f00-f3b2ed898e85",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba6f0ff3981e6263ab81ac512f04cca55b85ec81 <21cc8f704b6aed33175ae22a4c467c5e8e2bdd9e"
+    },
+    {
+      "id": "d9ab7883-5e36-36e4-9386-ed0fc92312cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.65"
+    },
+    {
+      "id": "ec0f3a19-86a1-36b4-8cc4-a53c26ecd5a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba6f0ff3981e6263ab81ac512f04cca55b85ec81 <daa1e227f972f64a8468aa0101170fadb93ab552"
     },
     {
       "id": "eda71cd1-7ede-3099-93f6-0538ed06d571",

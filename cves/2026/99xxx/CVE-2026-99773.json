@@ -3,19 +3,26 @@
   "enisaUuid": "f8f936a6-ca6a-3bde-b997-ae94926b72bc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/drm_crtc: ensure dma_fence_ops remain valid during device unbind\n\nIn [1], sashiko reported the following issue:\n\n=== snip ===\nLooking at how these fences are managed, drm_crtc_create_fence()\ncreates a dma_fence without taking a reference to the drm_device or\ndrm_crtc. Because the sync_file framework exposes this fence to\nuserspace, the fence can outlive the CRTC.\n\nThe dma_fence contract requires that data accessed by dma_fence_ops\n(like get_driver_name) must remain valid for an RCU grace period after\nthe fence is signaled. However, drm_crtc_cleanup() and the subsequent\nfreeing of the device do not wait for an RCU grace period via\nsynchronize_rcu().\n\nIf userspace calls ioctl(SYNC_IOC_FILE_INFO) concurrently with a device\nhot-unplug:\n\nCPU1 (Userspace)\nsync_file_get_name()\n  ops = rcu_dereference(fence->ops);\n  if (!dma_fence_test_signaled_flag())\n    // Preempted or delayed here\n\nCPU2 (Driver Teardown)\nSignals the fence (setting fence->ops = NULL)\nDestroys and frees the CRTC without waiting for an RCU grace period\n\nCPU1 (Resumes)\n  ops->get_driver_name(fence) -> drm_crtc_fence_get_driver_name()\n  crtc = fence_to_crtc(fence); // Casts to the freed CRTC\n  return crtc->dev->driver->name; // Use-after-free\n\n...\n\nDoes the CRTC or DRM device need to be kept alive for the RCU grace\nperiod, or should the fence hold a proper reference to prevent the\nuse-after-free when get_driver_name() and get_timeline_name() access\nthe freed CRTC structure?\n=== snap ===\n\nI believe this to be a correct observation and this patch implements\nthe suggestion of waiting for an RCU grace period before proceeding\nwith destruction of the drm_crtc, so that get_driver_name() and\nget_timeline_name() can still work.",
   "datePublished": "Nov 20, 2026, 5:51:37 AM",
-  "dateUpdated": "Nov 20, 2026, 5:51:37 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:07:17 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/6b046b7132b194c73078d237e4220497516011dd",
+    "https://git.kernel.org/stable/c/54c350d71a158f005c4613f32f1b0a57777d0a2a",
+    "https://git.kernel.org/stable/c/1b0bfef4e31f3c02ed54de519b15b840d5dad804",
+    "https://git.kernel.org/stable/c/d07a8465cd50a78d55b745ed002d5accf4a6d0a6",
     "https://git.kernel.org/stable/c/dd9a96b2271e28340acf2e3764914fe5f32f6102",
     "https://git.kernel.org/stable/c/07b2d7a3f2b984c20f5f2630a94f43ede387a8dc",
     "https://git.kernel.org/stable/c/f8e6f4deb868fd9da3eda95db222609ab1edc18d",
     "https://git.kernel.org/stable/c/3be436cbd3d265fe4fcfbb5b650edad7b2108443"
   ],
   "aliases": [
+    "GHSA-378q-gq2q-w9vq",
     "CVE-2026-99773"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.15,
   "enisaIdProduct": [
     {
       "id": "1b07da09-4677-37ea-b385-19d98c16fa2d",
@@ -26,6 +33,46 @@
         }
       },
       "product_version": "4.10"
+    },
+    {
+      "id": "2ad5c6bd-2b43-350f-9ce8-e2fee4ac5a6b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "3c9f946d-bc4e-3d3d-bf40-e55379fdb0bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6d6003c4b613c93973e4e870d83f4bed2ad9ac34 <1b0bfef4e31f3c02ed54de519b15b840d5dad804"
+    },
+    {
+      "id": "3fcb8f32-4ddb-3199-a451-f51a21778f85",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6d6003c4b613c93973e4e870d83f4bed2ad9ac34 <d07a8465cd50a78d55b745ed002d5accf4a6d0a6"
+    },
+    {
+      "id": "41ceaadf-fc2a-3d3a-9c77-f180fcdb4806",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "5916cf64-b2c3-38d6-a1a6-027ac4d536cf",
@@ -116,6 +163,46 @@
         }
       },
       "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "c2b4e14e-4289-3a1a-b699-86194c97423f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6d6003c4b613c93973e4e870d83f4bed2ad9ac34 <6b046b7132b194c73078d237e4220497516011dd"
+    },
+    {
+      "id": "e3f9e280-2454-39a9-8520-c12b9b2af146",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "f4dc4a0a-50d1-3c40-b6e8-74125e9f0d33",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "f6c43c8c-785b-346f-9cdb-d27de6a3329e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6d6003c4b613c93973e4e870d83f4bed2ad9ac34 <54c350d71a158f005c4613f32f1b0a57777d0a2a"
     }
   ],
   "enisaIdVendor": [

@@ -3,20 +3,47 @@
   "enisaUuid": "5f545946-113f-3f09-af44-7cc5e2aa8e85",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2/dlm: hold the lookup reference across convert AST enqueue\n\ndlm_convert_lock_handler() drops the reference it took when it found the\nlock on res->granted at its leave label, one statement before it calls\ndlm_queue_ast().  dlm_free_dead_locks() takes res->spinlock and drops the\nlist and base references, so a peer death landing in that gap leaves the\nhandler's own put as the one that frees the lock, and __dlm_queue_ast()\nthen reads lock->lockres from freed memory.\n\nThe handler is registered next to dlm_create_lock_handler(), so a convert\nmessage buffered on a dying peer's socket arrives on the same o2net\nreceive work that o2net_disconnect_node() does not wait for.  The two can\ninterleave as follows, with the reference counts as they are before this\nfix:\n\n  Socket data-ready       Node-down thread      Receive worker\n  -----------------       ----------------      --------------\n  o2net_data_ready()\n    select sc under\n    callback read lock\n                          o2net_disconnect_node()\n                            queue shutdown\n                            begin flush; new color\n    queue sc_rx_work\n    in the new color\n    release callback lock\n                            shutdown socket\n                            flush returns\n                                                read buffered convert_lock\n                                                dlm_convert_lock_handler()\n                                                  find lock on res->granted\n                                                  dlm_lock_get()  refs = 3\n                                                  lock res->spinlock\n                                                  __dlmconvert_master()\n                                                    call_ast = 1\n                                                  unlock res->spinlock\n                          DLM node-down cleanup\n                            lock res->spinlock\n                            dlm_free_dead_locks()\n                              unlink lock\n                              put list ref  refs = 2\n                              put base ref  refs = 1\n                            unlock res->spinlock\n                                                dlm_lock_put()  refs = 0\n                                                  free lock\n                                                dlm_queue_ast()\n                                                  __dlm_queue_ast()\n                                                  read lock->lockres\n                                                  (use-after-free)\n\n__dlmconvert_master() only moves the lock between lists, so the count\nentering the gap is base, list and lookup.  Drop the lookup reference\nafter the AST is queued instead of before it and the race ends with the\none __dlm_queue_ast() took, which dlm_flush_asts() releases later with\nast_pending cleared and ast_list unlinked.  No extra get is needed, and\nthe normal case ends with the same count as before.\n\ndlmconvert_master() has the same shape but is only reached from dlmlock()\nfor a lock this node owns, which dlm_free_dead_locks() never matches.",
   "datePublished": "Nov 19, 2026, 2:41:07 PM",
-  "dateUpdated": "Nov 19, 2026, 2:41:07 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:02:44 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/a57126a2f5a81232b3453fab8fd9f2f8fcf27017",
+    "https://git.kernel.org/stable/c/059d951ef87959435d6f1126ed7d2305dc836d45",
+    "https://git.kernel.org/stable/c/c736487fc0b933238ca59ec976dbd628c6ba1bf7",
+    "https://git.kernel.org/stable/c/7b8a7bb21a478dc1f0212f99bbfa017f2ee566d0",
     "https://git.kernel.org/stable/c/ecc5b17b8d2b1f720262e991896da2c909154a4d",
     "https://git.kernel.org/stable/c/a3dd8d3af023837516d8715393acbaa7b252f6d7",
     "https://git.kernel.org/stable/c/574aa7782c780b130463e1d7c0605a9e617880d1",
     "https://git.kernel.org/stable/c/125fe08ff6cfa064e1212f586f01993ee45c0330"
   ],
   "aliases": [
-    "CVE-2026-99432"
+    "CVE-2026-99432",
+    "GHSA-7xx6-8r25-7mxp"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.6,
   "enisaIdProduct": [
+    {
+      "id": "01e583a6-6fba-3780-9ee3-d10b36d570ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2c5c54aca9d0263f81bd4886232835ba31f7635a <a57126a2f5a81232b3453fab8fd9f2f8fcf27017"
+    },
+    {
+      "id": "04ab2a8b-2ecb-3782-a6fa-c19facd5c6dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
     {
       "id": "0c0801d1-973c-33e0-98bb-35238cd3b0ce",
       "product": {
@@ -28,6 +55,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "216b83f9-c3b2-3868-9a0c-ec4c487eb3ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "30eec731-1b89-3bc8-b693-6c0e81415057",
       "product": {
         "name": "Linux",
@@ -36,6 +73,36 @@
         }
       },
       "product_version": "2c5c54aca9d0263f81bd4886232835ba31f7635a <a3dd8d3af023837516d8715393acbaa7b252f6d7"
+    },
+    {
+      "id": "41b665f1-8fe9-36c5-b8ee-8cc2e65d64c2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2c5c54aca9d0263f81bd4886232835ba31f7635a <7b8a7bb21a478dc1f0212f99bbfa017f2ee566d0"
+    },
+    {
+      "id": "59765894-18fa-3b39-be1d-e35ff39c85a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2c5c54aca9d0263f81bd4886232835ba31f7635a <059d951ef87959435d6f1126ed7d2305dc836d45"
+    },
+    {
+      "id": "69fd715f-b41a-3756-92c4-cb4bda6017fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2c5c54aca9d0263f81bd4886232835ba31f7635a <c736487fc0b933238ca59ec976dbd628c6ba1bf7"
     },
     {
       "id": "7d2a1cf3-d784-3613-8331-9456bc51e502",
@@ -68,6 +135,16 @@
       "product_version": "patch: 7.4-rc1"
     },
     {
+      "id": "9bc88206-d380-35bd-8812-13e3c7bdb1af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "a0522090-03f2-3e5f-a99c-c8b5677b6c4c",
       "product": {
         "name": "Linux",
@@ -76,6 +153,16 @@
         }
       },
       "product_version": "2c5c54aca9d0263f81bd4886232835ba31f7635a <125fe08ff6cfa064e1212f586f01993ee45c0330"
+    },
+    {
+      "id": "aae6aa51-f473-375f-a68a-cda74d4c8a94",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "abcc284e-38b0-3f3b-9d73-e29e1264b90f",

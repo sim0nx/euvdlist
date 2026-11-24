@@ -3,19 +3,24 @@
   "enisaUuid": "aedb7129-2c54-3192-bcfe-702b06b0930c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngenirq: Defer kfree(irqaction) until irq_thread_dtor() finishes\n\nWhen an interrupt thread exits abnormally via do_exit() (e.g. the interrupt\nhandler oopses) without returning from irq_thread(), a concurrent call to\nfree_irq() could free the irqaction before the irq_thread_dtor() exit task\nwork runs.\n\n  irq thread (oopsed)                 free_irq()\n  -------------------                 ----------\n  do_exit()\n    exit_mm()\n      complete_vfork_done()  -------> kthread_stop() returns\n    exit_files() ...                  kfree(action)\n    exit_task_work()\n      irq_thread_dtor()\n        action->...                   <- use-after-free\n\nTrack the pending exit work with the IRQTF_EXIT_WORK thread flag, and have\n__free_irq() wait for the bit to clear before kfree().\n\nirq_thread_dtor() only runs on irq_thread abnormal exit. If that dtor also\nfaults, free_irq() will hang indefinitely, but double IRQ thread faults\nrequire a reboot anyways.\n\n[ tglx: Add missing include ]",
   "datePublished": "Nov 19, 2026, 2:43:07 PM",
-  "dateUpdated": "Nov 19, 2026, 2:43:07 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:18 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/38d9f85a44e58e20ee2495d284bedae07ce32ee2",
+    "https://git.kernel.org/stable/c/c5c65a0a75362ff9d28f96c719e9f458c72f17c0",
+    "https://git.kernel.org/stable/c/ac1dfa127969307c432aa4eb2ae21b406d51be46",
+    "https://git.kernel.org/stable/c/b21cf04007f8e039170674a6815e4ac97bbab417",
     "https://git.kernel.org/stable/c/ec397edc4c8ca868865953926831b539698469e6",
     "https://git.kernel.org/stable/c/a6deaadd460a3a3cfd59c857247097e8da892af8",
     "https://git.kernel.org/stable/c/08aaea3e62b2ddc69a65d52609a5924559d05af2",
     "https://git.kernel.org/stable/c/d04adff6860587e843948b0c31174f8ae11b8dfe"
   ],
   "aliases": [
-    "CVE-2026-99475"
+    "CVE-2026-99475",
+    "GHSA-r8wf-37qg-967j"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "16e64809-c509-3d1f-8b86-113003fae570",
@@ -26,6 +31,26 @@
         }
       },
       "product_version": "3.6"
+    },
+    {
+      "id": "34660b86-6a63-3834-b5bb-c0a4d6898788",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "476af8fe-a808-3eb6-978c-9def1c08c80e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "47d4e064-290e-39a0-869d-ded31c26bd5d",
@@ -48,6 +73,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "5c4b8a26-c580-3223-b83f-03d5b7cd1709",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ed3e694d78cc75fa79bf29698631b146fd27aa35 <38d9f85a44e58e20ee2495d284bedae07ce32ee2"
+    },
+    {
       "id": "7378b5e9-a2c5-3296-b5bd-3eaad217d40e",
       "product": {
         "name": "Linux",
@@ -56,6 +91,46 @@
         }
       },
       "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "7e596175-697a-32a0-9d64-60589fbde950",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "8a635c54-27a9-39ee-8a23-c8b34ba1aa48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "93a08ca5-4dce-3237-9a51-70468e37d877",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ed3e694d78cc75fa79bf29698631b146fd27aa35 <c5c65a0a75362ff9d28f96c719e9f458c72f17c0"
+    },
+    {
+      "id": "93d8f9bd-3c90-3fc6-b60d-8be09bdd3fe2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ed3e694d78cc75fa79bf29698631b146fd27aa35 <b21cf04007f8e039170674a6815e4ac97bbab417"
     },
     {
       "id": "9f927dfb-7ca0-3c58-a103-95db89347edb",
@@ -106,6 +181,16 @@
         }
       },
       "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "ea6384d6-8742-329b-a1a2-9c46330484ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ed3e694d78cc75fa79bf29698631b146fd27aa35 <ac1dfa127969307c432aa4eb2ae21b406d51be46"
     },
     {
       "id": "f2f387de-1af9-3987-91a0-0b39b05113c8",

@@ -3,19 +3,31 @@
   "enisaUuid": "c5bf3169-d487-31ed-a04c-5727e06be8cb",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: reject a negative TCP header offset in qdisc_pkt_len_segs_init()\n\nqdisc_pkt_len_segs_init() stores skb_transport_offset(), or the inner\noffset, in the unsigned hdr_len. A header in front of skb->data gives a\nnegative offset. For an offset a little below zero, pskb_may_pull() gets a\nsmall length and succeeds. Then a 64-bit kernel reads the TCP header far\nafter the skb and can crash. Further below zero pskb_may_pull() fails.\n\nCommit 28a57fb2c5df (\"net: iptunnel: fix stale transport header during\ntunnel decapsulation\") fixed one source of such offsets. Other code that\nremoves bytes from the front of a packet can leave the same stale header.\n\nReturn SKB_DROP_REASON_SKB_BAD_GSO for a negative offset in the TCP branch.\nSKB_GSO_UDP_L4 and the other GSO types read no header and still get a wrong\nqdisc_pkt_len(). On a 64-bit kernel only packets that cause the read after\nthe skb today get a new result. Then __dev_queue_xmit() drops them and\nreturns -EINVAL, but sch_handle_ingress() ignores the result. Their content\ncan be valid. Thus the code that leaves the header stale needs its own fix.",
   "datePublished": "Nov 20, 2026, 5:49:53 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:53 AM",
+  "dateUpdated": "Nov 23, 2026, 8:05:24 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/93c181f2d0e08c35be9be37db1722c1aae60ee95",
     "https://git.kernel.org/stable/c/d88be0067857b68df06a33cc056c9f05101c09d4",
     "https://git.kernel.org/stable/c/765af9e95c840fcbbecf34ca1e787daba8eac569",
     "https://git.kernel.org/stable/c/35d2d6e5ac0d22428b2a0216061f3330c095393c"
   ],
   "aliases": [
-    "CVE-2026-99636"
+    "CVE-2026-99636",
+    "GHSA-9x2v-m36v-rm8v"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "3b50ab1d-b0b8-3bde-8732-fbc9fd03a3cd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5895cfc76924a629c6eaa5e5f049de642860045f <93c181f2d0e08c35be9be37db1722c1aae60ee95"
+    },
     {
       "id": "62e3739c-1c25-3c18-91d0-c86e4a3711c4",
       "product": {
@@ -35,16 +47,6 @@
         }
       },
       "product_version": "patch: 6.12.118"
-    },
-    {
-      "id": "67d630ca-27a5-3230-b6f7-cb25f111265f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5895cfc76924a629c6eaa5e5f049de642860045f"
     },
     {
       "id": "6bccc491-f726-390e-ad89-a6103eec61bb",
@@ -97,14 +99,14 @@
       "product_version": "7.0.10 <7.1"
     },
     {
-      "id": "b9254950-28b4-312d-af87-9bf2e5630101",
+      "id": "b4c054d6-041e-360d-82a8-fb643d462b47",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.6.160 <6.7"
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "c63ef923-9d94-30f3-b699-a843fa002d91",
@@ -125,6 +127,16 @@
         }
       },
       "product_version": "7564dc804d8289d2e5c6edb8173754051b71bff4 <d88be0067857b68df06a33cc056c9f05101c09d4"
+    },
+    {
+      "id": "d322d547-8f90-3092-9fa7-cdf804cf2a79",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.160 <6.6.163"
     },
     {
       "id": "f3b8fada-721d-301a-82a5-21ab059efca1",

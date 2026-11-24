@@ -3,19 +3,24 @@
   "enisaUuid": "76300d1f-8efd-3cb0-8145-16116f4087cf",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrxrpc: Fix update of call->tx_pending without holding lock\n\nCurrently, rxrpc_send_data() updates call->tx_pending just before it\nreturns - but it won't be holding the call->user_mutex when it does this if\na wait was interrupted by a signal.  This would allow a parallel sendmsg()\nto race.\n\nFurther, both the callers of rxrpc_send_data() call it with the lock held,\nand then it returns an indication through the parameter list to say whether\nit has dropped the lock or not - after which the callers both just drop the\nlock if it's still held.\n\nFix this by:\n\n (1) Moving the release of call->user_mutex down into rxrpc_send_data() and\n     get rid of the indicator parameter.  This makes it easier to see where\n     the lock is held.\n\n (2) After waiting, if the attempt to reacquire the mutex is interrupted,\n     just return directly there rather than going to out_unlock\n\n (3) Restricting the txb variable to inside the buffering loop and leaving\n     ->tx_pending set until we've queued the buffer.\n\nNote that there's a slight change in behaviour in that wait_for_space\nfailure now doesn't check for completion because it doesn't hold the call\nuser_mutex.  The caller, however, should re-issue the send and pick up any\nerror at a second attempt.",
   "datePublished": "Nov 19, 2026, 2:22:10 PM",
-  "dateUpdated": "Nov 19, 2026, 2:36:51 PM",
+  "dateUpdated": "Nov 23, 2026, 8:01:45 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/43ba0d1e2e2aaef662eeebb30b7065e54a92f153",
+    "https://git.kernel.org/stable/c/d625b62be703e03d8ebe1caf578029d699009dcd",
+    "https://git.kernel.org/stable/c/a1610975f8766ac492de56336086e7a895881947",
+    "https://git.kernel.org/stable/c/b878e2b7445a220746eaa3db0e448d6b4a122d2d",
     "https://git.kernel.org/stable/c/35f7a69391ca0819d04ca6db3c2355848d633e16",
     "https://git.kernel.org/stable/c/965456110cf6952cc4eec80761171503e6e424df",
     "https://git.kernel.org/stable/c/ec98e8bdbde85e2dd2d43570e25b52bdfac1735b",
     "https://git.kernel.org/stable/c/7801c42c3bb737cfb06194a383873fcad8daacf5"
   ],
   "aliases": [
-    "CVE-2026-99350"
+    "CVE-2026-99350",
+    "GHSA-8xfh-wr24-pc99"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "019623ed-8bbc-3658-8468-41e861e084a7",
@@ -56,6 +61,76 @@
         }
       },
       "product_version": "b0f571ecd7943423c25947439045f0d352ca3dbf <ec98e8bdbde85e2dd2d43570e25b52bdfac1735b"
+    },
+    {
+      "id": "2600ef11-a638-3227-8bce-f2987d0ea482",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.140 <5.10.275"
+    },
+    {
+      "id": "2ed7f38f-238a-3571-a85c-ae15b3c6b46f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "79e2ca7aa96e80961828ab6312264633b66183cc <43ba0d1e2e2aaef662eeebb30b7065e54a92f153"
+    },
+    {
+      "id": "5415e92d-b2ef-3601-b9e5-85346d2ee43d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b0f571ecd7943423c25947439045f0d352ca3dbf <a1610975f8766ac492de56336086e7a895881947"
+    },
+    {
+      "id": "5d589829-ce3f-3aba-82af-6e346eeab0a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "5fcd77f6-2b19-332e-8d13-b2db4e915cb0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.64 <5.15.226"
+    },
+    {
+      "id": "62d7cb13-d0f9-30aa-a188-e7c8a72bbeb8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "63c0e83f-4393-3d86-9cf4-54b1416d8b38",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "6647a0c5-3699-399f-91ca-7d152706cc3e",
@@ -108,26 +183,6 @@
       "product_version": "patch: 6.18.61"
     },
     {
-      "id": "a40e3fd2-0217-3545-8de5-4a4d21560273",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5.10.140 <5.11"
-    },
-    {
-      "id": "a6dfa1fb-5a05-3734-924e-3f7bd0ae822d",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "79e2ca7aa96e80961828ab6312264633b66183cc"
-    },
-    {
       "id": "aed5ee7c-098c-3aca-a919-1f6e0ca7a1c5",
       "product": {
         "name": "Linux",
@@ -136,6 +191,16 @@
         }
       },
       "product_version": "b0f571ecd7943423c25947439045f0d352ca3dbf <7801c42c3bb737cfb06194a383873fcad8daacf5"
+    },
+    {
+      "id": "b00c6e68-7755-3854-b124-d416d334e7ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2bc769b8edb158be7379d15f36e23d66cf850053 <d625b62be703e03d8ebe1caf578029d699009dcd"
     },
     {
       "id": "b0a067c7-f3ba-3688-9fe0-b92fddbbeebc",
@@ -158,24 +223,24 @@
       "product_version": "5.19.6 <5.20"
     },
     {
-      "id": "dc6be488-d305-34a7-a9f6-fa2355179470",
+      "id": "bb7e30d7-9557-328b-bd5b-c1fa27967954",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "5.15.64 <5.16"
+      "product_version": "patch: 5.10.275"
     },
     {
-      "id": "efd3408c-a5c2-3ebd-933a-32d96942f391",
+      "id": "e91c4ad8-95e4-33f3-a28a-1997c10d848f",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "2bc769b8edb158be7379d15f36e23d66cf850053"
+      "product_version": "b0f571ecd7943423c25947439045f0d352ca3dbf <b878e2b7445a220746eaa3db0e448d6b4a122d2d"
     }
   ],
   "enisaIdVendor": [

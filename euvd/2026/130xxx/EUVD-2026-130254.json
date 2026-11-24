@@ -3,19 +3,23 @@
   "enisaUuid": "bf25964b-eaef-3652-8495-cd30ddd6f693",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: verify transform SessionId matches the decrypted header\n\nWhen an encrypted request comes in, the decryption key is picked by\nthe SessionId in the transform header, but the request is then\nauthorized under whatever session the decrypted inner header names.\nNothing ever compares the two, so on a connection with more than\none session a client can get a request decrypted with one session's\nkey and run it as another session. Encrypted requests are exempt\nfrom signing too, so a valid AEAD tag is the only proof of session\nidentity, and it is checked against the wrong session.\n\nMS-SMB2 says the server must check that the transform SessionId\nmatches the one in the decrypted SMB2 header and treat a mismatch\nas a protocol error. Add that check in __handle_ksmbd_work() after\ndecryption, before dispatching: the message has to be at least one\nfixed SMB2 header, the first operation must not set\nSMB2_FLAGS_RELATED_OPERATIONS and its SessionId must match the\ntransform SessionId, and every following non-related operation in\na compound chain must carry the same SessionId. NextCommand\noffsets must be 8-byte aligned and stay inside the message; the\nbounds check is done by subtraction so it cannot wrap.\n\nWhen the decrypted payload is a compression transform, the\nexisting decompression step runs first and the decompressed SMB2\nmessage is checked instead, since a compression transform header\ncarries no SessionId.",
   "datePublished": "Nov 19, 2026, 2:44:42 PM",
-  "dateUpdated": "Nov 19, 2026, 2:44:42 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:55 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/aff28f0f92ab3f9809ccab5075724ab54809378f",
+    "https://git.kernel.org/stable/c/1ab4528483a8307787ad66457045ebfb7c652d16",
+    "https://git.kernel.org/stable/c/62af7b1179fb0155ecda158b6e02e145d1abdc99",
     "https://git.kernel.org/stable/c/b150049dffd0865fb6e60ce843299216687f02ad",
     "https://git.kernel.org/stable/c/7f30b886c5a1a2b3d9342ea82d0699eff812a472",
     "https://git.kernel.org/stable/c/8c5f62dd9a0b61e0082d419796e0743e820bd002",
     "https://git.kernel.org/stable/c/798214e6fafcdcc29f5ba2661a473232b5e70cfb"
   ],
   "aliases": [
-    "CVE-2026-99531"
+    "CVE-2026-99531",
+    "GHSA-557w-hqxf-59v9"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "07f993cd-0a8c-3086-9af0-4fe214477dba",
@@ -28,6 +32,16 @@
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <798214e6fafcdcc29f5ba2661a473232b5e70cfb"
     },
     {
+      "id": "08ec31ab-660e-3443-9800-7f55874e5488",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <62af7b1179fb0155ecda158b6e02e145d1abdc99"
+    },
+    {
       "id": "1bc9190c-b2e2-3181-9976-c3e6529a776b",
       "product": {
         "name": "Linux",
@@ -36,6 +50,36 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "2292341a-7144-3211-8e02-b5ffb5a85ac2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <1ab4528483a8307787ad66457045ebfb7c652d16"
+    },
+    {
+      "id": "240356fc-38b9-307b-97ea-69ec8a083aa2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <aff28f0f92ab3f9809ccab5075724ab54809378f"
+    },
+    {
+      "id": "339c29ad-5c08-3d0e-a856-12b5572e99a8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "34fb1715-d4c4-32bb-aa6b-c07ec9995439",
@@ -56,6 +100,16 @@
         }
       },
       "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "4ff5031d-1aa5-3c78-adf9-e879b776c696",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "6228d46c-4e31-37d8-a54e-aa2b2ed0ae6b",
@@ -96,6 +150,16 @@
         }
       },
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <7f30b886c5a1a2b3d9342ea82d0699eff812a472"
+    },
+    {
+      "id": "e280bb2e-b562-30f5-affc-9a88be158bdf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "e99705b4-28e4-3f27-83de-7514bcdc33de",

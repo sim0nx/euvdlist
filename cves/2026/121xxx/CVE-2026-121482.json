@@ -1,18 +1,24 @@
 {
   "id": "EUVD-2026-128603",
   "enisaUuid": "caa1665f-1035-3b01-8161-954e55296676",
-  "description": "Verifying a maliciously crafted CMS or PKCS#7 SignedData message with CRL checking enabled may consume excessive CPU time, growing with the square of the message size.",
+  "description": "Issue summary: Verifying a maliciously crafted CMS or PKCS#7 SignedData\nmessage with CRL checking enabled may consume excessive CPU time, growing with\nthe square of the message size.\n\nImpact summary: An attacker who can submit a CMS or PKCS#7 SignedData message\nto an application that verifies it with CRL checking enabled can occupy a CPU\ncore for seconds to minutes, causing Denial of Service. Applications that\nleave CRL checking disabled are not affected.\n\nCWE: CWE-407: Inefficient Algorithmic Complexity\n\nDescription: With CRL checking enabled, OpenSSL compares each CRL distribution\npoint of a certificate against the issuing distribution point of every\ncandidate CRL. For a nameRelativeToCRLIssuer distribution point, the full name\nis the CRL issuer name with the relative name appended. Since the change that\ndeferred this computation, crl_crldp_check() rebuilds that full name for each\ncandidate CRL and frees it again.\n\nCMS_verify() and PKCS7_verify() take both the distribution points and the\ncandidate CRLs from the message, and this scoring runs before any signature is\nchecked. An application is exposed only if it sets X509_V_FLAG_CRL_CHECK on\nthe store and does not pass CMS_NOCRL or PKCS7_NOCRL; CRL checking is off by\ndefault. In TLS the CRLs come from the local store, so a peer controls only\nthe distribution point count.\n\nThe cost grows with the product of the distribution point count, the CRL count\nand the issuer name length, all chosen by the message author; a few hundred\nkilobytes can occupy a CPU core for tens of seconds. Verification still fails\nas it should, with no crash, no incorrect result and no memory growth.\nRequiring CRL checking is what limits the severity.\n\nFIPS impact: no\nThe affected code is outside the FIPS module boundary.",
   "datePublished": "Nov 18, 2026, 11:43:42 AM",
-  "dateUpdated": "Nov 18, 2026, 11:43:42 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 24, 2026, 11:29:55 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
-    "https://github.com/openssl/openssl/pull/33546"
+    "https://openssl-library.org/news/secadv/20261124.txt",
+    "https://github.com/openssl/openssl/commit/14a9f9ad6e8a17437fb75545f33e4fc56e9d41f6",
+    "https://github.com/openssl/openssl/commit/c37874e29c43e86f5ed94d02275f1c31cf68afb3",
+    "https://github.com/openssl/openssl/commit/468c287cf451a834b370b69ab321b8ffdfac23aa"
   ],
   "aliases": [
+    "GHSA-frqh-hqg8-j36v",
     "CVE-2026-121482"
   ],
   "assigner": "openssl",
-  "epss": 0.0,
+  "epss": 0.36,
   "enisaIdProduct": [
     {
       "id": "0aaf9f46-4c84-3657-b86c-3c233d45a7f9",

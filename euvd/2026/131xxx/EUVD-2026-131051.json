@@ -3,19 +3,23 @@
   "enisaUuid": "31b268e0-9a96-3c79-b9af-7c550f0cb033",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nudf: check the unallocated space table when it is loaded\n\nudf_table_new_block() hands out the first block of the extent closest\nto its goal and trusts that the extent covers at least one whole block\ninside the partition.  Nothing checks that.  A zero-length extent makes\nit return the block the extent points at, which need not be free, and\nthe subtraction of one block then underflows the length into the type\nbits, turning the entry into a bogus continuation.  An extent running\npast the end of the partition makes it return blocks behind the\npartition.\n\nSuch tables are not only found on crafted images: until the previous\ncommit, udf_table_new_block() itself left zero-length extents behind\nin tables written by mkudffs, and then converted them into extents\nrunning past the partition.\n\nCheck every extent once when the table is loaded, and refuse\nread-write access if one is empty, is not a whole number of blocks, or\ndoes not lie inside the partition, in the same way as for other\nallocation information the kernel cannot use.  Check first that the\ntable is an Unallocated Space Entry at all: the walk starts at the\noffset of the allocation descriptors in one, and for a file entry that\noffset lies before the inode's in-memory copy of the descriptors.\nTreat a chain of allocation extent descriptors that leads back to\nitself the same way: the walk would otherwise return the same extents\nforever, and the mount would never finish.  Let a fatal signal\ninterrupt the walk and fail the mount.\n\nRefusing read-write access to an empty extent is deliberate.  It shows\nthat an old kernel took the last block but left the entry behind.  If\nconsumed again, the entry returns an in-use block and turns into a huge\nbogus extent.  Refusing the table before that\nhappens avoids this second allocation; the filesystem can still be\nmounted read-only.  The check cannot detect every overlap that may\nalready exist in a damaged table.\n\nThis patch should be backported together with the previous one: that\npatch stops creating new empty extents, and this one rejects existing\nones before they are consumed again.",
   "datePublished": "Nov 20, 2026, 5:49:26 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:26 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:04:55 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/3ed23daf545953a7a1f03bad511f9fe742874f43",
     "https://git.kernel.org/stable/c/9f3df19234d2c180b9a99b0d3c2472e8fade5043",
     "https://git.kernel.org/stable/c/88401035fbfcad7067793455326262ac30633586",
     "https://git.kernel.org/stable/c/302eb1fa5be5e476a633d8ed0fd56ea5efa57374",
     "https://git.kernel.org/stable/c/e614c3e35a6699ed691b4d17e1ec4230e34aa3eb"
   ],
   "aliases": [
+    "GHSA-wrch-vrc4-vjvq",
     "CVE-2026-99601"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "31586d80-4dce-3229-9c14-2c1f4cc3b37d",
@@ -26,6 +30,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <9f3df19234d2c180b9a99b0d3c2472e8fade5043"
+    },
+    {
+      "id": "4e360a06-483c-3543-bec5-c2a41aadbe17",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "50e88049-efc3-3ec4-a650-54464b1305fe",
@@ -106,6 +120,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e614c3e35a6699ed691b4d17e1ec4230e34aa3eb"
+    },
+    {
+      "id": "f72056fd-b2fa-3c7c-a0ba-b92185099306",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <3ed23daf545953a7a1f03bad511f9fe742874f43"
     },
     {
       "id": "fd0ab64f-5342-3d8d-9e19-4be5436d99e5",

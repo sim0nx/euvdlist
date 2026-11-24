@@ -3,17 +3,20 @@
   "enisaUuid": "bbc7dfb0-1a41-3b7a-bb52-e0e63a992c3b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/cma: don't release CMA pages still in use\n\nWhen a driver calls dma_free_contiguous() before quiescing DMA, the\npage might still have a reference from the device.\nput_page_testzero() there returns false, WARN fires, but the code proceeds\nto free_contig_frozen_range() putting a live page onto buddy and clearing\nthe bitmap. A subsequent allocation can hand the same PFN to a new\nowner while the original holder still references it.\n\nA concurrent put_page() that drops the last reference between the\ntestzero loop and free_contig_frozen_range() can double-queue the page\nvia page->lru, corrupting buddy lists.\n\nAvoid the corruption by not freeing a CMA region if any of the\npages inside are still in use.\n\nMake it explicit in the warning that the driver allowed a leak.\n\nWhile at it, use page_ref_freeze() to make the semantics clearer and\nswitch to pr_warn_ratelimited().\n\n[ david: use page_ref_freeze() + pr_warn_ratelimited() ]",
   "datePublished": "Nov 20, 2026, 5:49:59 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:59 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 22, 2026, 11:09:24 AM",
+  "baseScore": 7.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/485214cc031771fdbd5829b431f4f115e285dc21",
     "https://git.kernel.org/stable/c/e8abc61d8a549a91c8fa639f68be2ef13d5fa63b"
   ],
   "aliases": [
-    "CVE-2026-99645"
+    "CVE-2026-99645",
+    "GHSA-646v-9cch-4hmg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "0aa7c699-915f-3088-b0e7-0fc601c0affb",

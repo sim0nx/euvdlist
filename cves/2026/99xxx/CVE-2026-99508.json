@@ -3,19 +3,21 @@
   "enisaUuid": "278f39cd-0478-3053-b83c-4fb004f5e6bc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: ipu-bridge: Fix use-after-free in IVSC error path\n\nipu_bridge_get_ivsc_acpi_dev() returns an ACPI device with a reference\nheld. If no matching CSI device is found, ipu_bridge_check_ivsc_dev()\ndrops that reference before passing the device to dev_err(). Concurrent\nCSI device and ACPI namespace removal can drop the other references,\nmaking this the final put. dev_err() then reads the freed struct\nacpi_device and its kobject name.\n\nThis was reproduced without kprobes by racing normal CSI platform-device\nunregistration and ACPI configfs table removal against the production\nipu_bridge_init() entry. KASAN reported the final free through\ndevice_release(), followed by invalid reads through _dev_err().\n\nEmit the error message while the lookup reference is still held, then\ndrop the reference as before.\n\nSource reproducers and vulnerable/fixed serial logs, with only the build\nhostname redacted, are available at:\nhttps://github.com/kimaiden1984-boop/linux-ipu-bridge-acpi-uaf-reproducer\n\nThe fixed target builds with W=1 on x86-64. This was not tested on\nphysical IPU hardware. The tests establish runtime reachability but do\nnot measure occurrence frequency on shipping systems or establish\nexploitability.",
   "datePublished": "Nov 19, 2026, 2:44:03 PM",
-  "dateUpdated": "Nov 19, 2026, 2:44:03 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:39 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/92c84f225836f26375b769f23f7dfdb31bb677d6",
     "https://git.kernel.org/stable/c/2af4892580167181c3181b2f0b6ffab1be0096c9",
     "https://git.kernel.org/stable/c/d1df2ec20a6ddac6ae553b34b39472a20c5de9c6",
     "https://git.kernel.org/stable/c/adf422b7587bff1c9069406ce7a6c5a1f0e70193",
     "https://git.kernel.org/stable/c/3d42d1c82717f0853379b516a7fab54b636e09cc"
   ],
   "aliases": [
-    "CVE-2026-99508"
+    "CVE-2026-99508",
+    "GHSA-q87q-qg4h-vwfg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.23,
   "enisaIdProduct": [
     {
       "id": "1a9d49c8-4b5e-33c8-9e9f-2fc2899c7f84",
@@ -46,6 +48,16 @@
         }
       },
       "product_version": "c66821f381aed2c7c754d6ac8920a8665a3a01f7 <adf422b7587bff1c9069406ce7a6c5a1f0e70193"
+    },
+    {
+      "id": "6abac50f-93ec-35e6-a194-a3ddc5780510",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c66821f381aed2c7c754d6ac8920a8665a3a01f7 <92c84f225836f26375b769f23f7dfdb31bb677d6"
     },
     {
       "id": "70c498dc-f75a-31e8-a18a-f72edb1241c6",
@@ -106,6 +118,16 @@
         }
       },
       "product_version": "c66821f381aed2c7c754d6ac8920a8665a3a01f7 <d1df2ec20a6ddac6ae553b34b39472a20c5de9c6"
+    },
+    {
+      "id": "e6107c64-d1db-3816-ab3e-782f2905d21b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "fc390904-9c3b-3046-a026-33d7a95dd296",

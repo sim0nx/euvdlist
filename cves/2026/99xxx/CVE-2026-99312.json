@@ -3,20 +3,46 @@
   "enisaUuid": "33f1663b-a69b-3ea8-b21d-495420624f3d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: x86: Unconditionally reset MMU context when emulating INIT\n\nForce an MMU reset when emulating an INIT even if paging was already\ndisabled, as the MMU page role includes guest_mode (L2), i.e. an INIT while\nL2 is running with CR0.PG=0 will result in KVM running L1 with a stale MMU\ncontext.\n\nAlternatively, the reset could be scoped strictly to paging being enabled\nor L2 being active, but SMM is also encoded in the page role.  Even though\nit _should_ be impossible for the vCPU to be INIT'd while SMM is active,\nthere's zero value in not handling SMM.  At that point, the only scenario\nwhere KVM _doesn't_ need to reset the MMU context is on an INIT with the\nvCPU running in Real Mode or Unpaged Protect Mode, and while INIT in those\nmodes is somewhat common, it's far from a hot path and re-initializing the\nMMU is not expensive, especially when the role isn't changing (KVM elides\nmost of the re-configuration in that case).\n\nNote, like the Fixes commit, this bug only affects nested SVM as INIT is an\nunconditional intercept on VMX, i.e. it's impossible to emulate INIT while\nL2 is active.\n\nTemporarily keep the guest TLB flush when CR0.PG is being cleared even\nthough it is fully redundant with the flush that is emitted on all INIT\nevents (KVM itself only does RESET when a vCPU is being created, i.e. when\nCR0.PG must be '0').",
   "datePublished": "Nov 18, 2026, 8:42:06 AM",
-  "dateUpdated": "Nov 18, 2026, 8:42:06 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:01:17 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/97be39acdbd7f33fdd8d8ca900d16fbd05482683",
+    "https://git.kernel.org/stable/c/1c59317eba381503abdf38251a687d0e772abbec",
+    "https://git.kernel.org/stable/c/87bd6507186c6357fb9267ab5aca869c57f0ef54",
     "https://git.kernel.org/stable/c/f55a3e4e08dc004b4bab7c1e9323d7e7e96e266a",
     "https://git.kernel.org/stable/c/24f644ea26c2ebb7b14c3baa2aa92d37fde3095f",
     "https://git.kernel.org/stable/c/d47bae9eb33b3ca0843a0954b7d0cafb354c99b0",
     "https://git.kernel.org/stable/c/c7c288d178cb0b78d3464a616b16b1aa0b316049"
   ],
   "aliases": [
+    "GHSA-8gg9-294g-g2r6",
     "CVE-2026-99312"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
+    {
+      "id": "12e6d468-ee49-367e-9a53-baebaa0989d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "182cb09d-831e-37f3-a532-ffb1be225bcf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6425c590d0cc6914658a630a40b7f8226aa028c3 <97be39acdbd7f33fdd8d8ca900d16fbd05482683"
+    },
     {
       "id": "216f56e6-f5ac-32bc-a952-03a0c3d514ac",
       "product": {
@@ -48,6 +74,16 @@
       "product_version": "patch: 6.12.118"
     },
     {
+      "id": "2df37d46-d178-3b31-85a2-fa832a5e79ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.81 <5.15.226"
+    },
+    {
       "id": "50b32a8a-b68e-30dd-9b4a-83034042e273",
       "product": {
         "name": "Linux",
@@ -58,6 +94,16 @@
       "product_version": "6.1"
     },
     {
+      "id": "5db9aa04-3930-335a-8076-1e049008342a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "5dd8563b-c1c0-38e1-a91f-ae8fd09d8f33",
       "product": {
         "name": "Linux",
@@ -66,6 +112,16 @@
         }
       },
       "product_version": "ed129ec9057f89d615ba0c81a4984a90345a1684 <f55a3e4e08dc004b4bab7c1e9323d7e7e96e266a"
+    },
+    {
+      "id": "615d2252-c39d-34da-9fda-431d562207b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ed129ec9057f89d615ba0c81a4984a90345a1684 <87bd6507186c6357fb9267ab5aca869c57f0ef54"
     },
     {
       "id": "72051193-b608-3266-a10b-a165a00048fb",
@@ -86,16 +142,6 @@
         }
       },
       "product_version": "ed129ec9057f89d615ba0c81a4984a90345a1684 <d47bae9eb33b3ca0843a0954b7d0cafb354c99b0"
-    },
-    {
-      "id": "91b8eae3-b82c-33d9-8344-3beb752ee40b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5.15.81 <5.16"
     },
     {
       "id": "95622b57-233d-39dd-b585-fdb0f4310b1b",
@@ -128,6 +174,16 @@
       "product_version": "ed129ec9057f89d615ba0c81a4984a90345a1684 <24f644ea26c2ebb7b14c3baa2aa92d37fde3095f"
     },
     {
+      "id": "d8993e62-b45d-3712-abd6-51945896704d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ed129ec9057f89d615ba0c81a4984a90345a1684 <1c59317eba381503abdf38251a687d0e772abbec"
+    },
+    {
       "id": "de29ce6b-89a0-384f-b8cc-eec60a45328a",
       "product": {
         "name": "Linux",
@@ -138,6 +194,16 @@
       "product_version": "patch: 7.4-rc2"
     },
     {
+      "id": "defa251b-5620-3155-932f-fa2cbeaabbc5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "fb37d680-61cd-3450-82f6-ca3842db56a7",
       "product": {
         "name": "Linux",
@@ -146,16 +212,6 @@
         }
       },
       "product_version": "patch: 7.3.5"
-    },
-    {
-      "id": "fb48402b-8597-3dfa-8f86-dc758b9a1398",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "6425c590d0cc6914658a630a40b7f8226aa028c3"
     }
   ],
   "enisaIdVendor": [

@@ -3,20 +3,77 @@
   "enisaUuid": "048c0c53-5c21-3c30-b4e4-77f2cd4d95cd",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nudf: don't let the extent type hide an exhausted free-space table extent\n\nudf_table_new_block() takes the first block of the free-space table\nextent closest to the goal.  It keeps that extent's type and length\ntogether in goal_elen, subtracts one block, and deletes the extent only\nif goal_elen then reaches zero.  UDF 2.60 section 2.3.7.1 requires the\nfree-space extents of an Unallocated Space Entry to be of type 1\n(allocated but not recorded), and mkudffs writes them that way.  For\nsuch an extent the type bits keep goal_elen non-zero, so taking its last\nblock leaves a type-1 extent of length zero behind, starting at the\nblock after the extent, which is in use.\n\nThe next allocation that picks this empty extent returns that in-use\nblock.  Subtracting a block from 0x40000000 then borrows from the type\nbits, and the extent becomes type 0 with a length of 2^30 - blocksize:\nabout a gigabyte of \"free\" space overlapping live metadata, the other\ntable extents and whatever lies behind the partition.  From then on\nblocks are handed out twice, or past the end of the partition.\n\nExtents that udf_table_free_blocks() adds are type 0, where the check\nworks, so only tables written by mkudffs or by another implementation\nare affected.  Nothing more than filling such a filesystem is needed:\non a fresh 1 MiB \"mkudffs --space=unalloctable\" image, creating empty\nfiles until the partition is full writes file entries over the reserve\nvolume descriptor sequence and the backup anchor, and df then reports a\nnegative amount of used space.\n\nOn syzbot's images the same double allocation is what the two reports\nbelow trip over.  In the first, ftruncate() extends a new file with\nenough hole extents to need a chain of allocation extent descriptors;\none AED is placed on another inode's file entry, and a later one is\nplaced on the block of the AED currently being filled, which\nudf_setup_indirect_aext() zeroes, so __udf_add_aext() finds\nlengthAllocDescs out of step with its cursor.  In the second, an AED\nis placed past the end of the device, sb_getblk() fails, and the error\npath of udf_do_extend_file() calls udf_truncate_extents() on an extent\nlist that no longer covers i_size.\n\nKeep the type separately from the length, as udf_table_prealloc_blocks()\nalready does.",
   "datePublished": "Nov 20, 2026, 5:49:27 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:27 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:04:56 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/816a6df00e9637a438668da849ee00bf0cf7efe0",
+    "https://git.kernel.org/stable/c/762315609f9695d983c43a6031a487693b5cb780",
+    "https://git.kernel.org/stable/c/30aac8fc4f24b1b065b59a7b07e26030b22c4c69",
+    "https://git.kernel.org/stable/c/ed79c0538e1e42c706409f4799c6145bf2d02365",
     "https://git.kernel.org/stable/c/a40b887f4b67cf969c23e19c28b650d6b5e8afeb",
     "https://git.kernel.org/stable/c/78885b05188d3df733a9697d67bfcbb6d8330f76",
     "https://git.kernel.org/stable/c/c4f8f503f2038269ffe9bca218bea65bbece9998",
     "https://git.kernel.org/stable/c/da582d84fcf5f2f0c1d7760e1a899ca7cedb80fc"
   ],
   "aliases": [
-    "CVE-2026-99602"
+    "CVE-2026-99602",
+    "GHSA-f4rj-3f27-8x82"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "014542d6-5e3f-3a40-8022-768fb434a357",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "154295c6-6971-3f4d-bc6d-130036fc8df4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <816a6df00e9637a438668da849ee00bf0cf7efe0"
+    },
+    {
+      "id": "2b940a10-b2f8-3b8b-9935-f261c910a739",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "3cd57fa2-8ccc-3e19-9b8c-b198955cfb3e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "495463d0-8eef-3460-905e-fd29d9282bb6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <762315609f9695d983c43a6031a487693b5cb780"
+    },
     {
       "id": "4b8a0845-667f-3287-a862-a475232a4824",
       "product": {
@@ -78,6 +135,16 @@
       "product_version": "patch: 7.4-rc2"
     },
     {
+      "id": "ae9642da-8dbb-39fd-9694-79771d14aba5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "c3b889a7-1bfb-3526-a3c0-c3ea2b1cf445",
       "product": {
         "name": "Linux",
@@ -98,6 +165,16 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c4f8f503f2038269ffe9bca218bea65bbece9998"
     },
     {
+      "id": "d1421b16-a17d-3c3e-a322-6ab8e7de8114",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <ed79c0538e1e42c706409f4799c6145bf2d02365"
+    },
+    {
       "id": "d26405fd-ff98-3d48-a9dd-c35a37c82602",
       "product": {
         "name": "Linux",
@@ -116,6 +193,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a40b887f4b67cf969c23e19c28b650d6b5e8afeb"
+    },
+    {
+      "id": "ffb21a6e-8a34-3520-ac4f-a4c2b53fadf0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <30aac8fc4f24b1b065b59a7b07e26030b22c4c69"
     }
   ],
   "enisaIdVendor": [

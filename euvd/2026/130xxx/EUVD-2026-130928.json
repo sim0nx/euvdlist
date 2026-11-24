@@ -3,19 +3,22 @@
   "enisaUuid": "30cbb698-8022-3917-a67f-b875fef37207",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvhost/vsock: size receive SKBs from declared payload\n\nvhost_vsock_alloc_skb() sizes the skb from iov_length(), the total guest\ndescriptor length.  virtio_transport_inc_rx_pkt() instead adds hdr->len to\nrx_bytes and buf_used, and budgets each queued skb as SKB_TRUESIZE(0).  The\nguest controls the descriptor length and hdr->len independently.\n\nA guest can therefore provide a 64 KiB descriptor while declaring a zero\npayload.  The descriptor-sized skb remains queued, rx_bytes and buf_used\nremain unchanged, and only the fixed queue-entry budget limits retention.\nThis is not a lifetime leak: the skb is freed when dequeued or at socket\nteardown.  Repeating this across connections can nevertheless exhaust host\nmemory.  On Linux v7.2, 455 such descriptors retained 30,255,680 bytes for\na 262,144-byte receive buffer; a full-payload control retained 265,984\nbytes.\n\nVhost previously read hdr->len and allocated pkt->buf from that value.  The\nconversion from virtio_vsock_pkt to sk_buff instead allocated receive skbs\nfrom the descriptor length, introducing the allocation-accounting mismatch.\n\nCopy the header into a stack object and validate hdr->len before allocating\nthe skb.  Size the allocation as sizeof(hdr) + payload_len so descriptor\ncapacity no longer determines queued memory.  Check payload_len against\nlen - sizeof(hdr) to avoid addition overflow on 32-bit hosts.",
   "datePublished": "Nov 20, 2026, 5:49:52 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:52 AM",
+  "dateUpdated": "Nov 23, 2026, 8:05:23 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/e07161f8d1d73a2b66ec24b9ac623d500bb9f006",
+    "https://git.kernel.org/stable/c/88910e2a8c690589e29a7b344554595d195ec9b5",
     "https://git.kernel.org/stable/c/92ac18f7de67c7cb35b71e9872b08fb9ba9a6bf8",
     "https://git.kernel.org/stable/c/89a2f2251a06751ddabbd6a39c207236b8bd42d5",
     "https://git.kernel.org/stable/c/9819add3aeb66dc823db0a82337f55481ad463be",
     "https://git.kernel.org/stable/c/d5e912448cd98b261eba8e35ab838f2dc69a79f5"
   ],
   "aliases": [
+    "GHSA-j4g4-66hm-533w",
     "CVE-2026-99635"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0bca4efe-2d2e-3dac-8d5f-e5886cf99572",
@@ -28,14 +31,14 @@
       "product_version": "71dc9ec9ac7d3eee785cdc986c3daeb821381e20 <d5e912448cd98b261eba8e35ab838f2dc69a79f5"
     },
     {
-      "id": "167da18f-7acd-3c23-b9ae-0acab7aa664e",
+      "id": "1340107c-efab-39ac-894e-c100a7d0134c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "baddcc2c71572968cdaeee1c4ab3dc0ad90fa765"
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "16f7809a-d7f1-39fa-8a8f-4dafb644dea9",
@@ -88,6 +91,26 @@
       "product_version": "71dc9ec9ac7d3eee785cdc986c3daeb821381e20 <92ac18f7de67c7cb35b71e9872b08fb9ba9a6bf8"
     },
     {
+      "id": "4884993a-6b6f-3e8e-be81-b23f3689575e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.63 <6.1.193"
+    },
+    {
+      "id": "4f0b1570-ed36-3aed-861a-e4ef0ad64cff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "71dc9ec9ac7d3eee785cdc986c3daeb821381e20 <88910e2a8c690589e29a7b344554595d195ec9b5"
+    },
+    {
       "id": "6a10eeb0-2f2f-3ecd-895e-b8c1ffcd0fab",
       "product": {
         "name": "Linux",
@@ -96,6 +119,16 @@
         }
       },
       "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "8a1eb697-efcd-3ec5-9168-06d85e70423a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "987a4309-9de6-3d93-811c-e68b6fcb560a",
@@ -118,14 +151,14 @@
       "product_version": "patch: 7.3.5"
     },
     {
-      "id": "ef639328-2de7-3330-9c80-228865750940",
+      "id": "de7c31b4-e2ec-3eaf-8270-9d87218de847",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.1.63 <6.2"
+      "product_version": "baddcc2c71572968cdaeee1c4ab3dc0ad90fa765 <e07161f8d1d73a2b66ec24b9ac623d500bb9f006"
     },
     {
       "id": "f4d993e0-9c55-3b5b-ad19-ae3607b7d6b2",

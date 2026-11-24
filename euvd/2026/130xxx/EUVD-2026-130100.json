@@ -3,19 +3,24 @@
   "enisaUuid": "7312f270-b91e-341d-80eb-1ad0635c2ab0",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2/heartbeat: unlink live slots when their node is missing\n\no2hb_shutdown_slot() returns immediately when its node is no longer in the\nconfigfs registry.  A slot can still be linked in o2hb_live_slots when\nthat lookup fails.  Region teardown or startup-error cleanup then frees\nthe slot array without removing its embedded list member.\n\nWith the same peer live in another region, the next list update can follow\na predecessor into the freed array.  Reusing the node number can also make\na later insertion encounter that stale member.\n\nAlways remove the slot under o2hb_live_lock, even when node lookup fails. \nPreserve aggregate membership accounting and the last-region DOWN\ncallback: the existing callback interface explicitly permits a NULL node\nfor DOWN events.  Only drop the node reference when lookup returned one. \nThis closes both normal release and startup-abort paths without changing\nthe publication or callback locking protocol.\n\nAlso require a configured node before admitting a new live slot in\no2hb_check_slot().  The early live-bitmap check is not held through\nadmission: the last live slot in another region can be removed in between.\nWithout a node, admission can then queue an UP event with a NULL argument\nand hit the event helper's BUG_ON.  Existing live slots can still leave\nand generate NULL-node DOWN events.\n\nA controlled probe-instrumented test reproduced this while stopping one of\ntwo regions after removing the peer from configfs.  Its KASAN report\nincludes:\n\n  BUG: KASAN: slab-use-after-free in __list_del_entry_valid_or_report+0x1e0/0x210\n  Read of size 8 at addr ffff888106a4ac60 by task o2hb-pmbd0058_b/497\n  Call Trace:\n   <TASK>\n   dump_stack_lvl+0x93/0xd0\n   print_report+0xce/0x630\n   kasan_report+0xe0/0x110\n   __list_del_entry_valid_or_report+0x1e0/0x210\n   o2hb_do_disk_heartbeat+0x1591/0x2c50\n   o2hb_thread+0x1ed/0xe70\n   kthread+0x351/0x460\n   ret_from_fork+0x659/0x940\n   ret_from_fork_asm+0x1a/0x30\n   </TASK>\n  Allocated by task 491:\n   kasan_save_stack+0x33/0x60\n   kasan_save_track+0x14/0x30\n   __kasan_kmalloc+0xaa/0xb0\n   __kmalloc_noprof+0x2de/0x780\n   o2hb_region_dev_store+0x7c2/0x1b60\n   configfs_write_iter+0x2f9/0x4f0\n   vfs_write+0x639/0x1010\n   ksys_write+0x111/0x200\n   do_syscall_64+0x114/0x620\n   entry_SYSCALL_64_after_hwframe+0x77/0x7f\n  Freed by task 491:\n   kasan_save_stack+0x33/0x60\n   kasan_save_track+0x14/0x30\n   kasan_save_free_info+0x3b/0x60\n   __kasan_slab_free+0x5f/0x80\n   kfree+0x308/0x580\n   o2hb_unmap_slot_data+0x1db/0x330\n   o2hb_region_release+0x14b/0x4f0\n   config_item_cleanup+0x14b/0x230\n   config_item_put+0x79/0x90\n   configfs_rmdir+0x58a/0x910\n   vfs_rmdir+0x2e8/0x820\n   filename_rmdir+0x3b1/0x520\n   __x64_sys_rmdir+0x4b/0x70\n   do_syscall_64+0x114/0x620\n   entry_SYSCALL_64_after_hwframe+0x77/0x7f",
   "datePublished": "Nov 19, 2026, 2:41:09 PM",
-  "dateUpdated": "Nov 19, 2026, 2:41:09 PM",
+  "dateUpdated": "Nov 23, 2026, 8:02:46 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/bb9364d7900b31b907a3a2c37acf25281ef1c1fc",
+    "https://git.kernel.org/stable/c/210766ec3387a07887445b3ea34853f401577a3d",
+    "https://git.kernel.org/stable/c/dfebbcc2db2a98c8bd43a2578866373ad508fa80",
+    "https://git.kernel.org/stable/c/597bbd635b2d292c2435e243531a189078204b4c",
     "https://git.kernel.org/stable/c/dffcdb5633641360204daee2f27d259a06f494ca",
     "https://git.kernel.org/stable/c/3e05df6bd33a920687c90061a6c0cc67cf71464a",
     "https://git.kernel.org/stable/c/7294ec25a13c20fe31c543589466d26cf24207a4",
     "https://git.kernel.org/stable/c/3ccd24c3f7a577b84a532cb027f1378385b82ef6"
   ],
   "aliases": [
-    "CVE-2026-99434"
+    "CVE-2026-99434",
+    "GHSA-fqf5-xvq2-x7ff"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "05e9b381-40d7-369a-9493-f26663b66e17",
@@ -36,6 +41,16 @@
         }
       },
       "product_version": "a7f6a5fb4bde142b622706e2006ba33f793e13ed <3e05df6bd33a920687c90061a6c0cc67cf71464a"
+    },
+    {
+      "id": "108761cb-9dd8-3db2-9971-745e102c3e30",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a7f6a5fb4bde142b622706e2006ba33f793e13ed <dfebbcc2db2a98c8bd43a2578866373ad508fa80"
     },
     {
       "id": "1b59a140-ba5a-3775-a7d2-67a4eb0883ca",
@@ -78,6 +93,26 @@
       "product_version": "patch: 7.4-rc1"
     },
     {
+      "id": "531b3365-222e-34bc-98e9-927288257163",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a7f6a5fb4bde142b622706e2006ba33f793e13ed <bb9364d7900b31b907a3a2c37acf25281ef1c1fc"
+    },
+    {
+      "id": "5cd823ba-bbc1-3964-b44a-52175185ebbc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "714c5be3-78fc-3511-9440-366e4c7653c7",
       "product": {
         "name": "Linux",
@@ -88,6 +123,26 @@
       "product_version": "patch: 7.3.2"
     },
     {
+      "id": "7c10cd8c-1c89-367d-aae8-fb11728d4b3b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a7f6a5fb4bde142b622706e2006ba33f793e13ed <597bbd635b2d292c2435e243531a189078204b4c"
+    },
+    {
+      "id": "85d6844b-e3dc-361b-8891-4162c64e6eab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "9975cdff-7552-33ac-9c1c-9e8e3d281796",
       "product": {
         "name": "Linux",
@@ -96,6 +151,16 @@
         }
       },
       "product_version": "2.6.16"
+    },
+    {
+      "id": "acd51919-dcb8-3cf0-9060-755389f02bcb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "bd3fbdce-3387-3b70-b0d8-93269cf942fb",
@@ -116,6 +181,26 @@
         }
       },
       "product_version": "a7f6a5fb4bde142b622706e2006ba33f793e13ed <3ccd24c3f7a577b84a532cb027f1378385b82ef6"
+    },
+    {
+      "id": "c2671367-460a-345b-82f0-c28b4961a17f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a7f6a5fb4bde142b622706e2006ba33f793e13ed <210766ec3387a07887445b3ea34853f401577a3d"
+    },
+    {
+      "id": "ff8b4ed7-626f-37d2-a703-676e84f70217",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     }
   ],
   "enisaIdVendor": [

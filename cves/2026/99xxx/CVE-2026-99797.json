@@ -3,19 +3,22 @@
   "enisaUuid": "2cb2f311-ec00-3dc3-bd97-ad6d5c579064",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/cancel: drop sqd->lock while SQPOLL waits\n\nAn exiting SQPOLL thread calls io_uring_cancel_generic() with sqd->lock\nheld, and keeps it across cond_resched() and the sleep until nothing is\nin flight anymore. A zero-copy send notification can't be canceled and\nstays pending as long as the peer doesn't read, so the lock is held for\nas long as a user cares to. io_ring_exit_work() needs it to park the\nthread, and so do IORING_REGISTER_IOWQ_AFF and IOWQ_MAX_WORKERS. With\n64 such rings sharing the thread, every iou_exit slot sleeps on the lock\nand no ring gets freed for anyone.\n\nDrop the lock around cond_resched() and the sleep, like the main loop of\nthe thread does. Each walk of ctx_list is still under one hold, and\nnothing is kept across the unlock. The thread drops its io-wq, frees its\ntctx and clears sqd->thread under one hold after the loop, so whoever\nholds the lock and finds sqd->thread set can still use them.\n\n[axboe: adapted to the schedule_timeout() based loop]",
   "datePublished": "Nov 20, 2026, 7:02:20 AM",
-  "dateUpdated": "Nov 20, 2026, 7:02:20 AM",
+  "dateUpdated": "Nov 23, 2026, 8:07:31 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/5cb79df890826e3b3eab81a7cb8fa4ebf7dfec90",
+    "https://git.kernel.org/stable/c/f2219bb2f4027f6f247660ce06ed8bf62f5e1563",
     "https://git.kernel.org/stable/c/9ebfcc60793a46eaf60fc34792486c9a6e114460",
     "https://git.kernel.org/stable/c/96ba960a6099935cfc5ea17aef056553f0c8e647",
     "https://git.kernel.org/stable/c/682a8804640b6266a4b7fae5a131c57dd8711f70",
     "https://git.kernel.org/stable/c/cb0306c52ffae083a86fb283de67875ae7a9500e"
   ],
   "aliases": [
+    "GHSA-xm98-9mpr-r7f4",
     "CVE-2026-99797"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.31,
   "enisaIdProduct": [
     {
       "id": "1be67815-e850-34ad-99ab-18c39b143f47",
@@ -26,6 +29,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "201d6032-7bfb-3bf5-9b62-65e16836d9a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "29b78078-e46d-3395-b4d5-008cace4bc93",
@@ -68,6 +81,16 @@
       "product_version": "63809137ebb58f0aa2ce359117422686e3304f45 <9ebfcc60793a46eaf60fc34792486c9a6e114460"
     },
     {
+      "id": "8df2efb0-305a-36b8-91e2-671c9c14e172",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63809137ebb58f0aa2ce359117422686e3304f45 <f2219bb2f4027f6f247660ce06ed8bf62f5e1563"
+    },
+    {
       "id": "905ab235-ab63-3813-a575-704e53c475c9",
       "product": {
         "name": "Linux",
@@ -86,6 +109,26 @@
         }
       },
       "product_version": "63809137ebb58f0aa2ce359117422686e3304f45 <682a8804640b6266a4b7fae5a131c57dd8711f70"
+    },
+    {
+      "id": "c40e2384-8020-3176-8d8b-4280a800b157",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63809137ebb58f0aa2ce359117422686e3304f45 <5cb79df890826e3b3eab81a7cb8fa4ebf7dfec90"
+    },
+    {
+      "id": "c6f0e71b-55d0-3f47-bc8e-21c1436da8e1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "c9a66b13-0c22-36bd-adec-20312488d7fa",

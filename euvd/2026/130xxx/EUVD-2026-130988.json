@@ -3,19 +3,24 @@
   "enisaUuid": "724c2541-3419-32ce-b6e7-41af2e9e04b5",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: find the xattr entry again after converting a block to a bucket\n\nocfs2_xattr_create_index_block() turns a non-indexed xattr block into a\ntree by copying it into a bucket, and the copy sorts the entries: a\nblock holds them in insertion order, a bucket by name hash.\nocfs2_xattr_update_xattr_search() nevertheless relocates the caller's\nsearch by the index the entry had in the block, so unless the two orders\nagreed it points at an unrelated entry, and nothing between there and\nthe write compares that entry's name with the one being set.\n\nSetting an xattr whose new value no longer fits the block arrives here\nwith xs->not_found clear.  The block gave up because\nocfs2_xa_block_can_reuse() wants an exact namevalue size match, while\nocfs2_xa_bucket_can_reuse() only wants an entry at least as large as the\nnew one, so the bucket accepts a pair the block rejected and the update\nlands on whichever entry the sort left at that index.  Equal padded name\nlengths get that other attribute's value replaced in place and its name\nleft alone, so setxattr returns success while the attribute asked for\nkeeps its old value.  A longer one trips ocfs2_xa_reuse_entry()'s\nBUG_ON, and a shorter one is refused by the bucket as well, so\nocfs2_xa_prepare_entry() wipes the entry and writes the new name over\nit, leaving xe_name_hash describing a name that is no longer there.\n\nFind the entry again by the name being set, matching the type as well.\nThe copy carries every entry and every name over unchanged, and (type,\nname) pairs are unique within a block, so the match is exact.  The type\nmatters because the handlers strip their prefix before calling\nocfs2_xattr_set(), so user.foo and trusted.foo share a stored name, a\nstored length and a hash, and both can sit in the same block.\n\nThe name has to come from xi rather than from xs->here: a failed set can\nremove the entry xs->here names, and only the \"growing\" caller sets\nctxt->set_abort, which is what stops the conversion.  Scan every entry\nrather than narrowing on the hash the way ocfs2_find_xe_in_bucket()\ndoes, since an existing entry keeps the hash it was stored under, which\na kernel that sign-extended the name bytes made different from the one\ncomputed now.  An empty result means the entry did not survive the\nfailed set and this has become an insert; leaving xs->here alone would\nkeep it pointing into the block, which is rewritten as a tree root\nbefore the caller reads it again.",
   "datePublished": "Nov 20, 2026, 5:50:38 AM",
-  "dateUpdated": "Nov 20, 2026, 5:50:38 AM",
+  "dateUpdated": "Nov 23, 2026, 8:06:10 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/049ded9e088fa206be3148f116ef9c914fd1c979",
+    "https://git.kernel.org/stable/c/b38342e173b6011b38349618d4925567e71d949c",
+    "https://git.kernel.org/stable/c/dc5ed4e05de2c0c05bb0a4cec7b5b50d18978646",
+    "https://git.kernel.org/stable/c/f3e86037f2ac33ad13d84d46158e04580bbae24e",
     "https://git.kernel.org/stable/c/49820bda28134ab0f6748e66cb104c9adcc2e116",
     "https://git.kernel.org/stable/c/1ca9787e733a29aea926f8956dffc41bf553c5ca",
     "https://git.kernel.org/stable/c/2bd2ca4f70570f08992ba38dbf2570f8def4288e",
     "https://git.kernel.org/stable/c/9c191a7a44882487e291e09f095d2ae4d7cca146"
   ],
   "aliases": [
-    "CVE-2026-99695"
+    "CVE-2026-99695",
+    "GHSA-2xw3-jjjj-42mr"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0f8d8a93-5b5e-3cd5-8e4b-b12bf4200b24",
@@ -26,6 +31,16 @@
         }
       },
       "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "149b3ce4-d3e3-32cb-afd1-29f96224f9a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "175b3b3a-9979-3db4-b696-42f27a05846d",
@@ -48,6 +63,16 @@
       "product_version": "012255961c9ecfe22b7a1df47ac26ab37818cb1e <9c191a7a44882487e291e09f095d2ae4d7cca146"
     },
     {
+      "id": "21352994-607d-34c4-b649-6451ea868ce8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "012255961c9ecfe22b7a1df47ac26ab37818cb1e <049ded9e088fa206be3148f116ef9c914fd1c979"
+    },
+    {
       "id": "3105b990-ddf7-30f0-b661-1c2e89513bf8",
       "product": {
         "name": "Linux",
@@ -68,6 +93,16 @@
       "product_version": "patch: 6.18.64"
     },
     {
+      "id": "4b47e1cd-0e2b-3d6f-b5f8-4bfd2658703b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
       "id": "7f8619e6-3fb5-3349-9c07-14be0983c901",
       "product": {
         "name": "Linux",
@@ -76,6 +111,36 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "98150d4a-41df-39a0-ad3e-f8a6cd401b63",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "012255961c9ecfe22b7a1df47ac26ab37818cb1e <b38342e173b6011b38349618d4925567e71d949c"
+    },
+    {
+      "id": "99609c1a-4317-3ae9-ba2e-3aeb8ec962fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "012255961c9ecfe22b7a1df47ac26ab37818cb1e <f3e86037f2ac33ad13d84d46158e04580bbae24e"
+    },
+    {
+      "id": "a552c41e-311d-32a1-b416-59fac4f77292",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "a9d94367-f858-3e7b-9a56-fcd333f0eb07",
@@ -96,6 +161,26 @@
         }
       },
       "product_version": "012255961c9ecfe22b7a1df47ac26ab37818cb1e <2bd2ca4f70570f08992ba38dbf2570f8def4288e"
+    },
+    {
+      "id": "de532749-e3ee-3d85-9b6f-7fb9edc25c9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "ea8a809b-8a1d-3686-91a5-125b5f9a2fdf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "012255961c9ecfe22b7a1df47ac26ab37818cb1e <dc5ed4e05de2c0c05bb0a4cec7b5b50d18978646"
     },
     {
       "id": "f7bffd69-32ab-3b6c-b483-64e414e73d92",

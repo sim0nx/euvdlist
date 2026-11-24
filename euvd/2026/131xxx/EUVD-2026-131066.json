@@ -3,20 +3,35 @@
   "enisaUuid": "78c0349d-bc7b-3bd5-a641-81449490e94c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\novl: look up the index by the decoded origin\n\nA file opened by file handle on an overlay with nfs_export=on can show\nthe stale lower data of a file that was copied up to the upper layer.\nWhile the file opened this way stays in the inode cache, a lookup of the\ncopied up file by path fails with ESTALE for all users. The open can\nalso succeed for a file that was removed, where it has to fail with\nESTALE. This happens with a handle that has one byte changed. The handle\ncomes from an NFS client, or from a process that calls\nopen_by_handle_at() with CAP_DAC_READ_SEARCH in the initial user\nnamespace.\n\nWhen a file in a lower layer is about to be modified, overlayfs first\ncopies it to the upper layer (copy up). With nfs_export=on, each copy up\nalso creates an entry in the index directory, a directory that overlayfs\nkeeps for itself on the upper filesystem.\n\nThe handle of an overlay file that comes from a lower layer wraps the\nhandle of its lower inode. Overlayfs calls this lower inode the origin.\nThe overlay handle stays valid after a copy up.\n\nTo decode such a handle, ovl_lower_fh_to_d() first decodes the wrapped\nhandle to the origin. If no overlay inode is cached for the origin, it\nlooks in the index directory:\n\n- An index entry there leads to the upper file.\n- A whiteout, the marker that overlayfs uses for a removed file, means\n  that the overlay file was removed.\n\nThe name of an index entry is the handle that copy up encoded for the\norigin, as a hex string.\n\novl_lower_fh_to_d() builds the name for this lookup from the bytes that\nthe caller passed in. But handles with different bytes can decode to the\nsame inode:\n\n- Overlayfs ignores some flag bits of the handle.\n- A lower filesystem can accept a different fid type, extra bytes, or\n  generation 0 for any generation.\n\nSuch a handle decodes to the origin but misses the index entry or the\nwhiteout. So the decode returns an overlay inode that has only the lower\nfile.\n\nWhile that inode is cached, a path lookup of a copied up file fails with\nESTALE, since the upper file that the lookup finds does not match the\ncached inode, which has none.\n\nReproduced on tmpfs and on ext4 with open_by_handle_at(), after a copy\nup and a mount cycle. A handle in which one flag bit, the fid type, the\nlength or the generation was changed read the old lower data, and path\nlookups returned ESTALE.\n\nFix this by re-encoding the decoded origin and building the index name\nfrom that handle.",
   "datePublished": "Nov 20, 2026, 5:49:37 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:37 AM",
+  "dateUpdated": "Nov 23, 2026, 8:05:11 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/39d1cd14ab2e7c7245dcb53d59b980df578da349",
+    "https://git.kernel.org/stable/c/d7bf8cda8c761c1fb8ae667637eb18d80906ec19",
+    "https://git.kernel.org/stable/c/73fbc5dade5624f4a4782fb9d0a93801c30a9ecf",
+    "https://git.kernel.org/stable/c/54084b6bc625642674a16e786c8bf20c6b100c1a",
     "https://git.kernel.org/stable/c/4b0d6c2bb0eadacecf35641cd63851d8406b22f2",
     "https://git.kernel.org/stable/c/aae380322cf51c645448d7063888fb5d14df08cb",
     "https://git.kernel.org/stable/c/7cd237effa89a6bb59da3bc9f98c9823cf1429ba",
     "https://git.kernel.org/stable/c/520ef67f47f69255695859b0008281a384d0bc20"
   ],
   "aliases": [
+    "GHSA-7wrf-mjrj-4ghv",
     "CVE-2026-99616"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "0b8d7b41-dc5d-3a72-85a1-6417741eeb0c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
     {
       "id": "0ce0ef24-6a9a-3b64-9c71-7e7978376cde",
       "product": {
@@ -38,6 +53,26 @@
       "product_version": "f71bd9cfb692ec80236b186419bf907eb5fa348c <520ef67f47f69255695859b0008281a384d0bc20"
     },
     {
+      "id": "300f4260-8e88-37bd-bc60-e232abc3d452",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "3a0b62c0-bcfe-31ac-bea3-d739140e3c23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f71bd9cfb692ec80236b186419bf907eb5fa348c <54084b6bc625642674a16e786c8bf20c6b100c1a"
+    },
+    {
       "id": "63607256-4d0a-3663-95a6-766e94e0c8a0",
       "product": {
         "name": "Linux",
@@ -46,6 +81,36 @@
         }
       },
       "product_version": "4.16"
+    },
+    {
+      "id": "646962bb-07a4-373d-a101-36527b2b5116",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "6ce30c0a-a29f-3194-80da-5c4c2aa4ac76",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f71bd9cfb692ec80236b186419bf907eb5fa348c <39d1cd14ab2e7c7245dcb53d59b980df578da349"
+    },
+    {
+      "id": "75c744b2-58d1-3f95-9f60-5744a7b4366f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "7f448254-b257-307d-a763-3034027fd55c",
@@ -76,6 +141,26 @@
         }
       },
       "product_version": "patch: 7.3.5"
+    },
+    {
+      "id": "91d83eb7-ac6b-3d0b-872b-25ff144ba23d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f71bd9cfb692ec80236b186419bf907eb5fa348c <73fbc5dade5624f4a4782fb9d0a93801c30a9ecf"
+    },
+    {
+      "id": "92450fe1-bef7-3641-8606-ffa85aa48f5d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f71bd9cfb692ec80236b186419bf907eb5fa348c <d7bf8cda8c761c1fb8ae667637eb18d80906ec19"
     },
     {
       "id": "b65ec251-1abc-3ce9-8ddb-2dcaae4d731b",

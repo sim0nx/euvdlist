@@ -3,20 +3,65 @@
   "enisaUuid": "67ca52d8-807d-31c9-8f2c-10fde63b3f62",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrapidio: mport_cdev: fix use-after-free in mport_mm_close()\n\nA use-after-free vulnerability was identified in mport_mm_close() in\ndrivers/rapidio/devices/rio_mport_cdev.c, identical to the pattern\npreviously addressed in dma_req_free().\n\nThis is observable from userspace when an application creates an mmap\nmapping via the RapidIO character device and subsequently unmaps it (or\nterminates, triggering exit_mmap()).  During munmap, mport_mm_close() is\ninvoked and drops the mapping reference via kref_put().\n\nIf kref_put() drops the last reference, mport_release_mapping() is called,\nwhich frees the underlying rio_mport_mapping structure.  The subsequent\nmutex_unlock() then dereferences map->md to unlock buf_mutex, leading to a\nuse-after-free:\n\n   mport_mm_close()\n     -> mutex_lock(&map->md->buf_mutex);\n     ...\n     -> kref_put(&map->ref, mport_release_mapping); /* map is freed */\n     -> mutex_unlock(&map->md->buf_mutex);          /* UAF: map used */\n\nFix this by caching map->md before kref_put() and using the cached pointer\nfor mutex unlocking, ensuring that freed memory is not accessed.",
   "datePublished": "Nov 19, 2026, 2:44:28 PM",
-  "dateUpdated": "Nov 19, 2026, 2:44:28 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:49 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/4fd7df6e7040fad99fee8989783748afefcee6ce",
+    "https://git.kernel.org/stable/c/1c66d8e8fc67f2471675e361b16200d419e40ef3",
+    "https://git.kernel.org/stable/c/40f37f710ef220286600bae75456977f3629629f",
+    "https://git.kernel.org/stable/c/3dc409ad1865d68f884611f7503c409071499067",
     "https://git.kernel.org/stable/c/df3008607f2c3343f7ad34001af656a185c123ee",
     "https://git.kernel.org/stable/c/48157350b24ac0343374ee3fa34188d7ff30be81",
     "https://git.kernel.org/stable/c/a0aaf59e7a86312c0272e36f19fb507f91405209",
     "https://git.kernel.org/stable/c/0f2cd84858e67cf8e02438bf28243bcdc67aa49a"
   ],
   "aliases": [
+    "GHSA-2p4q-79h9-pwgv",
     "CVE-2026-99521"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
+    {
+      "id": "00a977e1-8d9d-34f9-8a77-3ccb7aa2b86e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e8de370188d098bb49483c287b44925957c3c9b6 <3dc409ad1865d68f884611f7503c409071499067"
+    },
+    {
+      "id": "18219194-464e-3e7e-83df-402185ad2d48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e8de370188d098bb49483c287b44925957c3c9b6 <4fd7df6e7040fad99fee8989783748afefcee6ce"
+    },
+    {
+      "id": "1db4f4c8-e59f-3e73-ae49-04e3fb98b561",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "1ff27aac-47a1-3630-bbcc-f6c16790d5f4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e8de370188d098bb49483c287b44925957c3c9b6 <40f37f710ef220286600bae75456977f3629629f"
+    },
     {
       "id": "260d6a75-11ed-3b31-bccd-482da369bdf9",
       "product": {
@@ -36,6 +81,16 @@
         }
       },
       "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "504a284b-600c-35a9-b007-b69dfd7a6790",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "5d0cf606-c293-3361-b9f8-fd93c8c6757c",
@@ -68,6 +123,26 @@
       "product_version": "4.6"
     },
     {
+      "id": "b0cc5a2e-da16-3838-b6fa-1d50c6aea526",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e8de370188d098bb49483c287b44925957c3c9b6 <1c66d8e8fc67f2471675e361b16200d419e40ef3"
+    },
+    {
+      "id": "b610208a-1f44-3b6e-b756-667ff9a63bf5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "c43e50d6-56d0-32c1-a63e-7139eb4c0147",
       "product": {
         "name": "Linux",
@@ -86,6 +161,16 @@
         }
       },
       "product_version": "e8de370188d098bb49483c287b44925957c3c9b6 <a0aaf59e7a86312c0272e36f19fb507f91405209"
+    },
+    {
+      "id": "cde5b72a-f81d-3075-956c-af0616132ce9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "cfe60134-66f9-3d8f-a0ee-bc7c52ef0eba",

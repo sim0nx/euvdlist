@@ -3,20 +3,35 @@
   "enisaUuid": "57082544-527f-37c8-9191-b51e33e1bcde",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: us122l: Add missing NULL check in usb_stream_hwdep_mmap()\n\nusb_stream_hwdep_mmap() reads us122l->sk.s and dereferences it without\nchecking for NULL.  The stream object is released by usb_stream_free(),\nwhich is reached through us122l_stop() both when the device is\ndisconnected and when us122l_start() fails, and it leaves us122l->sk.s\nset to NULL.  The hwdep file stays usable after that, so a later mmap()\n\n\tKASAN: null-ptr-deref in range [0x0000000000000010-0x0000000000000017]\n\tRIP: 0010:usb_stream_hwdep_mmap+0x107/0x890 sound/usb/usx2y/us122l.c:182\n\ncrashes while reading s->read_size, which sits at offset 0x10.\n\nThat NULL is an expected state for this field: usb_stream_hwdep_vm_fault(),\nusb_stream_hwdep_poll(), usb_stream_hwdep_ioctl(), usb_stream_stop() and\nusb_stream_free() all test it before use.  Only the mmap callback misses\nthe check, so let it return -ENODEV, matching what the other hwdep mapping\nin usx2yhwdeppcm.c does when its shared buffer has not been allocated.",
   "datePublished": "Nov 18, 2026, 8:42:07 AM",
-  "dateUpdated": "Nov 18, 2026, 8:42:07 AM",
+  "dateUpdated": "Nov 23, 2026, 8:01:18 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/683e063b0ed300d2c09e64b21509ec1ceb6d23c0",
+    "https://git.kernel.org/stable/c/a4e41eb6cd57b3e6e2d4c6f6753020b5700b2e22",
+    "https://git.kernel.org/stable/c/6c63082368ea1094fc8a452d01e1f4de999e27e2",
+    "https://git.kernel.org/stable/c/10dfcb5f0f989b88035c50c752f3e7acd62a6d81",
     "https://git.kernel.org/stable/c/0f128b326d3defab6bf5c33c09e55addd87e74ec",
     "https://git.kernel.org/stable/c/03d3690ba06713358cd8c89bbec090040c272438",
     "https://git.kernel.org/stable/c/6fdd96fa2f7a70d61eeed166e520a990c40ff223",
     "https://git.kernel.org/stable/c/f5d3eb483fed59fc0f3b059b8b6a32cedc922360"
   ],
   "aliases": [
+    "GHSA-66f5-gvww-56pm",
     "CVE-2026-99314"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
+    {
+      "id": "0c0e6ab8-b8c8-3dea-8edf-088c132379cb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <10dfcb5f0f989b88035c50c752f3e7acd62a6d81"
+    },
     {
       "id": "1481056b-2167-367d-998a-ffffb7b1a988",
       "product": {
@@ -26,6 +41,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "15b8e76f-b302-3568-896e-d9c24b52bbf4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <a4e41eb6cd57b3e6e2d4c6f6753020b5700b2e22"
+    },
+    {
+      "id": "17518a2c-4937-304b-9a89-7fd331e20526",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "2ca1c98c-9b9a-3e43-a51e-49b1e9b708ac",
@@ -48,6 +83,16 @@
       "product_version": "2.6.28"
     },
     {
+      "id": "59c9a8f3-7f65-359a-a7d9-9c571aaa2b30",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "5cb44853-90ff-33d8-9a49-54a27e95dc9b",
       "product": {
         "name": "Linux",
@@ -66,6 +111,46 @@
         }
       },
       "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "a33a5442-006c-3e46-969b-2b6e9c26fac2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "ab13da0c-824f-393b-b3e7-574bcd3748f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <683e063b0ed300d2c09e64b21509ec1ceb6d23c0"
+    },
+    {
+      "id": "ae3a6e7f-207c-31e3-9805-811b3ca6a42e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "c5120ddd-66dc-3bbd-8f2b-057d96d70538",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "030a07e441296c372f946cd4065b5d831d8dc40c <6c63082368ea1094fc8a452d01e1f4de999e27e2"
     },
     {
       "id": "ca30a4bc-5b21-3ea2-80e7-0810dff17b3a",

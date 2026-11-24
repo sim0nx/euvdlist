@@ -3,19 +3,25 @@
   "enisaUuid": "9ad79109-ab6c-3cd3-a6a0-600a97be2fa4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: PPC: Book3S HV: Add SRCU protection for virtual-mode HPT hcalls\n\nThe virtual-mode HPT hcall handlers (H_ENTER, H_REMOVE, H_BULK_REMOVE,\nH_CLEAR_REF, H_CLEAR_MOD) call into book3s_hv_rm_mmu.c, which accesses\nmemslots via kvm_memslots_raw().  kvm_memslots_raw() uses\nrcu_dereference_raw_check() to bypass SRCU lockdep annotation checking.\nThis is safe in real mode because the entire guest entry/exit is wrapped\nin srcu_read_lock/unlock inside kvmppc_run_core() and\nkvmhv_run_single_vcpu().\n\nHowever, since commit 6165d5dd99db (\"KVM: PPC: Book3S HV: add virtual\nmode handlers for HPT hcalls and page faults\"), these same handlers are\nalso executed in virtual mode via kvmppc_pseries_do_hcall(), which runs\nafter SRCU has already been released on guest exit.\n\nA concurrent KVM_SET_USER_MEMORY_REGION deletion or move can therefore\ncall synchronize_srcu_expedited() \u2014 which does not wait for this thread \u2014\nand then kfree(slot) and vfree(slot->arch.rmap) while the hcall handler\nstill holds a raw pointer to the memslot.  lock_rmap() then writes to\nfreed vmalloc memory, leading to use-after-free and memory corruption.\nBecause kvm_memslots_raw() suppresses lockdep checks, this race is\nentirely silent.\n\nFix this by factoring out the 7 HPT hcall handlers (H_REMOVE, H_ENTER,\nH_READ, H_CLEAR_MOD, H_CLEAR_REF, H_PROTECT, H_BULK_REMOVE) into a\nhelper function, kvmppc_pseries_do_hpt_hcall(), and wrapping its call\nsite in srcu_read_lock(&kvm->srcu) / srcu_read_unlock(&kvm->srcu, idx).\nTargeting only the HPT hcalls avoids wrapping non-HPT hcalls that sleep\n(such as H_CONFER, H_REGISTER_VPA, H_PAGE_INIT) or handlers that already\nacquire SRCU internally (such as H_RTAS).",
   "datePublished": "Nov 19, 2026, 2:42:57 PM",
-  "dateUpdated": "Nov 19, 2026, 2:42:57 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:03:16 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/fbfff331e73f44c25f4edd112eaef3b6865171c6",
+    "https://git.kernel.org/stable/c/294e306dc1c49f1124d0b82eef565778d975420b",
+    "https://git.kernel.org/stable/c/0b456d70fff190abac02795ddb088618ff512a48",
     "https://git.kernel.org/stable/c/0f86aba67317d65b2dc89995dd5ddefe219411a7",
     "https://git.kernel.org/stable/c/4ab2c987fd15a4bd28ef46a9ac871359886e6439",
     "https://git.kernel.org/stable/c/c3d0261c4fae2cc36dcf9f4e247552498232caff",
     "https://git.kernel.org/stable/c/61a39797bb136243c48b46e2586d8a9e2cea6a89"
   ],
   "aliases": [
+    "GHSA-mxfq-v49v-5g45",
     "CVE-2026-99471"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0410115f-b18f-3ab0-8778-60177643952a",
@@ -48,6 +54,46 @@
       "product_version": "patch: 6.18.61"
     },
     {
+      "id": "15b4c912-b1b8-3588-b181-32d95f16d627",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6165d5dd99dbaec7a309491c3951bd81fc89978d <0b456d70fff190abac02795ddb088618ff512a48"
+    },
+    {
+      "id": "21be2ebc-10b3-30cc-a4ee-cb6c120e95e5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6165d5dd99dbaec7a309491c3951bd81fc89978d <fbfff331e73f44c25f4edd112eaef3b6865171c6"
+    },
+    {
+      "id": "24981d44-99f3-361a-a29d-91d87049c272",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6165d5dd99dbaec7a309491c3951bd81fc89978d <294e306dc1c49f1124d0b82eef565778d975420b"
+    },
+    {
+      "id": "48595725-8767-3bcc-8fc2-8cb2b2050f5d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
       "id": "48e44ebb-2be2-32f9-bb09-ca671117d27a",
       "product": {
         "name": "Linux",
@@ -76,6 +122,26 @@
         }
       },
       "product_version": "patch: 7.3.2"
+    },
+    {
+      "id": "637154b8-3b1b-31dd-8373-7d74f1f64b1e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "95701f8d-185f-3025-a643-9ca6286e4a4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "99feffa2-0cd0-329d-bf43-f81b6fe98126",

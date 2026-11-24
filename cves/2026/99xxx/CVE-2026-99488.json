@@ -3,19 +3,24 @@
   "enisaUuid": "416ea9dd-f6c6-3766-a7bf-14dc71499149",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nklist: avoid accesses after waking klist_remove()\n\nklist_remove() waits until a node is unreferenced so that its caller can\nfree the containing object.  klist_release() currently publishes\nwaiter->woken and wakes the waiter before its final accesses to the waiter\nand node.  klist_remove() can then return, allowing its stack waiter and\nthe containing object to be freed or reused while klist_release() is still\nrunning.  In particular, bus_remove_driver() can free drv->p while\n__device_attach() walks the same bus klist with bus_for_each_drv().\n\nOn an arm64 Cortex-A72 system, an unpatched 7.2.0-rc3 kernel with\nCONFIG_PREEMPT_RT=y and CONFIG_KASAN=y reproduced the bug through the\nin-tree I2C/at24 path.  KASAN reported a use-after-free in\nklist_dec_and_del() reached from klist_next()/bus_for_each_drv() while\nat24 was being unregistered.\n\nClear n_klist and take a task reference before publishing woken.  Use\nrelease/acquire accesses for that publication and wake the referenced\ntask.  The task reference keeps the waiter task alive if it returns and\nexits before wake_up_process().",
   "datePublished": "Nov 19, 2026, 2:43:27 PM",
-  "dateUpdated": "Nov 19, 2026, 2:43:27 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:25 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/224f1c87086b9bc15bfc2dc0fd6f23df265eb976",
+    "https://git.kernel.org/stable/c/2c3bbc8a1acd7b52a7785b51994a39aa336e2c08",
+    "https://git.kernel.org/stable/c/428846fffb806a2c1e7f5f9bb976964f011c8803",
+    "https://git.kernel.org/stable/c/1da13ac31040f1fb7365e994f84a6b2e32043363",
     "https://git.kernel.org/stable/c/3fee2a5ef405f08ea3d87d2014ae7d38e61dd06f",
     "https://git.kernel.org/stable/c/d655ef174056457d1c3bc06b4405097e0a9b3bf5",
     "https://git.kernel.org/stable/c/7d3df012573523cb2f38a65e3e00125d9869b390",
     "https://git.kernel.org/stable/c/732e3e10234cbe302d0dcbaa98c91c66628209cb"
   ],
   "aliases": [
+    "GHSA-gmmp-m68c-gcc9",
     "CVE-2026-99488"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "039afca8-9269-3181-b579-98785aad96ad",
@@ -38,6 +43,16 @@
       "product_version": "8b0c250be489dcbf1a3a33bb4ec4c7f33735a365 <732e3e10234cbe302d0dcbaa98c91c66628209cb"
     },
     {
+      "id": "3bafa55a-23cd-3f26-bc14-4e2bf763a3ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8b0c250be489dcbf1a3a33bb4ec4c7f33735a365 <1da13ac31040f1fb7365e994f84a6b2e32043363"
+    },
+    {
       "id": "440a6581-e14f-38d5-bc61-2bbfdf522258",
       "product": {
         "name": "Linux",
@@ -46,6 +61,26 @@
         }
       },
       "product_version": "8b0c250be489dcbf1a3a33bb4ec4c7f33735a365 <3fee2a5ef405f08ea3d87d2014ae7d38e61dd06f"
+    },
+    {
+      "id": "4fb822cb-18d4-3da4-80f4-050bd840825e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "57552cf8-b49f-3238-905b-2af37b8de5d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "583ac531-3c93-339b-9d4a-867284bf9914",
@@ -58,6 +93,16 @@
       "product_version": "8b0c250be489dcbf1a3a33bb4ec4c7f33735a365 <d655ef174056457d1c3bc06b4405097e0a9b3bf5"
     },
     {
+      "id": "6fac03d2-2224-3d1e-8438-62f0a1c80ca4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
       "id": "76ebcbda-036a-3b6b-9c9e-c8aa59756f8b",
       "product": {
         "name": "Linux",
@@ -66,6 +111,16 @@
         }
       },
       "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "89447467-0c32-3323-afe6-6826bcdcae11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
     },
     {
       "id": "96fa2055-5ea7-3e2f-acc0-07dc82d67d0e",
@@ -88,6 +143,16 @@
       "product_version": "patch: 6.12.117"
     },
     {
+      "id": "d43e2339-7ff0-361f-b6f8-0b662ab74415",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8b0c250be489dcbf1a3a33bb4ec4c7f33735a365 <2c3bbc8a1acd7b52a7785b51994a39aa336e2c08"
+    },
+    {
       "id": "d616319f-3e98-3d02-ab17-fb9ecf0207d5",
       "product": {
         "name": "Linux",
@@ -108,6 +173,16 @@
       "product_version": "patch: 7.3.2"
     },
     {
+      "id": "d765006e-d1c5-312e-b66d-483949ffb9a3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8b0c250be489dcbf1a3a33bb4ec4c7f33735a365 <224f1c87086b9bc15bfc2dc0fd6f23df265eb976"
+    },
+    {
       "id": "e8bc4830-206a-3613-9ed4-8a60107cfebb",
       "product": {
         "name": "Linux",
@@ -116,6 +191,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "fe2fc1ef-b0de-3426-a226-e37af28a4519",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8b0c250be489dcbf1a3a33bb4ec4c7f33735a365 <428846fffb806a2c1e7f5f9bb976964f011c8803"
     }
   ],
   "enisaIdVendor": [

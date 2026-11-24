@@ -3,19 +3,24 @@
   "enisaUuid": "62ae74f2-4fa4-306c-9832-ffabe197a032",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: wacom: Fix Use-After-Free in wacom_bamboo_pad\n\nwacom_bamboo_pad_pen_event() accesses wacom->shared->pen locklessly\nrelative to wacom_remove_shared_data() which nullifies it.  This\ncan lead to a Use-After-Free if the sibling device is removed while\nevents are being processed.\n\nResolve this by introducing RCU protection for pen and touch\npointers:\n\n - Annotate 'pen' and 'touch' in wacom_shared struct with __rcu.\n - Wrap lockless readers in wacom_bamboo_pad_pen_event() with\n   rcu_read_lock() and rcu_dereference().\n - Update writers in wacom_sys.c using rcu_assign_pointer().\n - Use rcu_dereference_protected for comparisons under\n   wacom_udev_list_lock.\n - Also use rcu_access_pointer in wacom_sibling_pending() and\n   wacom_mode_change_work() to avoid warnings (while lockless access in\n   the latter remains a pre-existing issue).",
   "datePublished": "Nov 19, 2026, 2:43:30 PM",
-  "dateUpdated": "Nov 19, 2026, 2:43:30 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:27 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/b5c7d12527ba739721e0902b64ff05c568041c24",
+    "https://git.kernel.org/stable/c/48ecba8b326732cb24f698bd85285ac46471013c",
+    "https://git.kernel.org/stable/c/21a1e897b98653f0d2d5dc41cadbf3e6a588e1b9",
+    "https://git.kernel.org/stable/c/b893d6b0a8dd71c5f0644f82c15dae8ed732a050",
     "https://git.kernel.org/stable/c/6704d7e9ca8aa1ec66d97fe1b2bc89e07ad710c7",
     "https://git.kernel.org/stable/c/ac81120321a90b052cc50ecc9e38753c9471c75e",
     "https://git.kernel.org/stable/c/8e56f274d61a21e7aa0bf4000f839f34dd721fe5",
     "https://git.kernel.org/stable/c/3a523ecf9ac3fdd33f5eb31c43937ee44135395b"
   ],
   "aliases": [
-    "CVE-2026-99490"
+    "CVE-2026-99490",
+    "GHSA-g9v6-h7qh-hrxh"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0afdf358-bee4-3323-9338-8f20d7449398",
@@ -26,6 +31,26 @@
         }
       },
       "product_version": "8c97a765467c5d58682e85f103899ec2355fc393 <8e56f274d61a21e7aa0bf4000f839f34dd721fe5"
+    },
+    {
+      "id": "116d20a4-87e4-30b1-90ca-b80b7457ed67",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "271b2998-7a55-397c-b806-1debead8f3a3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8c97a765467c5d58682e85f103899ec2355fc393 <48ecba8b326732cb24f698bd85285ac46471013c"
     },
     {
       "id": "2865771e-4569-3c92-9cd6-7f58d3681e3a",
@@ -48,6 +73,36 @@
       "product_version": "patch: 7.4-rc1"
     },
     {
+      "id": "4a07b7cf-03e1-3d8c-9ae8-e95bfdc1b0bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "59b86838-75d8-3021-9991-bae851cde498",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8c97a765467c5d58682e85f103899ec2355fc393 <b893d6b0a8dd71c5f0644f82c15dae8ed732a050"
+    },
+    {
+      "id": "72546d2d-8b8d-3153-9be3-bf1e55c18373",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8c97a765467c5d58682e85f103899ec2355fc393 <21a1e897b98653f0d2d5dc41cadbf3e6a588e1b9"
+    },
+    {
       "id": "7df63769-725e-391a-a982-8b36a127f460",
       "product": {
         "name": "Linux",
@@ -66,6 +121,26 @@
         }
       },
       "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "8aac41bc-889f-3736-92ed-8f56531b7db5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8c97a765467c5d58682e85f103899ec2355fc393 <b5c7d12527ba739721e0902b64ff05c568041c24"
+    },
+    {
+      "id": "9368127e-3634-39e1-adff-793be132e154",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "ae310037-2ace-35c3-9692-b3d17ecc7dae",
@@ -106,6 +181,16 @@
         }
       },
       "product_version": "8c97a765467c5d58682e85f103899ec2355fc393 <3a523ecf9ac3fdd33f5eb31c43937ee44135395b"
+    },
+    {
+      "id": "e8a3a2b5-f920-3652-afae-0aa9ff245c52",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "ed017590-1c8c-321a-b842-c78297ae8b55",

@@ -3,8 +3,10 @@
   "enisaUuid": "2d8bcf6d-15b3-3738-adb7-c04a2cf115c4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: x86: Take SRCU in kvm_zap_gfn_range()\n\nkvm_zap_gfn_range() walks memslots and rmaps and may drop mmu_lock to\nreschedule. Callers that do not already hold kvm->srcu (or slots_lock)\ncan race with memslot deletion: synchronize_srcu_expedited() does not\nwait, kvm_free_memslot() frees the old slot and its rmap, and the zap\nresumes on freed memory.\n\nThe VFIO noncoherent-DMA path hits this by zapping the entire GPA\nspace without SRCU. KASAN reported:\n\n  BUG: KASAN: vmalloc-out-of-bounds in slot_rmap_walk_next+0x82/0x1c0\n  Read of size 8 at addr ffffc900005c1008\n  Call Trace:\n   slot_rmap_walk_next+0x82/0x1c0\n   __kvm_rmap_zap_gfn_range+0x17a/0x280\n   kvm_zap_gfn_range+0x2a6/0x6a0\n   kvm_vfio_set_attr+0x576/0x770\n   kvm_device_ioctl+0x1ff/0x3b0\n\nTake SRCU inside kvm_zap_gfn_range() so every caller is covered.\nNesting with an existing kvm->srcu critical section is fine; the\nhelper uses a local index. Drop the now-redundant SRCU pair from\n__kvm_set_or_clear_apicv_inhibit().",
   "datePublished": "Nov 19, 2026, 2:21:48 PM",
-  "dateUpdated": "Nov 19, 2026, 2:35:43 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 22, 2026, 11:07:44 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/9d119b4921ac74bc606917fd274c10c966fa5b72",
     "https://git.kernel.org/stable/c/ec9df57c8e00f189d58d927cc9a1f49592f687af",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/b59a87c1ba3c347e8aec5f932eb7abf13064fd62"
   ],
   "aliases": [
+    "GHSA-qw96-mw3q-23qq",
     "CVE-2026-99340"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
     {
       "id": "0b58c94d-c22d-3a5b-8e73-209ab6070886",

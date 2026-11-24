@@ -3,19 +3,22 @@
   "enisaUuid": "4a53451e-d1ed-341d-9935-772b329a377b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nhwmon: (peci/dimmtemp) Fix devres leak and UAF on concurrent unbind\n\nWhen a peci_dimmtemp device is unbound concurrently with its delayed\ninitialization work (detect_work), newly allocated devm resources and\nthe hwmon device are leaked, leading to a use-after-free when reading\nthe lingering hwmon sysfs attributes.\n\nIn peci_dimmtemp_probe(), detect_work is registered for cancellation via\ndevm_delayed_work_autocancel(). During driver detach, devres_release_all()\nfirst moves all existing entries from dev->devres_head onto a local todo\nlist before invoking their release callbacks in reverse order. If\ncreate_dimm_temp_info_delayed() is already running when\ndevm_delayed_work_drop() calls cancel_delayed_work_sync(),\ncreate_dimm_temp_info() can allocate dimmtemp_label strings via\ndevm_kzalloc()/devm_kasprintf() and register the hwmon device via\ndevm_hwmon_device_register_with_info(), appending new devres entries to\nthe now-empty dev->devres_head. Once the work finishes,\ndevres_release_all() frees priv and priv->name from the local todo list\nwithout re-evaluating dev->devres_head, leaving the late devres\nallocations and registered hwmon device behind with a dangling priv\npointer.\n\nCancel detect_work synchronously in a driver .remove() callback instead\nof relying on devm_delayed_work_autocancel() so that the work is fully\ndrained before devres_release_all() detaches dev->devres_head, allowing\nany devm resources registered by the delayed work to be released in\nproper reverse order. Also only schedule detect_work when\ncheck_populated_dimms() returns -EAGAIN so that probe failure paths do\nnot leave delayed work pending.",
   "datePublished": "Nov 20, 2026, 5:50:56 AM",
-  "dateUpdated": "Nov 20, 2026, 5:50:56 AM",
+  "dateUpdated": "Nov 23, 2026, 8:06:28 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/31e2d1d0085ca261e42e9ecbbce200de1801d8e5",
+    "https://git.kernel.org/stable/c/d112d6e815ca4314eb3636f8b37cf0d84cd33a8b",
     "https://git.kernel.org/stable/c/f27cb64b04af01370fbe2d23ba9aeb3401d6def8",
     "https://git.kernel.org/stable/c/c7dcea6bdc6c36c649c1fdd29909b232bcac28c9",
     "https://git.kernel.org/stable/c/3f6bd7aeea5c3bd5ced9e23184155065f551ea96",
     "https://git.kernel.org/stable/c/61bc4514b8e99e9733c04de028885f6fc906d628"
   ],
   "aliases": [
-    "CVE-2026-99718"
+    "CVE-2026-99718",
+    "GHSA-7xx6-rr8h-5p5m"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0a209962-80c0-3cd7-a594-17b0352c1dd9",
@@ -46,6 +49,16 @@
         }
       },
       "product_version": "73bc1b885daeb684fbcd16cc4e979cac6a831b12 <61bc4514b8e99e9733c04de028885f6fc906d628"
+    },
+    {
+      "id": "613b7a06-cafe-3827-9cd4-4e7248d72e02",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "800f45aa-d315-3c76-afba-906be39aaa30",
@@ -88,6 +101,16 @@
       "product_version": "patch: 7.3.5"
     },
     {
+      "id": "c8b6e1aa-bfc7-3166-a378-4a26ab7ab2ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "73bc1b885daeb684fbcd16cc4e979cac6a831b12 <d112d6e815ca4314eb3636f8b37cf0d84cd33a8b"
+    },
+    {
       "id": "dcfb6390-c13b-34aa-9b0f-fa2b3e63e681",
       "product": {
         "name": "Linux",
@@ -98,6 +121,16 @@
       "product_version": "patch: 6.12.118"
     },
     {
+      "id": "edc443e9-ed58-3f85-a99c-6320661939d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "73bc1b885daeb684fbcd16cc4e979cac6a831b12 <31e2d1d0085ca261e42e9ecbbce200de1801d8e5"
+    },
+    {
       "id": "f3a1db33-d0fc-3d43-b331-9250b3a48b6c",
       "product": {
         "name": "Linux",
@@ -106,6 +139,16 @@
         }
       },
       "product_version": "5.18"
+    },
+    {
+      "id": "fd98ad67-126a-3d1f-989c-7d992afec79d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "fe3274ce-c3eb-3c11-a1ce-336ef47ac03a",

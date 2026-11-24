@@ -3,19 +3,24 @@
   "enisaUuid": "4837097b-ba8f-3d25-8e03-9ad7260e7d6e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbatman-adv: tt: only update flags for TT events\n\nIn the first implementation of the translation table events, it was only\npossible to announce:\n\n* ADD: new locally detected client\n* DEL: disappeared local client\n\nIf an ADD event was queued and then a DEL event was queued in the same\ntimeslot, it is valid to destroy both events because nothing actually\nchanged for remode nodes\n\nBut with commit 3c4f7ab60cc2 (\"batman-adv: improve the TT component to\nsupport runtime flag changes\") and subsequent changes, it could also happen\nthat there are extra ADD events:\n\n* ADD: _NEW_ locally detected client\n* ADD: already existing client with new flags\n* DEL: disappeared local client\n\nThe first and the last type of event could in theory still be removed\ntogether from the (to be announced) events queue. But if the \"update flags\"\nADD is dropped together with the DEL, it would still leave global\ntranslation table of a remote node in the incorrect state - believing that\nthe client didn't disappear.\n\nIf a detected client was previously announced, a DEL event must only\noverwrite the \"update flags\" ADD but the DEL itself must still continue to\nexist in the (to be anounced) events queue. For now, adjustment of the\nannounced flags is used for everything instead of dropping already queued\nup events completely.\n\nSimilarly, a DEL followed by an ADD caused both entries to be deleted. But\nthe new ADD could announce flags changes which were not yet present for the\nclient before it was marked for DELetion. The new ADD must therefore only\noverwrite the DEL - but still be kept.",
   "datePublished": "Nov 20, 2026, 5:49:17 AM",
-  "dateUpdated": "Nov 20, 2026, 5:49:17 AM",
+  "dateUpdated": "Nov 23, 2026, 8:04:41 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/e264dff563453ca96fdf09eac5a541af43ebb0ca",
+    "https://git.kernel.org/stable/c/1d6a23522665be4f6e56b03c9b9200da1884f9dd",
+    "https://git.kernel.org/stable/c/e8e09996189e2911f52889cc10fb5801100607f9",
+    "https://git.kernel.org/stable/c/02c5b60fd4b64f505189055232382e76d9d641a0",
     "https://git.kernel.org/stable/c/92fb8f25fee4c8820b54a18f694b74b3adb79f34",
     "https://git.kernel.org/stable/c/4cec0f6207e551ec4081e84a37918060dd2b51a7",
     "https://git.kernel.org/stable/c/326bea8dbc9dc741a39c33b4a8cb6ce07dc4cdbe",
     "https://git.kernel.org/stable/c/ad1fd828aa3944efc393b84b0d7c02483f1b5638"
   ],
   "aliases": [
-    "CVE-2026-99588"
+    "CVE-2026-99588",
+    "GHSA-fmwp-85ww-42w9"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "08e2430b-6b46-348d-9fe2-4b3c697ed78c",
@@ -38,6 +43,16 @@
       "product_version": "3c4f7ab60cc21e8fc65b234f3a6174fc19a93fee <4cec0f6207e551ec4081e84a37918060dd2b51a7"
     },
     {
+      "id": "1e64f04c-1f4f-3112-b696-8cc5ff230f52",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "244b8171-a474-3973-834b-2275fafa5270",
       "product": {
         "name": "Linux",
@@ -46,6 +61,16 @@
         }
       },
       "product_version": "patch: 6.12.118"
+    },
+    {
+      "id": "3cefa4de-466c-339f-8b23-48c0ae6c1144",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "565ea4bd-8f3d-3dee-9f24-3786ad9f2cf9",
@@ -88,6 +113,16 @@
       "product_version": "3c4f7ab60cc21e8fc65b234f3a6174fc19a93fee <ad1fd828aa3944efc393b84b0d7c02483f1b5638"
     },
     {
+      "id": "91ea9036-f637-32ed-8cba-0d661a6304d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3c4f7ab60cc21e8fc65b234f3a6174fc19a93fee <02c5b60fd4b64f505189055232382e76d9d641a0"
+    },
+    {
       "id": "9238d849-bd24-3927-8852-00161dbdd419",
       "product": {
         "name": "Linux",
@@ -96,6 +131,16 @@
         }
       },
       "product_version": "3c4f7ab60cc21e8fc65b234f3a6174fc19a93fee <326bea8dbc9dc741a39c33b4a8cb6ce07dc4cdbe"
+    },
+    {
+      "id": "937c90ca-b31c-3811-8363-6f691e84657a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3c4f7ab60cc21e8fc65b234f3a6174fc19a93fee <e264dff563453ca96fdf09eac5a541af43ebb0ca"
     },
     {
       "id": "ad99765e-20b7-3c06-afd6-127912422d86",
@@ -108,6 +153,16 @@
       "product_version": "patch: 7.3.5"
     },
     {
+      "id": "b2697996-4272-3269-b322-8335fdb0e954",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3c4f7ab60cc21e8fc65b234f3a6174fc19a93fee <1d6a23522665be4f6e56b03c9b9200da1884f9dd"
+    },
+    {
       "id": "b6b45113-b746-3e08-b2af-004cf6dc0f2c",
       "product": {
         "name": "Linux",
@@ -116,6 +171,36 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "ba8625d5-85da-368e-b13e-f8b1e43efbd8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3c4f7ab60cc21e8fc65b234f3a6174fc19a93fee <e8e09996189e2911f52889cc10fb5801100607f9"
+    },
+    {
+      "id": "c1fe7b4c-ebc6-3b28-9afc-2e4f1fdcc3a8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "dfd13c32-d28c-3ce9-9da4-a3098dd21f5c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     }
   ],
   "enisaIdVendor": [

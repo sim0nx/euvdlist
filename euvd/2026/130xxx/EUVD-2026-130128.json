@@ -3,19 +3,22 @@
   "enisaUuid": "87d29b28-ba94-33ca-9498-b42e4873d331",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm: khugepaged: fix swap entry value to folio_pfn()\n\nPatch series \"mm: khugepaged: fix tracepoint UAF\", v5.\n\nThe khugepaged tracepoints take a folio pointer and call folio_pfn(), but\nby then the folio may no longer be valid: freed after folio_put(),\nfolio_unlock() or pte_unmap_unlock(), or not a folio at all but an\nxarray-encoded swap entry.  On classic SPARSEMEM, dereferencing it oopses\nkhugepaged as soon as the trace event is enabled; on other memory models\nit merely prints a bogus pfn.\n\nPass the pfn to the tracepoints directly, captured while the folio is\nstill pinned, closing the use-after-free windows in\nmm_khugepaged_scan_file(), mm_khugepaged_scan_pmd() and\nmm_khugepaged_collapse_file().\n\n\nThis patch (of 3):\n\nWhen the swap entries found exceed max_ptes_swap, the loop is left via\nbreak with folio still holding the xarray value that encodes the swap\nentry, not valid folio pointer.\n\nThat value is passed to trace_mm_khugepaged_scan_file(), which feeds it to\nfolio_pfn().  On FLATMEM and SPARSEMEM_VMEMMAP, the page_to_pfn() is plain\npointer arithmetic, so the trace event merely prints bogus scan_pfn.  On\nclassic SPARSEMEM, the page_to_pfn() reads page->flags, dereferencing the\ntiny encoded integer and oopsing khugepaged whenever the trace event is\nenabled.\n\nSo when folio is the swap entry value, simply set pfn to -1, just like\nexhausted scan naturally.\n\nAnd the folio_put() has maybe dropped the last reference of folio.  The\ntrace_mm_khugepaged_scan_file() is left with a dangling folio pointer.  so\nusing the folio_pfn() before dropping the reference, closing\nuse-after-free window.",
   "datePublished": "Nov 19, 2026, 2:42:08 PM",
-  "dateUpdated": "Nov 19, 2026, 2:42:08 PM",
+  "dateUpdated": "Nov 23, 2026, 8:03:07 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/67d5822d6fbb93abcaae74853f4d125cb6118a46",
+    "https://git.kernel.org/stable/c/72b6f93acb1518e811dfd4828ab917acacb32920",
     "https://git.kernel.org/stable/c/384c524e066459c91a8750a055fe70d56b334437",
     "https://git.kernel.org/stable/c/c4252273ead984541eb9313667f2924f2ff8d0e0",
     "https://git.kernel.org/stable/c/9efc8d0c9c81094cfa99667154f5682d487e9b63",
     "https://git.kernel.org/stable/c/942c8ec27aa4ffc587511650718349964e1696e6"
   ],
   "aliases": [
+    "GHSA-2m22-xjj2-6cjx",
     "CVE-2026-99461"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "19ef63a9-3e7f-388e-9ca7-d64fd1710f7a",
@@ -56,6 +59,16 @@
         }
       },
       "product_version": "d41fd2016ed07a630da2817b76c98eeab7931e1e <9efc8d0c9c81094cfa99667154f5682d487e9b63"
+    },
+    {
+      "id": "5d5ee1bf-36b7-3966-b168-f2ef746f7a64",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d41fd2016ed07a630da2817b76c98eeab7931e1e <67d5822d6fbb93abcaae74853f4d125cb6118a46"
     },
     {
       "id": "69616e45-a95d-3bac-8304-b5db29e2f33a",
@@ -108,6 +121,16 @@
       "product_version": "d41fd2016ed07a630da2817b76c98eeab7931e1e <942c8ec27aa4ffc587511650718349964e1696e6"
     },
     {
+      "id": "c7cfbeac-fb28-39f2-a21d-c44ebd80a2d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "cdf8d3e3-d074-3a04-9b7c-6a72f4c54bb6",
       "product": {
         "name": "Linux",
@@ -116,6 +139,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "eb096d18-b2e6-367c-9bf4-3223532ed82a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "ed00e24d-8af3-334e-a24d-5fa1a0dbbb61",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d41fd2016ed07a630da2817b76c98eeab7931e1e <72b6f93acb1518e811dfd4828ab917acacb32920"
     }
   ],
   "enisaIdVendor": [
