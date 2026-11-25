@@ -3,7 +3,7 @@
   "enisaUuid": "dc4c9a74-6669-34bb-886b-b9a8d7927f30",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: sfq: clamp quantum to avoid signed overflow soft lockup\n\nsfq_init() sets q->quantum = psched_mtu(qdisc_dev(sch)) (unsigned). A\ndevice with a huge MTU (e.g. dummy with max_mtu == 0 accepting MTU\n2147483634) makes psched_mtu() return 0x80000000, so slot->allot = INT_MIN\nand INT_MIN + INT_MIN toggles between INT_MIN and 0 forever, spinning\nsfq_dequeue() under the qdisc lock.\n\nClamp the quantum to [256, 1 << 20] so the refill loop terminates. The\nlower bound also covers q->quantum == 0 (psched_mtu() returning 0),\nwhich spins sfq_dequeue() identically. sfq_change() already rejects a\nnegative quantum, so only the init path was exposed.\n\nConditions to recreate the bug: a device whose MTU (plus\nhard_header_len) wraps psched_mtu() into the sign bit (e.g. a dummy\ndevice with max_mtu == 0 accepting MTU 2147483634). Requires\nCAP_NET_ADMIN in a user namespace.",
   "datePublished": "Sep 17, 2026, 4:05:52 PM",
-  "dateUpdated": "Sep 17, 2026, 4:05:52 PM",
+  "dateUpdated": "Oct 19, 2026, 8:57:29 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/86799499585af06a9431c9e7782658667bd62650",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/816e90057ab1879562a5b7cc688e35bb9027ae97"
   ],
   "aliases": [
+    "GHSA-783h-5cfx-mm7x",
     "CVE-2026-90072"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "01baf710-e4df-3cef-b927-ef027fcf111d",
@@ -82,6 +83,16 @@
       "product_version": "patch: 6.1.188"
     },
     {
+      "id": "4f8cd809-4094-345e-9ee7-1f6b295502d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "546c56c9-d583-34f4-8c89-552d3e2190a9",
       "product": {
         "name": "Linux",
@@ -90,16 +101,6 @@
         }
       },
       "product_version": "2.6.12"
-    },
-    {
-      "id": "6a9cad12-f198-3865-9911-f76478282183",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "74710796-36fc-31dc-9ea9-2e4ae099d6c4",

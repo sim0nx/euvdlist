@@ -3,19 +3,35 @@
   "enisaUuid": "9e9f73df-946b-3397-b9fc-a050d4701b4e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/vmalloc: acquire init_mm lock on huge vmap to avoid ptdump UAF\n\nPatch series \"mm: fix UAF caused by race between ptdump and vmap pgtable\nfreeing\", v6.\n\nKernel page table walkers fall into two broad categories - those ranges\nwhere no exclusion is required via walk_kernel_page_table_range_lockless()\nand those where exclusion is required via walk_kernel_page_table_range()\nor walk_page_range_debug().\n\nThe former category is used only by arm64 arch code operating on ranges it\nboth wholly owns and does not concurrently write.\n\nThe latter category consists of kernel page table walkers operating on\nranges that are wholly owned (but which need exclusion against concurrent\nwriters).\n\nThe lock used for exclusion is the mmap lock, and for kernel ranges this\nis the mmap lock on init_mm.\n\nptdump is a special case being both the only user of\nwalk_page_range_debug(), and the only case in which it walks ranges it\ndoes not own.\n\nThis presents a problem, as page tables may be freed under ptdump.  And\nindeed there is a use-after-free bug in the kernel as a result, which this\nseries addresses.\n\nvmap promotes page tables to huge leaf entries where possible, freeing the\nlower page table when it does.  It does this with no meaningful locks held\nagainst concurrent ptdump walks.\n\nAs a result, use-after-free can currently occur.  This series addresses\nthe issue by having the vmap huge promotion logic acquire the mmap read\nlock while both setting the huge page table entry and freeing the prior\nleaf page table.\n\nThe ptdump code already acquires the mmap write lock, so by doing so we\nensure that the ptdump walker only ever observes either the huge page\ntable entry or the existing page table entry, and nothing is freed\nunderneath it.\n\nA mitigation for this issue was already applied for arm64 in commit\nfa93b45fd397 (\"arm64: Enable vmalloc-huge with ptdump\"), which this series\nhas to deal with carefully.\n\nThis mitigation resolves the issue by acquiring the mmap read lock on\ninit_mm on vmap page table free if a ptdump is in progress.\n\nHowever the fix in this series would cause a deadlock if we were to simply\napply it for arm64 without also reverting the change.\n\nThis is because vmap may acquire the read lock before ptdump attempts to\nacquire the write lock, which then gets queued, and rwsem starvation rules\nmean that the (unacknowledged) nested mmap read lock in the arm64 code\nwould also block, meaning the original read lock is never released and\nthus deadlock.\n\nThis series works around this by #ifndef CONFIG_ARM64'ing the mmap read\nlock in vmap logic, then partially reverting commit fa93b45fd397 (\"arm64:\nEnable vmalloc-huge with ptdump\"), keeping the enablement of huge vmap\nsupport, and removing the ifdeffery with the partial revert patch.\n\nThere are related issues that are also addressed in this series:\n\n* x86 page attribute logic, specifically Change Page Attributes (CPA),\n  implements a feature whereby huge ranges can be collapsed into huge leaf\n  entries. This can similarly cause a UAF when done in parallel with a\n  ptdump walk, so similarly acquire the init_mm mmap lock to avoid this.\n\n* The CPA logic allows concurrent page table manipulation and CPA\n  collapse, meaning the former risks accessing a page table the latter\n  frees. Fix this by acquiring mmap write lock on init_mm across the\n  whole CPA collapse operation and read lock on the page table\n  manipulation.\n\n* x86 and arm64 permit walks of non-kernel mm's (both allowing efi mm\n  walks, and in x86's case arbitrary mm's), so we ensure kernel mappings\n  remain stable by locking the init_mm as well as the mm being walked.\n\nThe ordering of patches is established for both strict dependencies (the\narm64 partial revert in particular has to be done after the vmap changes)\nand logical ones (the non-kernel mm fix only makes sense once the vmap/CPA\nfixes are in place).\n\n\nThis patch (of 3):\n\nCurrently there is a nasty ra\n---truncated---",
   "datePublished": "Aug 22, 2026, 3:32:42 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:42 PM",
+  "dateUpdated": "Nov 6, 2026, 5:05:50 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/51eaba47b3dc258d1182fc3a88da544ed6b6bb2d",
+    "https://git.kernel.org/stable/c/e85ed734611616d4a9d8a240bde563dd6ac7452f",
+    "https://git.kernel.org/stable/c/39c6772b56a6bbdd62794833f74232971d94d7c9",
+    "https://git.kernel.org/stable/c/8d7f560f4b0482d469de962fbe4b59c37561052e",
+    "https://git.kernel.org/stable/c/7ac8a333dd41ba5e1b4e8c6edbc48b15446c5468",
     "https://git.kernel.org/stable/c/c5bf8cd148cfea948cfa3db71da427294b20db0f",
     "https://git.kernel.org/stable/c/3cc26c8907db0f5d1ff8043b5851ee572e9b3c98",
     "https://git.kernel.org/stable/c/26444eb71465c9934d9d418ef69c43f61185329b"
   ],
   "aliases": [
-    "CVE-2026-74672"
+    "CVE-2026-74672",
+    "GHSA-h3pq-52v7-99m6"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "06961781-111e-3088-8c82-994d26210e71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b6bdb7517c3d3f41f20e5c2948d6bc3f8897394e <39c6772b56a6bbdd62794833f74232971d94d7c9"
+    },
     {
       "id": "0af10c59-8ac2-3109-a73d-4c38a8251586",
       "product": {
@@ -37,6 +53,16 @@
       "product_version": "4.15.14 <4.16"
     },
     {
+      "id": "1c8f0264-4c24-31e5-843a-830941fb9684",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b6bdb7517c3d3f41f20e5c2948d6bc3f8897394e <8d7f560f4b0482d469de962fbe4b59c37561052e"
+    },
+    {
       "id": "31936b7d-a71b-38ce-880c-4ea109ea809c",
       "product": {
         "name": "Linux",
@@ -45,6 +71,16 @@
         }
       },
       "product_version": "4.16"
+    },
+    {
+      "id": "34586644-3fa2-3054-bc62-33df0a572433",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
     },
     {
       "id": "3a5487c1-ee1c-39a2-971c-df69e8db54da",
@@ -67,6 +103,16 @@
       "product_version": "9c7f7bdb1932f8c1e5f80d32c717184701afe701"
     },
     {
+      "id": "3f910644-f0ec-3b23-8086-b3b0eafd5964",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b6bdb7517c3d3f41f20e5c2948d6bc3f8897394e <e85ed734611616d4a9d8a240bde563dd6ac7452f"
+    },
+    {
       "id": "5d75697c-2620-39b0-9bba-e8b9cf845605",
       "product": {
         "name": "Linux",
@@ -75,6 +121,16 @@
         }
       },
       "product_version": "b6bdb7517c3d3f41f20e5c2948d6bc3f8897394e <c5bf8cd148cfea948cfa3db71da427294b20db0f"
+    },
+    {
+      "id": "5ea9be51-c20e-3503-b0ef-c4bc395460d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.153"
     },
     {
       "id": "62582d44-fd6a-3a1d-8dfc-3ffbe14c3ac1",
@@ -107,6 +163,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "76a7e131-7e54-318a-a4a8-ef9be6cac39d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "8217b8a8-0ab7-3168-8b44-9187d3b35e96",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.184"
+    },
+    {
       "id": "85f0ad75-6109-3ff4-bc81-8fb796afbca6",
       "product": {
         "name": "Linux",
@@ -115,6 +191,26 @@
         }
       },
       "product_version": "b6bdb7517c3d3f41f20e5c2948d6bc3f8897394e <26444eb71465c9934d9d418ef69c43f61185329b"
+    },
+    {
+      "id": "9c834156-4cd2-3aa4-a92c-eac868da3c10",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b6bdb7517c3d3f41f20e5c2948d6bc3f8897394e <7ac8a333dd41ba5e1b4e8c6edbc48b15446c5468"
+    },
+    {
+      "id": "a069066d-ead0-3716-b675-918e1d1c33af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b6bdb7517c3d3f41f20e5c2948d6bc3f8897394e <51eaba47b3dc258d1182fc3a88da544ed6b6bb2d"
     },
     {
       "id": "abd90b2b-5040-39fb-b1a8-2f22aacca071",
@@ -145,6 +241,16 @@
         }
       },
       "product_version": "4.4.125 <4.5"
+    },
+    {
+      "id": "c419a63f-bce1-312d-96a2-629353753760",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.105"
     },
     {
       "id": "e80720db-1264-35c4-afbf-cdbd2746cdb7",

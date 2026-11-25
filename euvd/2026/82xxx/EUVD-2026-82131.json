@@ -3,8 +3,10 @@
   "enisaUuid": "848a95ed-9960-3da8-9786-027409cb05d6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/core: Fix potential use after free in ib_destroy_srq_user()\n\nWhen accessing a SRQ via the netlink path the only synchronization\nmechanism for the said SRQ is rdma_restrack_get().\nCurrently, rdma_restrack_del() is invoked at the end of\nib_destroy_srq_user(), which is too late, since by that point\nvendor-specific resources associated with the SRQ might already be\nfreed. This can leave a short window where the SRQ remains accessible\nthrough restrack, leading to a potential use-after-free.\n\nFix this by moving the rdma_restrack_begin_del() call to the start of\nib_destroy_srq_user(), ensuring that the SRQ is removed from restrack\nbefore its internal resources are released. This guarantees that no new\nusers hold references to a SRQ that is in the process of destruction.\n\nIn addition, this change preserves the intended inverted order\nbetween create and destroy routines: resources are added to\nrestrack at the end of successful creation, and hence shall be removed\nfrom the restrack first thing during the destruction flow, which keeps\nthe lifecycle management consistent and predictable.",
   "datePublished": "Sep 17, 2026, 4:10:20 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:20 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:04:16 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/a5bfd9fe05d5cebbd3e447bf7f7b2c663007d8b9",
     "https://git.kernel.org/stable/c/d3d0eabe6e39b024deb3e085e2d408d037e967c3",
@@ -14,10 +16,11 @@
     "https://git.kernel.org/stable/c/88244ecc71cc0b3ed200f5ef7ddea6686adfd730"
   ],
   "aliases": [
-    "CVE-2026-92510"
+    "CVE-2026-92510",
+    "GHSA-gq9p-mf7p-4754"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "2b98cff1-7fd2-3862-bce7-f54441dd9f26",
@@ -70,6 +73,16 @@
       "product_version": "5.13"
     },
     {
+      "id": "64a606f6-ae9e-3b9d-aadb-b37b96db2882",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "73eaa907-d23b-38dc-bc37-9b7ab6e331a2",
       "product": {
         "name": "Linux",
@@ -88,16 +101,6 @@
         }
       },
       "product_version": "patch: 6.6.157"
-    },
-    {
-      "id": "acf10692-2957-38f9-a000-49059d544cef",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "cf471204-2e97-3812-8834-d30599b2a72f",

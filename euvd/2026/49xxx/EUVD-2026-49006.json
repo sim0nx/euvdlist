@@ -3,9 +3,11 @@
   "enisaUuid": "1fbf17df-d4f4-3f04-bca7-71cdbe93a5dc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm: do file ownership checks with the proper mount idmap\n\nEver since idmapped mounts were introduced, inode ownership checks (for\nside-channel protection) in mincore() and madvise(MADV_PAGEOUT) were done\nagainst the nop_mnt_idmap, which completely ignores the file's mount's\nidmap.  This results in odd edgecases like:\n\n1) mount/bind-mount with an idmap userA:userB:1\n2) userB runs an owner_or_capable() check on file that is owned by userA\non-disk/in-memory, but owned by userB after idmap translation\n3) owner_or_capable() mysteriously fails as the correct idmap wasn't supplied\n\nIn the case of mincore/madvise MADV_PAGEOUT, this is usually benign,\nbecause file_permission(file, MAY_WRITE) will probably succeed, as it uses\nthe proper idmap internally, but it does not need to be the case on e.g a\n0444 file where even the owner itself doesn't have permissions to write to\nit.\n\nSince this is clearly not trivial to get right, introduce a\nfile_owner_or_capable() that can carry the correct semantics, and switch\nthe various users in mm to it.\n\nThe issue was found by manual code inspection & an off-list discussion\nwith Jan Kara.",
   "datePublished": "Jul 25, 2026, 8:49:32 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:32 AM",
+  "dateUpdated": "Nov 6, 2026, 4:34:33 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/7368bec565bac3e536cd43579dbde1e715e6ba61",
+    "https://git.kernel.org/stable/c/b2f3d94ea310bea9d36d53e9d9b3f45e86c1d893",
     "https://git.kernel.org/stable/c/744b23aa430d52f5c8e4dbff7d71496d6643bed2",
     "https://git.kernel.org/stable/c/8344bdf0629457e532797b42d9d2bbf2a2900bbf",
     "https://git.kernel.org/stable/c/5c942ad7df75925ee166e7f0fb36892d8dde376b",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/e187bc02f8fa4226d62814592cf064ee4557c470"
   ],
   "aliases": [
-    "CVE-2026-64294"
+    "CVE-2026-64294",
+    "GHSA-rgg7-9234-2h22"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "2e08d93b-e846-32f9-b074-88aadcdfc66e",
@@ -29,14 +32,24 @@
       "product_version": "patch: 6.6.145"
     },
     {
-      "id": "2e4c0251-f31e-3c96-8559-fc7e5e094342",
+      "id": "3259ae70-7f8d-34e6-ae0a-ee71def2ac9f",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc3"
+      "product_version": "patch: 6.1.184"
+    },
+    {
+      "id": "6098002a-238d-3e4e-a949-1f91adf83680",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "61ae02d6-b1f3-3bbe-aa72-d11945bc751d",
@@ -79,6 +92,26 @@
       "product_version": "5.12"
     },
     {
+      "id": "a8355876-00a4-3010-8324-bb11c51c6d97",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.217"
+    },
+    {
+      "id": "af3885de-f918-39a8-a952-3cb3ab605933",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9caccd41541a6f7d6279928d9f971f6642c361af <b2f3d94ea310bea9d36d53e9d9b3f45e86c1d893"
+    },
+    {
       "id": "bd533994-ce6d-33f5-8c24-e6059dc4cfe0",
       "product": {
         "name": "Linux",
@@ -107,6 +140,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "e574ffd0-1470-3755-b215-80c283b6d686",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9caccd41541a6f7d6279928d9f971f6642c361af <7368bec565bac3e536cd43579dbde1e715e6ba61"
     },
     {
       "id": "efa2943e-924c-3d24-b70f-bf15e1bdec5c",

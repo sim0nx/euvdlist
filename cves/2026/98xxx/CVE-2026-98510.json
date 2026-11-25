@@ -3,8 +3,10 @@
   "enisaUuid": "603917d4-70d3-3ece-b51f-0c456ef8c575",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/xe/vm: nuke PTs only after unlinking contested VMAs\n\nIn xe_vm_close_and_put(), external-BO VMAs are queued on the contested\nlist for deferred destruction via xe_vma_destroy_unlocked(). However,\nxe_vm_pt_destroy() was previously invoked before processing contested\nVMAs, destroying vm->pt_root while those VMAs were still linked to their\nrespective buffer objects (vm_bo->list.gpuva).\n\nIf a concurrent thread evicts one of those shared buffer objects,\nxe_bo_trigger_rebind() holding only bo->resv walks the BO's VMAs and, in\nfault mode, calls xe_vm_invalidate_vma() -> xe_pt_zap_ptes(). Because\nvm->pt_root[tile->id] is already NULL, dereferencing pt->level causes a\nNULL ptr deref.\n\nFix this by deferring xe_vm_free_scratch() and xe_vm_pt_destroy() until\nafter all contested VMAs have been unlinked and destroyed.\n\nUser is reporting hitting a NULL ptr deref in xe_pt_zap_ptes(), which\ncould be explained by this race.\n\n(cherry picked from commit c2863648959489767f08892fd6e90577d2ea0b6a)",
   "datePublished": "Oct 18, 2026, 3:17:20 PM",
-  "dateUpdated": "Oct 18, 2026, 3:17:20 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 24, 2026, 2:09:11 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/70fddc065ac80845ffd33095b3635d59883cf7e6",
     "https://git.kernel.org/stable/c/ba678c2b02e0d36b53deb5a6d5e5ea044d36def7",
@@ -12,21 +14,12 @@
     "https://git.kernel.org/stable/c/24a22fb3c731474b68e986af6804db450fb88617"
   ],
   "aliases": [
+    "GHSA-p8r6-wxq7-5fv3",
     "CVE-2026-98510"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
-    {
-      "id": "3ecfc9d8-6b66-34ac-81cd-bbb2ecf1f293",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
-    },
     {
       "id": "44a0709d-45e1-3d08-875d-ca06615d7f2e",
       "product": {
@@ -56,6 +49,16 @@
         }
       },
       "product_version": "b06d47be7c83165d3b3e45e1d5f9520b79c7f5cc <24a22fb3c731474b68e986af6804db450fb88617"
+    },
+    {
+      "id": "6ab21239-ffee-39d4-8904-aea734cee6d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "aa58a269-3915-3883-8eb2-29ea80b6ec5c",

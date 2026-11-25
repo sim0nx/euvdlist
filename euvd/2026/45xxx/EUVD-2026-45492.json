@@ -3,9 +3,10 @@
   "enisaUuid": "3f8a6a9e-aece-3ddd-ad37-2fe966ce1cb9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfbdev: fix use-after-free in store_modes()\n\nstore_modes() replaces a framebuffer's modelist with modes from userspace.\nOn success it frees the old modelist with fb_destroy_modelist(). Two\nfields still point into that freed list.\n\nOne pointer is fb_display[i].mode, the mode a console is using.\nfbcon_new_modelist() moves these pointers to the new list. It only does so\nfor consoles still mapped to the framebuffer. An unmapped console is\nskipped and keeps its stale pointer. Unbinding fbcon, for example, sets\ncon2fb_map[i] to -1 but leaves fb_display[i].mode set. An\nFBIOPUT_VSCREENINFO ioctl with FB_ACTIVATE_INV_MODE later reaches\nfbcon_mode_deleted(). That function reads the stale fb_display[i].mode\nthrough fb_mode_is_equal(). The read is a use-after-free.\n\nThe other pointer is fb_info->mode, the current mode. It is set through\nthe mode sysfs attribute. store_modes() does not update fb_info->mode, so\nit is left pointing into the freed list. show_mode(), the attribute's read\nhandler, dereferences the stale fb_info->mode through mode_string(). The\nread is a use-after-free.\n\nClear both pointers before freeing the list. Commit a1f305893074 (\"fbcon:\nSet fb_display[i]->mode to NULL when the mode is released\") added the\nhelper fbcon_delete_modelist(). It clears every fb_display[i].mode that\npoints into a given list. So far it is called only from the unregister\npath. Call it from store_modes() too, and set fb_info->mode to NULL.",
   "datePublished": "Jul 19, 2026, 12:02:21 PM",
-  "dateUpdated": "Jul 19, 2026, 12:02:21 PM",
+  "dateUpdated": "Nov 6, 2026, 4:34:24 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/3047319e44f1368370f6fa2c04dea2961fb10215",
     "https://git.kernel.org/stable/c/5267eab88fa4c684459504b8be577ad64953b9a6",
     "https://git.kernel.org/stable/c/c6765f39ed27014ff877b00a2efa494233404e17",
     "https://git.kernel.org/stable/c/0d35f9f194a858567a21017d69318a51e3a822b9",
@@ -17,8 +18,28 @@
     "GHSA-qmc7-p94r-m2hm"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
+    {
+      "id": "11ee5975-3af3-3753-9971-e1451f4329a8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <3047319e44f1368370f6fa2c04dea2961fb10215"
+    },
+    {
+      "id": "38830afe-bd93-3a5b-ae0d-92cb512e9889",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
     {
       "id": "44d94040-0a77-3a37-ba03-ab037b63fb73",
       "product": {
@@ -50,14 +71,14 @@
       "product_version": "patch: 6.18.38"
     },
     {
-      "id": "9a786831-0770-3a1e-836e-49f99ecd93f8",
+      "id": "754a037a-e2c0-3b3e-9b61-f9d696865b3c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.6.144"
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "a077603b-f81e-3533-a170-0a51afb1f657",
@@ -80,26 +101,6 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c6765f39ed27014ff877b00a2efa494233404e17"
     },
     {
-      "id": "aea9c095-16b0-316a-852e-c9a9c5b2c4c9",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.18.38"
-    },
-    {
-      "id": "b8cf35dc-465a-3f1a-9aef-6a0b1f2cff16",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.12.95"
-    },
-    {
       "id": "bb45e1bd-08d1-32c6-a668-b9ddc76d65ae",
       "product": {
         "name": "Linux",
@@ -120,6 +121,16 @@
       "product_version": "patch: 7.1.3"
     },
     {
+      "id": "c9813e5c-0d46-3a36-9390-45a2413c4da5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
       "id": "d7dea8e4-ff7d-3362-8075-9165e93c4214",
       "product": {
         "name": "Linux",
@@ -128,16 +139,6 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2c1c805c65fb7dc7524e20376d6987721e73a0b1"
-    },
-    {
-      "id": "dcbb679b-ad40-3b79-b2d9-0d4334efeb71",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "f885c00f-8b7c-3658-b851-9cb91d8746fe",
@@ -150,14 +151,14 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0d35f9f194a858567a21017d69318a51e3a822b9"
     },
     {
-      "id": "ff7f98dc-5ef4-36d9-babe-7450d671ffc0",
+      "id": "fbed98ad-7d77-3352-8dcd-7043b5c3eb2f",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.1.3"
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

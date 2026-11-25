@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2024-35791",
+  "enisaUuid": "aed3c48f-13d1-3279-ab6c-099c553dae79",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbtrfs: fix race in read_extent_buffer_pages()\n\nThere are reports from tree-checker that detects corrupted nodes,\nwithout any obvious pattern so possibly an overwrite in memory.\nAfter some debugging it turns out there's a race when reading an extent\nbuffer the uptodate status can be missed.\n\nTo prevent concurrent reads for the same extent buffer,\nread_extent_buffer_pages() performs these checks:\n\n    /* (1) */\n    if (test_bit(EXTENT_BUFFER_UPTODATE, &eb->bflags))\n        return 0;\n\n    /* (2) */\n    if (test_and_set_bit(EXTENT_BUFFER_READING, &eb->bflags))\n        goto done;\n\nAt this point, it seems safe to start the actual read operation. Once\nthat completes, end_bbio_meta_read() does\n\n    /* (3) */\n    set_extent_buffer_uptodate(eb);\n\n    /* (4) */\n    clear_bit(EXTENT_BUFFER_READING, &eb->bflags);\n\nNormally, this is enough to ensure only one read happens, and all other\ncallers wait for it to finish before returning.  Unfortunately, there is\na racey interleaving:\n\n    Thread A | Thread B | Thread C\n    ---------+----------+---------\n       (1)   |          |\n             |    (1)   |\n       (2)   |          |\n       (3)   |          |\n       (4)   |          |\n             |    (2)   |\n             |          |    (1)\n\nWhen this happens, thread B kicks of an unnecessary read. Worse, thread\nC will see UPTODATE set and return immediately, while the read from\nthread B is still in progress.  This race could result in tree-checker\nerrors like this as the extent buffer is concurrently modified:\n\n    BTRFS critical (device dm-0): corrupted node, root=256\n    block=8550954455682405139 owner mismatch, have 11858205567642294356\n    expect [256, 18446744073709551360]\n\nFix it by testing UPTODATE again after setting the READING bit, and if\nit's been set, skip the unnecessary read.\n\n[ minor update of changelog ]",
+  "datePublished": "May 17, 2024, 1:23:08 PM",
+  "dateUpdated": "Aug 5, 2026, 11:30:01 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/0427c8ef8bbb7f304de42ef51d69c960e165e052",
+    "https://git.kernel.org/stable/c/3a25878a3378adce5d846300c9570f15aa7f7a80",
+    "https://git.kernel.org/stable/c/2885d54af2c2e1d910e20d5c8045bae40e02fbc1",
+    "https://git.kernel.org/stable/c/ef1e68236b9153c27cb7cf29ead0c532870d4215"
+  ],
+  "aliases": [
+    "CVE-2024-35798",
+    "GHSA-w9qv-8mcj-wh8f"
+  ],
+  "assigner": "Linux",
+  "epss": 0.18,
+  "enisaIdProduct": [
+    {
+      "id": "076cc885-c6e1-3d79-aec5-be33d1c38521",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "108ed5de-1153-321c-a5b4-aef013dea7a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d7172f52e9933b6ec9305e7fe6e829e3939dba04 <3a25878a3378adce5d846300c9570f15aa7f7a80"
+    },
+    {
+      "id": "2ea06cfc-425a-3154-a2c1-5b176ace1afc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.5"
+    },
+    {
+      "id": "30824f0f-9f8e-39cb-8be9-d212017f22d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "4f538833-0317-33a9-ad71-8ccb6921c506",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d7172f52e9933b6ec9305e7fe6e829e3939dba04 <ef1e68236b9153c27cb7cf29ead0c532870d4215"
+    },
+    {
+      "id": "88afa64c-9821-3566-a441-2f30da862387",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.12"
+    },
+    {
+      "id": "914ac683-6607-3926-911e-30a2c37751f2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d7172f52e9933b6ec9305e7fe6e829e3939dba04 <0427c8ef8bbb7f304de42ef51d69c960e165e052"
+    },
+    {
+      "id": "9c2b5d3a-bdfe-384c-8033-e5666e2dfbf4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.24"
+    },
+    {
+      "id": "ef872629-2993-3cfb-97ca-a537031142da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d7172f52e9933b6ec9305e7fe6e829e3939dba04 <2885d54af2c2e1d910e20d5c8045bae40e02fbc1"
+    },
+    {
+      "id": "f3cf21c3-8e40-30f8-887b-677edf2578f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c6dd8723-8e99-3059-b8f9-c27ed1f1d001",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

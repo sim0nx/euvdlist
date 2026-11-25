@@ -3,9 +3,14 @@
   "enisaUuid": "cd5dd45a-fa9d-36ba-b630-53139a2cdb3e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: wilc1000: validate assoc response length before subtracting header\n\nwilc_parse_assoc_resp_info() computes the trailing IE length as\n\n\ties_len = buffer_len - sizeof(*res);\n\nwithout first checking that buffer_len is at least sizeof(struct\nwilc_assoc_resp) (6 bytes). buffer_len is the length reported for a\nreceived association response (host_int_parse_assoc_resp_info() passes\nhif_drv->assoc_resp / assoc_resp_info_len straight in) and must be\nvalidated before the driver accesses the fixed header.\n\nFor a frame shorter than the 6-byte fixed header, the subtraction wraps.\nFor a four-byte response the result is truncated to a u16 ies_len of\n65534, so kmemdup() then attempts to copy 65534 bytes starting at\nbuffer + sizeof(*res), beyond the valid association-response data\n(CWE-125). A response shorter than four bytes can also cause an\nout-of-bounds read of res->status_code at offsets 2 and 3.\n\nReject frames too short to hold the fixed header before touching the\nheader or computing ies_len. Also set the connection status to a failure\non this path: the caller falls through to a\n\"conn_info->status == WLAN_STATUS_SUCCESS\" check after the parser\nreturns, so leaving the status untouched could let a malformed short\nresponse be treated as a successful association.",
   "datePublished": "Aug 10, 2026, 12:00:14 PM",
-  "dateUpdated": "Aug 10, 2026, 12:00:14 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 19, 2026, 4:31:13 PM",
+  "baseScore": 8.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/d79b92417f33424ff23dad76716ed8f2cefb1083",
+    "https://git.kernel.org/stable/c/b81d0ea9e1daa215b3da68c1f4f6fb07940c2f6a",
+    "https://git.kernel.org/stable/c/8d50acf5420de0c4da99c2d634731c9d3164a755",
     "https://git.kernel.org/stable/c/584c8954ad55f8b09b475be6db710fe40ceb988c",
     "https://git.kernel.org/stable/c/4d410320e8ae5933e651660c9fadc1d380309e23",
     "https://git.kernel.org/stable/c/e511e93abd6eeedcd5b3c55516241f414fbde64a",
@@ -13,11 +18,22 @@
     "https://git.kernel.org/stable/c/4c4c97b60a5e978121d9ee8cb0ab3916e5d6a8de"
   ],
   "aliases": [
-    "CVE-2026-68196"
+    "CVE-2026-68196",
+    "GHSA-hm4w-q57w-3qrc"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.41,
   "enisaIdProduct": [
+    {
+      "id": "0508165c-e5de-325e-86fc-a836778872d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
     {
       "id": "4230e994-7144-3ba8-8837-684dc144f46d",
       "product": {
@@ -59,6 +75,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "67b843aa-c987-344c-8cef-34c25129dc9f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c5c77ba18ea66aa05441c71e38473efb787705a4 <d79b92417f33424ff23dad76716ed8f2cefb1083"
+    },
+    {
       "id": "6bca30ea-f2ee-3fb9-a358-df199c25f5ae",
       "product": {
         "name": "Linux",
@@ -67,6 +93,26 @@
         }
       },
       "product_version": "c5c77ba18ea66aa05441c71e38473efb787705a4 <e511e93abd6eeedcd5b3c55516241f414fbde64a"
+    },
+    {
+      "id": "6f150a5c-eae2-3967-b7ef-afef7741a91f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c5c77ba18ea66aa05441c71e38473efb787705a4 <8d50acf5420de0c4da99c2d634731c9d3164a755"
+    },
+    {
+      "id": "83c368ca-09d0-3cbb-9a23-8d4cfefd192e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "93d2245d-78f3-361a-9574-752508633cf6",
@@ -99,6 +145,16 @@
       "product_version": "c5c77ba18ea66aa05441c71e38473efb787705a4 <8ccdf8c8de87a9580df37c3c1ec53ba88cedef65"
     },
     {
+      "id": "ad903f81-787c-3bcf-bb88-d226a9fcb450",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
       "id": "c67560c4-1a33-3c1d-9a5c-46701e2db4ef",
       "product": {
         "name": "Linux",
@@ -107,6 +163,16 @@
         }
       },
       "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "c8bf9ce6-3b61-39a3-bc5d-dbaa0a498f3b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c5c77ba18ea66aa05441c71e38473efb787705a4 <b81d0ea9e1daa215b3da68c1f4f6fb07940c2f6a"
     },
     {
       "id": "d860014e-890f-311a-923c-f5a82c4e0660",
@@ -119,14 +185,14 @@
       "product_version": "c5c77ba18ea66aa05441c71e38473efb787705a4 <584c8954ad55f8b09b475be6db710fe40ceb988c"
     },
     {
-      "id": "d9e42236-c3d3-351c-b03e-f5029cad2c36",
+      "id": "eab86142-c9b1-3907-b3df-b5479a4b7965",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc5"
+      "product_version": "patch: 5.15.216"
     },
     {
       "id": "ec0117cf-a021-30ea-8fa4-dcb1b3115375",

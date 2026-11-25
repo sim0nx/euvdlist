@@ -3,8 +3,10 @@
   "enisaUuid": "aa4999ec-5602-38f4-8b09-66ee17eacdb7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: reject non-VALID session in compound request branch\n\nsmb2_check_user_session() takes a shortcut for any operation that is not\nthe first in a COMPOUND request: it reuses work->sess (the session bound by\nthe first operation) and validates only the SessionId, then returns\n\"valid\". It never re-checks work->sess->state == SMB2_SESSION_VALID, and a\nSessionId of 0xFFFFFFFFFFFFFFFF (ULLONG_MAX, the MS-SMB2 related-operation\nvalue) skips even the id comparison. The standalone path\n(ksmbd_session_lookup_all() plus the SESSION_SETUP state machine) does\nenforce the VALID state; the compound branch bypasses all of it.\n\nA SESSION_SETUP carrying only an NTLM Type-1 (NtLmNegotiate) blob publishes\na fresh SMB2_SESSION_IN_PROGRESS session whose sess->user is still NULL\n(->user is assigned later, by ntlm_authenticate()). Used as operation 1 of\na COMPOUND with operation 2 = TREE_CONNECT (related, SessionId=ULLONG_MAX,\n\\\\host\\IPC$), the tree-connect then runs on that IN_PROGRESS session and\nreaches ksmbd_ipc_tree_connect_request(), which dereferences\nuser_name(sess->user) with sess->user == NULL (transport_ipc.c:687/701/704)\n-> remote NULL-pointer dereference and a kernel Oops that wedges the ksmbd\nworker for all clients.\n\nReject any non-first compound operation that lands on a session which is\nnot SMB2_SESSION_VALID, mirroring the validity the standalone lookup path\nenforces. SESSION_SETUP itself legitimately runs on an IN_PROGRESS session,\nbut it is never carried as a non-first compound operation, so multi-leg\nauthentication is unaffected by this check.",
   "datePublished": "Jul 19, 2026, 11:59:31 AM",
-  "dateUpdated": "Jul 19, 2026, 11:59:31 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:50:33 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/25ff12b82a376ff5c4583102a63d2456a6b9ebb9",
     "https://git.kernel.org/stable/c/fc578523a72cb8b329d32070b95898e81613cc3f",
@@ -20,7 +22,7 @@
     "CVE-2026-53383"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.66,
   "enisaIdProduct": [
     {
       "id": "03198b00-0001-3c2d-9fb7-8a23de13ee9b",
@@ -173,16 +175,6 @@
       "product_version": "patch: 6.18.37"
     },
     {
-      "id": "a7b9ab25-865a-3132-80c5-827e8aaf5d52",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
-    {
       "id": "b6a2c0b3-3a02-3e4a-8223-0a8d5e82e462",
       "product": {
         "name": "Linux",
@@ -211,6 +203,16 @@
         }
       },
       "product_version": "d1066c1b3663401cd23c0d6e60cdae750ce00c0f"
+    },
+    {
+      "id": "ea99e393-453d-35b8-932d-cbbb28924b32",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "f0f23210-c2a6-3567-8764-8262a30c6c49",

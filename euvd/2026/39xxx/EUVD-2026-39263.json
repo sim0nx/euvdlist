@@ -3,17 +3,20 @@
   "enisaUuid": "99017295-2c03-3ccf-bc4a-4009c69b65ae",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\naccel/ethosu: fix IFM region index out-of-bounds in command stream parser\n\nNPU_SET_IFM_REGION extracts the region index with param & 0x7f, giving\na maximum value of 127. However region_size[] and output_region[] in\nstruct ethosu_validated_cmdstream_info are both sized to\nNPU_BASEP_REGION_MAX (8), giving valid indices [0..7].\n\nEvery other region assignment in the same switch uses param & 0x7:\n  NPU_SET_OFM_REGION:  st.ofm.region  = param & 0x7;\n  NPU_SET_IFM2_REGION: st.ifm2.region = param & 0x7;\n  NPU_SET_WEIGHT_REGION: st.weight[0].region = param & 0x7;\n  NPU_SET_SCALE_REGION:  st.scale[0].region  = param & 0x7;\n\nThe 0x7f mask on IFM is inconsistent and appears to be a typo.\n\nfeat_matrix_length() and calc_sizes() use the region index directly\nas an array subscript into the kzalloc'd info struct:\n  info->region_size[fm->region] = max(...);\n\nA userspace caller supplying NPU_SET_IFM_REGION with param > 7 causes\na write up to 127*8 = 1016 bytes past the start of region_size[],\ncorrupting adjacent kernel heap data.\n\nFix by applying the same & 0x7 mask used by all other region\nassignments.",
   "datePublished": "Jun 25, 2026, 8:38:50 AM",
-  "dateUpdated": "Jun 25, 2026, 8:38:50 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:33:41 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ee7bed779def61ebff1b92b0e851f412176fa416",
     "https://git.kernel.org/stable/c/00f547e0dfecf83014fb32bcba587c6b684c1362"
   ],
   "aliases": [
-    "CVE-2026-53172"
+    "CVE-2026-53172",
+    "GHSA-jf8x-7724-7vrr"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "14d13279-8c4e-39b7-865d-6aba933fc3d1",

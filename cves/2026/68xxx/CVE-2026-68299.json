@@ -3,9 +3,14 @@
   "enisaUuid": "ed17f418-bdde-3866-b78a-18fdc2c957f9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvmxnet3: fix BUG_ON in vmxnet3_get_hdr_len() for Geneve packets\n\nvmxnet3_get_hdr_len() assumes gdesc->rcd.v4/v6/tcp always describe the\nouter header, but for a Geneve-encapsulated packet the device can set\nthem based on the inner header instead, signalled by the\nVMXNET3_RCD_HDR_INNER_SHIFT bit in the completion descriptor. Since the\nfunction never skips the outer encapsulation, this mismatch triggers:\n\n- BUG_ON(hdr.ipv4->protocol != IPPROTO_TCP), because the outer\n  protocol is UDP (Geneve), not TCP.\n- BUG_ON(hdr.eth->h_proto != ...), when the tunnel's outer and inner\n  IP versions differ (e.g. outer IPv6/inner IPv4 or vice versa).\n\nCheck VMXNET3_RCD_HDR_INNER_SHIFT up front and bail out, since the\nfunction cannot locate the inner header it would need to parse. Also\nconvert the remaining BUG_ON()s in this function to return 0\ndefensively.",
   "datePublished": "Aug 10, 2026, 12:02:33 PM",
-  "dateUpdated": "Aug 10, 2026, 12:02:33 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:09:04 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/2ddf51fcb6dd7d55ceef38e2e1a5ab2ab7fd47b0",
+    "https://git.kernel.org/stable/c/fbab6b73cc086e32698c86e43d1b16bf17d24c36",
+    "https://git.kernel.org/stable/c/28e382646417c7e2be9c9a7079eddf627ff52b90",
     "https://git.kernel.org/stable/c/667b6e52048eaf4dbcf1707ed87ffd44abb9cb38",
     "https://git.kernel.org/stable/c/28cb5d8d13b4c1faf3f688f62e5df82fe7b438d8",
     "https://git.kernel.org/stable/c/4fdb0f162ccdbe9626863b10003855703253fa29",
@@ -13,10 +18,11 @@
     "https://git.kernel.org/stable/c/34a71f5361fc3adb5b7138da78750b0d535a8252"
   ],
   "aliases": [
+    "GHSA-m243-8cm2-374c",
     "CVE-2026-68299"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.5,
   "enisaIdProduct": [
     {
       "id": "227a330c-67ab-37e8-873d-0bf20af18d1d",
@@ -27,6 +33,26 @@
         }
       },
       "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "2899968b-e658-3544-9789-4bb28b257434",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
+      "id": "38d5d50d-dff2-3ca2-8cb8-87245cf09559",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "45dac1d6ea045ae56e4df8d9c70c92c7412bd4fc <2ddf51fcb6dd7d55ceef38e2e1a5ab2ab7fd47b0"
     },
     {
       "id": "3901d2d4-389b-3ffb-a5ac-7d5a702790a6",
@@ -59,16 +85,6 @@
       "product_version": "patch: 6.18.42"
     },
     {
-      "id": "62496505-ee46-3956-ac22-6e0a8f6ecfba",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
-    },
-    {
       "id": "68add8b7-b955-33c4-9acb-faef1b787577",
       "product": {
         "name": "Linux",
@@ -99,6 +115,16 @@
       "product_version": "45dac1d6ea045ae56e4df8d9c70c92c7412bd4fc <b28596baf87e25a078789f1c05817c8a3bf71257"
     },
     {
+      "id": "8f46f6bb-44e4-3853-ac45-f8c0edbd9035",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "45dac1d6ea045ae56e4df8d9c70c92c7412bd4fc <28e382646417c7e2be9c9a7079eddf627ff52b90"
+    },
+    {
       "id": "967f2435-f5a5-3b78-bcae-6a52f68cdbff",
       "product": {
         "name": "Linux",
@@ -107,6 +133,16 @@
         }
       },
       "product_version": "4.2"
+    },
+    {
+      "id": "9a08d8d7-b9cc-355d-b43b-53944738b660",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
     },
     {
       "id": "accb321c-71d4-32c1-90f5-a3f4915bb899",
@@ -137,6 +173,36 @@
         }
       },
       "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "d92d43f7-5008-36a2-908c-f96b0f24eec2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "e534b2fc-6d24-30d7-8b0b-f702deb3b65c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "45dac1d6ea045ae56e4df8d9c70c92c7412bd4fc <fbab6b73cc086e32698c86e43d1b16bf17d24c36"
+    },
+    {
+      "id": "f3af18c6-339c-37a0-9566-a3a9bb1841a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     }
   ],
   "enisaIdVendor": [

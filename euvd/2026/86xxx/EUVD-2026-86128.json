@@ -3,7 +3,7 @@
   "enisaUuid": "8b4b1545-fcc9-36f1-aefe-67b060dc10a1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\narm64: hibernate: mask DAIF before restoring hibernated kernel\n\nThe arm64 hibernate code manages the exception masking in an unsound\nway, leading to potential crashes and/or warnings during resume.\n\nWhen a hibernation image is saved in `swsusp_arch_suspend()`, all DAIF\nexceptions are masked (by virtue of `local_daif_save()`), and the\nsuspended image is saved assuming that all DAIF exceptions will remain\nmasked when the image is restored.\n\nWhen a hibernation image is resumed by `swsusp_arch_resume()`, only\ninterrupts are masked (by virtue of `local_irq_disable()` in\n`resume_target_kernel()`). When pseudo-NMI is enabled the DAIF.IF bits\nwill be clear, and regardless of pseudo-NMI the DAIF.DA bits will be\nclear.\n\nThis means that there are two problems:\n\n(1) It is possible to take Debug, SError, or pseudo-NMI exceptions\n    during the resume process. This is unsafe, as during the resume\n    process both the old ane new kernels will tranisently be in an\n    inconsistent state, and swsusp_arch_suspend_exit() won't retain\n    an executable mapping of any exception vectors.\n\n    Any exception taken here will be fatal and silent.\n\n(2) When re-entering the resumed kernel, some DAIF bits will be clear\n    unexpectedly. This permits Debug, SError, or pseudo-NMI exceptions\n    to be taken for a short period while the resumed kernel is not yet\n    in a consistent state.\n\n    This is detected by CONFIG_ARM64_DEBUG_PRIORITY_MASKING.\n\nAvoid these issues by masking all DAIF exceptions during resume.",
   "datePublished": "Sep 24, 2026, 3:51:43 PM",
-  "dateUpdated": "Sep 24, 2026, 3:51:43 PM",
+  "dateUpdated": "Oct 19, 2026, 9:08:09 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/c9c671e9ab87b639720db8f7f8648bdf0f3bc8ec",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/684bde100117931f4c51c644a95f42f2dab041bc"
   ],
   "aliases": [
-    "CVE-2026-93256"
+    "CVE-2026-93256",
+    "GHSA-jf3q-gp4f-qwvj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "28653375-9cdb-3ff3-a6ac-de27e68d67da",
@@ -92,14 +93,14 @@
       "product_version": "82869ac57b5d3b550446932c918dbf2caf020c9e <c9c671e9ab87b639720db8f7f8648bdf0f3bc8ec"
     },
     {
-      "id": "82c17c40-6a0d-3b94-9c1f-3d9942c1b86f",
+      "id": "630146e3-594b-3ea8-8649-520be45eda2a",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "84ec4b05-3abe-3903-9973-b2c6f558873a",

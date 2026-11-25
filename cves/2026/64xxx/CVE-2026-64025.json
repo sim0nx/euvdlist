@@ -3,9 +3,12 @@
   "enisaUuid": "5fbd5e96-59cb-33b8-8ebb-af331c91884f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf, skmsg: fix verdict sk_data_ready racing with ktls rx\n\nsk_psock_strp_data_ready() already checks tls_sw_has_ctx_rx() and\ndefers to psock->saved_data_ready when a TLS RX context is present,\navoiding a conflict with the TLS strparser's ownership of the receive\nqueue (commit e91de6afa81c, \"bpf: Fix running sk_skb program types\nwith ktls\").\n\nsk_psock_verdict_data_ready() has no equivalent guard.  When a socket\nis inserted into a sockmap (BPF_SK_SKB_VERDICT) before TLS RX is\nconfigured, tls_sw_strparser_arm() saves sk_psock_verdict_data_ready\nas rx_ctx->saved_data_ready.  On data arrival:\n\n  tls_data_ready -> tls_strp_data_ready -> tls_rx_msg_ready\n    -> saved_data_ready() = sk_psock_verdict_data_ready()\n      -> tcp_read_skb() drains sk_receive_queue via __skb_unlink()\n         without calling tcp_eat_skb(), so copied_seq is not advanced.\n\ntls_strp_msg_load() then finds tcp_inq() >= full_len (stale), calls\ntcp_recv_skb() on the now-empty queue, hits WARN_ON_ONCE(!first), and\nreturns with rx_ctx->strp.anchor.frag_list pointing at a psock-owned\n(potentially freed) skb.  tls_decrypt_sg() subsequently walks that\nfrag_list: use-after-free.\n\nApply the same fix as sk_psock_strp_data_ready(): if a TLS RX context\nis present, call psock->saved_data_ready (sock_def_readable) to wake\nrecv() waiters and return immediately, leaving the receive queue\nuntouched.  TLS retains sole ownership of the queue and decrypts the\nrecord normally through tls_sw_recvmsg().",
   "datePublished": "Jul 19, 2026, 3:39:17 PM",
-  "dateUpdated": "Jul 19, 2026, 3:39:17 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:27:29 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/d698bdba0f9969a6e390d1b1a9a3e283f1f174a7",
     "https://git.kernel.org/stable/c/c9ea01768903ae47f210cd457af1dead6de7a9c3",
     "https://git.kernel.org/stable/c/7c8cf21bc4efb4af18d6096db3f8bd06d622251c",
     "https://git.kernel.org/stable/c/1861d369efd62d67796563bf3e01fc22e5626f8b",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/ddf8029623a1af20e984c040e89ff918158397ab"
   ],
   "aliases": [
+    "GHSA-r22g-q228-2mx8",
     "CVE-2026-64025"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.45,
   "enisaIdProduct": [
     {
       "id": "15b5b828-9e92-3a90-b4ea-573b896ffa47",
@@ -27,6 +31,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "28b7bce5-eb7e-3a48-b862-83a13380bc49",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "34e780d3-2ab3-374b-823e-1ab0ef72ffaf",
@@ -127,6 +141,16 @@
         }
       },
       "product_version": "patch: 6.6.142"
+    },
+    {
+      "id": "f8abf0d2-a75f-30bd-a684-39c057845827",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ef5659280eb13e8ac31c296f58cfdfa1684ac06b <d698bdba0f9969a6e390d1b1a9a3e283f1f174a7"
     },
     {
       "id": "f9c0f0bc-d286-3c53-8f12-f87bcecd3216",

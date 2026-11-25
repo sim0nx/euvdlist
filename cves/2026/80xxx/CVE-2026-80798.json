@@ -3,7 +3,7 @@
   "enisaUuid": "95a0d20a-6f6c-3812-8c56-8ab9eabf926f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfc: llcp: reject PDUs shorter than the LLCP header\n\nEvery LLCP PDU begins with a two-byte header (DSAP/SSAP + PTYPE), but the\nreceive path never checked that a frame is at least LLCP_HEADER_SIZE bytes\nbefore parsing it.\n\nnfc_llcp_rx_skb() reads the header via nfc_llcp_ptype()/nfc_llcp_dsap()/\nnfc_llcp_ssap(), which dereference pdu->data[0] and pdu->data[1], and a\nCONNECT or CC PDU then computes\n\n\ttlv_array_len = skb->len - LLCP_HEADER_SIZE;\n\nas a size_t and hands it to the TLV walk. When the frame is shorter than\nthe header the subtraction wraps to a huge value and the walk runs far\npast the buffer, an out-of-bounds read.\n\nA nearby NFC device can reach this without authentication; LLCP link\nactivation happens automatically after NFC-DEP.\n\nGuard the common receive choke point __nfc_llcp_recv(), shared by both the\ntarget (nfc_llcp_data_received()) and initiator (nfc_llcp_recv()) paths, so\na short skb is dropped before the rx_work worker parses it. Use\npskb_may_pull() rather than a skb->len test so the two header bytes are\nguaranteed to sit in the skb linear area even for a non-linear skb,\nmatching how the sibling NCI and HCI receive paths validate their headers.\n\nReproduced with a KFENCE out-of-bounds read via /dev/virtual_nci on\nlinux-next.\n\nFound by 0sec automated security-research tooling (https://0sec.ai).",
   "datePublished": "Sep 4, 2026, 3:13:12 PM",
-  "dateUpdated": "Sep 4, 2026, 3:13:12 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:51 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/e6ec76a68dce04884dfeccfe5a5f0e9f67c0ec82",
@@ -17,10 +17,11 @@
     "https://git.kernel.org/stable/c/95674f506c6376d6722a23144c9acd26609771ed"
   ],
   "aliases": [
+    "GHSA-p65w-76hh-qj57",
     "CVE-2026-80798"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.23,
   "enisaIdProduct": [
     {
       "id": "004dd523-ec81-3187-8c48-813309d4aabf",
@@ -193,6 +194,16 @@
       "product_version": "patch: 6.18.47"
     },
     {
+      "id": "b9034724-f690-385a-8750-1091a82a93d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "bd5ffe15-bac1-319a-853f-cb8f1530296a",
       "product": {
         "name": "Linux",
@@ -201,16 +212,6 @@
         }
       },
       "product_version": "d646960f7986fefb460a2b062d5ccc8ccfeacc3a <ae5f20f5842f440b72d030e3a34fe182dd8eae42"
-    },
-    {
-      "id": "deba0f81-796b-34d2-af10-448bbf784a98",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "ebd014d4-b9a3-3cab-8ebc-285167ef5195",

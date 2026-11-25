@@ -3,8 +3,10 @@
   "enisaUuid": "6edece79-e931-3783-affd-8f6dc026a136",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nkeys: Pin request_key_auth payload in instantiate paths\n\nA: request_key()       B: KEYCTL_INSTANTIATE_IOV\n================       =========================\n\ncreate auth key\nstore rka in auth key\nwait for helper\n                       get auth key\n                       load rka from auth key\n                       copy user payload\n                       sleep on #PF\n\nhelper completed\ndetach and free rka\ndestroy auth key\n                       wake up\n                       use rka->target_key\n                       **USE-AFTER-FREE**\n\nGive request_key_auth payloads a refcount.  Take a payload reference while\nauthkey->sem stabilizes the payload and revocation state.  Hold that\nreference across the instantiate and reject paths.  Drop the auth key\nowning reference from revoke and destroy.\n\n[jarkko: Replaced the first two paragraphs of text with an actual\n concurrency scenario.]",
   "datePublished": "Jul 19, 2026, 12:02:19 PM",
-  "dateUpdated": "Jul 19, 2026, 12:02:19 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:07:48 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/d8274181b0f28d450b42489723a5ba81042158d7",
     "https://git.kernel.org/stable/c/4982bfabce6b33b3c9eddb4fb900fe5568b7cf91",
@@ -20,7 +22,7 @@
     "GHSA-hhf9-cxvj-3mv7"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "0523e964-32f7-30ed-bbdf-45f8f337a8fd",
@@ -73,14 +75,14 @@
       "product_version": "patch: 6.6.144"
     },
     {
-      "id": "2ab7ae43-b60f-3162-ac09-9ae4accdf136",
+      "id": "33d8ca94-abd6-3687-b149-a47880b20f38",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "56df6b16-ddd4-31f3-9fda-6bf7791a7384",

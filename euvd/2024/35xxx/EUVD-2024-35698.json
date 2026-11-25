@@ -1,0 +1,111 @@
+{
+  "id": "EUVD-2024-35698",
+  "enisaUuid": "0a8586f4-8586-3246-91b0-27ead908fd5b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\narm64: tlb: Fix TLBI RANGE operand\n\nKVM/arm64 relies on TLBI RANGE feature to flush TLBs when the dirty\npages are collected by VMM and the page table entries become write\nprotected during live migration. Unfortunately, the operand passed\nto the TLBI RANGE instruction isn't correctly sorted out due to the\ncommit 117940aa6e5f (\"KVM: arm64: Define kvm_tlb_flush_vmid_range()\").\nIt leads to crash on the destination VM after live migration because\nTLBs aren't flushed completely and some of the dirty pages are missed.\n\nFor example, I have a VM where 8GB memory is assigned, starting from\n0x40000000 (1GB). Note that the host has 4KB as the base page size.\nIn the middile of migration, kvm_tlb_flush_vmid_range() is executed\nto flush TLBs. It passes MAX_TLBI_RANGE_PAGES as the argument to\n__kvm_tlb_flush_vmid_range() and __flush_s2_tlb_range_op(). SCALE#3\nand NUM#31, corresponding to MAX_TLBI_RANGE_PAGES, isn't supported\nby __TLBI_RANGE_NUM(). In this specific case, -1 has been returned\nfrom __TLBI_RANGE_NUM() for SCALE#3/2/1/0 and rejected by the loop\nin the __flush_tlb_range_op() until the variable @scale underflows\nand becomes -9, 0xffff708000040000 is set as the operand. The operand\nis wrong since it's sorted out by __TLBI_VADDR_RANGE() according to\ninvalid @scale and @num.\n\nFix it by extending __TLBI_RANGE_NUM() to support the combination of\nSCALE#3 and NUM#31. With the changes, [-1 31] instead of [-1 30] can\nbe returned from the macro, meaning the TLBs for 0x200000 pages in the\nabove example can be flushed in one shoot with SCALE#3 and NUM#31. The\nmacro TLBI_RANGE_MASK is dropped since no one uses it any more. The\ncomments are also adjusted accordingly.",
+  "datePublished": "May 20, 2024, 9:42:05 AM",
+  "dateUpdated": "Aug 5, 2026, 11:31:22 AM",
+  "baseScore": 8.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:N/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/ac4ad513de4fba18b4ac0ace132777d0910e8cfa",
+    "https://git.kernel.org/stable/c/944db7b536baaf49d7e576af36a94f4719552b07",
+    "https://git.kernel.org/stable/c/e3ba51ab24fddef79fc212f9840de54db8fd1685"
+  ],
+  "aliases": [
+    "CVE-2024-35980",
+    "GHSA-xv8c-x88j-w3qj"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "0b7b0a93-bf91-3b42-8364-7aacece831b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "117940aa6e5f8308f1529e1313660980f1dae771 <ac4ad513de4fba18b4ac0ace132777d0910e8cfa"
+    },
+    {
+      "id": "597e3f8a-a241-3232-a583-929ce30468d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.29"
+    },
+    {
+      "id": "6efa2ec6-bb43-361c-be85-50a2274eeaa5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7e7ad5df-38ca-3769-8f80-e495a51cb5dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.7"
+    },
+    {
+      "id": "bab4697b-d8ec-32b7-ba7f-6e7376419eb0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "f568a2ae-65da-33a4-81be-36aeb13a2732",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6"
+    },
+    {
+      "id": "fa5ab508-d956-3846-b3c8-77f47f4f1613",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "117940aa6e5f8308f1529e1313660980f1dae771 <e3ba51ab24fddef79fc212f9840de54db8fd1685"
+    },
+    {
+      "id": "fe416811-a0ac-3512-95de-ac708e46a1d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "117940aa6e5f8308f1529e1313660980f1dae771 <944db7b536baaf49d7e576af36a94f4719552b07"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "01cda957-21ab-3295-9ea8-d5262de7ed19",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -2,76 +2,94 @@
   "id": "EUVD-2025-36988",
   "enisaUuid": "14d3909f-6b8c-3f87-88a6-2ed3f5096e98",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: fix recursive locking in RPC handle list access\n\nSince commit 305853cce3794 (\"ksmbd: Fix race condition in RPC handle list\naccess\"), ksmbd_session_rpc_method() attempts to lock sess->rpc_lock.\n\nThis causes hung connections / tasks when a client attempts to open\na named pipe. Using Samba's rpcclient tool:\n\n $ rpcclient //192.168.1.254 -U user%password\n $ rpcclient $> srvinfo\n <connection hung here>\n\nKernel side:\n  \"echo 0 > /proc/sys/kernel/hung_task_timeout_secs\" disables this message.\n  task:kworker/0:0 state:D stack:0 pid:5021 tgid:5021 ppid:2 flags:0x00200000\n  Workqueue: ksmbd-io handle_ksmbd_work\n  Call trace:\n  __schedule from schedule+0x3c/0x58\n  schedule from schedule_preempt_disabled+0xc/0x10\n  schedule_preempt_disabled from rwsem_down_read_slowpath+0x1b0/0x1d8\n  rwsem_down_read_slowpath from down_read+0x28/0x30\n  down_read from ksmbd_session_rpc_method+0x18/0x3c\n  ksmbd_session_rpc_method from ksmbd_rpc_open+0x34/0x68\n  ksmbd_rpc_open from ksmbd_session_rpc_open+0x194/0x228\n  ksmbd_session_rpc_open from create_smb2_pipe+0x8c/0x2c8\n  create_smb2_pipe from smb2_open+0x10c/0x27ac\n  smb2_open from handle_ksmbd_work+0x238/0x3dc\n  handle_ksmbd_work from process_scheduled_works+0x160/0x25c\n  process_scheduled_works from worker_thread+0x16c/0x1e8\n  worker_thread from kthread+0xa8/0xb8\n  kthread from ret_from_fork+0x14/0x38\n  Exception stack(0x8529ffb0 to 0x8529fff8)\n\nThe task deadlocks because the lock is already held:\n  ksmbd_session_rpc_open\n    down_write(&sess->rpc_lock)\n    ksmbd_rpc_open\n      ksmbd_session_rpc_method\n        down_read(&sess->rpc_lock)   <-- deadlock\n\nAdjust ksmbd_session_rpc_method() callers to take the lock when necessary.",
-  "datePublished": "Oct 30, 2025, 12:31:09 PM",
-  "dateUpdated": "Oct 30, 2025, 12:31:09 PM",
-  "baseScore": 0.0,
+  "datePublished": "Oct 30, 2025, 9:47:58 AM",
+  "dateUpdated": "Aug 5, 2026, 12:07:42 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/5493571f4351f74e11db9943e98a07c56467cf7e",
+    "https://git.kernel.org/stable/c/1891abe832cbf5a11039e088766131d0f1642d02",
     "https://git.kernel.org/stable/c/4602b8cee1481dbb896182e5cb1e8cf12910e9e7",
     "https://git.kernel.org/stable/c/3412fbd81b46b9cfae013817b61d4bbd27e09e36",
-    "https://git.kernel.org/stable/c/88f170814fea74911ceab798a43cbd7c5599bed4",
-    "https://nvd.nist.gov/vuln/detail/CVE-2025-40090"
+    "https://git.kernel.org/stable/c/88f170814fea74911ceab798a43cbd7c5599bed4"
   ],
   "aliases": [
+    "GHSA-m33j-r627-qphr",
     "CVE-2025-40090"
   ],
   "assigner": "Linux",
-  "epss": 0.02,
+  "epss": 0.29,
   "enisaIdProduct": [
     {
-      "id": "0319af88-1bdd-30e2-a147-dbd2442a0b16",
+      "id": "0039c497-e17d-382a-a478-d6361d0c2e44",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "patch: 0"
-    },
-    {
-      "id": "0d325ab1-0145-372c-85da-28816533b547",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "patch: 6.18-rc2"
-    },
-    {
-      "id": "15ef4d44-a783-3e59-8492-f8bfc1a8e7e0",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "patch: 6.17.5"
+      "product_version": "6.12.53 <6.12.55"
     },
     {
       "id": "1ca14be4-40f9-322c-b042-80036da4c629",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "305853cce379407090a73b38c5de5ba748893aee <88f170814fea74911ceab798a43cbd7c5599bed4"
     },
     {
-      "id": "476d0523-1c64-3e97-a6bd-c714b73bdaf6",
+      "id": "58eeeb7d-2ddd-3833-a715-5549fdf48ec9",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "patch: 6.12.55"
+      "product_version": "6.17.3 <6.17.5"
+    },
+    {
+      "id": "5c6b58ac-b468-3e9a-8ab3-7e9d2f759646",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "69674b029002b1d90b655f014bdf64f404efa54d <5493571f4351f74e11db9943e98a07c56467cf7e"
     },
     {
       "id": "62f1d1fc-cd19-3e1c-9c10-d5a4aa42f3fa",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "6bd7e0e55dcea2cf0d391bbc21c2eb069b4be3e1 <3412fbd81b46b9cfae013817b61d4bbd27e09e36"
     },
     {
-      "id": "d3fe8777-a0e2-398e-b581-68f7c102c93f",
+      "id": "a6c0d008-edd5-3d94-a2ff-d6a7bce70ef8",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "5cc679ba0f4505936124cd4179ba66bb0a4bd9f3 <4602b8cee1481dbb896182e5cb1e8cf12910e9e7"
+      "product_version": "6b615a8fb3af0baf8126cde3d4fee97d57222ffc <1891abe832cbf5a11039e088766131d0f1642d02"
     },
     {
-      "id": "e1eb9346-bd12-3021-b4c3-c733f9eeb9fe",
+      "id": "d3fe8777-a0e2-398e-b581-68f7c102c93f",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "6.18-rc1"
+      "product_version": "5cc679ba0f4505936124cd4179ba66bb0a4bd9f3 <4602b8cee1481dbb896182e5cb1e8cf12910e9e7"
     }
   ],
   "enisaIdVendor": [

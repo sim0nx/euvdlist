@@ -3,7 +3,7 @@
   "enisaUuid": "f75d26cb-2f16-3563-9a9c-394d44101b37",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: mm: Fix out-of-bounds page-table walk during memory hot-remove\n\nremove_pud_mapping() and remove_p4d_mapping() obtain a child table base\nwith pud_offset(p4dp, 0) and p4d_offset(pgd, 0), then add the index for\naddr.\n\nRISC-V folds page-table levels at runtime. When a level is folded, its\noffset helper returns the parent entry itself, but the index can still be\nnonzero. Adding it walks past the parent table. Sv48 folds P4D, while Sv39\nfolds both P4D and PUD, so memory hot-remove can descend into unrelated\nmemory and pass an invalid page to __free_pages(). This can trigger:\n\n  kernel BUG at include/linux/mm.h:1810!\n  VM_BUG_ON_PAGE(page_ref_count(page) == 0)\n  arch_remove_memory+0x1e/0x5c\n  try_remove_memory+0x15e/0x200\n  remove_memory+0x24/0x3c\n\nOnly add the index when the corresponding page-table level is enabled,\nmatching p4d_offset() and pud_offset().",
   "datePublished": "Aug 15, 2026, 12:27:41 PM",
-  "dateUpdated": "Aug 15, 2026, 12:27:41 PM",
+  "dateUpdated": "Aug 17, 2026, 5:21:07 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1da6d832eda02d908df11a30ba6a856b98a3dd76",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/a0188cc133696627857d16054e43f9ebc7efc821"
   ],
   "aliases": [
-    "CVE-2026-74524"
+    "CVE-2026-74524",
+    "GHSA-273p-44hj-2v3c"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "01a94dbf-2429-30fe-8b0c-2a2c3d2cb9f6",
@@ -36,6 +37,16 @@
         }
       },
       "product_version": "c75a74f4ba19c904c0ae1e011ae2568449409ae4 <54e07a158f7aea2754849d3a5a4cba1ac338ae7e"
+    },
+    {
+      "id": "252ee591-793a-3934-8949-1316e29b8e8f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "4360c73d-ca42-3a6d-be52-f4774ba01cf6",
@@ -96,16 +107,6 @@
         }
       },
       "product_version": "c75a74f4ba19c904c0ae1e011ae2568449409ae4 <a0188cc133696627857d16054e43f9ebc7efc821"
-    },
-    {
-      "id": "e1bf10de-073f-38d1-9539-7e46a98a41f0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc6"
     },
     {
       "id": "eb73a7fa-759d-3aa7-87bf-908f7ed4079c",

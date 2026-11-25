@@ -3,7 +3,7 @@
   "enisaUuid": "c5b7991e-f036-32cd-8a5d-baa827155dd5",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Reject untrusted allocated-object pointers\n\nWhen the final RCU read-side critical section ends, a local kptr is demoted\nto PTR_UNTRUSTED but retains MEM_ALLOC. The pointer may be NULL or may refer\nto an object whose lifetime is no longer protected.\n\ntype_is_ptr_alloc_obj() nevertheless recognizes any PTR_TO_BTF_ID with\nMEM_ALLOC as a live allocated object. In particular, a refcount-only local\nkptr never carries NON_OWN_REF, so it still passes the\nbpf_refcount_acquire() argument check after RCU protection ends. The kfunc\ncan then dereference NULL or stale memory.\n\nMake type_is_ptr_alloc_obj() reject PTR_UNTRUSTED pointers. Since\ntype_is_non_owning_ref() is based on the same predicate, graph kfunc\narguments obey the same live-object requirement. Fault-protected reads of\nthe demoted pointer remain valid: writes are already rejected, and read\nfixups use bpf_may_fault_on_deref() rather than this predicate.\n\n[ kkd: Rewrote commit log ]",
   "datePublished": "Sep 25, 2026, 10:23:51 AM",
-  "dateUpdated": "Sep 25, 2026, 10:23:51 AM",
+  "dateUpdated": "Oct 19, 2026, 9:12:42 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/092c2874dc1b2060fa77a465a971acd4fdf87683",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/7441ee8276641bddaf1cba7bb75ef9c1458ceb3b"
   ],
   "aliases": [
+    "GHSA-3hhf-gmj4-q58c",
     "CVE-2026-98037"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "01d9c0e2-578a-32a2-8d40-b692a497e07e",
@@ -48,16 +49,6 @@
       "product_version": "1b12171533a9bb23cf6fba7262b479028b65e1e8 <135d542b97fa93e32c457d49d6e7b33ca7d05bae"
     },
     {
-      "id": "21a7b0c3-ca76-305d-bfad-c29f7df4152a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc2"
-    },
-    {
       "id": "272de06a-ac12-3579-8279-835b79814171",
       "product": {
         "name": "Linux",
@@ -66,6 +57,16 @@
         }
       },
       "product_version": "6.8"
+    },
+    {
+      "id": "55d8572e-ed7c-30bf-9ebc-f3c7637fb8d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "576a8d85-ebdb-3f01-b745-c38d3b92be38",

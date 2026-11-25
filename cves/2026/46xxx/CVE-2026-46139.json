@@ -3,7 +3,7 @@
   "enisaUuid": "5a3c1a91-6933-32ab-ba13-3bd584747d25",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: use kzalloc to zero-initialize security descriptor buffer\n\nCommit 62e7dd0a39c2d (\"smb: common: change the data type of num_aces\nto le16\") split struct smb_acl's __le32 num_aces field into __le16\nnum_aces and __le16 reserved. The reserved field corresponds to Sbz2\nin the MS-DTYP ACL wire format, which must be zero [1].\n\nWhen building an ACL descriptor in build_sec_desc(), we are using a\nkmalloc()'ed descriptor buffer and writing the fields explicitly using\nle16() writes now. This never writes to the 2 byte reserved field,\nleaving it as uninitialized heap data.\n\nWhen the reserved field happens to contain non-zero slab garbage,\nSamba rejects the security descriptor with \"ndr_pull_security_descriptor\nfailed: Range Error\", causing chmod to fail with EINVAL.\n\nChange kmalloc() to kzalloc() to ensure the entire buffer is\nzero-initialized.\n\n\n[1] https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/20233ed8-a6c6-4097-aafa-dd545ed24428",
   "datePublished": "May 28, 2026, 9:35:55 AM",
-  "dateUpdated": "May 28, 2026, 9:35:55 AM",
+  "dateUpdated": "Nov 6, 2026, 4:13:40 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/4c3ed344a970aad51388ac3b0145b98318f0e21f",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/5e489c6c47a2ac15edbaca153b9348e42c1eacab"
   ],
   "aliases": [
+    "GHSA-v8jf-78w3-v9hm",
     "CVE-2026-46139"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "1fa2c173-d025-3dd2-829a-e0de14445928",
@@ -109,6 +110,16 @@
       "product_version": "6.14"
     },
     {
+      "id": "c0b6a73f-9800-370c-83d4-2c4a610abda6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
       "id": "dc8a252f-56ed-3e7d-a285-40f2731910e0",
       "product": {
         "name": "Linux",
@@ -137,16 +148,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "fabe61e7-dc9c-3fd5-bdf2-afeabf08b933",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc3"
     },
     {
       "id": "fe1ef1c6-023f-3be2-be2e-71e75e9df27f",

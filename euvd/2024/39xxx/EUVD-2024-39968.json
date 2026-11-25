@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2024-39968",
+  "enisaUuid": "cbdf9837-deec-3af4-99c4-936f9445b04b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncdrom: rearrange last_media_change check to avoid unintentional overflow\n\nWhen running syzkaller with the newly reintroduced signed integer wrap\nsanitizer we encounter this splat:\n\n[  366.015950] UBSAN: signed-integer-overflow in ../drivers/cdrom/cdrom.c:2361:33\n[  366.021089] -9223372036854775808 - 346321 cannot be represented in type '__s64' (aka 'long long')\n[  366.025894] program syz-executor.4 is using a deprecated SCSI ioctl, please convert it to SG_IO\n[  366.027502] CPU: 5 PID: 28472 Comm: syz-executor.7 Not tainted 6.8.0-rc2-00035-gb3ef86b5a957 #1\n[  366.027512] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.16.3-debian-1.16.3-2 04/01/2014\n[  366.027518] Call Trace:\n[  366.027523]  <TASK>\n[  366.027533]  dump_stack_lvl+0x93/0xd0\n[  366.027899]  handle_overflow+0x171/0x1b0\n[  366.038787] ata1.00: invalid multi_count 32 ignored\n[  366.043924]  cdrom_ioctl+0x2c3f/0x2d10\n[  366.063932]  ? __pm_runtime_resume+0xe6/0x130\n[  366.071923]  sr_block_ioctl+0x15d/0x1d0\n[  366.074624]  ? __pfx_sr_block_ioctl+0x10/0x10\n[  366.077642]  blkdev_ioctl+0x419/0x500\n[  366.080231]  ? __pfx_blkdev_ioctl+0x10/0x10\n...\n\nHistorically, the signed integer overflow sanitizer did not work in the\nkernel due to its interaction with `-fwrapv` but this has since been\nchanged [1] in the newest version of Clang. It was re-enabled in the\nkernel with Commit 557f8c582a9ba8ab (\"ubsan: Reintroduce signed overflow\nsanitizer\").\n\nLet's rearrange the check to not perform any arithmetic, thus not\ntripping the sanitizer.",
+  "datePublished": "Jul 30, 2024, 7:46:30 AM",
+  "dateUpdated": "May 11, 2026, 8:27:40 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/0c97527e916054acc4a46ffb02842988acb2e92b",
+    "https://git.kernel.org/stable/c/3ee21e14c8c329168a0b66bab00ecd18f5d0dee3",
+    "https://git.kernel.org/stable/c/e809bc112712da8f7e15822674c6562da6cdf24c",
+    "https://git.kernel.org/stable/c/efb905aeb44b0e99c0e6b07865b1885ae0471ebf"
+  ],
+  "aliases": [
+    "CVE-2024-42136",
+    "GHSA-hcp4-6c7v-w8f2"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "00f43911-7eca-37b5-8fc5-4202cc47e52c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.16"
+    },
+    {
+      "id": "2fc4897e-cd9c-3f30-b82a-5853d53c9843",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.39"
+    },
+    {
+      "id": "3f959124-9cea-3005-85c5-ffbb89d3feb9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.9"
+    },
+    {
+      "id": "60404be9-0809-3c4b-9247-77f83e793161",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "67f1e027c27054e641584655020a417eaac9cb3a <efb905aeb44b0e99c0e6b07865b1885ae0471ebf"
+    },
+    {
+      "id": "65dbad2f-1359-3808-9baf-c6dcf7a1c892",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.98"
+    },
+    {
+      "id": "6acf457e-ffa0-3728-8c8a-1d6635582aff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "67f1e027c27054e641584655020a417eaac9cb3a <e809bc112712da8f7e15822674c6562da6cdf24c"
+    },
+    {
+      "id": "6b779ccc-7ac9-35b3-acfb-0b968f521708",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7298582d-714e-3b02-a899-246f249c2243",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "67f1e027c27054e641584655020a417eaac9cb3a <0c97527e916054acc4a46ffb02842988acb2e92b"
+    },
+    {
+      "id": "cfca2b4c-5f9c-3328-8161-f601020ae9ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "e4e8e086-33b3-3a76-8ade-10afa9886770",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "67f1e027c27054e641584655020a417eaac9cb3a <3ee21e14c8c329168a0b66bab00ecd18f5d0dee3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "bbed3341-4a5d-3daf-b202-dcba98dc7efb",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

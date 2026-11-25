@@ -3,8 +3,10 @@
   "enisaUuid": "6db78710-173e-34e5-b773-f0eca29fd62b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/mlx5e: Prevent stale XSK buffer release on refill retry\n\nWhen an XDP redirect to an AF_XDP socket fails because its RX ring is\nfull, the XSK core frees the buffer. During the subsequent batched refill\nof a legacy cyclic RQ, mlx5e also releases the WQE's XSK buffer before\nallocating a replacement. If that refill succeeds only partially, a WQE\nleft without a replacement retains its old buffer pointer.\n\nThe buffer can meanwhile be allocated to another WQE. A later refill\nretry can then free the live buffer through the stale pointer and publish\nthe same UMEM frame twice.\n\nMark the WQE as released immediately after the driver-side free. The flag\nis already cleared when a replacement buffer is assigned, so refill\nretries no longer release stale pointers.\n\nThe failure is silent and produces no kernel warning or splat. A\nstandalone legacy cyclic-RQ zero-copy libxsk reproducer, using 64-byte UDP\ntraffic offered at 12 Mpps, detected it: stock stopped after 2,854,914\npackets in 4.094 seconds, with 4,542 xdp_rx_ring_full events and 64\nownership/double-publication errors. With this change it processed\n356,904,225 packets in 30 seconds despite 571,405 xdp_rx_ring_full events,\nwith no ownership or data errors.",
   "datePublished": "Oct 23, 2026, 12:23:26 PM",
-  "dateUpdated": "Oct 23, 2026, 12:23:26 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 24, 2026, 2:10:21 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/32bbb870078d467479965c21bbc4960c57eea208",
     "https://git.kernel.org/stable/c/34d1db2b18e1c1d189e34dd51923e031815f88e3",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/e01620844c5c88b6fcf819d171df8e3976a0e76f"
   ],
   "aliases": [
+    "GHSA-7w5x-75mg-qr73",
     "CVE-2026-99079"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.45,
   "enisaIdProduct": [
     {
       "id": "0faaf2b8-5bc0-3374-92e0-c82d52b6b904",

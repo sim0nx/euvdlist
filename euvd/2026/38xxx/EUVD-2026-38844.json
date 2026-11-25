@@ -3,8 +3,10 @@
   "enisaUuid": "003fef26-1c7d-38a5-b623-da7374815331",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/xe: Fix error cleanup in xe_exec_queue_create_ioctl()\n\nTwo error handling issues exist in xe_exec_queue_create_ioctl():\n\n1. When xe_hw_engine_group_add_exec_queue() fails, the error path jumps\n   to put_exec_queue which skips xe_exec_queue_kill(). If the VM is in\n   preempt fence mode, xe_vm_add_compute_exec_queue() has already added\n   the queue to the VM's compute exec queue list. Skipping the kill\n   leaves the queue on that list, leading to a dangling pointer after\n   the queue is freed.\n\n2. When xa_alloc() fails after xe_hw_engine_group_add_exec_queue() has\n   succeeded, the error path does not call\n   xe_hw_engine_group_del_exec_queue() to remove the queue from the hw\n   engine group list. The queue is then freed while still linked into\n   the hw engine group, causing a use-after-free.\n\nFix both by:\n- Changing the xe_hw_engine_group_add_exec_queue() failure path to jump\n  to kill_exec_queue so that xe_exec_queue_kill() properly removes the\n  queue from the VM's compute list.\n- Adding a del_hw_engine_group label before kill_exec_queue for the\n  xa_alloc() failure path, which removes the queue from the hw engine\n  group before proceeding with the rest of the cleanup.\n\n(cherry picked from commit 37c831f401746a45d510b312b0ed7a77b1e06ec8)",
   "datePublished": "Jun 24, 2026, 4:28:53 PM",
-  "dateUpdated": "Jun 24, 2026, 4:28:53 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:47:11 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/f93b00161213a0fe9f7ff1d8498ee5ca9e0a5c43",
     "https://git.kernel.org/stable/c/753b149d5a433eb19e0c1b0eb4526a6e26120d1f",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/f3cc22d4df3ed58439ea7e21daa54c3608e03b78"
   ],
   "aliases": [
-    "CVE-2026-52976"
+    "CVE-2026-52976",
+    "GHSA-c52j-4pg6-8f2f"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "21175297-02cf-3269-a77b-8b9db70968f1",

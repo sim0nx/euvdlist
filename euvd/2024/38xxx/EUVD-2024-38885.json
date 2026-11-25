@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2024-38885",
+  "enisaUuid": "cfb870f9-23a4-3ce7-b21b-efa09c4e373c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncan: mcp251xfd: fix infinite loop when xmit fails\n\nWhen the mcp251xfd_start_xmit() function fails, the driver stops\nprocessing messages, and the interrupt routine does not return,\nrunning indefinitely even after killing the running application.\n\nError messages:\n[  441.298819] mcp251xfd spi2.0 can0: ERROR in mcp251xfd_start_xmit: -16\n[  441.306498] mcp251xfd spi2.0 can0: Transmit Event FIFO buffer not empty. (seq=0x000017c7, tef_tail=0x000017cf, tef_head=0x000017d0, tx_head=0x000017d3).\n... and repeat forever.\n\nThe issue can be triggered when multiple devices share the same SPI\ninterface. And there is concurrent access to the bus.\n\nThe problem occurs because tx_ring->head increments even if\nmcp251xfd_start_xmit() fails. Consequently, the driver skips one TX\npackage while still expecting a response in\nmcp251xfd_handle_tefif_one().\n\nResolve the issue by starting a workqueue to write the tx obj\nsynchronously if err = -EBUSY. In case of another error, decrement\ntx_ring->head, remove skb from the echo stack, and drop the message.\n\n[mkl: use more imperative wording in patch description]",
+  "datePublished": "Jul 29, 2024, 3:48:04 PM",
+  "dateUpdated": "May 11, 2026, 8:25:57 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f926c022ebaabf7963bebf89a97201d66978a025",
+    "https://git.kernel.org/stable/c/3e72558c1711d524e3150103739ddd06650e291b",
+    "https://git.kernel.org/stable/c/6c6b4afa59c2fb4d1759235f866d8caed2aa4729",
+    "https://git.kernel.org/stable/c/d8fb63e46c884c898a38f061c2330f7729e75510"
+  ],
+  "aliases": [
+    "CVE-2024-41088",
+    "GHSA-jh57-6wf8-c6gg"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "26b5c5c4-de9d-3443-9102-8795b410664e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "55e5b97f003e85e66babb55f357627d52081a264 <3e72558c1711d524e3150103739ddd06650e291b"
+    },
+    {
+      "id": "2ec8ca3b-3d3b-3a90-9689-847ea9e1b56d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "5b620c6e-6bba-3493-b0e9-06800ba1a7ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "55e5b97f003e85e66babb55f357627d52081a264 <d8fb63e46c884c898a38f061c2330f7729e75510"
+    },
+    {
+      "id": "976bb8ba-0237-333f-a1c3-ac4af436be0a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.97"
+    },
+    {
+      "id": "9e73203f-61cf-3ba2-9232-21b179691507",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "55e5b97f003e85e66babb55f357627d52081a264 <f926c022ebaabf7963bebf89a97201d66978a025"
+    },
+    {
+      "id": "b7802310-f0a7-3e8a-be92-c3f3563b8447",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e1be1683-b0cd-3e87-a84f-e0fb812abd7e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.37"
+    },
+    {
+      "id": "ea6af7c3-4ccb-3c3f-a321-0fd6bb9db772",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10"
+    },
+    {
+      "id": "eac4d337-d86d-3003-9844-ded4f63d7e1d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.8"
+    },
+    {
+      "id": "eb70ccab-a565-3095-af6f-b813c4293920",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "55e5b97f003e85e66babb55f357627d52081a264 <6c6b4afa59c2fb4d1759235f866d8caed2aa4729"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4c991027-333e-3e3d-9fd5-501e5dd20e87",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

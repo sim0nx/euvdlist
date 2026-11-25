@@ -2,61 +2,184 @@
   "id": "EUVD-2025-205072",
   "enisaUuid": "1e2c30eb-6c57-3edf-9a02-5f7228afb2fd",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Do not let BPF test infra emit invalid GSO types to stack\n\nYinhao et al. reported that their fuzzer tool was able to trigger a\nskb_warn_bad_offload() from netif_skb_features() -> gso_features_check().\nWhen a BPF program - triggered via BPF test infra - pushes the packet\nto the loopback device via bpf_clone_redirect() then mentioned offload\nwarning can be seen. GSO-related features are then rightfully disabled.\n\nWe get into this situation due to convert___skb_to_skb() setting\ngso_segs and gso_size but not gso_type. Technically, it makes sense\nthat this warning triggers since the GSO properties are malformed due\nto the gso_type. Potentially, the gso_type could be marked non-trustworthy\nthrough setting it at least to SKB_GSO_DODGY without any other specific\nassumptions, but that also feels wrong given we should not go further\ninto the GSO engine in the first place.\n\nThe checks were added in 121d57af308d (\"gso: validate gso_type in GSO\nhandlers\") because there were malicious (syzbot) senders that combine\na protocol with a non-matching gso_type. If we would want to drop such\npackets, gso_features_check() currently only returns feature flags via\nnetif_skb_features(), so one location for potentially dropping such skbs\ncould be validate_xmit_unreadable_skb(), but then otoh it would be\nan additional check in the fast-path for a very corner case. Given\nbpf_clone_redirect() is the only place where BPF test infra could emit\nsuch packets, lets reject them right there.",
-  "datePublished": "Dec 24, 2025, 12:30:30 PM",
-  "dateUpdated": "Dec 24, 2025, 12:30:30 PM",
+  "datePublished": "Dec 24, 2025, 10:33:09 AM",
+  "dateUpdated": "Nov 10, 2026, 12:38:18 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/bb7902ed7d7f6d6a7c6c4dc25410d6127ce1085f",
+    "https://git.kernel.org/stable/c/e0ffb64a2d72c6705b4a4c9efef600409f7e98a0",
+    "https://git.kernel.org/stable/c/768376ece7036ecb8604961793a1b72afe6345dd",
+    "https://git.kernel.org/stable/c/8670b53b8ee91f028f7240531064020b7413c461",
+    "https://git.kernel.org/stable/c/0f3a60869ca22024dfb9c6fce412b0c70cb4ea36",
     "https://git.kernel.org/stable/c/fbea4c63b5385588cb44ab21f91e55e33c719a54",
-    "https://git.kernel.org/stable/c/04a899573fb87273a656f178b5f920c505f68875",
-    "https://nvd.nist.gov/vuln/detail/CVE-2025-68725"
+    "https://git.kernel.org/stable/c/04a899573fb87273a656f178b5f920c505f68875"
   ],
   "aliases": [
+    "GHSA-696c-x544-xmc9",
     "CVE-2025-68725"
   ],
   "assigner": "Linux",
-  "epss": 0.02,
+  "epss": 0.19,
   "enisaIdProduct": [
+    {
+      "id": "3b4af4de-827b-36d3-b0f2-dac453c546ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.199"
+    },
+    {
+      "id": "3be40ec2-7b2e-31d2-8ceb-0eb5e19e5f58",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "850a88cc4096fe1df407452ba2e4d28cf5b3eee9 <8670b53b8ee91f028f7240531064020b7413c461"
+    },
+    {
+      "id": "44d057f2-2c11-3768-9af7-eb0b380f8f32",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "850a88cc4096fe1df407452ba2e4d28cf5b3eee9 <0f3a60869ca22024dfb9c6fce412b0c70cb4ea36"
+    },
+    {
+      "id": "4a8b5da1-ee80-3767-b124-4b3003a4ba0c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "850a88cc4096fe1df407452ba2e4d28cf5b3eee9 <e0ffb64a2d72c6705b4a4c9efef600409f7e98a0"
+    },
+    {
+      "id": "5edef4dd-bf7e-3025-ac03-b0cd5480a2db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "850a88cc4096fe1df407452ba2e4d28cf5b3eee9 <bb7902ed7d7f6d6a7c6c4dc25410d6127ce1085f"
+    },
     {
       "id": "794c7c24-48fc-3325-b5a8-09661625e3e7",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.18.2"
     },
     {
       "id": "7eada053-a3ff-3c34-a3a3-c91f6751e235",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "850a88cc4096fe1df407452ba2e4d28cf5b3eee9 <04a899573fb87273a656f178b5f920c505f68875"
     },
     {
       "id": "81e9e40d-5df8-366d-b5bb-9076831c0d95",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 0"
     },
     {
+      "id": "a3466658-131a-3d09-b0db-4b6d3afc7166",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.19"
+    },
+    {
+      "id": "bf31f489-197a-3cf4-875d-53cc3460fec6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.68"
+    },
+    {
       "id": "d856a5fd-0d2d-3abc-99ae-c1d522dc2a98",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "850a88cc4096fe1df407452ba2e4d28cf5b3eee9 <fbea4c63b5385588cb44ab21f91e55e33c719a54"
     },
     {
+      "id": "e213a69f-66cf-3bc4-8fce-254ad9335eec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "850a88cc4096fe1df407452ba2e4d28cf5b3eee9 <768376ece7036ecb8604961793a1b72afe6345dd"
+    },
+    {
+      "id": "e353dadc-27d9-3363-9212-5ad7fd3f938c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.122"
+    },
+    {
+      "id": "e4f39304-a95d-34f9-a793-77d3772ac725",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.162"
+    },
+    {
       "id": "ef7ea934-d7ab-3f0b-a5cb-70b2e2d6a92e",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "5.6"
     },
     {
-      "id": "f1c80101-ee3e-352a-9f90-c7fef9bce021",
+      "id": "f1bfaccf-76f5-34b4-9df5-91e91314ed85",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "patch: 6.19-rc1"
+      "product_version": "patch: 5.10.249"
     }
   ],
   "enisaIdVendor": [

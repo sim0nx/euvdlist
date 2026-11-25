@@ -3,8 +3,10 @@
   "enisaUuid": "c2547fc7-f106-34f1-a6dd-ed0131b3a99e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvxlan: mdb: Fix source list corruption on a failed replace\n\nWhen replacing the source list of an MDB remote entry, all existing\nsources are first marked for deletion and vxlan_mdb_remote_srcs_add()\nis then called to add the new source list. Sources present in the new\nlist have their deletion mark cleared, and any sources left marked\nafterwards are removed.\n\nIf vxlan_mdb_remote_srcs_add() fails partway through, its error path\ndeletes all entries on the remote's source list. That rollback is only\ncorrect for its other caller, vxlan_mdb_remote_add(), where the remote\nwas just allocated and the list contains solely entries added during\nthe call. On the replace path the list also holds pre-existing sources,\nso a failed replace tears them down together with their (S, G)\nforwarding entries instead of leaving the entry unchanged.\n\nThis is reachable from an existing (*, G) remote. An EXCLUDE filter\nthat loses sources starts forwarding traffic that should be blocked,\nwhile an INCLUDE filter that loses sources drops traffic that should be\nforwarded.\n\nMark entries created during the current pass with a new\nVXLAN_SGRP_F_NEW flag. On failure, delete only those entries and clear\nthe deletion mark on the pre-existing ones, so a failed replace leaves\nthe source list untouched. Retain the flag until the whole operation\nsucceeds and then clear it. Also stop vxlan_mdb_remote_src_add() from\ndeleting a pre-existing entry it only looked up when adding that\nentry's forwarding entry fails.",
   "datePublished": "Aug 10, 2026, 11:58:34 AM",
-  "dateUpdated": "Aug 10, 2026, 11:58:34 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:58:51 PM",
+  "baseScore": 7.9,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:L/I:L/A:H",
   "references": [
     "https://git.kernel.org/stable/c/5bc8fc1d2ff802eec839e03adef5df597421898d",
     "https://git.kernel.org/stable/c/2c54dff57606590fa4abec46bab6bea3133f1539",
@@ -13,11 +15,22 @@
     "https://git.kernel.org/stable/c/dcd9b465965422b9654f6026e8a2fa8984f74c3c"
   ],
   "aliases": [
+    "GHSA-qqrm-rmvj-6vv2",
     "CVE-2026-68116"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
+    {
+      "id": "0fe8e744-bc19-3fae-846a-17b15b6ce92e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "2136d52c-b75b-3e49-b6c2-112ba3fc42e3",
       "product": {
@@ -37,16 +50,6 @@
         }
       },
       "product_version": "patch: 6.6.148"
-    },
-    {
-      "id": "4c6f069c-0b6d-316a-b600-ad19ca1cded3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
     },
     {
       "id": "583af1c9-7f48-335f-8f09-e3d5ba3e6c32",

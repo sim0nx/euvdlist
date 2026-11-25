@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2023-57283",
+  "enisaUuid": "ade864dd-2ca6-354a-8bbd-cabedb7bdc7c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nx86/mm: Ensure input to pfn_to_kaddr() is treated as a 64-bit type\n\nOn 64-bit platforms, the pfn_to_kaddr() macro requires that the input\nvalue is 64 bits in order to ensure that valid address bits don't get\nlost when shifting that input by PAGE_SHIFT to calculate the physical\naddress to provide a virtual address for.\n\nOne such example is in pvalidate_pages() (used by SEV-SNP guests), where\nthe GFN in the struct used for page-state change requests is a 40-bit\nbit-field, so attempts to pass this GFN field directly into\npfn_to_kaddr() ends up causing guest crashes when dealing with addresses\nabove the 1TB range due to the above.\n\nFix this issue with SEV-SNP guests, as well as any similar cases that\nmight cause issues in current/future code, by using an inline function,\ninstead of a macro, so that the input is implicitly cast to the\nexpected 64-bit input type prior to performing the shift operation.\n\nWhile it might be argued that the issue is on the caller side, other\narchs/macros have taken similar approaches to deal with instances like\nthis, such as ARM explicitly casting the input to phys_addr_t:\n\n  e48866647b48 (\"ARM: 8396/1: use phys_addr_t in pfn_to_kaddr()\")\n\nA C inline function is even better though.\n\n[ mingo: Refined the changelog some more & added __always_inline. ]",
+  "datePublished": "May 17, 2024, 12:08:36 PM",
+  "dateUpdated": "May 11, 2026, 7:31:13 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/325956b0173f11e98f90462be4829a8b8b0682ce",
+    "https://git.kernel.org/stable/c/7e1471888a5e6e846e9b4d306e5327db2b58e64e",
+    "https://git.kernel.org/stable/c/814305b5c23cb815ada68d43019f39050472b25f",
+    "https://git.kernel.org/stable/c/8e5647a723c49d73b9f108a8bb38e8c29d3948ea"
+  ],
+  "aliases": [
+    "GHSA-jpp4-rwwf-g5qm",
+    "CVE-2023-52659"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "12f77514-647c-3169-b099-6ec3fad91307",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.2"
+    },
+    {
+      "id": "1a1f82c0-a252-345b-ae60-226ad2cb13cd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6c3211796326a9d35618b866826ca556c8f008a8 <8e5647a723c49d73b9f108a8bb38e8c29d3948ea"
+    },
+    {
+      "id": "1f706604-fd70-32af-9424-4fbaf7f2e4d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6c3211796326a9d35618b866826ca556c8f008a8 <814305b5c23cb815ada68d43019f39050472b25f"
+    },
+    {
+      "id": "3a90c679-9db3-38b8-a3b8-1cabae990044",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "480e9d8f-9c93-3955-9e58-c18773ba4649",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6c3211796326a9d35618b866826ca556c8f008a8 <325956b0173f11e98f90462be4829a8b8b0682ce"
+    },
+    {
+      "id": "61d4053a-0238-3435-91e9-9dc69b811a5c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.11"
+    },
+    {
+      "id": "6304fa26-c709-3982-9ff1-d3e56f00da56",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6c3211796326a9d35618b866826ca556c8f008a8 <7e1471888a5e6e846e9b4d306e5327db2b58e64e"
+    },
+    {
+      "id": "878063b8-450d-3581-a3d2-c50ad80fc61c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "98756645-b6ce-3075-918f-039c45b7b438",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.5"
+    },
+    {
+      "id": "a39189d2-12f7-3dc9-bae8-b1dfeb4aed74",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.23"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7c37d862-fa3a-3820-9d2f-8c524865d547",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2024-43825",
+  "enisaUuid": "c2980544-ac3d-310c-8681-6d5ea82d5c60",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nresource: fix region_intersects() vs add_memory_driver_managed()\n\nOn a system with CXL memory, the resource tree (/proc/iomem) related to\nCXL memory may look like something as follows.\n\n490000000-50fffffff : CXL Window 0\n  490000000-50fffffff : region0\n    490000000-50fffffff : dax0.0\n      490000000-50fffffff : System RAM (kmem)\n\nBecause drivers/dax/kmem.c calls add_memory_driver_managed() during\nonlining CXL memory, which makes \"System RAM (kmem)\" a descendant of \"CXL\nWindow X\".  This confuses region_intersects(), which expects all \"System\nRAM\" resources to be at the top level of iomem_resource.  This can lead to\nbugs.\n\nFor example, when the following command line is executed to write some\nmemory in CXL memory range via /dev/mem,\n\n $ dd if=data of=/dev/mem bs=$((1 << 10)) seek=$((0x490000000 >> 10)) count=1\n dd: error writing '/dev/mem': Bad address\n 1+0 records in\n 0+0 records out\n 0 bytes copied, 0.0283507 s, 0.0 kB/s\n\nthe command fails as expected.  However, the error code is wrong.  It\nshould be \"Operation not permitted\" instead of \"Bad address\".  More\nseriously, the /dev/mem permission checking in devmem_is_allowed() passes\nincorrectly.  Although the accessing is prevented later because ioremap()\nisn't allowed to map system RAM, it is a potential security issue.  During\ncommand executing, the following warning is reported in the kernel log for\ncalling ioremap() on system RAM.\n\n ioremap on RAM at 0x0000000490000000 - 0x0000000490000fff\n WARNING: CPU: 2 PID: 416 at arch/x86/mm/ioremap.c:216 __ioremap_caller.constprop.0+0x131/0x35d\n Call Trace:\n  memremap+0xcb/0x184\n  xlate_dev_mem_ptr+0x25/0x2f\n  write_mem+0x94/0xfb\n  vfs_write+0x128/0x26d\n  ksys_write+0xac/0xfe\n  do_syscall_64+0x9a/0xfd\n  entry_SYSCALL_64_after_hwframe+0x4b/0x53\n\nThe details of command execution process are as follows.  In the above\nresource tree, \"System RAM\" is a descendant of \"CXL Window 0\" instead of a\ntop level resource.  So, region_intersects() will report no System RAM\nresources in the CXL memory region incorrectly, because it only checks the\ntop level resources.  Consequently, devmem_is_allowed() will return 1\n(allow access via /dev/mem) for CXL memory region incorrectly. \nFortunately, ioremap() doesn't allow to map System RAM and reject the\naccess.\n\nSo, region_intersects() needs to be fixed to work correctly with the\nresource tree with \"System RAM\" not at top level as above.  To fix it, if\nwe found a unmatched resource in the top level, we will continue to search\nmatched resources in its descendant resources.  So, we will not miss any\nmatched resources in resource tree anymore.\n\nIn the new implementation, an example resource tree\n\n|------------- \"CXL Window 0\" ------------|\n|-- \"System RAM\" --|\n\nwill behave similar as the following fake resource tree for\nregion_intersects(, IORESOURCE_SYSTEM_RAM, ),\n\n|-- \"System RAM\" --||-- \"CXL Window 0a\" --|\n\nWhere \"CXL Window 0a\" is part of the original \"CXL Window 0\" that\nisn't covered by \"System RAM\".",
+  "datePublished": "Oct 21, 2024, 6:01:17 PM",
+  "dateUpdated": "May 11, 2026, 8:40:59 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/333fbaf6864a4ca031367eb947961a1f3484d337",
+    "https://git.kernel.org/stable/c/1d5f85f1b7db79c75c9e07d6571ce2a7bdf725c4",
+    "https://git.kernel.org/stable/c/8a6fef7d22a1d952aed68584d3fcc0d018d2bdc3",
+    "https://git.kernel.org/stable/c/4b90d2eb451b357681063ba4552b10b39d7ad885",
+    "https://git.kernel.org/stable/c/393331e16ce205e036e58b3d8ca4ee2e635f21d9",
+    "https://git.kernel.org/stable/c/06ff97a20b8c9e9d256b0d2c3e87f78f8ccea3de",
+    "https://git.kernel.org/stable/c/927abc5b7d6d2c2e936bec5a2f71d9512c5e72f7",
+    "https://git.kernel.org/stable/c/b4afe4183ec77f230851ea139d91e5cf2644c68b"
+  ],
+  "aliases": [
+    "CVE-2024-49878",
+    "GHSA-f3xx-63r9-v2cp"
+  ],
+  "assigner": "Linux",
+  "epss": 0.3,
+  "enisaIdProduct": [
+    {
+      "id": "11fcdb61-cb76-3c94-8c65-d9d58f76d1ed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c221c0b0308fd01d9fb33a16f64d2fd95f8830a4 <1d5f85f1b7db79c75c9e07d6571ce2a7bdf725c4"
+    },
+    {
+      "id": "16d4443b-ca18-3aea-813b-828e8cb9a8ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c221c0b0308fd01d9fb33a16f64d2fd95f8830a4 <393331e16ce205e036e58b3d8ca4ee2e635f21d9"
+    },
+    {
+      "id": "1aeeacc2-c911-3a0b-890b-8df1e0015f3b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c221c0b0308fd01d9fb33a16f64d2fd95f8830a4 <4b90d2eb451b357681063ba4552b10b39d7ad885"
+    },
+    {
+      "id": "1bcac3c3-25f4-3e1f-a370-c6171a48b331",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.168"
+    },
+    {
+      "id": "356096d6-e8fd-3ffc-a9cb-fab501c08eb6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.113"
+    },
+    {
+      "id": "3df63f4a-e468-30c5-af39-610d4b4a4cc2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.3"
+    },
+    {
+      "id": "482cb3d6-8111-32b0-b643-bce32fe5ae08",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.55"
+    },
+    {
+      "id": "48fca1af-9ea7-367c-9500-ab4a0aaecadb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "621f8a58-72b5-38af-adfd-fd1f88422d28",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "6698b687-e7ad-3789-9cde-f649809c786a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.227"
+    },
+    {
+      "id": "7a1d3f65-9d9c-3e4f-aea8-0e0d57d96a3e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c221c0b0308fd01d9fb33a16f64d2fd95f8830a4 <927abc5b7d6d2c2e936bec5a2f71d9512c5e72f7"
+    },
+    {
+      "id": "7a35cdd7-2d31-3453-828c-24a112acbbad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.1"
+    },
+    {
+      "id": "85f6538e-f237-3d7e-a841-5634187a76b5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.14"
+    },
+    {
+      "id": "9954ea4e-1278-3bcc-9bbc-ad22acd57f42",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c221c0b0308fd01d9fb33a16f64d2fd95f8830a4 <06ff97a20b8c9e9d256b0d2c3e87f78f8ccea3de"
+    },
+    {
+      "id": "b75950b0-c353-3f47-94f2-f10cb1461f1d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c221c0b0308fd01d9fb33a16f64d2fd95f8830a4 <333fbaf6864a4ca031367eb947961a1f3484d337"
+    },
+    {
+      "id": "c124d0d6-4ef5-324b-b59b-5a09b10c9efd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c221c0b0308fd01d9fb33a16f64d2fd95f8830a4 <b4afe4183ec77f230851ea139d91e5cf2644c68b"
+    },
+    {
+      "id": "d2470311-f311-3a91-952e-cd7f1e9f8f8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.285"
+    },
+    {
+      "id": "d624cd4f-e54f-36fd-a131-fb16da2da63f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c221c0b0308fd01d9fb33a16f64d2fd95f8830a4 <8a6fef7d22a1d952aed68584d3fcc0d018d2bdc3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c4383e5c-5198-3fea-9ca5-7a66598f0edd",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

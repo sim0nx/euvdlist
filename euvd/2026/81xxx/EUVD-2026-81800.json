@@ -3,8 +3,10 @@
   "enisaUuid": "0894d715-63f7-3322-a06f-db2dcc8c9323",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: seq: midi: Serialize input teardown with event_input\n\nsnd_midi_input_event() must not be running while a rawmidi substream is\nclosing, since this can lead to the trigger state becoming out-of-step\nthrough this sequence in snd_rawmidi_input_trigger():\n\n\tsnd_rawmidi_input_trigger(up=0)\n\t\t\t\t\tsnd_midi_input_event()\n\t\t\t\t\t -> snd_rawmidi_kernel_read()\n\t\t\t\t\t     -> snd_rawmidi_input_trigger(up=1)\n\t  -> cancel_work_sync()\n\nwhich ends with the underlying device being active unexpectedly.\n\nWhen this is called from close_substream(), further input can re-trigger\nthe input event leaving it running after rawmidi_release_priv() has set\nrfile->rmidi to NULL which leads to:\n\n\tUnable to handle kernel NULL pointer dereference at virtual address 00000000000000b0\n\tCall trace:\n\t snd_midi_input_event+0x3c/0x134 [snd_seq_midi] (P)\n\t snd_rawmidi_input_event_work+0x1c/0x2c\n\t process_one_work+0x150/0x3a4\n\t worker_thread+0x190/0x318\n\nApply a similar approach to commit ef7607ab1c8ad (\"ALSA: seq: midi:\nSerialize output teardown with event_input\") which fixed the same issue\nin the output direction, but updated to use RCU following Takashi Iwai's\nproposed follow-on patch [1].\n\nWith this change in place, midisynth_unsubscribe() clears the input file\nso snd_midi_input_event() will not re-trigger the stream and will be\nquiesced by the cancel_work_sync() in snd_rawmidi_input_trigger().\n\n[1] https://lore.kernel.org/linux-sound/20260813144224.753399-1-tiwai@suse.de/",
   "datePublished": "Sep 17, 2026, 4:07:22 PM",
-  "dateUpdated": "Sep 17, 2026, 4:07:22 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:59:43 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/de76a2b47582cd6dba2e15f024681bf377ecc94a",
     "https://git.kernel.org/stable/c/89d986897aff7275b42e075e556731b8353366af",
@@ -14,11 +16,22 @@
     "https://git.kernel.org/stable/c/403f7f3ad3808a0096d84cf228fab68dc253fd9d"
   ],
   "aliases": [
-    "CVE-2026-90207"
+    "CVE-2026-90207",
+    "GHSA-hhf3-44mr-39mw"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "240d942c-69c1-3d9c-963e-c8066f41a129",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "25ccf55e-9aa2-3e66-980c-8bd0bcfda79e",
       "product": {
@@ -128,16 +141,6 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <403f7f3ad3808a0096d84cf228fab68dc253fd9d"
-    },
-    {
-      "id": "dee7c37b-0836-3cf0-96cb-472be8f70f69",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "ee42ac9b-3fce-33ab-810d-b50ca9b89960",

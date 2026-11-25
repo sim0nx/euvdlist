@@ -3,7 +3,7 @@
   "enisaUuid": "6158082c-bc82-33da-b730-991f1b87bed9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: s390: Free guest debug data on vcpu destroy\n\nkvm_s390_clear_bp_data() is only called from\nkvm_arch_vcpu_ioctl_set_guest_debug(), i.e. when user space changes or\ndisables debugging. A vCPU that is destroyed while hardware breakpoints\nare still armed - the normal case when the VMM just exits or crashes -\nleaks hw_bp_info, hw_wp_info and all old_data buffers, since generic KVM\nfrees the vCPU right after kvm_arch_vcpu_destroy().\n\nThat is bounded by MAX_BP_COUNT entries, so roughly 8 KiB per vCPU, but\nit is unbounded over VM lifetimes. The allocations are\nGFP_KERNEL_ACCOUNT, so the charge also outlives the exiting process and\npins dying memcgs.\n\nFix by clearing the debug data on vCPU destruction. Calling it\nunconditionally is fine: struct kvm_vcpu is zero allocated, so for a vCPU\nthat never enabled debugging the counters are 0 and the pointers NULL.",
   "datePublished": "Sep 16, 2026, 10:32:16 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:16 AM",
+  "dateUpdated": "Oct 19, 2026, 8:54:58 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/053f2068cf9b0654b651fed5ad7649d3deb982bf",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/e7f698b09d4a7c36b299acf680fc50fe868e2bcd"
   ],
   "aliases": [
+    "GHSA-69xh-7r26-q3mw",
     "CVE-2026-89923"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "003b858e-9a72-38df-8288-b0de308ad567",
@@ -40,6 +41,16 @@
         }
       },
       "product_version": "27291e2165b6de70c476b7b675308113edd69a60 <e7f698b09d4a7c36b299acf680fc50fe868e2bcd"
+    },
+    {
+      "id": "070ffe8f-e389-34cb-bdf2-85345fad54b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "110d1e65-a4dc-3450-a5f6-67ef4da91419",
@@ -130,16 +141,6 @@
         }
       },
       "product_version": "27291e2165b6de70c476b7b675308113edd69a60 <9a32c4c6a6c23b7f5bf765eb5b83ba7f64a8ec63"
-    },
-    {
-      "id": "a386c3cb-765d-3307-8336-1acd3942ce43",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "a44d9dc7-30f7-36a4-bbbb-028c533b58c8",

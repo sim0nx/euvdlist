@@ -3,8 +3,10 @@
   "enisaUuid": "719bb8a3-9739-3bb1-a9a1-ff99d3a0e28c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrds: ib: Clear the sg list when mapping an MR fails\n\nrds_ib_map_frmr() stores the caller's scatterlist in the MR before DMA\nmapping and registration can fail. On failure, __rds_rdma_map() unpins\nthe pages and frees the scatterlist, but rds_ib_free_frmr() can still\nreturn the MR to the pool with the stale pointer set.\n\nThis leaves the pool with a dangling scatterlist and can lead to local\nprivilege escalation. KASAN detects the resulting use-after-free when the\nMR is later torn down:\n\nBUG: KASAN: slab-use-after-free in __rds_ib_teardown_mr\nRead of size 8\n\nCall Trace:\n __rds_ib_teardown_mr\n rds_ib_unreg_frmr\n rds_ib_flush_mr_pool\n rds_ib_flush_mrs\n rds_free_mr\n rds_setsockopt\n\nStore the scatterlist in the MR only after DMA mapping succeeds. If DMA\nmapping fails, return directly while the MR fields remain clear; the caller\nkeeps ownership of the scatterlist and its pinned pages. If a later\nregistration step fails, unmap the scatterlist and clear the MR fields\nbefore returning.",
   "datePublished": "Oct 18, 2026, 3:17:41 PM",
-  "dateUpdated": "Oct 18, 2026, 3:17:41 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 24, 2026, 2:09:17 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/1be3211e6ac77adbb1eac01314d989d243b32c59",
     "https://git.kernel.org/stable/c/c42d316163f89cd23de2f3e24558177a8c29bad8",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/58eb1b3325edac42dc6df72c80962bd53a3c8ca7"
   ],
   "aliases": [
-    "CVE-2026-98524"
+    "CVE-2026-98524",
+    "GHSA-wq82-wxrv-wcj7"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "132df2c7-9b94-374d-97cf-c07cf3029fbd",
@@ -102,16 +105,6 @@
       "product_version": "1659185fb4d0025835eb2058a141f0746c5cab00 <4468df5bcdef959fd96494e9968f323561a45f4c"
     },
     {
-      "id": "5af9be00-e4fe-304d-8c76-45291134239b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
-    },
-    {
       "id": "624c71a4-6c15-38a4-979f-9c0722ab8f06",
       "product": {
         "name": "Linux",
@@ -150,6 +143,16 @@
         }
       },
       "product_version": "patch: 6.18.55"
+    },
+    {
+      "id": "a82419fa-007b-3511-8509-d53c92d76646",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "b80adffb-7276-35ee-aaf1-7ee18232d7c8",

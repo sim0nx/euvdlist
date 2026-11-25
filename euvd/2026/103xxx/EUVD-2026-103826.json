@@ -3,30 +3,25 @@
   "enisaUuid": "534d6d15-262e-3179-8fd5-b42dc7cc56d3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: ua101: reject mismatched capture/playback packet sizes\n\ndetect_usb_format() cross-checks bSubframeSize, bBitResolution and\ntSamFreq between the capture and playback interfaces, but never relates\nthe two endpoints' wMaxPacketSize and bNrChannels.  Each playback URB\ngets a buffer of ua->playback.max_packet_bytes, while the number of\nbytes written into it is derived from the capture stream:\ncapture_urb_complete() computes frames from the received capture packet\nand capture.frame_bytes, and start_usb_playback() and playback_work()\nmultiply that by playback.frame_bytes.\n\nA device declaring a large capture wMaxPacketSize with few capture\nchannels and a small playback wMaxPacketSize with many playback channels\ntherefore memset()s and memcpy()s past the end of the playback buffer,\nin open() of the PCM node the driver registers during probe.\nusb_submit_urb() rejects the over-long iso_frame_desc[0].length with\n-EMSGSIZE, but only after the write.\n\nReject such descriptors at probe time.  Genuine UA-101/UA-1000 hardware\ndeclares proportional packet sizes and is unaffected.\n\n  BUG: KASAN: slab-out-of-bounds in start_usb_playback (sound/usb/misc/ua101.c:586)\n  Write of size 2048 at addr ffff8881098f3c00 by task exploit/5021\n  Call Trace:\n   __asan_memset (mm/kasan/shadow.c:84)\n   start_usb_playback (sound/usb/misc/ua101.c:586)\n   playback_pcm_open (sound/usb/misc/ua101.c:679)\n   snd_pcm_open_substream (sound/core/pcm_native.c:2829)\n   snd_pcm_open (sound/core/pcm_native.c:2865 sound/core/pcm_native.c:2932)\n   snd_pcm_playback_open (sound/core/pcm_native.c:2891)\n   snd_open (sound/core/sound.c:166)\n   chrdev_open (fs/char_dev.c:411)\n   do_dentry_open (fs/open.c:996)\n   vfs_open (fs/open.c:1101)\n   path_openat (fs/namei.c:4837 fs/namei.c:5000)\n   do_file_open (fs/namei.c:5029)\n   do_sys_openat2 (fs/open.c:1417)\n   __x64_sys_openat (fs/open.c:1423 fs/open.c:1439 fs/open.c:1434)\n   do_syscall_64 (arch/x86/entry/syscall_64.c:61 arch/x86/entry/syscall_64.c:84)\n   entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:121)\n\n  The buggy address belongs to the object at ffff8881098f3c00\n   which belongs to the cache kmalloc-192 of size 192\n  The buggy address is located 0 bytes inside of\n   allocated 168-byte region [ffff8881098f3c00, ffff8881098f3ca8)",
   "datePublished": "Oct 18, 2026, 3:47:26 PM",
-  "dateUpdated": "Oct 18, 2026, 3:47:26 PM",
+  "dateUpdated": "Oct 30, 2026, 12:39:15 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/b54976c81a6b8cae311b75be1a4cda444689bca0",
+    "https://git.kernel.org/stable/c/a2d326b3f6d470ea4bfde00245794e0dc6dbbc3d",
+    "https://git.kernel.org/stable/c/0a6a5eecc92c13f936d8d90975116d6bbdf4f876",
+    "https://git.kernel.org/stable/c/ada5ded765f059a6e3036e69ca350449442af0fc",
     "https://git.kernel.org/stable/c/fd3a7bf0d988b0878a1957df150edb35f81db87e",
     "https://git.kernel.org/stable/c/eb0c7fda59cf650076f8ed5b949a6c8441aa3606",
     "https://git.kernel.org/stable/c/4294fe57048594a9e158b61c967bb7f943cda477",
     "https://git.kernel.org/stable/c/86f86e6fdedc33c5b8d38b9208b350f8accf57ee"
   ],
   "aliases": [
+    "GHSA-3vm7-3m85-mm4q",
     "CVE-2026-98741"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
-    {
-      "id": "08e0c151-c9bb-342c-88d0-e2e7deb62de8",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc6"
-    },
     {
       "id": "099ff7ca-0e81-3d2b-bc3b-973e4a846a1b",
       "product": {
@@ -48,6 +43,46 @@
       "product_version": "63978ab3e3e963db28093b53bb4598f2702e1ad7 <eb0c7fda59cf650076f8ed5b949a6c8441aa3606"
     },
     {
+      "id": "3819daad-e5e7-386f-86a0-c87f18d965f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "46d62123-0227-31d9-aeb6-d79adb72cf33",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "4c441d26-702f-36eb-9587-6bfd3a7e13c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63978ab3e3e963db28093b53bb4598f2702e1ad7 <ada5ded765f059a6e3036e69ca350449442af0fc"
+    },
+    {
+      "id": "8a39ce4d-9747-3d75-827a-c4bfbf6b9b1b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
       "id": "9a6c902e-71a1-3a55-8ce4-919db503d9e0",
       "product": {
         "name": "Linux",
@@ -58,6 +93,16 @@
       "product_version": "patch: 6.12.113"
     },
     {
+      "id": "9adcf79f-41ad-3a75-9f2a-69e7f0663f9c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63978ab3e3e963db28093b53bb4598f2702e1ad7 <a2d326b3f6d470ea4bfde00245794e0dc6dbbc3d"
+    },
+    {
       "id": "9b8890ca-afff-3c25-b881-82448799579f",
       "product": {
         "name": "Linux",
@@ -66,6 +111,16 @@
         }
       },
       "product_version": "patch: 7.2.10"
+    },
+    {
+      "id": "9ce4a55a-b8c3-3e7f-b550-2f53f88fc952",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63978ab3e3e963db28093b53bb4598f2702e1ad7 <0a6a5eecc92c13f936d8d90975116d6bbdf4f876"
     },
     {
       "id": "a8988c0c-890d-3508-9940-681fbd64e413",
@@ -88,6 +143,16 @@
       "product_version": "63978ab3e3e963db28093b53bb4598f2702e1ad7 <4294fe57048594a9e158b61c967bb7f943cda477"
     },
     {
+      "id": "b1909a1c-3a59-3b4e-b27d-f5af4e076544",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63978ab3e3e963db28093b53bb4598f2702e1ad7 <b54976c81a6b8cae311b75be1a4cda444689bca0"
+    },
+    {
       "id": "b8298c9d-f3ad-3518-bb2f-f8c3de5f32c6",
       "product": {
         "name": "Linux",
@@ -106,6 +171,26 @@
         }
       },
       "product_version": "patch: 6.18.56"
+    },
+    {
+      "id": "d56f4225-4d45-3c3e-8a93-dd1cb8691058",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "d9a92f08-0d9f-31c9-ad5f-e567273c432d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "db41d151-4168-32ac-b55e-e3349652c490",

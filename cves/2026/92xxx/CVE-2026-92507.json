@@ -3,8 +3,10 @@
   "enisaUuid": "c4615b6a-1561-3d36-9098-dd505db4d8f0",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/core: Fix potential use after free in ib_dealloc_pd_user()\n\nWhen accessing a PD via the netlink path the only synchronization\nmechanism for the said PD is rdma_restrack_get().\nCurrently, rdma_restrack_del() is invoked at the end of\nib_dealloc_pd_user(), which is too late, since by that point\nvendor-specific resources associated with the PD might already be\nfreed. This can leave a short window where the PD remains accessible\nthrough restrack, leading to a potential use-after-free.\n\nFix this by moving the rdma_restrack_begin_del() call to the start of\nib_dealloc_pd_user(), ensuring that the PD is removed from restrack\nbefore its internal resources are released. This guarantees that no new\nusers hold references to a PD that is in the process of destruction.\n\nIn addition, this change preserves the intended inverted order\nbetween create and destroy routines: resources are added to\nrestrack at the end of successful creation, and hence shall be removed\nfrom the restrack first thing during the destruction flow, which keeps\nthe lifecycle management consistent and predictable.",
   "datePublished": "Sep 17, 2026, 4:10:18 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:18 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:04:13 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/df0e9efe61ca706a07b1c9bf93fcb9032455efc4",
     "https://git.kernel.org/stable/c/7647363fa02046da681acc3c827d9f301c06e0e7",
@@ -14,21 +16,12 @@
     "https://git.kernel.org/stable/c/8b90e701342275f414e36e7421c502237df241ad"
   ],
   "aliases": [
-    "CVE-2026-92507"
+    "CVE-2026-92507",
+    "GHSA-hqrw-r899-pphh"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
-    {
-      "id": "134ee817-4f33-37e5-b85b-b290e965bfa0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
     {
       "id": "1774f906-b90e-36a2-9183-a2ae7ae58304",
       "product": {
@@ -48,6 +41,16 @@
         }
       },
       "product_version": "patch: 6.6.157"
+    },
+    {
+      "id": "3c5c0ee6-f9fa-34d0-bdb0-03358a66178e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "454bd443-24af-3538-b2a8-9387eb7a2199",

@@ -1,0 +1,119 @@
+{
+  "id": "EUVD-2024-38853",
+  "enisaUuid": "66b686a3-9e5d-3a4b-b7a6-e0cc82e3eb52",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: ufs: core: Fix ufshcd_abort_one racing issue\n\nWhen ufshcd_abort_one is racing with the completion ISR, the completed tag\nof the request's mq_hctx pointer will be set to NULL by ISR.  Return\nsuccess when request is completed by ISR because ufshcd_abort_one does not\nneed to do anything.\n\nThe racing flow is:\n\nThread A\nufshcd_err_handler\t\t\t\t\tstep 1\n\t...\n\tufshcd_abort_one\n\t\tufshcd_try_to_abort_task\n\t\t\tufshcd_cmd_inflight(true)\tstep 3\n\t\tufshcd_mcq_req_to_hwq\n\t\t\tblk_mq_unique_tag\n\t\t\t\trq->mq_hctx->queue_num\tstep 5\n\nThread B\nufs_mtk_mcq_intr(cq complete ISR)\t\t\tstep 2\n\tscsi_done\n\t\t...\n\t\t__blk_mq_free_request\n\t\t\trq->mq_hctx = NULL;\t\tstep 4\n\nBelow is KE back trace.\n  ufshcd_try_to_abort_task: cmd at tag 41 not pending in the device.\n  ufshcd_try_to_abort_task: cmd at tag=41 is cleared.\n  Aborting tag 41 / CDB 0x28 succeeded\n  Unable to handle kernel NULL pointer dereference at virtual address 0000000000000194\n  pc : [0xffffffddd7a79bf8] blk_mq_unique_tag+0x8/0x14\n  lr : [0xffffffddd6155b84] ufshcd_mcq_req_to_hwq+0x1c/0x40 [ufs_mediatek_mod_ise]\n   do_mem_abort+0x58/0x118\n   el1_abort+0x3c/0x5c\n   el1h_64_sync_handler+0x54/0x90\n   el1h_64_sync+0x68/0x6c\n   blk_mq_unique_tag+0x8/0x14\n   ufshcd_err_handler+0xae4/0xfa8 [ufs_mediatek_mod_ise]\n   process_one_work+0x208/0x4fc\n   worker_thread+0x228/0x438\n   kthread+0x104/0x1d4\n   ret_from_fork+0x10/0x20",
+  "datePublished": "Jul 29, 2024, 2:32:08 PM",
+  "dateUpdated": "May 23, 2026, 3:51:47 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/c3111b3cf3889bfa7b73ebff83d7397db9b7e5e0",
+    "https://git.kernel.org/stable/c/b5a6ac887256762758bfe7f2918cb0233aa544f4",
+    "https://git.kernel.org/stable/c/74736103fb4123c71bf11fb7a6abe7c884c5269e"
+  ],
+  "aliases": [
+    "GHSA-f9fx-wvgj-vvxm",
+    "CVE-2024-41053"
+  ],
+  "assigner": "Linux",
+  "epss": 0.29,
+  "enisaIdProduct": [
+    {
+      "id": "325e23fb-98aa-338a-b823-a2c77e80ab74",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "51f655c4-860f-3294-8162-9e2785fa3a9f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "93e6c0e19d5bb12b49534a411c85e21d333731fa <74736103fb4123c71bf11fb7a6abe7c884c5269e"
+    },
+    {
+      "id": "5f7c60b8-3827-3526-b9ef-e750eaebd1da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.5 <6.6.41"
+    },
+    {
+      "id": "879fea45-2d6a-3ed0-b2ee-435b0c631e71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.10"
+    },
+    {
+      "id": "96511d93-661b-351f-9c78-252856deb8ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ff7699d3620763b0dfe2ff93df4528880bf903a8 <c3111b3cf3889bfa7b73ebff83d7397db9b7e5e0"
+    },
+    {
+      "id": "be96e0f4-fbe5-3c71-8f22-69fa135cc2d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "93e6c0e19d5bb12b49534a411c85e21d333731fa <b5a6ac887256762758bfe7f2918cb0233aa544f4"
+    },
+    {
+      "id": "e5c7f751-c26c-39db-9328-1a3b96ccb79f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.41"
+    },
+    {
+      "id": "eb11ae1f-d213-3584-8a5c-0f986c85d8f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "fb2771cd-cd54-35bd-af5f-23a5b334805f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.7"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "63cdc254-aae9-30ad-b15d-f8a3c62e3e1f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

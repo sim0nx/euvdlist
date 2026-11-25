@@ -3,18 +3,26 @@
   "enisaUuid": "74a9cb86-c0f4-3fa7-a14b-01cfa1c220ea",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: bridge: mcast: don't truncate the port group walk on teardown\n\n__br_multicast_disable_port_ctx() and br_multicast_del_port() walk\nport->mglist with hlist_for_each_entry_safe(). However,\nbr_multicast_find_del_pg() can also delete other entries from the same\nlist through br_multicast_fwd_src_remove() or __fwd_del_star_excl().\n\nIf such an entry is the iterator's saved next node, hlist_del_init()\nclears its ->next and terminates the walk early. The reproducer triggers\nthis in both teardown walks, leaving port groups in the bridge mdb with\na dangling ->key.port after del_nbp() frees the port:\n\n  BUG: KASAN: slab-use-after-free in __mdb_fill_info+0x1191/0x1320\n   __mdb_fill_info+0x1191/0x1320\n   br_mdb_dump+0x594/0xe40\n   rtnl_mdb_dump+0x1cf/0x5d0\n\nUse hlist_del_init_rcu() to unlink the group while preserving ->next.\nbr_multicast_del_pg() and the teardown walks run under\nbr->multicast_lock. The GC worker must acquire the same lock before\ndetaching the group for destruction, so the node remains alive while\nthe walk uses the preserved pointer.\n\nPreserving ->next means a walk can now reach a group that an earlier\niteration already deleted as a side effect. That group is off mp->ports,\nso br_multicast_find_del_pg() would fall through its port scan and hit\nthe trailing WARN_ON(1). Skip such groups at the top of that helper: a\nport group is put on port->mglist when it is created and only unlinked\nwhen it is deleted, so hlist_unhashed() identifies exactly this case.",
   "datePublished": "Oct 28, 2026, 10:34:33 AM",
-  "dateUpdated": "Oct 28, 2026, 10:34:33 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 31, 2026, 12:43:18 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/be331b23c650de9518f8266b901d8abb9b36af77",
+    "https://git.kernel.org/stable/c/ab836d56ff43f2e7927e88c83cd02c47a98a672e",
+    "https://git.kernel.org/stable/c/025c25ad73323c7dc5af4ee97fe0a2c0b3c177c8",
+    "https://git.kernel.org/stable/c/b0db9f4ff402becff710ab27dbd9f6fe4850b47e",
+    "https://git.kernel.org/stable/c/e69d4927dacd6ddaff09777a89efc0d3143d3b0d",
     "https://git.kernel.org/stable/c/8243d587a081e790ad96e80d48eef44d9f7ef005",
     "https://git.kernel.org/stable/c/b45e8c24608c992d1e2cea047eb5bcbfa537f86b",
     "https://git.kernel.org/stable/c/5a3f7a683aee56e1f15c9d53041f3236767eaae7"
   ],
   "aliases": [
-    "CVE-2026-99117"
+    "CVE-2026-99117",
+    "GHSA-phhg-87vx-7j2v"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "097c0343-adb5-3f10-ac38-e6e3e205d353",
@@ -37,6 +45,16 @@
       "product_version": "patch: 6.18.59"
     },
     {
+      "id": "3926e32c-4a8b-37d3-a7fe-e28513b5b35e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
       "id": "4384087a-56ce-3214-b225-0acb64b0b216",
       "product": {
         "name": "Linux",
@@ -57,6 +75,66 @@
       "product_version": "patch: 7.3"
     },
     {
+      "id": "451d7142-106d-3b42-bbfb-2866c7612c22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b08123684bd55fa6d6ee4b52d4ae3040fadb5aa2 <e69d4927dacd6ddaff09777a89efc0d3143d3b0d"
+    },
+    {
+      "id": "49170a43-4d6d-3005-a74e-ceeab02f42ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "53df24b8-93c3-3db1-a268-19b3440b4c05",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b08123684bd55fa6d6ee4b52d4ae3040fadb5aa2 <025c25ad73323c7dc5af4ee97fe0a2c0b3c177c8"
+    },
+    {
+      "id": "55016db3-4239-3777-a45e-a4eba7f169f5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b08123684bd55fa6d6ee4b52d4ae3040fadb5aa2 <b0db9f4ff402becff710ab27dbd9f6fe4850b47e"
+    },
+    {
+      "id": "5b93980f-53be-3683-9180-fd3be3402549",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
+    },
+    {
+      "id": "63e1c137-f6cc-3dab-9463-e04a25cdb687",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b08123684bd55fa6d6ee4b52d4ae3040fadb5aa2 <ab836d56ff43f2e7927e88c83cd02c47a98a672e"
+    },
+    {
       "id": "6877dd95-79c3-39e9-b220-0882d12cb539",
       "product": {
         "name": "Linux",
@@ -67,6 +145,16 @@
       "product_version": "b08123684bd55fa6d6ee4b52d4ae3040fadb5aa2 <5a3f7a683aee56e1f15c9d53041f3236767eaae7"
     },
     {
+      "id": "80598f9e-ee3d-3ad6-b19a-b81b20fc9a53",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.161"
+    },
+    {
       "id": "8a9958d6-f1b4-3fdd-b892-6bdcb85b2209",
       "product": {
         "name": "Linux",
@@ -75,6 +163,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "94b38ebd-34b9-3e3a-92e5-2ba333cf9e90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b08123684bd55fa6d6ee4b52d4ae3040fadb5aa2 <be331b23c650de9518f8266b901d8abb9b36af77"
+    },
+    {
+      "id": "b2e08e53-2904-35ea-a65a-0399d2b7a964",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
     },
     {
       "id": "dc6384b7-46e1-3a7c-ac3b-c7837afe3961",

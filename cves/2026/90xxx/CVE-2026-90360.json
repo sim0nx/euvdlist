@@ -3,7 +3,7 @@
   "enisaUuid": "1f4e916a-adbd-3f2b-aa8d-3c302b47c188",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nregulator: core: use system_freezable_wq for init complete work\n\nschedule_delayed_work() uses system_wq, which is non-freezable, allowing\nregulator_init_complete_work to run concurrently with system suspend. This\nwork fires ~30s after boot to disable unused regulators via I2C. When it\nraces with PM suspend, the I2C adapter may already be suspended, triggering\na -ESHUTDOWN warning in __i2c_transfer():\n\n  WARNING: ... at __i2c_transfer+0x36c/0x3c8\n  Call trace:\n   __i2c_transfer\n   i2c_transfer\n   regmap_i2c_write\n   _regmap_update_bits\n   regulator_disable_regmap\n   _regulator_do_disable\n   regulator_late_cleanup\n   regulator_init_complete_work_function\n   process_one_work\n\nSwitch to system_freezable_wq so the work is frozen before any device\nis suspended, eliminating the race.",
   "datePublished": "Sep 17, 2026, 4:09:04 PM",
-  "dateUpdated": "Sep 17, 2026, 4:09:04 PM",
+  "dateUpdated": "Oct 19, 2026, 9:02:16 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/8a2ae3ab348cce44120667277c2198f10cc348b1",
@@ -18,10 +18,11 @@
     "https://git.kernel.org/stable/c/03eab318cedd6ae34ecd34533cd986edf5237164"
   ],
   "aliases": [
-    "CVE-2026-90360"
+    "CVE-2026-90360",
+    "GHSA-8q97-2m9m-f966"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.25,
   "enisaIdProduct": [
     {
       "id": "00eaaa5f-348e-3ed9-ade0-781b9b218d20",
@@ -204,6 +205,16 @@
       "product_version": "patch: 5.10.270"
     },
     {
+      "id": "96014626-cbc6-3c86-ad54-15b41502fdd2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "a2384db3-63a4-3805-ae2d-0d67c38fab19",
       "product": {
         "name": "Linux",
@@ -272,16 +283,6 @@
         }
       },
       "product_version": "patch: 4.9.207"
-    },
-    {
-      "id": "cbebf8c6-2a6a-38b8-bcc3-37f06510441d",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "d8357538-3999-3b79-91b9-4ee58b0c05f5",

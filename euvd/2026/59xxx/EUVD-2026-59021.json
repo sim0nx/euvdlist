@@ -2,23 +2,25 @@
   "id": "EUVD-2026-59021",
   "enisaUuid": "e56a5948-c056-369c-85db-50deeccf8146",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngpio: tegra: do not call pinctrl for GPIO direction\n\ntegra_gpio_direction_input() and tegra_gpio_direction_output() already\nprogram the GPIO controller direction registers directly. The additional\npinctrl_gpio_direction_input/output() calls do not add a Tegra pinctrl\noperation, because the Tegra pinmux ops provide GPIO request/free\nhandling but no gpio_set_direction hook.\n\nThe extra call still enters the pinctrl core and takes pctldev->mutex.\nShared GPIO users can call the direction path while holding their\nper-line spinlock, so this otherwise redundant pinctrl direction call can\nsleep in an atomic context.\n\nThis was found by our static analysis tool and then confirmed by manual\nreview of tegra_gpio_probe(), the Tegra GPIO direction callbacks and the\nTegra pinctrl ops. The reviewed path has a default non-sleeping\nstruct gpio_chip while the direction callback still enters the pinctrl\nmutex path.\n\nA directed runtime validation kept the same non-sleeping chip registration\nand drove:\n\n  gpio_shared_proxy_direction_output()\n  gpiod_direction_output_raw_commit()\n  tegra_gpio_direction_output()\n  pinctrl_gpio_direction_output()\n\nLockdep reported a sleep-in-atomic warning with the shared GPIO spinlock\nheld and pinctrl_get_device_gpio_range() plus tegra_gpio_direction_output()\non the stack.\n\nDo not mark the whole chip as can_sleep to paper over this: can_sleep\ndescribes whether get()/set() may sleep, and Tegra value access is MMIO.\nRemove the redundant pinctrl direction calls and keep pinctrl involvement\nin the existing request/free path.",
-  "datePublished": "Aug 15, 2026, 6:32:10 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:10 AM",
+  "datePublished": "Aug 15, 2026, 5:52:17 AM",
+  "dateUpdated": "Nov 6, 2026, 4:55:19 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/89904b4f1dc0f9550c3f206dcdfceed0b7ce7c49",
+    "https://git.kernel.org/stable/c/d3b92d16e1c4debec7526b6dbb2d98d0aeed796b",
+    "https://git.kernel.org/stable/c/616188becd4a208afbae1653fc5241e1748bae80",
     "https://git.kernel.org/stable/c/e57a4845b0da60a7b9f052160878097826320954",
     "https://git.kernel.org/stable/c/cd17c5a1d9f186b57e9e2949be427803b7110a5c",
     "https://git.kernel.org/stable/c/ac761e66708d51dac35c4c7f1891ea991dc788f0",
     "https://git.kernel.org/stable/c/628c63f96f4564fa145f602af2d41daf9532201f",
-    "https://git.kernel.org/stable/c/d3e91a95b2b0fc6336dbf3ec90d831a1654d2720",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72063"
+    "https://git.kernel.org/stable/c/d3e91a95b2b0fc6336dbf3ec90d831a1654d2720"
   ],
   "aliases": [
     "CVE-2026-72063",
     "GHSA-75r6-72m8-24v6"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "06081b1e-d104-39ed-aee7-b94f1e8ea2f6",
@@ -31,14 +33,14 @@
       "product_version": "11da905412833d9b369a6a09a401f87149d674dc <628c63f96f4564fa145f602af2d41daf9532201f"
     },
     {
-      "id": "0eeebc26-8bc7-3dc8-a58e-36fe55c52f8f",
+      "id": "0bf0d2d7-3627-33d0-b9e2-710b2381a3de",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "2938febf-36ef-38db-9a2b-6fea4926f28b",
@@ -61,6 +63,16 @@
       "product_version": "11da905412833d9b369a6a09a401f87149d674dc <d3e91a95b2b0fc6336dbf3ec90d831a1654d2720"
     },
     {
+      "id": "34ecd642-2c5b-3c10-80ee-d1c218751025",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11da905412833d9b369a6a09a401f87149d674dc <616188becd4a208afbae1653fc5241e1748bae80"
+    },
+    {
       "id": "4483a499-f1dc-3697-9ab8-2bc51e5e975e",
       "product": {
         "name": "Linux",
@@ -69,6 +81,16 @@
         }
       },
       "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "4dd69584-2e14-351c-bf7b-89b476a57980",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11da905412833d9b369a6a09a401f87149d674dc <89904b4f1dc0f9550c3f206dcdfceed0b7ce7c49"
     },
     {
       "id": "605ec1fd-884e-3880-b033-c2fe8760c0c0",
@@ -89,6 +111,16 @@
         }
       },
       "product_version": "11da905412833d9b369a6a09a401f87149d674dc <ac761e66708d51dac35c4c7f1891ea991dc788f0"
+    },
+    {
+      "id": "7b350d71-d0fc-3e2b-bf04-14bde118a181",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.217"
     },
     {
       "id": "80a97fb7-0ba0-3cc2-9020-e8075c7b4c49",
@@ -131,6 +163,26 @@
       "product_version": "patch: 6.18.40"
     },
     {
+      "id": "c14039e8-ac5a-38c7-883b-e27774a6f0d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.266"
+    },
+    {
+      "id": "d66e743e-02f7-3470-acfe-7547394bf1c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.184"
+    },
+    {
       "id": "f0be149e-c091-3b4b-a5de-1e70e0b7c194",
       "product": {
         "name": "Linux",
@@ -139,6 +191,16 @@
         }
       },
       "product_version": "patch: 6.12.97"
+    },
+    {
+      "id": "f475dbff-73f5-338e-aa12-5ae981260d29",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11da905412833d9b369a6a09a401f87149d674dc <d3b92d16e1c4debec7526b6dbb2d98d0aeed796b"
     }
   ],
   "enisaIdVendor": [

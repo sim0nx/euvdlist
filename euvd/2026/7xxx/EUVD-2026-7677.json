@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2026-7677",
+  "enisaUuid": "cbc94913-8a0d-3a05-9415-938412924314",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nerofs: fix UAF issue for file-backed mounts w/ directio option\n\n[    9.269940][ T3222] Call trace:\n[    9.269948][ T3222]  ext4_file_read_iter+0xac/0x108\n[    9.269979][ T3222]  vfs_iocb_iter_read+0xac/0x198\n[    9.269993][ T3222]  erofs_fileio_rq_submit+0x12c/0x180\n[    9.270008][ T3222]  erofs_fileio_submit_bio+0x14/0x24\n[    9.270030][ T3222]  z_erofs_runqueue+0x834/0x8ac\n[    9.270054][ T3222]  z_erofs_read_folio+0x120/0x220\n[    9.270083][ T3222]  filemap_read_folio+0x60/0x120\n[    9.270102][ T3222]  filemap_fault+0xcac/0x1060\n[    9.270119][ T3222]  do_pte_missing+0x2d8/0x1554\n[    9.270131][ T3222]  handle_mm_fault+0x5ec/0x70c\n[    9.270142][ T3222]  do_page_fault+0x178/0x88c\n[    9.270167][ T3222]  do_translation_fault+0x38/0x54\n[    9.270183][ T3222]  do_mem_abort+0x54/0xac\n[    9.270208][ T3222]  el0_da+0x44/0x7c\n[    9.270227][ T3222]  el0t_64_sync_handler+0x5c/0xf4\n[    9.270253][ T3222]  el0t_64_sync+0x1bc/0x1c0\n\nEROFS may encounter above panic when enabling file-backed mount w/\ndirectio mount option, the root cause is it may suffer UAF in below\nrace condition:\n\n- z_erofs_read_folio                          wq s_dio_done_wq\n - z_erofs_runqueue\n  - erofs_fileio_submit_bio\n   - erofs_fileio_rq_submit\n    - vfs_iocb_iter_read\n     - ext4_file_read_iter\n      - ext4_dio_read_iter\n       - iomap_dio_rw\n       : bio was submitted and return -EIOCBQUEUED\n                                              - dio_aio_complete_work\n                                               - dio_complete\n                                                - dio->iocb->ki_complete (erofs_fileio_ki_complete())\n                                                 - kfree(rq)\n                                                 : it frees iocb, iocb.ki_filp can be UAF in file_accessed().\n       - file_accessed\n       : access NULL file point\n\nIntroduce a reference count in struct erofs_fileio_rq, and initialize it\nas two, both erofs_fileio_ki_complete() and erofs_fileio_rq_submit() will\ndecrease reference count, the last one decreasing the reference count\nto zero will free rq.",
+  "datePublished": "Feb 18, 2026, 2:53:27 PM",
+  "dateUpdated": "Aug 5, 2026, 12:20:42 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/ae385826840a3c8e09bf38cac90adcd690716f57",
+    "https://git.kernel.org/stable/c/d741534302f71c511eb0bb670b92eaa7df4a0aec",
+    "https://git.kernel.org/stable/c/b2ee5e4d5446babd23ff7beb4e636be0fb3ea5aa",
+    "https://git.kernel.org/stable/c/1caf50ce4af096d0280d59a31abdd85703cd995c"
+  ],
+  "aliases": [
+    "GHSA-8j5g-3q2r-xfjh",
+    "CVE-2026-23224"
+  ],
+  "assigner": "Linux",
+  "epss": 0.15,
+  "enisaIdProduct": [
+    {
+      "id": "0381d872-4cfb-3807-b33f-aab9be3cc1d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb176750266a3d7f42ebdcf28e8ba40350b27847 <ae385826840a3c8e09bf38cac90adcd690716f57"
+    },
+    {
+      "id": "13150f59-23b1-3f52-b344-b41f9e5260e1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "2b08457d-e188-3ed4-ad8f-f5ef8145c583",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "31f095e0-7fee-3dcd-9e1e-c8cc40a44cee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb176750266a3d7f42ebdcf28e8ba40350b27847 <b2ee5e4d5446babd23ff7beb4e636be0fb3ea5aa"
+    },
+    {
+      "id": "6c65f19d-7886-3aa6-94bd-1c7f7e6c67b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb176750266a3d7f42ebdcf28e8ba40350b27847 <d741534302f71c511eb0bb670b92eaa7df4a0aec"
+    },
+    {
+      "id": "7ad6fcc4-7452-3f56-ae58-e68dfdeca787",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12"
+    },
+    {
+      "id": "80f7a080-87ad-3f69-a53a-426bed2baa4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.11"
+    },
+    {
+      "id": "9ee2a700-bb02-3e76-b6c2-5f99dd068cb4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb176750266a3d7f42ebdcf28e8ba40350b27847 <1caf50ce4af096d0280d59a31abdd85703cd995c"
+    },
+    {
+      "id": "dcedb542-6954-3215-84b9-1b046de5de2f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.72"
+    },
+    {
+      "id": "f44c6ce2-acf0-3b6a-b152-1ca058a37c5a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.19.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d5787ecf-ea05-3ea8-b4e0-08f5d7c8c90e",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

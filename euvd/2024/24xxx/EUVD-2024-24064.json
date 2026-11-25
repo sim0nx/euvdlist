@@ -1,0 +1,153 @@
+{
+  "id": "EUVD-2024-24064",
+  "enisaUuid": "5df01b01-d8ca-3b43-acec-8955ac8cc4a7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nstmmac: Clear variable when destroying workqueue\n\nCurrently when suspending driver and stopping workqueue it is checked whether\nworkqueue is not NULL and if so, it is destroyed.\nFunction destroy_workqueue() does drain queue and does clear variable, but\nit does not set workqueue variable to NULL. This can cause kernel/module\npanic if code attempts to clear workqueue that was not initialized.\n\nThis scenario is possible when resuming suspended driver in stmmac_resume(),\nbecause there is no handling for failed stmmac_hw_setup(),\nwhich can fail and return if DMA engine has failed to initialize,\nand workqueue is initialized after DMA engine.\nShould DMA engine fail to initialize, resume will proceed normally,\nbut interface won't work and TX queue will eventually timeout,\ncausing 'Reset adapter' error.\nThis then does destroy workqueue during reset process.\nAnd since workqueue is initialized after DMA engine and can be skipped,\nit will cause kernel/module panic.\n\nTo secure against this possible crash, set workqueue variable to NULL when\ndestroying workqueue.\n\nLog/backtrace from crash goes as follows:\n[88.031977]------------[ cut here ]------------\n[88.031985]NETDEV WATCHDOG: eth0 (sxgmac): transmit queue 1 timed out\n[88.032017]WARNING: CPU: 0 PID: 0 at net/sched/sch_generic.c:477 dev_watchdog+0x390/0x398\n           <Skipping backtrace for watchdog timeout>\n[88.032251]---[ end trace e70de432e4d5c2c0 ]---\n[88.032282]sxgmac 16d88000.ethernet eth0: Reset adapter.\n[88.036359]------------[ cut here ]------------\n[88.036519]Call trace:\n[88.036523] flush_workqueue+0x3e4/0x430\n[88.036528] drain_workqueue+0xc4/0x160\n[88.036533] destroy_workqueue+0x40/0x270\n[88.036537] stmmac_fpe_stop_wq+0x4c/0x70\n[88.036541] stmmac_release+0x278/0x280\n[88.036546] __dev_close_many+0xcc/0x158\n[88.036551] dev_close_many+0xbc/0x190\n[88.036555] dev_close.part.0+0x70/0xc0\n[88.036560] dev_close+0x24/0x30\n[88.036564] stmmac_service_task+0x110/0x140\n[88.036569] process_one_work+0x1d8/0x4a0\n[88.036573] worker_thread+0x54/0x408\n[88.036578] kthread+0x164/0x170\n[88.036583] ret_from_fork+0x10/0x20\n[88.036588]---[ end trace e70de432e4d5c2c1 ]---\n[88.036597]Unable to handle kernel NULL pointer dereference at virtual address 0000000000000004",
+  "datePublished": "Apr 4, 2024, 8:20:29 AM",
+  "dateUpdated": "Aug 5, 2026, 11:27:23 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/8e99556301172465c8fe33c7f78c39a3d4ce8462",
+    "https://git.kernel.org/stable/c/17ccd9798fe0beda3db212cfa3ebe373f605cbd6",
+    "https://git.kernel.org/stable/c/699b103e48ce32d03fc86c35b37ee8ae4288c7e3",
+    "https://git.kernel.org/stable/c/f72cf22dccc94038cbbaa1029cb575bf52e5cbc8",
+    "https://git.kernel.org/stable/c/8af411bbba1f457c33734795f024d0ef26d0963f"
+  ],
+  "aliases": [
+    "GHSA-r7p6-cff4-g6q4",
+    "CVE-2024-26802"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "1a26296d-6d4f-362f-8d96-3c865ab6cec9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.13"
+    },
+    {
+      "id": "566dc248-eb73-37b1-9a60-10c7de785abd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.9"
+    },
+    {
+      "id": "5db9c9cc-c5a8-3863-8882-bb7dfa4117cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a5586112b929546e16029261a987c9197bfdfa2 <17ccd9798fe0beda3db212cfa3ebe373f605cbd6"
+    },
+    {
+      "id": "66731adc-5554-336b-a221-838db6d7e7c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a5586112b929546e16029261a987c9197bfdfa2 <699b103e48ce32d03fc86c35b37ee8ae4288c7e3"
+    },
+    {
+      "id": "75f05142-93e6-3005-b63d-7a8fb2211e7d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a5586112b929546e16029261a987c9197bfdfa2 <8e99556301172465c8fe33c7f78c39a3d4ce8462"
+    },
+    {
+      "id": "78863f43-7d61-34d0-81f5-0bc85870bf00",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.21"
+    },
+    {
+      "id": "7c9b5e7f-2c25-33cc-a6de-e95fa478b274",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a5586112b929546e16029261a987c9197bfdfa2 <f72cf22dccc94038cbbaa1029cb575bf52e5cbc8"
+    },
+    {
+      "id": "85a02d29-0717-3c7f-9d3f-3a0d4eb0ce06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "886c9e44-babf-39fb-9828-ac2f1a5f2dfe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.151"
+    },
+    {
+      "id": "a14e8bff-6b55-33d4-8be8-8e6e66f985a8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.81"
+    },
+    {
+      "id": "b505ef86-ebf8-3817-b45e-92280deaa633",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "cf235355-20bd-324e-8ba4-fe21243f24ca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a5586112b929546e16029261a987c9197bfdfa2 <8af411bbba1f457c33734795f024d0ef26d0963f"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b7cba211-0860-396e-ba0f-dd587cf8e92a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

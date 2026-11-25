@@ -3,7 +3,7 @@
   "enisaUuid": "a6c0f097-82d5-30b8-8362-af2149a56096",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix out-of-bounds read of sk_protocol in bpf_sock_destroy()\n\nsk_protocol lives in struct sock, not in struct sock_common. A timewait\nor request sock handed to bpf_sock_destroy() by the tcp iterator is\nneither, so reading sk->sk_protocol runs past the object:\n\n==================================================================\nBUG: KASAN: slab-out-of-bounds in bpf_sock_destroy+0xc7/0xe0\nRead of size 2 at addr ffff8881047d11b4 by task test_progs/428\n\nTainted: [W]=WARN\nCall Trace:\n <TASK>\n dump_stack_lvl+0x91/0xf0\n print_report+0xd1/0x630\n kasan_report+0xf3/0x130\n __asan_report_load2_noabort+0x14/0x30\n bpf_sock_destroy+0xc7/0xe0\n bpf_prog_c3dd61f9d9cd9f37_iter_tcp6_timewait+0x9f/0xb7\n bpf_iter_run_prog+0x538/0xde0\n bpf_iter_tcp_seq_show+0x26b/0x4b0\n bpf_seq_read+0x424/0x1210\n vfs_read+0x197/0xe40\n ksys_read+0x119/0x240\n __x64_sys_read+0x72/0xc0\n x64_sys_call+0x647/0x27e0\n do_syscall_64+0xe5/0x610\n entry_SYSCALL_64_after_hwframe+0x76/0x7e\n\nOnly check sk_protocol on full socks. tcp_abort() already knows how to\ndeal with TIME_WAIT and NEW_SYN_RECV socks. Also fix the comment, it\nnever matched the code.",
   "datePublished": "Oct 9, 2026, 7:34:23 AM",
-  "dateUpdated": "Oct 9, 2026, 7:34:23 AM",
+  "dateUpdated": "Oct 19, 2026, 9:18:35 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/5b4eb82475ae17d55974235c09e97044829426a8",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/01b245ba016d44861690594e10f67e026ce8552f"
   ],
   "aliases": [
-    "CVE-2026-98384"
+    "CVE-2026-98384",
+    "GHSA-rjxf-mj66-7hpg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "2c8e4295-46b0-323b-9b2d-d65a35e4fd3e",
@@ -27,16 +28,6 @@
         }
       },
       "product_version": "4ddbcb886268af8d12a23e6640b39d1d9c652b1b <5b4eb82475ae17d55974235c09e97044829426a8"
-    },
-    {
-      "id": "41e93a53-6fb1-3a93-9780-ad709105d2b8",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "49c54e0b-b4a1-369c-b23e-1ccfea6c3bb5",
@@ -127,6 +118,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "daf5ea20-f068-3c21-8ced-a4c4cd95bba9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "debc27d1-b26a-3278-b50b-a55549b97d45",

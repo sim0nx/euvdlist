@@ -3,9 +3,12 @@
   "enisaUuid": "c25c4274-3985-3a9d-b915-ca195df8e0c6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: usblp: fix uninitialized heap leak via LPGETSTATUS ioctl\n\nJust like in a previous problem in this driver, usblp_ctrl_msg() will\ncollapse the usb_control_msg() return value to 0/-errno, discarding the\nactual number of bytes transferred.\n\nIdeally that short command should be detected and error out, but many\nprinters are known to send \"incorrect\" responses back so we can't just\ndo that.\n\nstatusbuf is kmalloc(8) at probe time and never filled before the first\nLPGETSTATUS ioctl.\n\nusblp_read_status() requests 1 byte. If a malicious printer responds\nwith zero bytes, *statusbuf is one byte of stale kmalloc heap,\nsign-extended into the local int status, which the LPGETSTATUS path then\ncopy_to_user()s directly to the ioctl caller.\n\nFix this all by just zapping out the memory buffer when allocated at\nprobe time.  If a later call does a short read, the data will be\nidentical to what the device sent it the last time, so there is no\n\"leak\" of information happening.",
   "datePublished": "May 28, 2026, 9:36:22 AM",
-  "dateUpdated": "May 28, 2026, 9:36:22 AM",
+  "dateUpdated": "Nov 6, 2026, 4:13:42 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/0f7c41314ebf17049917a452684db371babf711a",
+    "https://git.kernel.org/stable/c/cf24991619be317e2769310b4a367bf4a04b82bc",
+    "https://git.kernel.org/stable/c/087d97342c100138ea7d75a50977c9c2319f957b",
     "https://git.kernel.org/stable/c/d06d937b0a4cdb8867f04275c8100a8b943da31a",
     "https://git.kernel.org/stable/c/a502b997668401a6821501fc98b7f9220f9b6ff2",
     "https://git.kernel.org/stable/c/762a6ccf391db0d629e590a803a3a2231e17dd3f",
@@ -13,20 +16,21 @@
     "https://git.kernel.org/stable/c/b38e53cbfb9d84732e5984fbd73e128d592415c5"
   ],
   "aliases": [
-    "CVE-2026-46167"
+    "CVE-2026-46167",
+    "GHSA-vq8g-vcx9-rmc5"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
-      "id": "0e120e58-a166-3693-8b1b-9ab381b4e0db",
+      "id": "04456651-c061-3c0c-a645-6578797cb82c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.6.140"
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <cf24991619be317e2769310b4a367bf4a04b82bc"
     },
     {
       "id": "10296f57-319e-3de8-9768-c6d1b1362bed",
@@ -49,6 +53,16 @@
       "product_version": "patch: 6.18.30"
     },
     {
+      "id": "2c6e7d09-30db-3032-a266-028288f02a0a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
       "id": "2f9126d3-16c4-3e49-ac4f-0c1804324e62",
       "product": {
         "name": "Linux",
@@ -59,24 +73,34 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a502b997668401a6821501fc98b7f9220f9b6ff2"
     },
     {
-      "id": "39aeb391-a45f-3182-a9ae-f1fa5d72c8cd",
+      "id": "50e8da58-88cd-31ba-ae57-ed2a119c4ddb",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.0.7"
+      "product_version": "patch: 5.15.209"
     },
     {
-      "id": "533db8e6-8e98-3f44-8091-fc7748bb86cc",
+      "id": "545d8ae9-6041-33fe-ab4f-2dc4ea5830e5",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.12.88"
+      "product_version": "patch: 5.10.258"
+    },
+    {
+      "id": "5df8d765-0b11-3126-a656-4f6df10498df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "5ff2f58d-6301-36c7-bade-a4435c985795",
@@ -89,14 +113,24 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6b0e7438e31c74b01514d31ff35c1e688c4baaba"
     },
     {
-      "id": "63742614-669f-3dcb-ad4f-6fdf7671ca4c",
+      "id": "73792efb-1aa4-3c03-8885-da22ebb6b33b",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.18.30"
+      "product_version": "patch: 6.1.175"
+    },
+    {
+      "id": "877d1c25-3576-327a-baf2-0fbe40bd9f3b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0f7c41314ebf17049917a452684db371babf711a"
     },
     {
       "id": "a294d484-a58e-30d1-a838-65c934d6f7a3",
@@ -107,6 +141,26 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d06d937b0a4cdb8867f04275c8100a8b943da31a"
+    },
+    {
+      "id": "b4d78d73-f2d1-34f1-926e-512afb912052",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d40ee72b-9f0e-342d-9289-d645145c390a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <087d97342c100138ea7d75a50977c9c2319f957b"
     },
     {
       "id": "d60dcf5d-5b3b-3239-979d-85619e3cef39",
@@ -137,16 +191,6 @@
         }
       },
       "product_version": "patch: 6.6.140"
-    },
-    {
-      "id": "e6e86947-f6a1-3a2f-8290-93052d1051de",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc3"
     },
     {
       "id": "e71b1da8-06e4-3ce5-b9f2-2ac51f0f5b56",

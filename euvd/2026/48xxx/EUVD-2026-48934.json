@@ -3,8 +3,10 @@
   "enisaUuid": "b4970422-762a-3b51-8d9e-f3ab0283caf8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: track the connection owning a byte-range lock\n\nSMB2_LOCK adds each granted byte-range lock to both the file lock list\nand the lock list of the connection which handled the request.  The\nfinal close and durable handle paths, however, remove the connection\nlist entry while holding fp->conn->llist_lock.\n\nWith SMB3 multichannel, the connection handling the LOCK request can be\ndifferent from the connection which opened the file.  The entry can\ntherefore be removed under a different spinlock from the one protecting\nthe list it belongs to.  A concurrent traversal can then access freed\nstruct ksmbd_lock and struct file_lock objects.\n\nRecord the connection owning each lock's clist entry and hold a\nreference to it while the entry is linked.  Use that connection and its\nllist_lock for unlock, rollback, close, and durable preserve.  Durable\nreconnect assigns the new connection as the owner when publishing the\nlocks again.",
   "datePublished": "Jul 25, 2026, 8:50:37 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:37 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:54:42 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/22d38cf75b556c20b039743bdf3654d535b858be",
     "https://git.kernel.org/stable/c/66eb3643164e5e1029907793926c132f8b5c6148",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/c1016dd1d8b2bcd1158bbaabe94a31bb7e7431fb"
   ],
   "aliases": [
+    "GHSA-pgh2-g34p-4j6m",
     "CVE-2026-64390"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.47,
   "enisaIdProduct": [
     {
       "id": "063050ec-1cb2-3a17-a5cf-50be2d715f59",
@@ -69,6 +72,16 @@
         }
       },
       "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "2d019f60-ab92-373e-986d-074d210f0716",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "36d42626-cd92-3382-bf10-5b39077d524b",
@@ -159,16 +172,6 @@
         }
       },
       "product_version": "patch: 6.18.40"
-    },
-    {
-      "id": "f88822df-c68d-3a41-a5a0-61e38f1d5afd",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "fa9e720e-04df-3531-bef0-3303cdd8968e",

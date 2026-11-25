@@ -1,0 +1,153 @@
+{
+  "id": "EUVD-2021-33569",
+  "enisaUuid": "c2638277-a255-3376-9edc-546b30bd8bbb",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nlocking/qrwlock: Fix ordering in queued_write_lock_slowpath()\n\nWhile this code is executed with the wait_lock held, a reader can\nacquire the lock without holding wait_lock.  The writer side loops\nchecking the value with the atomic_cond_read_acquire(), but only truly\nacquires the lock when the compare-and-exchange is completed\nsuccessfully which isn\u2019t ordered. This exposes the window between the\nacquire and the cmpxchg to an A-B-A problem which allows reads\nfollowing the lock acquisition to observe values speculatively before\nthe write lock is truly acquired.\n\nWe've seen a problem in epoll where the reader does a xchg while\nholding the read lock, but the writer can see a value change out from\nunder it.\n\n  Writer                                | Reader\n  --------------------------------------------------------------------------------\n  ep_scan_ready_list()                  |\n  |- write_lock_irq()                   |\n      |- queued_write_lock_slowpath()   |\n\t|- atomic_cond_read_acquire()   |\n\t\t\t\t        | read_lock_irqsave(&ep->lock, flags);\n     --> (observes value before unlock) |  chain_epi_lockless()\n     |                                  |    epi->next = xchg(&ep->ovflist, epi);\n     |                                  | read_unlock_irqrestore(&ep->lock, flags);\n     |                                  |\n     |     atomic_cmpxchg_relaxed()     |\n     |-- READ_ONCE(ep->ovflist);        |\n\nA core can order the read of the ovflist ahead of the\natomic_cmpxchg_relaxed(). Switching the cmpxchg to use acquire\nsemantics addresses this issue at which point the atomic_cond_read can\nbe switched to use relaxed semantics.\n\n[peterz: use try_cmpxchg()]",
+  "datePublished": "Feb 27, 2024, 9:36:26 AM",
+  "dateUpdated": "Aug 5, 2026, 8:45:05 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/5902f9453a313be8fe78cbd7e7ca9dba9319fc6e",
+    "https://git.kernel.org/stable/c/82808cc026811fbc3ecf0c0b267a12a339eead56",
+    "https://git.kernel.org/stable/c/82fa9ced35d88581cffa4a1c856fc41fca96d80a",
+    "https://git.kernel.org/stable/c/d558fcdb17139728347bccc60a16af3e639649d2",
+    "https://git.kernel.org/stable/c/84a24bf8c52e66b7ac89ada5e3cfbe72d65c1896"
+  ],
+  "aliases": [
+    "CVE-2021-46921",
+    "GHSA-8j25-5vwv-hm2f"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "1f64de14-33e2-3d8e-a5fa-c44aa80d3c51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12"
+    },
+    {
+      "id": "3c8752a3-54de-32d1-8f87-83d86bca5877",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.189"
+    },
+    {
+      "id": "5638daa0-237b-35a6-96fc-9d9905165a2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "5735fd82-7984-3170-9561-8b1c392e7c95",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b519b56e378ee82caf9b079b04f5db87dedc3251 <82808cc026811fbc3ecf0c0b267a12a339eead56"
+    },
+    {
+      "id": "7749312e-339a-3423-bdf5-87c6c9a18094",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b519b56e378ee82caf9b079b04f5db87dedc3251 <d558fcdb17139728347bccc60a16af3e639649d2"
+    },
+    {
+      "id": "7fdfde18-e2fa-34ff-b29e-5c7c046e806e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.33"
+    },
+    {
+      "id": "83a3ff54-0e7a-3585-b882-265ab4331279",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b519b56e378ee82caf9b079b04f5db87dedc3251 <82fa9ced35d88581cffa4a1c856fc41fca96d80a"
+    },
+    {
+      "id": "89786adb-c536-3195-ae35-6a5937ebcfc2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.11.17"
+    },
+    {
+      "id": "ca29b27c-369b-34fa-9950-e21c191f226e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.115"
+    },
+    {
+      "id": "da8d00af-2cbc-388a-addf-da71db901779",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b519b56e378ee82caf9b079b04f5db87dedc3251 <5902f9453a313be8fe78cbd7e7ca9dba9319fc6e"
+    },
+    {
+      "id": "e4fe92e8-2a18-3e74-81a4-5a11a75330d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b519b56e378ee82caf9b079b04f5db87dedc3251 <84a24bf8c52e66b7ac89ada5e3cfbe72d65c1896"
+    },
+    {
+      "id": "f381ee48-e19d-3ba4-8c7c-773b4d37da2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.15"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d34e74ba-e9b3-33d9-a419-dc0756e98ff9",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

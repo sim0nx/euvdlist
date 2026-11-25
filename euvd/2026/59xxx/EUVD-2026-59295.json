@@ -2,8 +2,8 @@
   "id": "EUVD-2026-59295",
   "enisaUuid": "7f28033b-36de-35eb-bb9c-c1684526abb7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nhwmon: adm1275: Prevent reading uninitialized stack\n\nWhile adding support for the ROHM BD127X0 hot-swap controllers, sashiko\nreported an error in device-name comparison, which can lead to reading\nuninitialized stack memory.\n\nQuoting Sashiko:\n\nThis is a pre-existing issue, but I noticed that just before this block in\nadm1275_probe(), there might be an out-of-bounds stack read:\n\n    ret = i2c_smbus_read_block_data(client, PMBUS_MFR_MODEL, block_buffer);\n    if (ret < 0) { ... }\n    for (mid = adm1275_id; mid->name[0]; mid++) {\n            if (!strncasecmp(mid->name, block_buffer, strlen(mid->name)))\n                    break;\n    }\n\nSince i2c_smbus_read_block_data() reads up to 32 bytes into the\nuninitialized stack array block_buffer without appending a null\nterminator, strncasecmp() could read past the valid bytes returned in ret.\n\nFor example, if the device returns a shorter string like \"adm12\", checking\nit against \"adm1275\" up to the length of \"adm1275\" will continue reading\ninto uninitialized stack bounds.\n\nPrevent reading uninitialized memory by zeroing the stack array.",
-  "datePublished": "Aug 15, 2026, 6:32:23 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:23 AM",
+  "datePublished": "Aug 15, 2026, 5:56:23 AM",
+  "dateUpdated": "Nov 6, 2026, 4:55:26 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/57d583f069fa9d3d0c0831e34b967d1f61edae94",
@@ -13,15 +13,14 @@
     "https://git.kernel.org/stable/c/aa35cee30686e6be3c890bf741429c5025d55abe",
     "https://git.kernel.org/stable/c/36554592e2f5cac16ff8bf73720d38a6d9ef4a20",
     "https://git.kernel.org/stable/c/93b96e723bdcba6172a5814262be875abcc5d269",
-    "https://git.kernel.org/stable/c/553f9517813912a5ab661af5504485d96824a61c",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72396"
+    "https://git.kernel.org/stable/c/553f9517813912a5ab661af5504485d96824a61c"
   ],
   "aliases": [
     "CVE-2026-72396",
     "GHSA-xgwj-fj27-7g4m"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "009a231f-f289-38b5-8a7e-6d68a143f9c1",
@@ -34,6 +33,16 @@
       "product_version": "patch: 6.1.178"
     },
     {
+      "id": "08aa2c8e-8e88-3de6-bbca-72f8bcba672a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "08ec813e-e6c4-34c6-a6c2-e0b76a64c1a4",
       "product": {
         "name": "Linux",
@@ -42,16 +51,6 @@
         }
       },
       "product_version": "87102808d03948c825c3bdc48316e48f6422fd7e <57d583f069fa9d3d0c0831e34b967d1f61edae94"
-    },
-    {
-      "id": "2e9277eb-e590-3cb4-826b-a1dc4fe1fa8e",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc2"
     },
     {
       "id": "307d7a9f-cb5a-35fb-a372-88cc84237d1b",

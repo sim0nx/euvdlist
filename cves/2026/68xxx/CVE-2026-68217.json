@@ -3,9 +3,12 @@
   "enisaUuid": "417b5b22-b9f1-3656-9d20-2d7e1b25154b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: pwc: Drain fill_buf on start_streaming() failure\n\npwc_isoc_init() submits its isochronous URBs with\nusb_submit_urb(.., GFP_KERNEL) in a loop. After the first URB is\nsubmitted, its completion handler pwc_isoc_handler() can run on another\nCPU before the loop finishes:\n\n  start_streaming()\n    pwc_isoc_init()\n      usb_submit_urb(urbs[0], GFP_KERNEL)\n                                  pwc_isoc_handler(urbs[0])\n                                    pdev->fill_buf =\n                                      pwc_get_next_fill_buf(pdev)\n      usb_submit_urb(urbs[i>0], ..)  -> fails\n      pwc_isoc_cleanup(pdev)           /* kills URBs */\n      return ret;\n    pwc_cleanup_queued_bufs(pdev, VB2_BUF_STATE_QUEUED)\n\npwc_get_next_fill_buf() detaches a buffer from pdev->queued_bufs and\nstores it in pdev->fill_buf. The error path in start_streaming() only\ndrains pdev->queued_bufs, so the buffer parked in pdev->fill_buf is\nleaked. vb2_start_streaming() then triggers\nWARN_ON(owned_by_drv_count).\n\nstop_streaming() already handles this since commit 80b0963e1698\n(\"[media] pwc: fix WARN_ON\"), which added the fill_buf drain in the\nteardown path but not in the start_streaming() error path. Mirror that\nhandling on failure so start_streaming() returns with no buffer owned\nby the driver.\n\nIssue identified by automated review of the INV-003 series at\nhttps://sashiko.dev/",
   "datePublished": "Aug 10, 2026, 12:00:36 PM",
-  "dateUpdated": "Aug 10, 2026, 12:00:36 PM",
+  "dateUpdated": "Nov 6, 2026, 4:55:09 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/97f3c15957ec7e6d249f05407ad947c0644df24d",
+    "https://git.kernel.org/stable/c/a4afffd148991a826e8995362fb10cf8705c1130",
+    "https://git.kernel.org/stable/c/eabe9a59640698137d7382d5b549e95dc37f7565",
     "https://git.kernel.org/stable/c/a56e7641e09bd80b976e944ae759109b86fd5b38",
     "https://git.kernel.org/stable/c/acc789b2173070638cad89c2b61d33ed338be0dd",
     "https://git.kernel.org/stable/c/9afd605dcd96c7a45f338eded1de16679b30e1df",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/906e410dcffbbd99fb4081abab817a830033aa28"
   ],
   "aliases": [
-    "CVE-2026-68217"
+    "CVE-2026-68217",
+    "GHSA-mj4m-5r47-3f8j"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "082e4791-147d-3803-a891-8c2e720192e1",
@@ -39,14 +43,24 @@
       "product_version": "patch: 6.6.148"
     },
     {
-      "id": "49326b2a-738a-3aed-b742-30f00cf0a704",
+      "id": "4f8bd2f4-c87d-3c79-9c2e-e75b8286eef3",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "885fe18f5542fe283a17f70583383c6cadcba1c3 <a4afffd148991a826e8995362fb10cf8705c1130"
+    },
+    {
+      "id": "566dd142-3f8b-38f7-9d8b-c0f0b646d47a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "885fe18f5542fe283a17f70583383c6cadcba1c3 <97f3c15957ec7e6d249f05407ad947c0644df24d"
     },
     {
       "id": "574f8fb2-309a-3f83-9572-a7c000b5ca1e",
@@ -79,6 +93,26 @@
       "product_version": "patch: 7.1.6"
     },
     {
+      "id": "73655d0a-6640-3ab4-9110-8c7fb556ba95",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
+    {
+      "id": "906084cb-f516-34dc-b7d6-7cb7c1f49137",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
       "id": "91b54695-43b0-37a9-a085-59ad596c3fee",
       "product": {
         "name": "Linux",
@@ -99,6 +133,16 @@
       "product_version": "885fe18f5542fe283a17f70583383c6cadcba1c3 <acc789b2173070638cad89c2b61d33ed338be0dd"
     },
     {
+      "id": "bde9cbfa-e8ea-3edf-ab9e-4c7db214bbec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "885fe18f5542fe283a17f70583383c6cadcba1c3 <eabe9a59640698137d7382d5b549e95dc37f7565"
+    },
+    {
       "id": "d1c582f0-509f-34ef-b40b-6b23fc3db4fd",
       "product": {
         "name": "Linux",
@@ -109,6 +153,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "e1d63966-3d01-365f-b201-d11c18a90f4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "e6122654-40ce-3594-a432-9069debbda83",
       "product": {
         "name": "Linux",
@@ -117,6 +171,16 @@
         }
       },
       "product_version": "885fe18f5542fe283a17f70583383c6cadcba1c3 <906e410dcffbbd99fb4081abab817a830033aa28"
+    },
+    {
+      "id": "eac2593b-52d5-374b-8811-1ce88e1c3d90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "f4e21477-3349-3711-b957-98ed2ef75b5a",

@@ -3,7 +3,7 @@
   "enisaUuid": "70106cb1-2aed-3681-acc2-e1124e386b6d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfuse-uring: fix EFAULT clobber in fuse_uring_commit\n\ncopy_from_user() returns the number of bytes not copied as an unsigned\nresidual on failure (1..sizeof(struct fuse_out_header)). fuse_uring_commit\nstores that residual in ssize_t err, sets req->out.h.error to -EFAULT,\nthen jumps to out: with err still holding the positive residual.\n\n    err = copy_from_user(&req->out.h, &ent->headers->in_out,\n                         sizeof(req->out.h));\n    if (err) {\n        req->out.h.error = -EFAULT;\n        goto out;          /* err is the positive residual */\n    }\n    ...\n    out:\n        fuse_uring_req_end(ent, req, err);\n\nfuse_uring_req_end() then runs\n\n    if (error)\n        req->out.h.error = error;\n\nwhich overwrites the just-assigned -EFAULT with the positive residual.\nFUSE callers such as fuse_simple_request() test err < 0 to detect\nfailure, so the positive value is interpreted as success and the\ncaller proceeds with an uninitialised or partial req->out.args.\n\nFix by assigning err = -EFAULT in the failure branch before jumping\nto out, so fuse_uring_req_end() receives a negative errno and sets\nreq->out.h.error to -EFAULT.",
   "datePublished": "Jul 25, 2026, 8:49:13 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:13 AM",
+  "dateUpdated": "Aug 17, 2026, 4:52:17 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/0483fffdeeb363f320e6bf5fc0f0306007507306",
@@ -11,21 +11,12 @@
     "https://git.kernel.org/stable/c/3a0a8bc51a13951c5141262bf770eeea3e0b6228"
   ],
   "aliases": [
+    "GHSA-2mhj-4m6m-6rj5",
     "CVE-2026-64264"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
-    {
-      "id": "101f9e13-4794-31d5-9ad7-dccd5b327883",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
     {
       "id": "38f71c90-0cb5-315f-9657-7f2894431e2a",
       "product": {
@@ -35,6 +26,16 @@
         }
       },
       "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "3ccf2c5c-11ea-306a-a6fe-7841f7a7f993",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "a4259bd5-7dfa-309f-aac9-10b2afa12d6f",

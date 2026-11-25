@@ -3,8 +3,10 @@
   "enisaUuid": "2c1493d3-611d-3475-a331-2bf96e544777",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\namt: fix use-after-free in AMT delayed works\n\nWhen an AMT device is removed, pending delayed works can still access\nthe freed amt_dev structure, which may result in kernel crashes or\nmemory corruption.\n\namt_dev_stop() cancels req_wq and discovery_wq with\ncancel_delayed_work_sync(), but these works can be scheduled again\nfrom event_wq after the cancellation. This allows delayed works to\naccess the freed amt_dev structure after the netdev has been released.\n\nThe following is a simple race scenario:\n\nCPU0                         CPU1\n\namt_dev_stop()\ncancel_delayed_work_sync()\n                             amt_event_work()\n                             mod_delayed_work(req_wq)\nfree netdev\n                             req_wq accesses freed amt_dev\n\nUse disable_delayed_work_sync() in amt_dev_stop() to prevent req_wq and\ndiscovery_wq from being queued again and wait for running work items\nto complete.\n\nThe delayed works are disabled after initialization in\namt_newlink() and enabled only when the device is successfully opened.\nThis keeps the delayed work lifecycle synchronized with the lifetime\nof the AMT device.",
   "datePublished": "Aug 10, 2026, 11:59:18 AM",
-  "dateUpdated": "Aug 10, 2026, 11:59:18 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:59:47 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/a46bfa01e01df0f6f6dc4b0be18db002d6d2dbd2",
     "https://git.kernel.org/stable/c/1a644db2cf59f164cdf3c75995bab5aadc097528",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/ea20c44935d6142daecfa9b39d635033a7553e1b"
   ],
   "aliases": [
-    "CVE-2026-68152"
+    "CVE-2026-68152",
+    "GHSA-3v9r-4x9w-8c55"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "064a88f6-fd43-3544-9ac4-978cfa50055a",
@@ -48,16 +51,6 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "669c991c-8796-3651-860e-30463986d8ce",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
-    },
-    {
       "id": "8bdfb0c7-f01f-35e6-bb37-263289c65ab3",
       "product": {
         "name": "Linux",
@@ -76,6 +69,16 @@
         }
       },
       "product_version": "cbc21dc1cfe949e37b2a54c71511579f1899e8d4 <ea20c44935d6142daecfa9b39d635033a7553e1b"
+    },
+    {
+      "id": "927a9f64-7d3e-3577-b493-25d444b1fe8b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "989107a0-58f7-34a3-b1b0-28ac52fc7c04",

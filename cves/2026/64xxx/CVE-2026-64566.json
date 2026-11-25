@@ -3,19 +3,32 @@
   "enisaUuid": "045f7c63-8995-33d3-943e-810a090cd090",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: iptfs: propagate SKBFL_SHARED_FRAG in iptfs_skb_add_frags()\n\nWhen iptfs_skb_add_frags() copies frag references from the source\nfrag walk into a new SKB, it increments the page reference count via\n__skb_frag_ref() but does not propagate SKBFL_SHARED_FRAG to the\ndestination SKB's skb_shinfo->flags.\n\nIf the source SKB carries shared frags (e.g. from a page-pool backed\nreceive path), the new inner SKB will appear to ESP as having privately\nowned frags.  A subsequent esp_input() call for a nested transport-mode\nSA then takes the no-COW fast path and decrypts in place, writing over\npages that are still referenced by the outer IPTFS SKB.  This causes\nkernel-visible memory corruption and can trigger a panic.\n\nAll other frag-transfer helpers in the kernel (skb_try_coalesce,\nskb_gro_receive, __pskb_copy_fclone, skb_shift, skb_segment) correctly\npropagate SKBFL_SHARED_FRAG; align iptfs_skb_add_frags() with this\nconvention by setting the flag inside the loop immediately after\n__skb_frag_ref() and nr_frags++, so every exit path that attaches a frag\nunconditionally propagates SKBFL_SHARED_FRAG.",
   "datePublished": "Aug 5, 2026, 8:06:18 AM",
-  "dateUpdated": "Aug 5, 2026, 8:06:18 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:57:44 AM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/d8aaf06b29f5a0b6186cf68d21c7d63678ee3891",
     "https://git.kernel.org/stable/c/ffd64e0717efd83fbf3396ab4e5ac6d795dac4d0",
     "https://git.kernel.org/stable/c/430ea57d6daf765e88f90046afbfd1e071cb7200"
   ],
   "aliases": [
+    "GHSA-wr7x-h83j-8fqg",
     "CVE-2026-64566"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.35,
   "enisaIdProduct": [
+    {
+      "id": "3335fc7d-7ce7-33b0-805d-c40e7aef081c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "3d674f9a-c7c1-3d53-9449-13acb9daf98f",
       "product": {
@@ -85,16 +98,6 @@
         }
       },
       "product_version": "6.14"
-    },
-    {
-      "id": "b8c6abbc-3493-3d81-90a7-af958a656d6c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
     }
   ],
   "enisaIdVendor": [

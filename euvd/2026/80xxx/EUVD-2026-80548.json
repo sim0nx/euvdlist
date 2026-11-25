@@ -3,7 +3,7 @@
   "enisaUuid": "b86eb18f-4fca-3626-b5b0-011d068e974a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbatman-adv: bla: fix freeing of claims on meshif deletion\n\nWhen the mesh interface is getting deleted, then\nbatadv_bla_del_backbone_claims() (via batadv_bla_purge_backbone_gw()) could\nmake sure that all claims gets removed. But this function is only executed\nwhen bat_priv->bla.claim_hash is not NULL. And since batadv_bla_free() is\nalways setting it to NULL before it is (indirectly) called, it was never\nactually executed.\n\nBut the batadv_bla_purge_claims() -> batadv_handle_unclaim() is at the\nmoment too fragile because the BLA code is not handling the rehashing in\nbatadv_bla_update_orig_address(). The stored backbone address doesn't have\nto be the one actually used for the hash bucket selection during the\ninitial adding of the backbone. The batadv_handle_unclaim() can therefore\nfail to find the respective backbone for the unclaim and then stop the\ndeletion.\n\nBut the actual backbone_gw object is not needed for the unclaim because all\nrelevant information is always provided by the caller. And the check for\nthe existence of the backbone_gw doesn't provide any additional security\ncheck for the deletion of a claim.",
   "datePublished": "Sep 16, 2026, 10:32:34 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:34 AM",
+  "dateUpdated": "Oct 19, 2026, 8:55:22 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/844a95a734f178d56c7acce14c5cce2cecff7e1a",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/8d128c932bced74e3b1625ba3d7c78ef122a88a7"
   ],
   "aliases": [
-    "CVE-2026-89948"
+    "CVE-2026-89948",
+    "GHSA-9m5r-cr5m-2hhr"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "16e44673-8c13-3475-a06c-5168cdf9c385",
@@ -80,16 +81,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "82342ef1-98ce-32d1-a666-0d0f803cb434",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "86161e3a-5ba3-3500-8ff6-3eacaf1cda7f",
@@ -160,6 +151,16 @@
         }
       },
       "product_version": "23721387c409087fd3b97e274f34d3ddc0970b74 <76aedcde5a2489cc971d4d1e396e784a49565e96"
+    },
+    {
+      "id": "c45c89ff-e7ff-38b8-8dc7-33e51dacfd49",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "c8d0f53b-69d0-33d5-bf4b-087b0523cabe",

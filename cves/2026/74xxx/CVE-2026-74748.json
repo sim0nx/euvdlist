@@ -3,8 +3,10 @@
   "enisaUuid": "7473e285-fa3c-3ded-a98a-78c9ce4c6799",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: ipset: fix refcount race between list:set GC and swap\n\n__ip_set_put_byindex() resolved the index to a set pointer under RCU,\nthen took ip_set_ref_lock in __ip_set_put() to decrement set->ref.\nip_set_swap() holds that same lock while swapping both the ip_set_list\nslots and the two sets' ref counters, so it can interleave between the\ndereference and the lock acquisition, leaving the caller to decrement a\nset whose reference already moved to the other index and hit\nBUG_ON(set->ref == 0). list_set_gc() reaches this from timer softirq,\nwhich the nfnl mutex does not serialize against swap: an expiring\nlist:set member calls list_set_del() -> ip_set_put_byindex() while\nIPSET_CMD_SWAP runs on the referenced sets.\n\nResolve the index and decrement under ip_set_ref_lock, as ip_set_swap()\nalready does, keeping the refcount tied to the index rather than to a\nstale set pointer.\n\n  kernel BUG at net/netfilter/ipset/ip_set_core.c:685!\n  Oops: invalid opcode: 0000 [#1] SMP KASAN NOPTI\n  RIP: 0010:ip_set_put_byindex (net/netfilter/ipset/ip_set_core.c:870)\n  Call Trace:\n   <IRQ>\n   list_set_del (net/netfilter/ipset/ip_set_list_set.c:159)\n   set_cleanup_entries (net/netfilter/ipset/ip_set_list_set.c:181)\n   list_set_gc (net/netfilter/ipset/ip_set_list_set.c:578)\n   call_timer_fn (kernel/time/timer.c:1748)\n   __run_timers (kernel/time/timer.c:1799 kernel/time/timer.c:2374)\n   run_timer_softirq (kernel/time/timer.c:2405)\n   </IRQ>\n  Kernel panic - not syncing: Fatal exception in interrupt",
   "datePublished": "Aug 26, 2026, 2:36:57 PM",
-  "dateUpdated": "Aug 26, 2026, 2:36:57 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:26:24 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/97a01de0c6321b7210d30d0a4d60f10f561097c7",
     "https://git.kernel.org/stable/c/c21afc7c216a4d257a4f3f300e0791890bc846b9",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/0c88868271653537ed443272dd8e7d13634d214b"
   ],
   "aliases": [
-    "CVE-2026-74748"
+    "CVE-2026-74748",
+    "GHSA-hf83-xv8x-wgq9"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "09753066-43f4-3468-8b3f-38e6447c956a",

@@ -1,0 +1,274 @@
+{
+  "id": "EUVD-2024-24197",
+  "enisaUuid": "cad541e0-bdf6-3a7a-9bce-a81b457f0d92",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: core: Fix unremoved procfs host directory regression\n\nCommit fc663711b944 (\"scsi: core: Remove the /proc/scsi/${proc_name}\ndirectory earlier\") fixed a bug related to modules loading/unloading, by\nadding a call to scsi_proc_hostdir_rm() on scsi_remove_host(). But that led\nto a potential duplicate call to the hostdir_rm() routine, since it's also\ncalled from scsi_host_dev_release(). That triggered a regression report,\nwhich was then fixed by commit be03df3d4bfe (\"scsi: core: Fix a procfs host\ndirectory removal regression\"). The fix just dropped the hostdir_rm() call\nfrom dev_release().\n\nBut it happens that this proc directory is created on scsi_host_alloc(),\nand that function \"pairs\" with scsi_host_dev_release(), while\nscsi_remove_host() pairs with scsi_add_host(). In other words, it seems the\nreason for removing the proc directory on dev_release() was meant to cover\ncases in which a SCSI host structure was allocated, but the call to\nscsi_add_host() didn't happen. And that pattern happens to exist in some\nerror paths, for example.\n\nSyzkaller causes that by using USB raw gadget device, error'ing on\nusb-storage driver, at usb_stor_probe2(). By checking that path, we can see\nthat the BadDevice label leads to a scsi_host_put() after a SCSI host\nallocation, but there's no call to scsi_add_host() in such path. That leads\nto messages like this in dmesg (and a leak of the SCSI host proc\nstructure):\n\nusb-storage 4-1:87.51: USB Mass Storage device detected\nproc_dir_entry 'scsi/usb-storage' already registered\nWARNING: CPU: 1 PID: 3519 at fs/proc/generic.c:377 proc_register+0x347/0x4e0 fs/proc/generic.c:376\n\nThe proper fix seems to still call scsi_proc_hostdir_rm() on dev_release(),\nbut guard that with the state check for SHOST_CREATED; there is even a\ncomment in scsi_host_dev_release() detailing that: such conditional is\nmeant for cases where the SCSI host was allocated but there was no calls to\n{add,remove}_host(), like the usb-storage case.\n\nThis is what we propose here and with that, the error path of usb-storage\ndoes not trigger the warning anymore.",
+  "datePublished": "May 1, 2024, 5:17:31 AM",
+  "dateUpdated": "Oct 15, 2026, 12:39:28 AM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/0053f15d50d50c9312d8ab9c11e2e405812dfcac",
+    "https://git.kernel.org/stable/c/5c2386ba80e779a92ec3bb64ccadbedd88f779b1",
+    "https://git.kernel.org/stable/c/cea234bb214b17d004dfdccce4491e6ff57c96ee",
+    "https://git.kernel.org/stable/c/3678cf67ff7136db1dd3bf63c361650db5d92889",
+    "https://git.kernel.org/stable/c/d4c34782b6d7b1e68d18d9549451b19433bd4c6c",
+    "https://git.kernel.org/stable/c/e293c773c13b830cdc251f155df2254981abc320",
+    "https://git.kernel.org/stable/c/f4ff08fab66eb5c0b97e1a24edac052fb40bf5d7",
+    "https://git.kernel.org/stable/c/f23a4d6e07570826fe95023ca1aa96a011fa9f84"
+  ],
+  "aliases": [
+    "GHSA-hxgr-6xc2-q9mv",
+    "CVE-2024-26935"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "0953cdf7-8fdf-3f55-acbc-b3ff6176762b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "282bb2b6-6c1f-3f06-a8bd-40ad76d35841",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "be03df3d4bfe7e8866d4aa43d62e648ffe884f5f <d4c34782b6d7b1e68d18d9549451b19433bd4c6c"
+    },
+    {
+      "id": "29ff40cf-0218-38df-8b09-d44f9aeac10f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.84"
+    },
+    {
+      "id": "2b086b78-2ab2-35b8-b5aa-bf6cefea3dde",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.154"
+    },
+    {
+      "id": "2cfb2bf9-512e-31d0-b964-d81cc3587355",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7e0ae8667fcdd99d1756922e1140cac75f5fa279 <3678cf67ff7136db1dd3bf63c361650db5d92889"
+    },
+    {
+      "id": "32f3b076-dee8-31da-beb9-29d3e1efd356",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.3"
+    },
+    {
+      "id": "3e2524bd-2442-366c-80e3-5b7796cbd9b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "73f030d4ef6d1ad17f824a0a2eb637ef7a9c7d51"
+    },
+    {
+      "id": "5b2c1bce-64c7-30e1-845b-35dd8c2e891d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.215"
+    },
+    {
+      "id": "5f76c053-e2a3-3f08-8f25-f42bc0cce6f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.3"
+    },
+    {
+      "id": "83847685-35af-34c6-9827-d57f7a90f7c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "be03df3d4bfe7e8866d4aa43d62e648ffe884f5f <f23a4d6e07570826fe95023ca1aa96a011fa9f84"
+    },
+    {
+      "id": "86d9c54a-98a2-33cf-9a25-f3b8b57174b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "88c3d3bb6469cea929ac68fd326bdcbefcdfdd83 <0053f15d50d50c9312d8ab9c11e2e405812dfcac"
+    },
+    {
+      "id": "91028121-a523-3468-b76a-f86f0dca3958",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.176 <5.10.215"
+    },
+    {
+      "id": "94af1eed-de95-3381-87ec-c75444753524",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "68c665bb185037e7eb66fb792c61da9d7151e99c <5c2386ba80e779a92ec3bb64ccadbedd88f779b1"
+    },
+    {
+      "id": "99723deb-ceaf-303f-bc4b-747f2e791418",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "be03df3d4bfe7e8866d4aa43d62e648ffe884f5f <e293c773c13b830cdc251f155df2254981abc320"
+    },
+    {
+      "id": "9e64986e-90bb-3df3-9465-0c4ca8a39420",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "af689da3-7f97-3e25-8c0a-435d5839f780",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.4.238 <5.4.274"
+    },
+    {
+      "id": "afe8ba97-59f0-3e86-81cc-931442d6888f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.21 <6.1.84"
+    },
+    {
+      "id": "b6b61d59-9227-3473-b31b-98c4b48e5b33",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2a764d55e938743efa7c2cba7305633bcf227f09 <cea234bb214b17d004dfdccce4491e6ff57c96ee"
+    },
+    {
+      "id": "c5c53a83-9f55-392e-bedf-51cec5f0d757",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.12"
+    },
+    {
+      "id": "dd7bb862-e409-321a-aa02-5ff68e92e57f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.2.8 <6.3"
+    },
+    {
+      "id": "e27cabf8-f57f-348a-b94c-1f86b8bdd438",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.104 <5.15.154"
+    },
+    {
+      "id": "ec510ecb-03ae-3d73-b001-f494cce65b68",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "be03df3d4bfe7e8866d4aa43d62e648ffe884f5f <f4ff08fab66eb5c0b97e1a24edac052fb40bf5d7"
+    },
+    {
+      "id": "ee7ee3dd-952d-3b19-a00f-e97e5e7bb199",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.24"
+    },
+    {
+      "id": "ef9e9432-9da4-310e-b8ca-b4455f1226da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.274"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "da65e099-38eb-3748-a22c-f7624c527243",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

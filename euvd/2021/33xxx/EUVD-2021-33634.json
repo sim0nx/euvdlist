@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2021-33634",
+  "enisaUuid": "cc7d052b-b681-3372-b65d-b5a1a66320c5",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: dwc3: gadget: Free gadget structure only after freeing endpoints\n\nAs part of commit e81a7018d93a (\"usb: dwc3: allocate gadget structure\ndynamically\") the dwc3_gadget_release() was added which will free\nthe dwc->gadget structure upon the device's removal when\nusb_del_gadget_udc() is called in dwc3_gadget_exit().\n\nHowever, simply freeing the gadget results a dangling pointer\nsituation: the endpoints created in dwc3_gadget_init_endpoints()\nhave their dep->endpoint.ep_list members chained off the list_head\nanchored at dwc->gadget->ep_list.  Thus when dwc->gadget is freed,\nthe first dwc3_ep in the list now has a dangling prev pointer and\nlikewise for the next pointer of the dwc3_ep at the tail of the list.\nThe dwc3_gadget_free_endpoints() that follows will result in a\nuse-after-free when it calls list_del().\n\nThis was caught by enabling KASAN and performing a driver unbind.\nThe recent commit 568262bf5492 (\"usb: dwc3: core: Add shutdown\ncallback for dwc3\") also exposes this as a panic during shutdown.\n\nThere are a few possibilities to fix this.  One could be to perform\na list_del() of the gadget->ep_list itself which removes it from\nthe rest of the dwc3_ep chain.\n\nAnother approach is what this patch does, by splitting up the\nusb_del_gadget_udc() call into its separate \"del\" and \"put\"\ncomponents.  This allows dwc3_gadget_free_endpoints() to be\ncalled before the gadget is finally freed with usb_put_gadget().",
+  "datePublished": "Feb 28, 2024, 8:13:14 AM",
+  "dateUpdated": "May 11, 2026, 1:45:44 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/1ea775021282d90e1d08d696b7ab54aa75d688e5",
+    "https://git.kernel.org/stable/c/bc0cdd72493236fb72b390ad38ce581e353c143c",
+    "https://git.kernel.org/stable/c/b4b8e9601d7ee8806d2687f081a42485d27674a1",
+    "https://git.kernel.org/stable/c/bb9c74a5bd1462499fe5ccb1e3c5ac40dcfa9139"
+  ],
+  "aliases": [
+    "CVE-2021-46986",
+    "GHSA-h78p-v7hc-728f"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "628c826a-0144-3eac-8593-0165358a03c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.11.22"
+    },
+    {
+      "id": "6e31ae2c-cf67-3f40-b96f-f52097ab0fbe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6f0b4730-590f-30e9-9ea0-fc2bb21300c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    },
+    {
+      "id": "8ee10212-5159-3302-a854-aefa4d3ba22b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.38"
+    },
+    {
+      "id": "9d7566c1-3c3f-3950-b8b7-209510923100",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10"
+    },
+    {
+      "id": "a5bcd44d-912a-3110-bcf2-3a30944421b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e81a7018d93a7de31a3f121c9a7eecd0a5ec58b0 <1ea775021282d90e1d08d696b7ab54aa75d688e5"
+    },
+    {
+      "id": "a933050c-a125-3be5-b04f-0911bd7a7515",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e81a7018d93a7de31a3f121c9a7eecd0a5ec58b0 <bc0cdd72493236fb72b390ad38ce581e353c143c"
+    },
+    {
+      "id": "bedfce7a-bfd4-32bd-aec4-617bca97d79a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e81a7018d93a7de31a3f121c9a7eecd0a5ec58b0 <b4b8e9601d7ee8806d2687f081a42485d27674a1"
+    },
+    {
+      "id": "c68f8b65-a6aa-37a6-9dfd-6084293adeb2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e81a7018d93a7de31a3f121c9a7eecd0a5ec58b0 <bb9c74a5bd1462499fe5ccb1e3c5ac40dcfa9139"
+    },
+    {
+      "id": "e27f4c66-a94d-3b8a-9a8b-3ee82009c7ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9bd1bab1-cd09-34bb-927a-6c2774dac1c9",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,9 +3,12 @@
   "enisaUuid": "a5ac738f-2dac-36ff-ba4c-e54268b68ccf",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: RFCOMM: connect the session socket without rfcomm_mutex\n\nAn RFCOMM connect() issued while a BR/EDR link is being authenticated\nmakes lockdep report a circular dependency, and the reported cycle is a\nreal AB/BA between rfcomm_mutex and hdev->lock.\n\nrfcomm_security_cfm() is called from the HCI event path, which already\nholds hdev->lock:\n\n  hci_rx_work()\n    hci_event_packet()\n      hci_cc_read_enc_key_size()   [hdev->lock]\n        hci_encrypt_cfm()          [hci_cb_list_lock]\n          rfcomm_security_cfm()    [rfcomm_mutex]\n\nwhile an RFCOMM connect() from userspace takes the same two locks the\nother way round:\n\n  rfcomm_sock_connect()\n    rfcomm_dlc_open()              [rfcomm_mutex]\n      __rfcomm_dlc_open()\n        rfcomm_session_create()\n          kernel_connect()\n            l2cap_sock_connect()\n              l2cap_chan_connect() [hdev->lock]\n\n  WARNING: possible circular locking dependency detected\n  kworker/u131:1/1128 is trying to acquire lock:\n  rfcomm_mutex, at: rfcomm_security_cfm+0x31/0x3e0 [rfcomm]\n  but task is already holding lock:\n  hci_cb_list_lock, at: hci_cc_read_enc_key_size+0x1d2/0xcc0\n  Chain exists of:\n    rfcomm_mutex --> &hdev->lock --> hci_cb_list_lock\n\nhci_auth_complete_evt() and hci_encrypt_change_evt() reach the callback\nthe same way.\n\nBoth orders have to be seen in the same boot, which is why a BR/EDR\nconnection alone is not enough to show it: a session set up by the\nremote side is created by rfcomm_accept_connection() in krfcommd, which\ncalls kernel_accept() and never takes hdev->lock under rfcomm_mutex.\nConnecting a device that authenticates and encrypts the link and then\ncalling connect() on an RFCOMM socket towards any address - the connect\ndoes not have to succeed, the order is recorded before the page timeout\n- reports it every time.\n\nOnly the session socket has to be connected with the lock held, and it\ndoes not: nothing else can see the socket before it is put on the\nsession list.  So connect it first and take rfcomm_mutex afterwards,\nwhich removes the rfcomm_mutex -> hdev->lock order for good, rather\nthan keeping the HCI event path out of rfcomm_mutex.\n\nrfcomm_session_create() becomes rfcomm_session_connect(), which returns\nthe connected socket without touching the session list, and\nrfcomm_dlc_open() adds the session once it holds the lock again.  If\nanother opener added a session for the same pair while this socket was\nconnecting, that session is used and this socket is dropped.\n__rfcomm_dlc_open() now takes the session it should use, and its state\ncheck runs after the lock is re-acquired, so a DLC that was opened or\nclosed in the meantime is still handled.\n\nOver an existing ACL link the connection can complete before the\nsession reaches the list, and the wakeup from the socket callback is\nthen lost, so krfcommd is woken once the session is visible.\n\nConnecting without the lock opens a window in which the socket can be\nclosed.  The DLC is not on a session yet, so rfcomm_dlc_close() finds\nnothing to do and returns without touching it, and rfcomm_dlc_open()\nwould then attach a DLC whose owner is gone.  rfcomm_dlc_close() now\nmarks such a DLC with RFCOMM_CLOSED, and rfcomm_dlc_open() checks the\nmark once it holds rfcomm_mutex again and drops the socket instead of\nattaching the DLC.  The mark is cleared when an open starts, so a DLC\nthat is reused is not affected.  This covers both callers of\nrfcomm_dlc_open(), the socket and the tty layer.",
   "datePublished": "Oct 23, 2026, 12:20:34 PM",
-  "dateUpdated": "Oct 23, 2026, 12:20:34 PM",
+  "dateUpdated": "Oct 30, 2026, 12:40:54 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/d7a3bf6f55ab77d465206b25fe3418091c3d4b92",
+    "https://git.kernel.org/stable/c/172b152119643018a2ed792e5096f33a4491c7de",
+    "https://git.kernel.org/stable/c/caf78390f78a005d5cdc1db2eb467b2794bbf020",
     "https://git.kernel.org/stable/c/4dc3d5a004b8fd59f3c905631dbb18cb601b1b41",
     "https://git.kernel.org/stable/c/d2206e8c78be69d21d4f5343c3e99fbaeef41cbb",
     "https://git.kernel.org/stable/c/cc7732b8549ecb6f02457edeb8db1f6d255e381c",
@@ -13,11 +16,22 @@
     "https://git.kernel.org/stable/c/ac022970e9fb0a5f7e7d1f6c8e104c1ed924dd1c"
   ],
   "aliases": [
+    "GHSA-5rpp-jh2w-vm6p",
     "CVE-2026-99009"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "01e3232b-d35c-32b7-9d51-2c7842c7d8f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.188 <6.1.191"
+    },
     {
       "id": "07b20ab6-6abd-3755-b52e-80465c1d57a0",
       "product": {
@@ -47,16 +61,6 @@
         }
       },
       "product_version": "759c185d0bbdb131357408f50b8735e04ed3caff <ac022970e9fb0a5f7e7d1f6c8e104c1ed924dd1c"
-    },
-    {
-      "id": "31966fc3-7b33-39a2-ad1f-cc2d12d080fe",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5.15.221 <5.16"
     },
     {
       "id": "388ea22a-f64f-3c97-a11f-58404d9bd928",
@@ -99,14 +103,24 @@
       "product_version": "946d76db77ee5f922968ce558629ae47b381e3fc <cc7732b8549ecb6f02457edeb8db1f6d255e381c"
     },
     {
-      "id": "8d3c23da-c584-3b8d-91e9-b59155e6e247",
+      "id": "62891a80-26ed-3cc6-9f6c-599527ab0797",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "5.10.270 <5.11"
+      "product_version": "7ded3264106418c6456ccceaafd9fda596ce12c3 <caf78390f78a005d5cdc1db2eb467b2794bbf020"
+    },
+    {
+      "id": "6d3243c8-7b41-393d-a211-d9cc0f6f8a96",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3873f3449701b3dc98cba577923be6493598e7a1 <172b152119643018a2ed792e5096f33a4491c7de"
     },
     {
       "id": "8fe6a1c4-0f82-31a9-95ba-0bc65b6bf5ec",
@@ -119,16 +133,6 @@
       "product_version": "82425b14f0fb22e46cfddc56d6465570f5ed0ce6 <4dc3d5a004b8fd59f3c905631dbb18cb601b1b41"
     },
     {
-      "id": "ba2a2d45-7510-37f1-9601-ee1df85c1cb1",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "3873f3449701b3dc98cba577923be6493598e7a1"
-    },
-    {
       "id": "badae2c7-727c-32d6-b77d-ce3cce6b72b6",
       "product": {
         "name": "Linux",
@@ -139,34 +143,34 @@
       "product_version": "6.6.157 <6.6.160"
     },
     {
-      "id": "e2a23f07-d5e9-3c49-9a35-58aa8c8119a9",
+      "id": "d6beef62-98a0-3e85-b071-502e1dd50da5",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.1.188 <6.2"
+      "product_version": "5.15.221 <5.15.224"
     },
     {
-      "id": "f8eac5da-ce26-3890-977c-12db67cf8a82",
+      "id": "e3fcc56a-4292-3ec7-9ee6-adca7aabd935",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "62ce8b33eb238cf18c15207332fbdc26d858f592"
+      "product_version": "62ce8b33eb238cf18c15207332fbdc26d858f592 <d7a3bf6f55ab77d465206b25fe3418091c3d4b92"
     },
     {
-      "id": "fe4e90ed-e4bc-342e-a527-719f7b3e0134",
+      "id": "ff0339d4-999e-3115-8e24-67878d9922b3",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "7ded3264106418c6456ccceaafd9fda596ce12c3"
+      "product_version": "5.10.270 <5.10.273"
     }
   ],
   "enisaIdVendor": [

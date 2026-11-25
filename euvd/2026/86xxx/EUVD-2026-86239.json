@@ -3,7 +3,7 @@
   "enisaUuid": "8fad0ba3-dd84-387a-8868-5893251a7d6f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/gud: validate TV mode names before creating enum property\n\nThe GUD protocol returns TV mode names as fixed-size\nGUD_CONNECTOR_TV_MODE_NAME_LEN entries and requires each name to be\nNUL-terminated.\n\ngud_connector_add_tv_mode() currently passes each fixed-size entry\ndirectly to drm_mode_create_tv_properties_legacy(), which eventually\nreaches drm_property_add_enum() and strlen(). If a device returns an\nentry without a terminating NUL byte, strlen() reads past the end of\nthe slot and can run beyond the allocated buffer, triggering an\nout-of-bounds read.\n\nValidate that each returned TV mode name contains a NUL terminator\nwithin its fixed-size slot before passing it to the DRM property code.\nIf a malformed entry is found, reject the device response with -EIO.\n\nThis fixes the out-of-bounds read without changing the handling of\nvalid devices, and avoids silently truncating malformed protocol data.",
   "datePublished": "Sep 24, 2026, 3:33:31 PM",
-  "dateUpdated": "Sep 24, 2026, 3:33:31 PM",
+  "dateUpdated": "Oct 19, 2026, 9:07:45 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/676f1fb3632bbc9ce83be7938e93fe6bfc9510fd",
@@ -15,10 +15,11 @@
     "https://git.kernel.org/stable/c/da1ea35fea67ad841f4ada28dd61b41be65e5437"
   ],
   "aliases": [
-    "CVE-2026-93234"
+    "CVE-2026-93234",
+    "GHSA-mh3c-9rpg-gxv8"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "11accfe7-6987-3f38-a5be-56a0f6b36479",
@@ -29,16 +30,6 @@
         }
       },
       "product_version": "patch: 7.2.5"
-    },
-    {
-      "id": "11fb0251-0391-39b0-91f0-d69908b0e2fa",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc2"
     },
     {
       "id": "180db3a6-881c-3831-826c-b9e5e96f0f70",
@@ -179,6 +170,16 @@
         }
       },
       "product_version": "patch: 6.1.188"
+    },
+    {
+      "id": "f95b34a2-1b7e-369a-b4c1-cb23c4e30d4a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

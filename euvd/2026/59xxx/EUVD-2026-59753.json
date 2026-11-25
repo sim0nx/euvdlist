@@ -3,9 +3,12 @@
   "enisaUuid": "61ccfaf0-f9a9-31d0-9948-5288c997dc80",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdkfd: hold event_mutex while checkpointing CRIU events\n\nkfd_criu_checkpoint_events() counts the entries in p->event_idr via\nkfd_get_num_events(), allocates an array sized to that count, and then\nwalks the same IDR to fill it. Neither the count nor the walk holds\np->event_mutex.\n\nThe CRIU checkpoint caller holds only p->mutex. Event create and destroy\n(kfd_event_create()/kfd_event_destroy()) take p->event_mutex and do not\ntake p->mutex, so a second thread in the same process can insert or remove\nevents between the count and the walk. If an event is inserted, the walk\niterates more entries than were counted and writes past the end of the\nev_privs allocation; if an event is removed, the walk dereferences an\nentry that is being freed.\n\nHold p->event_mutex across the count and the walk so both observe a\nconsistent view of p->event_idr. The lock is released before\ncopy_to_user(), which only touches the local buffer. The caller already\nholds p->mutex and the create/destroy paths never take p->mutex, so the\np->mutex -> p->event_mutex order is not inverted and no deadlock is\nintroduced.\n\n(cherry picked from commit ff57e223ab105795b05d3ef3f3c35a5a441bcbaa)",
   "datePublished": "Aug 15, 2026, 12:26:52 PM",
-  "dateUpdated": "Aug 15, 2026, 12:26:52 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:05:46 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/8f7196f25b14f4290738639a50459b56a5ff2784",
     "https://git.kernel.org/stable/c/2040b7e39027cb83bb8c7b84a4c95c2f6053c32f",
     "https://git.kernel.org/stable/c/9a7f765985f64fd4a7a58f7bc9cd80a1f4230628",
     "https://git.kernel.org/stable/c/6a52f48157fa7fb81e0c146937fd6c8b0c1cfdbd",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/ff8bc5a68a9a70bdc38d61a72c7a49c56063f9d2"
   ],
   "aliases": [
-    "CVE-2026-74446"
+    "CVE-2026-74446",
+    "GHSA-3f2f-q78g-jqw3"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "01e61f8d-41af-33e8-85a2-2b030c577a1c",
@@ -47,16 +51,6 @@
         }
       },
       "product_version": "40e8a766a761f7fdc8530347527b344fddf6f1a8 <6a52f48157fa7fb81e0c146937fd6c8b0c1cfdbd"
-    },
-    {
-      "id": "3830bc15-1218-32dd-9699-110f7c36ba23",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc6"
     },
     {
       "id": "5e8a26ab-fc54-3f97-b9a2-240248a2f11c",
@@ -99,6 +93,26 @@
       "product_version": "patch: 7.1.8"
     },
     {
+      "id": "c665f5e5-dee1-341a-9545-87343314d852",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "d357e30e-9ba1-3730-953d-49616e7c179f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "40e8a766a761f7fdc8530347527b344fddf6f1a8 <8f7196f25b14f4290738639a50459b56a5ff2784"
+    },
+    {
       "id": "df96e016-6b14-374c-aa82-ec7db4ba73dd",
       "product": {
         "name": "Linux",
@@ -107,6 +121,16 @@
         }
       },
       "product_version": "5.18"
+    },
+    {
+      "id": "e67284a4-a992-3734-a11d-e9cf4e03a503",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "eaccd4a9-7777-3b78-8f6f-995ab69b2e17",

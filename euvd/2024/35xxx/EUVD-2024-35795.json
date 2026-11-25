@@ -1,0 +1,151 @@
+{
+  "id": "EUVD-2024-35795",
+  "enisaUuid": "5862d8fd-e817-32c0-9236-bab237220619",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nx86/efistub: Call mixed mode boot services on the firmware's stack\n\nNormally, the EFI stub calls into the EFI boot services using the stack\nthat was live when the stub was entered. According to the UEFI spec,\nthis stack needs to be at least 128k in size - this might seem large but\nall asynchronous processing and event handling in EFI runs from the same\nstack and so quite a lot of space may be used in practice.\n\nIn mixed mode, the situation is a bit different: the bootloader calls\nthe 32-bit EFI stub entry point, which calls the decompressor's 32-bit\nentry point, where the boot stack is set up, using a fixed allocation\nof 16k. This stack is still in use when the EFI stub is started in\n64-bit mode, and so all calls back into the EFI firmware will be using\nthe decompressor's limited boot stack.\n\nDue to the placement of the boot stack right after the boot heap, any\nstack overruns have gone unnoticed. However, commit\n\n  5c4feadb0011983b (\"x86/decompressor: Move global symbol references to C code\")\n\nmoved the definition of the boot heap into C code, and now the boot\nstack is placed right at the base of BSS, where any overruns will\ncorrupt the end of the .data section.\n\nWhile it would be possible to work around this by increasing the size of\nthe boot stack, doing so would affect all x86 systems, and mixed mode\nsystems are a tiny (and shrinking) fraction of the x86 installed base.\n\nSo instead, record the firmware stack pointer value when entering from\nthe 32-bit firmware, and switch to this stack every time a EFI boot\nservice call is made.",
+  "datePublished": "May 17, 2024, 1:23:12 PM",
+  "dateUpdated": "May 11, 2026, 8:11:19 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/2149f8a56e2ed345c7a4d022a79f6b8fc53ae926",
+    "https://git.kernel.org/stable/c/930775060ca348b8665f60eef14b204172d14f31",
+    "https://git.kernel.org/stable/c/fba7ee7187581b5bc222003e73e2592b398bb06d",
+    "https://git.kernel.org/stable/c/725351c036452b7db5771a7bed783564bc4b99cc",
+    "https://git.kernel.org/stable/c/cefcd4fe2e3aaf792c14c9e56dab89e3d7a65d02"
+  ],
+  "aliases": [
+    "GHSA-w77r-vc72-rx49",
+    "CVE-2024-35803"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "0554a023-ec1d-308e-b63e-3b01fc55dff5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.3"
+    },
+    {
+      "id": "127d868d-9937-3db5-8516-4b7498b450bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "27386004-4041-30ca-8849-345c3e415217",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b8ff87a6158886771677e6dc8139bac6e3cba717 <930775060ca348b8665f60eef14b204172d14f31"
+    },
+    {
+      "id": "60fd6ecb-55ca-3c78-a9dc-68dcbbe56817",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.15"
+    },
+    {
+      "id": "6797ffad-d72d-3b42-9a13-da4c18dead9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b8ff87a6158886771677e6dc8139bac6e3cba717 <cefcd4fe2e3aaf792c14c9e56dab89e3d7a65d02"
+    },
+    {
+      "id": "8564a764-d7a5-3141-a948-8ab4a9219a29",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b8ff87a6158886771677e6dc8139bac6e3cba717 <2149f8a56e2ed345c7a4d022a79f6b8fc53ae926"
+    },
+    {
+      "id": "86240578-2dd6-3532-9ea0-07fb8cdd176e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.84"
+    },
+    {
+      "id": "89627ade-9673-30a2-87d6-35f0362d7db1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b8ff87a6158886771677e6dc8139bac6e3cba717 <725351c036452b7db5771a7bed783564bc4b99cc"
+    },
+    {
+      "id": "96e90775-c64b-3919-8da4-a79a5fa052ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.24"
+    },
+    {
+      "id": "b5a623d7-b3a4-364b-b15e-45f303284eee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b7e09659-e5bb-3507-8758-986663f91197",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.12"
+    },
+    {
+      "id": "e9589236-9b92-30b2-94a8-acbceeba8612",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b8ff87a6158886771677e6dc8139bac6e3cba717 <fba7ee7187581b5bc222003e73e2592b398bb06d"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c161c9ff-af56-340a-8928-012c85f5b29b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

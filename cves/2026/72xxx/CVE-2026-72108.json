@@ -2,9 +2,11 @@
   "id": "EUVD-2026-59066",
   "enisaUuid": "8358291d-c104-3d49-832b-337a8a89c7ce",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndm thin metadata: fix metadata snapshot consistency on commit failure\n\n__reserve_metadata_snap() and __release_metadata_snap() modify the\nsuperblock's held_root directly in the block_manager's buffer. If the\nsubsequent metadata commit fails, the held_root gets flushed to disk\nthrough the abort_transaction path, resulting in inconsistent metadata.\n\nReproducer 1: __reserve_metadata_snap()\n\n1. Create a 2 MiB metadata device and make the region after the 14th\n   block inaccessible, to trigger metadata commit failure in the\n   subsequent reserve_metadata_snap operation. The 14th block will be\n   the shadow destination for the index block.\n\ndmsetup create tmeta --table \"0 112 linear /dev/sdc 0\n112 3984 error\"\n\n2. Create a 16 MiB thin-pool\n\ndmsetup create tdata --table \"0 32768 zero\"\ndd if=/dev/zero of=/dev/mapper/tmeta bs=4k count=1\ndmsetup create tpool --table \"0 32768 thin-pool /dev/mapper/tmeta \\\n/dev/mapper/tdata 128 0 1 skip_block_zeroing\"\n\n3. Take a metadata snapshot to trigger metadata commit failure and\n   transaction abort. However, the held_root is written to disk,\n   breaking metadata consistency.\n\ndmsetup message tpool 0 \"reserve_metadata_snap\"\n\nthin_check v1.2.2 result:\n\nBad reference count for metadata block 6.  Expected 2, but space map contains 1.\nBad reference count for metadata block 7.  Expected 2, but space map contains 1.\nBad reference count for metadata block 13.  Expected 1, but space map contains 0.\n\nReproducer 2: __release_metadata_snap()\n\n1. Create a 2 MiB metadata device and make the region after the 16th\n   block inaccessible, to trigger metadata commit failure in the\n   subsequent release_metadata_snap operation. The 16th block will be\n   the shadow destination for the index block.\n\ndmsetup create tmeta --table \"0 128 linear /dev/sdc 0\n128 3968 error\"\n\n2. Create a 16 MiB thin-pool\n\ndmsetup create tdata --table \"0 32768 zero\"\ndd if=/dev/zero of=/dev/mapper/tmeta bs=4k count=1\ndmsetup create tpool --table \"0 32768 thin-pool /dev/mapper/tmeta \\\n/dev/mapper/tdata 128 0 1 skip_block_zeroing\"\n\n3. Reserve then release the metadata snapshot, to trigger metadata\n   commit failure and transaction abort. The held_root gets removed\n   from the on-disk superblock, causing inconsistent metadata.\n\ndmsetup message tpool 0 \"reserve_metadata_snap\"\ndmsetup message tpool 0 \"release_metadata_snap\"\n\nthin_check v1.2.2 result:\n\nBad reference count for metadata block 6.  Expected 1, but space map contains 2.\nBad reference count for metadata block 7.  Expected 1, but space map contains 2.\n1 metadata blocks have leaked.\n\nFix by deferring the held_root update to commit time.\n\nAdditionally, move the existing-snapshot check in __reserve_metadata_snap\nbefore the shadow operation to avoid unnecessary work. In\n__release_metadata_snap, clear pmd->held_root before btree deletion so\npartial failure leaks blocks rather than leaving a stale reference, and\nunlock the snapshot block before decrementing its refcount.",
-  "datePublished": "Aug 15, 2026, 6:32:12 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:12 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:52:50 AM",
+  "dateUpdated": "Oct 19, 2026, 9:19:28 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/4af993468193cf4cd32ba5748786e7801945f7d2",
     "https://git.kernel.org/stable/c/abf2fae92cbe68945028987d498cc72f8f0e23a8",
@@ -13,15 +15,14 @@
     "https://git.kernel.org/stable/c/b5f9a31c51cbb374a1713c3494f8660ab070f035",
     "https://git.kernel.org/stable/c/7f76245960a332f39b08cc556e675d1765dc5bbb",
     "https://git.kernel.org/stable/c/9f1a0d27586ceab055e6b050e3731ce3c6b2c4f0",
-    "https://git.kernel.org/stable/c/5bcd4d3058ebaf46ad2e163829d87dd4870c7a45",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72108"
+    "https://git.kernel.org/stable/c/5bcd4d3058ebaf46ad2e163829d87dd4870c7a45"
   ],
   "aliases": [
     "GHSA-j64h-56wh-mxm7",
     "CVE-2026-72108"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.26,
   "enisaIdProduct": [
     {
       "id": "1986a116-eb06-31cf-983c-78aa520b65ed",
@@ -44,6 +45,16 @@
       "product_version": "991d9fa02da0dd1f843dc011376965e0c8c6c9b5 <abf2fae92cbe68945028987d498cc72f8f0e23a8"
     },
     {
+      "id": "21434c1d-f04c-353a-a25b-b5463a8106d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "2542ff46-b8c5-38cf-b5e0-1e8e9fcff68e",
       "product": {
         "name": "Linux",
@@ -62,16 +73,6 @@
         }
       },
       "product_version": "patch: 5.10.261"
-    },
-    {
-      "id": "3999754c-f3ef-37f5-86be-9b5236518c63",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     },
     {
       "id": "4854dfed-dc15-3cef-8711-6942579781e7",

@@ -3,7 +3,7 @@
   "enisaUuid": "4887c08c-f582-301a-971d-e85189ff2fbc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: caiaq: fix out-of-bounds read in the Traktor Kontrol S4 input parser\n\nsnd_usb_caiaq_tks4_dispatch() decodes the Traktor Kontrol S4 input\nstream in fixed 16-byte (TKS4_MSGBLOCK_SIZE) message blocks. On every\niteration it advances buf and subtracts the block size while looping on\n\"while (len)\".\n\nlen is urb->actual_length. That value is supplied by the device and is\nnot guaranteed to be a multiple of 16. When a final short block leaves\nlen between 1 and 15, the loop runs once more, reads up to buf[15], and\nthen does \"len -= TKS4_MSGBLOCK_SIZE\". As len is unsigned this underflows\nto a huge value. The loop then keeps iterating and walking buf far past\nthe end of the 512-byte ep4_in_buf, reading out of bounds until a bogus\nblock id happens to be hit.\n\nIterate only while a full message block is available. This stops the\nunsigned underflow and silently drops any trailing partial block, which\ncarries no complete control value anyway.\n\nThe sibling endpoint-4 parsers are not affected. The Traktor Kontrol X1\nand Maschine arms in snd_usb_caiaq_ep4_reply_dispatch() floor\nurb->actual_length before dispatching.",
   "datePublished": "Jul 25, 2026, 8:51:46 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:46 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:55 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/de5f9edc705497b1b2c6b173b22f283486d2fd91",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/f7f3f9fd81e7adbaa12c2e62ee07f0e094a543fd"
   ],
   "aliases": [
+    "GHSA-x4v5-hfh7-vrg5",
     "CVE-2026-64487"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "04f4205e-0a3a-3b95-83dc-77440031ea8f",
@@ -112,6 +113,16 @@
       "product_version": "patch: 5.10.261"
     },
     {
+      "id": "8e106572-83dc-3368-83a5-c08273a7704e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "a3b7740d-8d59-3654-b42d-b6d77661b619",
       "product": {
         "name": "Linux",
@@ -180,16 +191,6 @@
         }
       },
       "product_version": "15c5ab607045e278ebf4d2ca4aea2250617d50ca <70d6d4cfa4ad09688aed2ec8a0cfa72c31f60334"
-    },
-    {
-      "id": "f34dc214-b9fe-3633-aa88-4b1b1808a05d",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "fd6970cc-3d02-3690-853b-bf7ddf22327d",

@@ -3,19 +3,32 @@
   "enisaUuid": "bb33f673-55c9-3fcd-befa-2c97844102c4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/cancel: don't spin on local work the task can't run\n\nio_uring_cancel_generic() refuses to sleep while any ring on the exiting\ntask's tctx has local work pending. It assumes the task is that ring's\nsubmitter and that the next io_uring_try_cancel_requests() pass will run\nthe work. This does not hold for a ring that was still\nIORING_SETUP_R_DISABLED when the task got its tctx node from\nio_uring_create() or io_ringfd_register(). The submitter is set later by\nIORING_REGISTER_ENABLE_RINGS, possibly from another task, and only the\nsubmitter may run local work on an IORING_SETUP_DEFER_TASKRUN ring. To\nthe exiting task the work stays pending forever, the loop never reaches\nschedule(), and the task trips the WARN_ON_ONCE() once and then spins in\ndo_exit().\n\nAn unprivileged user can set this up at will by creating a disabled\nring, having a child enable it and stop, posting to the ring with\nIORING_OP_MSG_RING and exiting with a request in flight that only the\nchild can complete. The exiting thread burns a CPU until the child runs\nor dies, and with panic_on_warn set the WARN panics the kernel.\n\nFix by skipping the sleep only when io_allowed_defer_tw_run() allows the\ntask to run the work. This is reasonable since work it cannot run cannot\ncomplete any of its requests either, so nothing is lost by sleeping.\nDrop the WARN_ON_ONCE() since handing a disabled ring to another thread\nis a supported scenario, not a bug state.",
   "datePublished": "Oct 28, 2026, 10:34:43 AM",
-  "dateUpdated": "Oct 28, 2026, 10:34:43 AM",
+  "dateUpdated": "Oct 30, 2026, 12:42:03 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/64e196a6d7173667a2a0fe2f191bc64eecd07778",
+    "https://git.kernel.org/stable/c/8a241d7ca23be2695a1fbe587ee12eae061c31af",
     "https://git.kernel.org/stable/c/94d13387b96e50a4288f7bbdfe401189246a11a1",
     "https://git.kernel.org/stable/c/3005459e0ddfcef0f555b6e81f672f2c49a1c0aa",
     "https://git.kernel.org/stable/c/fddcf4c5321b3ea5f72166c3fd36a9d1c34f80c7"
   ],
   "aliases": [
+    "GHSA-74p5-p638-5cc7",
     "CVE-2026-99130"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
+    {
+      "id": "05362ca1-c94b-3f0b-ae6d-fa75368f0765",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "360cd42c4e95ff06d8d7b0a54e42236c7e7c187f <64e196a6d7173667a2a0fe2f191bc64eecd07778"
+    },
     {
       "id": "1678270e-b36a-3591-a2cd-4c7c8368f828",
       "product": {
@@ -47,6 +60,16 @@
       "product_version": "patch: 6.18.59"
     },
     {
+      "id": "2d1d10e8-3f72-3088-a805-7106a5d6c12a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
+    },
+    {
       "id": "3ca186e1-0a9c-36f8-9b51-07d830649667",
       "product": {
         "name": "Linux",
@@ -65,6 +88,16 @@
         }
       },
       "product_version": "patch: 7.2.13"
+    },
+    {
+      "id": "6f5b2e29-a546-3aa9-a7f6-a9a9b8989745",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "360cd42c4e95ff06d8d7b0a54e42236c7e7c187f <8a241d7ca23be2695a1fbe587ee12eae061c31af"
     },
     {
       "id": "754f0c3f-a639-313d-b18f-234d53c105d7",
@@ -95,6 +128,16 @@
         }
       },
       "product_version": "360cd42c4e95ff06d8d7b0a54e42236c7e7c187f <94d13387b96e50a4288f7bbdfe401189246a11a1"
+    },
+    {
+      "id": "dc7081f4-c7b1-3431-8c2a-f4fea71e7d83",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.161"
     }
   ],
   "enisaIdVendor": [

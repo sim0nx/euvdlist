@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2024-42043",
+  "enisaUuid": "9190d898-4b64-3580-9d0c-bb64c0c5ac95",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nila: call nf_unregister_net_hooks() sooner\n\nsyzbot found an use-after-free Read in ila_nf_input [1]\n\nIssue here is that ila_xlat_exit_net() frees the rhashtable,\nthen call nf_unregister_net_hooks().\n\nIt should be done in the reverse way, with a synchronize_rcu().\n\nThis is a good match for a pre_exit() method.\n\n[1]\n BUG: KASAN: use-after-free in rht_key_hashfn include/linux/rhashtable.h:159 [inline]\n BUG: KASAN: use-after-free in __rhashtable_lookup include/linux/rhashtable.h:604 [inline]\n BUG: KASAN: use-after-free in rhashtable_lookup include/linux/rhashtable.h:646 [inline]\n BUG: KASAN: use-after-free in rhashtable_lookup_fast+0x77a/0x9b0 include/linux/rhashtable.h:672\nRead of size 4 at addr ffff888064620008 by task ksoftirqd/0/16\n\nCPU: 0 UID: 0 PID: 16 Comm: ksoftirqd/0 Not tainted 6.11.0-rc4-syzkaller-00238-g2ad6d23f465a #0\nHardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 08/06/2024\nCall Trace:\n <TASK>\n  __dump_stack lib/dump_stack.c:93 [inline]\n  dump_stack_lvl+0x241/0x360 lib/dump_stack.c:119\n  print_address_description mm/kasan/report.c:377 [inline]\n  print_report+0x169/0x550 mm/kasan/report.c:488\n  kasan_report+0x143/0x180 mm/kasan/report.c:601\n  rht_key_hashfn include/linux/rhashtable.h:159 [inline]\n  __rhashtable_lookup include/linux/rhashtable.h:604 [inline]\n  rhashtable_lookup include/linux/rhashtable.h:646 [inline]\n  rhashtable_lookup_fast+0x77a/0x9b0 include/linux/rhashtable.h:672\n  ila_lookup_wildcards net/ipv6/ila/ila_xlat.c:132 [inline]\n  ila_xlat_addr net/ipv6/ila/ila_xlat.c:652 [inline]\n  ila_nf_input+0x1fe/0x3c0 net/ipv6/ila/ila_xlat.c:190\n  nf_hook_entry_hookfn include/linux/netfilter.h:154 [inline]\n  nf_hook_slow+0xc3/0x220 net/netfilter/core.c:626\n  nf_hook include/linux/netfilter.h:269 [inline]\n  NF_HOOK+0x29e/0x450 include/linux/netfilter.h:312\n  __netif_receive_skb_one_core net/core/dev.c:5661 [inline]\n  __netif_receive_skb+0x1ea/0x650 net/core/dev.c:5775\n  process_backlog+0x662/0x15b0 net/core/dev.c:6108\n  __napi_poll+0xcb/0x490 net/core/dev.c:6772\n  napi_poll net/core/dev.c:6841 [inline]\n  net_rx_action+0x89b/0x1240 net/core/dev.c:6963\n  handle_softirqs+0x2c4/0x970 kernel/softirq.c:554\n  run_ksoftirqd+0xca/0x130 kernel/softirq.c:928\n  smpboot_thread_fn+0x544/0xa30 kernel/smpboot.c:164\n  kthread+0x2f0/0x390 kernel/kthread.c:389\n  ret_from_fork+0x4b/0x80 arch/x86/kernel/process.c:147\n  ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:244\n </TASK>\n\nThe buggy address belongs to the physical page:\npage: refcount:0 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x64620\nflags: 0xfff00000000000(node=0|zone=1|lastcpupid=0x7ff)\npage_type: 0xbfffffff(buddy)\nraw: 00fff00000000000 ffffea0000959608 ffffea00019d9408 0000000000000000\nraw: 0000000000000000 0000000000000003 00000000bfffffff 0000000000000000\npage dumped because: kasan: bad access detected\npage_owner tracks the page as freed\npage last allocated via order 3, migratetype Unmovable, gfp_mask 0x52dc0(GFP_KERNEL|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_ZERO), pid 5242, tgid 5242 (syz-executor), ts 73611328570, free_ts 618981657187\n  set_page_owner include/linux/page_owner.h:32 [inline]\n  post_alloc_hook+0x1f3/0x230 mm/page_alloc.c:1493\n  prep_new_page mm/page_alloc.c:1501 [inline]\n  get_page_from_freelist+0x2e4c/0x2f10 mm/page_alloc.c:3439\n  __alloc_pages_noprof+0x256/0x6c0 mm/page_alloc.c:4695\n  __alloc_pages_node_noprof include/linux/gfp.h:269 [inline]\n  alloc_pages_node_noprof include/linux/gfp.h:296 [inline]\n  ___kmalloc_large_node+0x8b/0x1d0 mm/slub.c:4103\n  __kmalloc_large_node_noprof+0x1a/0x80 mm/slub.c:4130\n  __do_kmalloc_node mm/slub.c:4146 [inline]\n  __kmalloc_node_noprof+0x2d2/0x440 mm/slub.c:4164\n  __kvmalloc_node_noprof+0x72/0x190 mm/util.c:650\n  bucket_table_alloc lib/rhashtable.c:186 [inline]\n  rhashtable_init_noprof+0x534/0xa60 lib/rhashtable.c:1071\n  ila_xlat_init_net+0xa0/0x110 net/ipv6/ila/ila_xlat.c:613\n  ops_ini\n---truncated---",
+  "datePublished": "Sep 18, 2024, 7:12:38 AM",
+  "dateUpdated": "May 11, 2026, 8:36:22 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/43d34110882b97ba1ec66cc8234b18983efb9abf",
+    "https://git.kernel.org/stable/c/dcaf4e2216824839d26727a15b638c6a677bd9fc",
+    "https://git.kernel.org/stable/c/93ee345ba349922834e6a9d1dadabaedcc12dce6",
+    "https://git.kernel.org/stable/c/bda4d84ac0d5421b346faee720011f58bdb99673",
+    "https://git.kernel.org/stable/c/925c18a7cff93d8a4320d652351294ff7d0ac93c",
+    "https://git.kernel.org/stable/c/18a5a16940464b301ea91bf5da3a324aedb347b2",
+    "https://git.kernel.org/stable/c/47abd8adddbc0aecb8f231269ef659148d5dabe4",
+    "https://git.kernel.org/stable/c/031ae72825cef43e4650140b800ad58bf7a6a466"
+  ],
+  "aliases": [
+    "GHSA-9f66-cv49-738x",
+    "CVE-2024-46782"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "1ed363d7-24ba-3212-a846-ca80886f9eca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7f00feaf107645d95a6d87e99b4d141ac0a08efd <bda4d84ac0d5421b346faee720011f58bdb99673"
+    },
+    {
+      "id": "298228be-e151-37a0-9d31-b50689aff3e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7f00feaf107645d95a6d87e99b4d141ac0a08efd <47abd8adddbc0aecb8f231269ef659148d5dabe4"
+    },
+    {
+      "id": "369f719e-a3ad-3d13-9a3e-2903ac05130a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.226"
+    },
+    {
+      "id": "3a01e1a4-0c3c-3b96-a4bb-76b93b54e81e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.284"
+    },
+    {
+      "id": "3b0e39f8-0527-398d-880d-e8e6e46749c3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.5"
+    },
+    {
+      "id": "3b145173-7c06-3d02-a133-142c070136f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.110"
+    },
+    {
+      "id": "49c5c4e6-2e47-3cfd-a557-7541ce867c2a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7f00feaf107645d95a6d87e99b4d141ac0a08efd <dcaf4e2216824839d26727a15b638c6a677bd9fc"
+    },
+    {
+      "id": "4c733c03-9680-3eb6-8963-994bc0d24d81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7f00feaf107645d95a6d87e99b4d141ac0a08efd <93ee345ba349922834e6a9d1dadabaedcc12dce6"
+    },
+    {
+      "id": "522993cb-7494-3676-898e-25a296f32292",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.167"
+    },
+    {
+      "id": "60c4dd79-440d-3d5c-b26c-71a81f176d2f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "62ff0e5a-c925-31f6-ba92-acf9bd2df774",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7f00feaf107645d95a6d87e99b4d141ac0a08efd <43d34110882b97ba1ec66cc8234b18983efb9abf"
+    },
+    {
+      "id": "6fda84a7-28c8-37a8-b5a0-ea9d6be306de",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7f00feaf107645d95a6d87e99b4d141ac0a08efd <925c18a7cff93d8a4320d652351294ff7d0ac93c"
+    },
+    {
+      "id": "7b0db60c-e5e0-3e22-811b-37b30ceb1ccd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9a5eafa2-b2a8-32fe-a6ab-000b8b6e43e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.51"
+    },
+    {
+      "id": "a1d1b93d-faaa-39b4-aa97-5825f2e77ba8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7f00feaf107645d95a6d87e99b4d141ac0a08efd <031ae72825cef43e4650140b800ad58bf7a6a466"
+    },
+    {
+      "id": "aa9be687-be40-3539-b618-1b80f5cf5557",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.322"
+    },
+    {
+      "id": "fc0e389a-1f7d-3b54-9361-b38afcc6d4da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.10"
+    },
+    {
+      "id": "fd742362-af99-3083-89d9-23bb67c47792",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7f00feaf107645d95a6d87e99b4d141ac0a08efd <18a5a16940464b301ea91bf5da3a324aedb347b2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f50045dc-0b7d-366f-a20a-73b3a062d803",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

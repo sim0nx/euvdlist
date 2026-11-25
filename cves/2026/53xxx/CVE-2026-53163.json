@@ -3,18 +3,24 @@
   "enisaUuid": "7e320c21-5d00-3c25-85cc-f400becf2ab7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nlocking/rtmutex: Skip remove_waiter() when waiter is not enqueued\n\nsyzbot triggered the following splat in remove_waiter() via\nFUTEX_CMP_REQUEUE_PI:\n\n  KASAN: null-ptr-deref in range [0x0000000000000a88-0x0000000000000a8f]\n   class_raw_spinlock_constructor\n   remove_waiter+0x159/0x1200 kernel/locking/rtmutex.c:1561\n   rt_mutex_start_proxy_lock+0x103/0x120\n   futex_requeue+0x10e4/0x20d0\n   __x64_sys_futex+0x34f/0x4d0\n\ntask_blocks_on_rt_mutex() does not arm the waiter upon deadlock detection,\nleaving waiter->task nil, where 3bfdc63936dd (\"rtmutex: Use waiter::task instead\nof current in remove_waiter()\") made this fatal.\n\nFurthermore, rt_mutex_start_proxy_lock() should not be calling into remove_waiter()\nupon a successfully grabbing the rtmutex. 1a1fb985f2e2 (\"futex: Handle early deadlock\nreturn correctly\"), moved the remove_waiter() out of __rt_mutex_start_proxy_lock()\n(where 'ret' was only ever 0 or < 0) into the wrapper. Tighten this check to\naccount for try_to_take_rt_mutex().",
   "datePublished": "Jun 25, 2026, 8:38:44 AM",
-  "dateUpdated": "Jun 25, 2026, 8:38:44 AM",
+  "dateUpdated": "Nov 6, 2026, 4:24:05 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/bfbc047ceb42c0e1fac8f3a155d4548a8bbe76b1",
+    "https://git.kernel.org/stable/c/4ffacf76a457b7ca8ac05f5df8740b0d8f53574a",
+    "https://git.kernel.org/stable/c/4afda3a1da02129568a3a2f1898aa13e6763bcba",
+    "https://git.kernel.org/stable/c/6707d7e0b71748cb3cd95bad81dae5fe1b3c8f48",
+    "https://git.kernel.org/stable/c/5799f9bd7fee40370b93ab1ddf001cdc7017c14d",
     "https://git.kernel.org/stable/c/a388e3dfaf9538a680de5ed43a8ebb5dd45b6e53",
     "https://git.kernel.org/stable/c/55363fa0a04524d11efeaadee734d2db1756ed27",
     "https://git.kernel.org/stable/c/40a25d59e85b3c8709ac2424d44f65610467871e"
   ],
   "aliases": [
-    "CVE-2026-53163"
+    "CVE-2026-53163",
+    "GHSA-4w7w-2mrj-36vw"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "27884d9b-200f-3c6f-9c63-aed12b167f01",
@@ -37,44 +43,34 @@
       "product_version": "88614876370aac8ad1050ad785a4c095ba17ac11 <55363fa0a04524d11efeaadee734d2db1756ed27"
     },
     {
-      "id": "5cc8b289-449c-3a7e-ad32-23a0aab51051",
+      "id": "2f51c24c-a292-342f-ba3a-dbb1be546373",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.1.175 <6.2"
+      "product_version": "d8cce4773c2b23d819baf5abedc62f7b430e8745 <4afda3a1da02129568a3a2f1898aa13e6763bcba"
     },
     {
-      "id": "5dd6164d-bc80-3842-ad7a-f3cc4394adc6",
+      "id": "759cc17d-c06a-38dc-9653-5984c63e0f3a",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.12.86 <6.13"
+      "product_version": "6d52dfcb2a5db86e346cf51f8fcf2071b8085166 <5799f9bd7fee40370b93ab1ddf001cdc7017c14d"
     },
     {
-      "id": "7d128269-6bda-3c18-85a1-7ae021bbdecb",
+      "id": "7dc67eb0-173d-3b9f-8bc6-a2eeeba73d8c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "8a1fc8d698ac5e5916e3082a0f74450d71f9611f"
-    },
-    {
-      "id": "8f8666b8-254d-337d-9d00-561e121f0f22",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "6d52dfcb2a5db86e346cf51f8fcf2071b8085166"
+      "product_version": "8a1fc8d698ac5e5916e3082a0f74450d71f9611f <6707d7e0b71748cb3cd95bad81dae5fe1b3c8f48"
     },
     {
       "id": "919fc31f-32b4-31c2-a35d-9aef6dd1da1d",
@@ -87,6 +83,16 @@
       "product_version": "3bfdc63936dd4773109b7b8c280c0f3b5ae7d349 <40a25d59e85b3c8709ac2424d44f65610467871e"
     },
     {
+      "id": "9d0ff8ad-8395-3c3c-bd5a-61034142299f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3fa3424bceb128d2be4b3745506b22844b87db7 <bfbc047ceb42c0e1fac8f3a155d4548a8bbe76b1"
+    },
+    {
       "id": "a5860b1d-6a0b-34bb-b840-4230f0dd29ce",
       "product": {
         "name": "Linux",
@@ -97,24 +103,24 @@
       "product_version": "7.0.4 <7.0.13"
     },
     {
-      "id": "b72e665f-1821-35ea-8e10-542ba798784e",
+      "id": "af45f271-5d50-3811-b102-4d754ca15afc",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "d8cce4773c2b23d819baf5abedc62f7b430e8745"
+      "product_version": "6.6.140 <6.6.144"
     },
     {
-      "id": "bfb4ee87-3652-3cb7-b070-86f2a62622fc",
+      "id": "bec17684-c5e2-378d-bf32-6d0c8b2b1a42",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.6.140 <6.7"
+      "product_version": "838ce5cb5d93c3ab8b27e75bc6ad905a94b752fd <4ffacf76a457b7ca8ac05f5df8740b0d8f53574a"
     },
     {
       "id": "ca497623-05e0-3ff8-8bb3-b3d158e674fd",
@@ -125,6 +131,26 @@
         }
       },
       "product_version": "3fb7394a837740770f0d6b4b30567e60786a63f2 <a388e3dfaf9538a680de5ed43a8ebb5dd45b6e53"
+    },
+    {
+      "id": "cf7c6894-eaa4-3b8f-9383-a2ab97537d90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12.86 <6.12.95"
+    },
+    {
+      "id": "f551407f-191e-38e2-b6b8-f137f66aa505",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.175 <6.1.177"
     }
   ],
   "enisaIdVendor": [

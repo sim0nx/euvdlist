@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2021-34591",
+  "enisaUuid": "e4c5bc28-0e74-3748-85a3-ace264abbcfe",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nigbvf: fix double free in `igbvf_probe`\n\nIn `igbvf_probe`, if register_netdev() fails, the program will go to\nlabel err_hw_init, and then to label err_ioremap. In free_netdev() which\nis just below label err_ioremap, there is `list_for_each_entry_safe` and\n`netif_napi_del` which aims to delete all entries in `dev->napi_list`.\nThe program has added an entry `adapter->rx_ring->napi` which is added by\n`netif_napi_add` in igbvf_alloc_queues(). However, adapter->rx_ring has\nbeen freed below label err_hw_init. So this a UAF.\n\nIn terms of how to patch the problem, we can refer to igbvf_remove() and\ndelete the entry before `adapter->rx_ring`.\n\nThe KASAN logs are as follows:\n\n[   35.126075] BUG: KASAN: use-after-free in free_netdev+0x1fd/0x450\n[   35.127170] Read of size 8 at addr ffff88810126d990 by task modprobe/366\n[   35.128360]\n[   35.128643] CPU: 1 PID: 366 Comm: modprobe Not tainted 5.15.0-rc2+ #14\n[   35.129789] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS rel-1.12.0-59-gc9ba5276e321-prebuilt.qemu.org 04/01/2014\n[   35.131749] Call Trace:\n[   35.132199]  dump_stack_lvl+0x59/0x7b\n[   35.132865]  print_address_description+0x7c/0x3b0\n[   35.133707]  ? free_netdev+0x1fd/0x450\n[   35.134378]  __kasan_report+0x160/0x1c0\n[   35.135063]  ? free_netdev+0x1fd/0x450\n[   35.135738]  kasan_report+0x4b/0x70\n[   35.136367]  free_netdev+0x1fd/0x450\n[   35.137006]  igbvf_probe+0x121d/0x1a10 [igbvf]\n[   35.137808]  ? igbvf_vlan_rx_add_vid+0x100/0x100 [igbvf]\n[   35.138751]  local_pci_probe+0x13c/0x1f0\n[   35.139461]  pci_device_probe+0x37e/0x6c0\n[   35.165526]\n[   35.165806] Allocated by task 366:\n[   35.166414]  ____kasan_kmalloc+0xc4/0xf0\n[   35.167117]  foo_kmem_cache_alloc_trace+0x3c/0x50 [igbvf]\n[   35.168078]  igbvf_probe+0x9c5/0x1a10 [igbvf]\n[   35.168866]  local_pci_probe+0x13c/0x1f0\n[   35.169565]  pci_device_probe+0x37e/0x6c0\n[   35.179713]\n[   35.179993] Freed by task 366:\n[   35.180539]  kasan_set_track+0x4c/0x80\n[   35.181211]  kasan_set_free_info+0x1f/0x40\n[   35.181942]  ____kasan_slab_free+0x103/0x140\n[   35.182703]  kfree+0xe3/0x250\n[   35.183239]  igbvf_probe+0x1173/0x1a10 [igbvf]\n[   35.184040]  local_pci_probe+0x13c/0x1f0",
+  "datePublished": "Jun 19, 2024, 2:53:53 PM",
+  "dateUpdated": "May 11, 2026, 1:57:27 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/ffe1695b678729edec04037e691007900a2b2beb",
+    "https://git.kernel.org/stable/c/79d9b092035dcdbe636b70433149df9cc6db1e49",
+    "https://git.kernel.org/stable/c/8d0c927a9fb2b4065230936b77b54f857a3754fc",
+    "https://git.kernel.org/stable/c/cc9b655bb84f1be283293dfea94dff9a31b106ac",
+    "https://git.kernel.org/stable/c/8addba6cab94ce01686ea2e80ed1530f9dc33a9a",
+    "https://git.kernel.org/stable/c/74a16e062b23332d8db017ff4a41e16279c44411",
+    "https://git.kernel.org/stable/c/944b8be08131f5faf2cd2440aa1c24a39a163a54",
+    "https://git.kernel.org/stable/c/b6d335a60dc624c0d279333b22c737faa765b028"
+  ],
+  "aliases": [
+    "CVE-2021-47589",
+    "GHSA-j6pm-8m22-4px5"
+  ],
+  "assigner": "Linux",
+  "epss": 0.27,
+  "enisaIdProduct": [
+    {
+      "id": "1286f89d-2cdb-3be7-ac90-76eab6c4834e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.259"
+    },
+    {
+      "id": "20270828-e065-387f-8d5a-a3697c1da98b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.11"
+    },
+    {
+      "id": "2596ccd0-2bd2-3d01-a0c0-a1cf6b261ea7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.88"
+    },
+    {
+      "id": "25c6eec3-d347-37ce-9750-e3803304d89b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.30"
+    },
+    {
+      "id": "25ed4f05-4c24-3600-8b33-9be529f7b963",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "2b25f427-6d76-386b-a84f-502d7f448f4d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16"
+    },
+    {
+      "id": "3532a1b7-75d9-38ff-8f71-575544529dbe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d4e0fe01a38a073568aee541a0247fe734095979 <cc9b655bb84f1be283293dfea94dff9a31b106ac"
+    },
+    {
+      "id": "495b6963-a770-3f1e-8ba4-7f6bc0b6629e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d4e0fe01a38a073568aee541a0247fe734095979 <79d9b092035dcdbe636b70433149df9cc6db1e49"
+    },
+    {
+      "id": "512f0a0f-980a-3250-ab0e-e0463fd178e4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d4e0fe01a38a073568aee541a0247fe734095979 <ffe1695b678729edec04037e691007900a2b2beb"
+    },
+    {
+      "id": "7a340040-a77e-3d32-b324-f36d151c2073",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d4e0fe01a38a073568aee541a0247fe734095979 <b6d335a60dc624c0d279333b22c737faa765b028"
+    },
+    {
+      "id": "8dc9205a-8624-3d20-b07c-949224ba9727",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.168"
+    },
+    {
+      "id": "a3a64d37-9b2f-378b-b506-c422e6fa8ecf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d4e0fe01a38a073568aee541a0247fe734095979 <8d0c927a9fb2b4065230936b77b54f857a3754fc"
+    },
+    {
+      "id": "a6105807-280b-3906-acb1-b0f238f50ba5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d4e0fe01a38a073568aee541a0247fe734095979 <74a16e062b23332d8db017ff4a41e16279c44411"
+    },
+    {
+      "id": "b4f5b73d-078e-38c0-827a-650b667cf98f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d4e0fe01a38a073568aee541a0247fe734095979 <944b8be08131f5faf2cd2440aa1c24a39a163a54"
+    },
+    {
+      "id": "b66df50b-b368-35ee-b6d9-ff7e129d50f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.222"
+    },
+    {
+      "id": "bcd9bb4b-2b76-3931-b941-61ecab1577a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.4.296"
+    },
+    {
+      "id": "c3c0222a-16c7-3a1e-80fa-b1921d080a29",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d4e0fe01a38a073568aee541a0247fe734095979 <8addba6cab94ce01686ea2e80ed1530f9dc33a9a"
+    },
+    {
+      "id": "d7178166-d8da-3841-9cd8-9f4fd1839ef5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.9.294"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "aa3f21ac-0822-3d7a-a487-71298a2d89da",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

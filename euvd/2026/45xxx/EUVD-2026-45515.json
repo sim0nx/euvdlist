@@ -3,9 +3,13 @@
   "enisaUuid": "c2866269-bbcb-348b-b4fb-3c9f15392c70",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfsd: reset write verifier on deferred writeback errors\n\nnfsd_vfs_write() and nfsd_commit() both call filemap_check_wb_err() to\ndetect deferred writeback errors, but neither rotates the server's write\nverifier (nn->writeverf) when this check fails. Every other\ndurable-storage-failure path in these functions calls\ncommit_reset_write_verifier() before returning an error.\n\nThe missing rotation means clients holding UNSTABLE write data under the\ncurrent verifier will COMMIT, receive the unchanged verifier back, and\nconclude their data is durable \u2014 silently dropping data that failed\nwriteback. This violates the UNSTABLE+COMMIT durability contract\n(RFC 1813 \u00a73.3.7, RFC 8881 \u00a718.32).\n\nAdd commit_reset_write_verifier() calls at both filemap_check_wb_err()\nerror sites, matching the pattern used by adjacent error paths in the\nsame functions. The helper already filters -EAGAIN and -ESTALE\ninternally, so the calls are unconditionally safe.",
   "datePublished": "Jul 19, 2026, 12:01:56 PM",
-  "dateUpdated": "Jul 19, 2026, 12:01:56 PM",
+  "dateUpdated": "Nov 6, 2026, 4:34:23 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/b8e5894e56cff70fa245628fe16f0ad6367f8090",
+    "https://git.kernel.org/stable/c/bc2baca02ec56da7707a74ed5d340b0a1dff1841",
+    "https://git.kernel.org/stable/c/43b65d2997963e80e8d8d86520bcb1e0751227de",
+    "https://git.kernel.org/stable/c/666e837b247fcadf2d8d508b9b0e49d720393eb4",
     "https://git.kernel.org/stable/c/1dd664b39774a9c89b72de8e59bf9ef4b3aaff2e",
     "https://git.kernel.org/stable/c/4367afc119c51e17a616f6908772b7e2c2c4013f",
     "https://git.kernel.org/stable/c/b027cca33c97354149fcc0ddeede4525c41093cd",
@@ -16,7 +20,7 @@
     "CVE-2026-53393"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "149044d8-2b5a-3eba-88cc-e2dbe3d06ba1",
@@ -39,14 +43,34 @@
       "product_version": "patch: 6.18.38"
     },
     {
-      "id": "58067e95-52c5-3038-9673-434b0f604dd4",
+      "id": "31d0fc91-66b3-35ad-a678-5f8238fee305",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "5.10.124 <5.11"
+      "product_version": "5.10.124 <5.10.261"
+    },
+    {
+      "id": "3d8fad26-3ee2-358c-b4df-bda7df9638a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3145fe0ebb16e1715ad541a301bc6675c8375fcd <bc2baca02ec56da7707a74ed5d340b0a1dff1841"
+    },
+    {
+      "id": "4ef5d5eb-7737-355f-822d-e6fc6d7538ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "555dbf1a9aac6d3150c8b52fa35f768a692f4eeb <43b65d2997963e80e8d8d86520bcb1e0751227de"
     },
     {
       "id": "63fd5ad5-b588-33c9-bba2-22d3df39a8b6",
@@ -79,14 +103,44 @@
       "product_version": "5.17"
     },
     {
-      "id": "b80b275d-eb36-30b5-a866-6391e9cf337a",
+      "id": "9e318054-c571-3476-bba5-93a402dbe71b",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "3145fe0ebb16e1715ad541a301bc6675c8375fcd"
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "a443e459-0e73-319e-b358-507fa6377dd7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.261"
+    },
+    {
+      "id": "a97aae53-fdf9-3dbe-b9e9-87afd7a0b758",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f14816f2f928c560d28ba344af689f56efcd6f55 <b8e5894e56cff70fa245628fe16f0ad6367f8090"
+    },
+    {
+      "id": "b82e008c-609d-3762-937f-00fff09eab42",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.178"
     },
     {
       "id": "bd0059af-84bb-3599-8959-3ed27317c130",
@@ -97,16 +151,6 @@
         }
       },
       "product_version": "555dbf1a9aac6d3150c8b52fa35f768a692f4eeb <4367afc119c51e17a616f6908772b7e2c2c4013f"
-    },
-    {
-      "id": "beeb68d2-4b43-3d14-8e32-1296a8b118a2",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "f14816f2f928c560d28ba344af689f56efcd6f55"
     },
     {
       "id": "d456070e-4f91-3757-87cb-852f617a4ee0",
@@ -129,14 +173,14 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "e4e3b303-3f07-316d-bb94-eeb880d1f0c4",
+      "id": "e5129e97-b617-381c-b3b5-9e0fb9ca5dcd",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "5.15.49 <5.16"
+      "product_version": "patch: 6.6.145"
     },
     {
       "id": "e98af1cf-7351-379d-b164-b4115419c5e9",
@@ -149,14 +193,34 @@
       "product_version": "555dbf1a9aac6d3150c8b52fa35f768a692f4eeb <1dd664b39774a9c89b72de8e59bf9ef4b3aaff2e"
     },
     {
-      "id": "eb468892-aa40-341f-9afb-84fcaeee2177",
+      "id": "f08e196b-e098-3a87-b8eb-4387ad01cf7b",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 5.15.212"
+    },
+    {
+      "id": "f6a6c30d-db0a-3665-be63-5ff5ed58175d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.49 <5.15.212"
+    },
+    {
+      "id": "fed11eeb-a5de-37fc-8930-49356e3a5250",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "555dbf1a9aac6d3150c8b52fa35f768a692f4eeb <666e837b247fcadf2d8d508b9b0e49d720393eb4"
     }
   ],
   "enisaIdVendor": [

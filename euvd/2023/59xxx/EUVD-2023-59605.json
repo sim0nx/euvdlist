@@ -1,0 +1,193 @@
+{
+  "id": "EUVD-2023-59605",
+  "enisaUuid": "9ba9c5c4-ff30-3d1a-9cf4-3732bb54c8a7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: f_ncm: fix potential NULL ptr deref in ncm_bitrate()\n\nIn Google internal bug 265639009 we've received an (as yet) unreproducible\ncrash report from an aarch64 GKI 5.10.149-android13 running device.\n\nAFAICT the source code is at:\n  https://android.googlesource.com/kernel/common/+/refs/tags/ASB-2022-12-05_13-5.10\n\nThe call stack is:\n  ncm_close() -> ncm_notify() -> ncm_do_notify()\nwith the crash at:\n  ncm_do_notify+0x98/0x270\nCode: 79000d0b b9000a6c f940012a f9400269 (b9405d4b)\n\nWhich I believe disassembles to (I don't know ARM assembly, but it looks sane enough to me...):\n\n  // halfword (16-bit) store presumably to event->wLength (at offset 6 of struct usb_cdc_notification)\n  0B 0D 00 79    strh w11, [x8, #6]\n\n  // word (32-bit) store presumably to req->Length (at offset 8 of struct usb_request)\n  6C 0A 00 B9    str  w12, [x19, #8]\n\n  // x10 (NULL) was read here from offset 0 of valid pointer x9\n  // IMHO we're reading 'cdev->gadget' and getting NULL\n  // gadget is indeed at offset 0 of struct usb_composite_dev\n  2A 01 40 F9    ldr  x10, [x9]\n\n  // loading req->buf pointer, which is at offset 0 of struct usb_request\n  69 02 40 F9    ldr  x9, [x19]\n\n  // x10 is null, crash, appears to be attempt to read cdev->gadget->max_speed\n  4B 5D 40 B9    ldr  w11, [x10, #0x5c]\n\nwhich seems to line up with ncm_do_notify() case NCM_NOTIFY_SPEED code fragment:\n\n  event->wLength = cpu_to_le16(8);\n  req->length = NCM_STATUS_BYTECOUNT;\n\n  /* SPEED_CHANGE data is up/down speeds in bits/sec */\n  data = req->buf + sizeof *event;\n  data[0] = cpu_to_le32(ncm_bitrate(cdev->gadget));\n\nMy analysis of registers and NULL ptr deref crash offset\n  (Unable to handle kernel NULL pointer dereference at virtual address 000000000000005c)\nheavily suggests that the crash is due to 'cdev->gadget' being NULL when executing:\n  data[0] = cpu_to_le32(ncm_bitrate(cdev->gadget));\nwhich calls:\n  ncm_bitrate(NULL)\nwhich then calls:\n  gadget_is_superspeed(NULL)\nwhich reads\n  ((struct usb_gadget *)NULL)->max_speed\nand hits a panic.\n\nAFAICT, if I'm counting right, the offset of max_speed is indeed 0x5C.\n(remember there's a GKI KABI reservation of 16 bytes in struct work_struct)\n\nIt's not at all clear to me how this is all supposed to work...\nbut returning 0 seems much better than panic-ing...",
+  "datePublished": "Aug 21, 2024, 6:10:34 AM",
+  "dateUpdated": "May 11, 2026, 7:35:02 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/fef6b29671b66dfb71f17e337c1ad14b5a2cedae",
+    "https://git.kernel.org/stable/c/63d161f29cd39c050e8873aa36e0c9fc013bb763",
+    "https://git.kernel.org/stable/c/a21da7f7aae618c785f7e4a275d43c06dc8412b6",
+    "https://git.kernel.org/stable/c/e92c70059178da751e5af7de02384b7dfadb5ec7",
+    "https://git.kernel.org/stable/c/a69c8dfb85b44be9cc223be07d35cc3a9baefbea",
+    "https://git.kernel.org/stable/c/09e4507ec8ef2d44da6ba4092b8ee2d81f216497",
+    "https://git.kernel.org/stable/c/c6ec929595c7443250b2a4faea988c62019d5cd2"
+  ],
+  "aliases": [
+    "GHSA-9r79-4jhv-2rfr",
+    "CVE-2023-52894"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "08319087-0845-3335-b85c-ccd8087f842e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.165"
+    },
+    {
+      "id": "3f2df49f-a0b8-380d-b073-3d50aa34a9ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1650113888fe7b7e16604a5019c32dd3ddeb3af2 <fef6b29671b66dfb71f17e337c1ad14b5a2cedae"
+    },
+    {
+      "id": "4b1e3a91-480d-3da2-a5b1-144db6001373",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.304"
+    },
+    {
+      "id": "6195ddb6-4201-308f-8447-bdebc0fc1346",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.2"
+    },
+    {
+      "id": "647e1d60-38fa-3ff4-9ada-f65ce0ccf610",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1650113888fe7b7e16604a5019c32dd3ddeb3af2 <a21da7f7aae618c785f7e4a275d43c06dc8412b6"
+    },
+    {
+      "id": "64b82131-5363-3a03-82a9-11dfddd8be5f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1650113888fe7b7e16604a5019c32dd3ddeb3af2 <a69c8dfb85b44be9cc223be07d35cc3a9baefbea"
+    },
+    {
+      "id": "64d04f4b-f6c8-3f17-8e83-8dbc1076030a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.90"
+    },
+    {
+      "id": "6bb3307d-bf2c-3891-8eaf-4f9618445f73",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.9"
+    },
+    {
+      "id": "be0da296-3e64-338e-9517-1f4f3f180e2f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.271"
+    },
+    {
+      "id": "bf9c7db0-b74e-389a-a7e4-447f5298d813",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d096da3e-6881-3dc3-aaf6-72b7e252ed12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1650113888fe7b7e16604a5019c32dd3ddeb3af2 <c6ec929595c7443250b2a4faea988c62019d5cd2"
+    },
+    {
+      "id": "d3e19f2a-0abf-36be-8165-00c1dac87f90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1650113888fe7b7e16604a5019c32dd3ddeb3af2 <63d161f29cd39c050e8873aa36e0c9fc013bb763"
+    },
+    {
+      "id": "d6d810c9-98a5-394d-84d5-212367321df7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1650113888fe7b7e16604a5019c32dd3ddeb3af2 <09e4507ec8ef2d44da6ba4092b8ee2d81f216497"
+    },
+    {
+      "id": "e4f84748-203e-3898-96c6-0a150b7c2080",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1650113888fe7b7e16604a5019c32dd3ddeb3af2 <e92c70059178da751e5af7de02384b7dfadb5ec7"
+    },
+    {
+      "id": "f83be43b-5920-321b-910e-92d4da702807",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.230"
+    },
+    {
+      "id": "fbee1b8e-289f-3213-9507-3ea5a3d95a2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.8"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e6166122-466f-384d-ab61-fb352ad3ff84",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

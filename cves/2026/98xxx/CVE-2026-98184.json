@@ -3,7 +3,7 @@
   "enisaUuid": "59c63468-c3f7-3947-a6a8-a0353f303b65",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: mwifiex: prevent authentication frame length truncation\n\nmwifiex_cfg80211_authenticate() derives the authentication frame length\nfrom req->ie_len and req->auth_data_len, both of type size_t, but stores\nit in a u16.\n\nNL80211_ATTR_AUTH_DATA only has a minimum length policy. Since nla_len is\na u16, a single attribute can carry up to 65531 bytes of payload, so the\nsum can exceed U16_MAX before it is assigned to pkt_len. The truncated\npkt_len determines the skb frame area, while the copy length remains\nreq->auth_data_len - 4, resulting in a heap buffer overflow.\n\nFor example, with auth_data_len equal to 65510 and no IEs, the sum is\n65546. It is truncated to 10 and then reduced by four to 6. The driver\nappends only six bytes to the skb with skb_put(), but then copies 65506\nuser-provided bytes into the authentication body.\n\nReaching this path requires CAP_NET_ADMIN in the user namespace owning\nthe network namespace, an up station netdev, and a suitable BSS/SAE\nauthentication request.\n\nCompute the length in size_t, reject values that cannot be represented by\nthe firmware's u16 frame length field, and only then assign it to pkt_len.",
   "datePublished": "Oct 6, 2026, 8:44:26 AM",
-  "dateUpdated": "Oct 6, 2026, 8:44:26 AM",
+  "dateUpdated": "Oct 19, 2026, 9:15:15 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/25c45a2075cc00faed45f92a64bb172fb074a2ee",
@@ -12,21 +12,12 @@
     "https://git.kernel.org/stable/c/fa00193eb991f92b007aefe7afb6a7566976dacf"
   ],
   "aliases": [
+    "GHSA-m63w-cm3m-w2gf",
     "CVE-2026-98184"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
-    {
-      "id": "10212520-55ce-3f89-8853-65b5c55c7dd0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
     {
       "id": "117d52bb-2978-3cbf-9f4e-3fe6d5bd46f8",
       "product": {
@@ -116,6 +107,16 @@
         }
       },
       "product_version": "patch: 7.2.8"
+    },
+    {
+      "id": "f5b9c124-aa31-392d-b483-dad1dfb9e8a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

@@ -3,7 +3,7 @@
   "enisaUuid": "41c5856a-3ec2-3f89-9169-caf791e4b5e1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: cfg80211: only group hidden BSSes with beacon entries\n\nWhen a probe response for an unknown BSS comes in, __cfg80211_bss_update()\nlooks for an existing entry with the same BSSID and a hidden (zero-length\nor NUL-filled) SSID, and if it finds one it groups them, using the beacon\nIEs from the existing entry.\n\nBut that could find another entry without a beacon, if it was also from a\nprobe response (with SSID), so there's a group without beacon elements.\n\nIf a beacon with a hidden SSID for that BSSID arrives later,\ncfg80211_combine_bsses() goes looking for the probe response entries that\nbelong to it - i.e. entries with the same BSSID and channel that have no\nbeacon IEs - and finds those two. They are already grouped with each\nother, so it hits its\n\n  WARN_ON_ONCE(bss->pub.hidden_beacon_bss)\n  WARN_ON_ONCE(!list_empty(&bss->hidden_list))\n\nwhich are there because an entry without beacon elements is not supposed\nto be part of a group yet.\n\nOnly combine entries when a beacon was already received, ones that are\nkept separate will be combined when a beacon arrives.",
   "datePublished": "Oct 6, 2026, 8:46:30 AM",
-  "dateUpdated": "Oct 6, 2026, 8:46:30 AM",
+  "dateUpdated": "Oct 19, 2026, 9:17:51 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/4cd6a518ce7527284bbc9baab5fa2453a7d477c2",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/068843ed0902c552a13860c5ec6b2ca65b57a065"
   ],
   "aliases": [
+    "GHSA-84vw-9582-fhpx",
     "CVE-2026-98340"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0e0159b5-003a-3ca7-a995-7c38e0c9a477",
@@ -102,16 +103,6 @@
       "product_version": "4593c4cbe1c96b3995727dc42f6aa103f4ff5afc <3658093df69849daf4f813a8f087f358e13be203"
     },
     {
-      "id": "750cd0e6-8ec1-3638-a5c9-974e2a5c18e8",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
-    {
       "id": "79980b8e-7397-3b29-8016-560ed63c3b69",
       "product": {
         "name": "Linux",
@@ -150,6 +141,16 @@
         }
       },
       "product_version": "4593c4cbe1c96b3995727dc42f6aa103f4ff5afc <73365b81630b57e1a1f9d50dc87281797855c2ac"
+    },
+    {
+      "id": "b18fe151-3a21-3b60-af7f-937f19f2fb25",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "d91c634a-77d2-39c2-a547-1256f07fb74d",

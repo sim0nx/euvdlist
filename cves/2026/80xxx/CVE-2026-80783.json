@@ -3,7 +3,7 @@
   "enisaUuid": "3410ad92-19e6-3165-a1da-185ca8a654a0",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: magicmouse: prevent unbounded recursion in magicmouse_raw_event()\n\nmagicmouse_raw_event() handles DOUBLE_REPORT_ID (0xf7) packets, which pack\ntwo touch reports into one, by splitting the packet and calling itself on\neach half. The only guard against runaway recursion is a \"size < 1\" check,\nwhich stops zero-sized calls but does not bound the recursion depth.\n\nA malicious HID device that matches this driver can send a report starting\nwith DOUBLE_REPORT_ID and filled with the sequence [0xf7, 0x00]. Each level\nconsumes two bytes and recurses on the remainder, so an incoming report of\nup to HID_MAX_BUFFER_SIZE (16 KiB) drives roughly 8000 nested calls. That\neasily exhausts the 16 KiB kernel stack, leading to a stack overflow: a\npanic with CONFIG_VMAP_STACK, or memory corruption without it.\n\nA double report only ever wraps two normal reports; it is never\nlegitimately nested. Refuse to re-enter the DOUBLE_REPORT_ID case from a\nrecursive call so the recursion depth is bounded to two, while all valid\npackets keep being parsed exactly as before.",
   "datePublished": "Sep 4, 2026, 3:12:54 PM",
-  "dateUpdated": "Sep 4, 2026, 3:12:54 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:38 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/26c45abed62536aabf4033fb6d64cf72e93374e9",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/db8d634128d2ba88d79c0b601e983ebe14bb0519"
   ],
   "aliases": [
+    "GHSA-846j-3r8r-8xv8",
     "CVE-2026-80783"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "0d69f8f2-2c90-3575-ac4c-394422539b32",
@@ -122,6 +123,16 @@
       "product_version": "patch: 7.1.11"
     },
     {
+      "id": "c36a8919-d8b5-352e-8cc9-f1e6d343a232",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "d70da0a6-944e-3d30-8003-b7b56d5b1da7",
       "product": {
         "name": "Linux",
@@ -130,16 +141,6 @@
         }
       },
       "product_version": "patch: 5.15.220"
-    },
-    {
-      "id": "e0316f58-48c5-3179-995b-9543ab7c0759",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "e03bf80c-1d4f-3c7f-91ab-d047536964e2",

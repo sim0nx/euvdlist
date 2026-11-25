@@ -3,8 +3,10 @@
   "enisaUuid": "34abf560-442d-32ad-a145-4970b121dd22",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: RFCOMM: hold listener socket in rfcomm_connect_ind()\n\nrfcomm_get_sock_by_channel() scans rfcomm_sk_list under the list lock,\nbut returns the selected listener after dropping that lock without\ntaking a reference. rfcomm_connect_ind() then locks the listener,\nqueues a child socket on it, and may notify it after unlocking it.\n\nThe buggy scenario involves two paths, with each column showing the\norder within that path:\n\nrfcomm_connect_ind():            listener close:\n  1. Find parent in              1. close() enters\n     rfcomm_get_sock_by_channel()   rfcomm_sock_release().\n  2. Drop rfcomm_sk_list.lock    2. rfcomm_sock_shutdown()\n     without pinning parent.        closes the listener.\n  3. Call lock_sock(parent) and  3. rfcomm_sock_kill()\n     bt_accept_enqueue(parent,      unlinks and puts parent.\n     sk, true).\n  4. Read parent flags and may   4. parent can be freed.\n     call sk_state_change().\n\nIf close wins the race, parent can be freed before\nrfcomm_connect_ind() reaches lock_sock(), bt_accept_enqueue(), or the\ndeferred-setup callback.\n\nTake a reference on the listener before leaving rfcomm_sk_list.lock.\nAfter lock_sock() succeeds, recheck that it is still in BT_LISTEN\nbefore queueing a child, cache the deferred-setup bit while the parent\nis locked, and drop the reference after the last parent use.\n\nKASAN reported a slab-use-after-free in lock_sock_nested() from\nrfcomm_connect_ind(), with the freeing stack going through\nrfcomm_sock_kill() and rfcomm_sock_release().",
   "datePublished": "Jun 25, 2026, 8:39:46 AM",
-  "dateUpdated": "Jun 25, 2026, 8:39:46 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:57:32 PM",
+  "baseScore": 8.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/f5ec76bdbeb80f75ad0be204371afffee0f8fac8",
     "https://git.kernel.org/stable/c/a07d741c077d4e34b16458241a94d29039386553",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/43c441edacf953b39517a44f5e5e10a93618b226"
   ],
   "aliases": [
+    "GHSA-hq32-rppj-r4rv",
     "CVE-2026-53256"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.26,
   "enisaIdProduct": [
     {
       "id": "0b7c0691-8d44-3cfc-9e43-5be09317ff00",

@@ -1,0 +1,174 @@
+{
+  "id": "EUVD-2021-33637",
+  "enisaUuid": "0e6224c9-8f5c-3d74-9ddb-54db7658f291",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nhfsplus: prevent corruption in shrinking truncate\n\nI believe there are some issues introduced by commit 31651c607151\n(\"hfsplus: avoid deadlock on file truncation\")\n\nHFS+ has extent records which always contains 8 extents.  In case the\nfirst extent record in catalog file gets full, new ones are allocated from\nextents overflow file.\n\nIn case shrinking truncate happens to middle of an extent record which\nlocates in extents overflow file, the logic in hfsplus_file_truncate() was\nchanged so that call to hfs_brec_remove() is not guarded any more.\n\nRight action would be just freeing the extents that exceed the new size\ninside extent record by calling hfsplus_free_extents(), and then check if\nthe whole extent record should be removed.  However since the guard\n(blk_cnt > start) is now after the call to hfs_brec_remove(), this has\nunfortunate effect that the last matching extent record is removed\nunconditionally.\n\nTo reproduce this issue, create a file which has at least 10 extents, and\nthen perform shrinking truncate into middle of the last extent record, so\nthat the number of remaining extents is not under or divisible by 8.  This\ncauses the last extent record (8 extents) to be removed totally instead of\ntruncating into middle of it.  Thus this causes corruption, and lost data.\n\nFix for this is simply checking if the new truncated end is below the\nstart of this extent record, making it safe to remove the full extent\nrecord.  However call to hfs_brec_remove() can't be moved to it's previous\nplace since we're dropping ->tree_lock and it can cause a race condition\nand the cached info being invalidated possibly corrupting the node data.\n\nAnother issue is related to this one.  When entering into the block\n(blk_cnt > start) we are not holding the ->tree_lock.  We break out from\nthe loop not holding the lock, but hfs_find_exit() does unlock it.  Not\nsure if it's possible for someone else to take the lock under our feet,\nbut it can cause hard to debug errors and premature unlocking.  Even if\nthere's no real risk of it, the locking should still always be kept in\nbalance.  Thus taking the lock now just before the check.",
+  "datePublished": "Feb 28, 2024, 8:13:15 AM",
+  "dateUpdated": "Aug 5, 2026, 8:45:24 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/52dde855663e5db824af51db39b5757d2ef3e28a",
+    "https://git.kernel.org/stable/c/c451a6bafb5f422197d31536f82116aed132b72c",
+    "https://git.kernel.org/stable/c/adbd8a2a8cc05d9e501f93e5c95c59307874cc99",
+    "https://git.kernel.org/stable/c/c477f62db1a0c0ecaa60a29713006ceeeb04b685",
+    "https://git.kernel.org/stable/c/97314e45aa1223a42d60256a62c5d9af54baf446",
+    "https://git.kernel.org/stable/c/c3187cf32216313fb316084efac4dab3a8459b1d"
+  ],
+  "aliases": [
+    "CVE-2021-46989",
+    "GHSA-758g-j8h5-xvgg"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "179cd7a1-1b40-381c-9f86-7acfab52eef7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "31651c607151f1034cfb57e5a78678bea54c362b <c477f62db1a0c0ecaa60a29713006ceeeb04b685"
+    },
+    {
+      "id": "291f6cd8-4208-3bff-a842-210118f51626",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.191"
+    },
+    {
+      "id": "2f7fd312-e1da-3ede-b805-889f19965154",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.120"
+    },
+    {
+      "id": "3e1b2520-4480-341d-a3fe-1d1ce64c4e44",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.5"
+    },
+    {
+      "id": "6364cc83-8de1-321a-8423-96a3b67394f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "31651c607151f1034cfb57e5a78678bea54c362b <adbd8a2a8cc05d9e501f93e5c95c59307874cc99"
+    },
+    {
+      "id": "75af6089-d670-30f5-8b44-38af0037e639",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "31651c607151f1034cfb57e5a78678bea54c362b <c451a6bafb5f422197d31536f82116aed132b72c"
+    },
+    {
+      "id": "b4b8b7af-a63f-33d6-8e4e-48e50beb4972",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.11.22"
+    },
+    {
+      "id": "b55feb98-ea66-3fd3-ab09-c0a8284100a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "31651c607151f1034cfb57e5a78678bea54c362b <97314e45aa1223a42d60256a62c5d9af54baf446"
+    },
+    {
+      "id": "be010d67-70a9-31bd-80e2-443d30fe8d8e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.38"
+    },
+    {
+      "id": "c7b9879d-2a20-3a66-960a-b8f84dbab067",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "31651c607151f1034cfb57e5a78678bea54c362b <c3187cf32216313fb316084efac4dab3a8459b1d"
+    },
+    {
+      "id": "ca9a5170-2e41-384c-887d-ceb3d1da26b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "31651c607151f1034cfb57e5a78678bea54c362b <52dde855663e5db824af51db39b5757d2ef3e28a"
+    },
+    {
+      "id": "d5f68cf2-a821-3b76-a513-8c9453724bec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.19"
+    },
+    {
+      "id": "f67f0a68-52d3-3580-b8ed-cf99d66477d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    },
+    {
+      "id": "fa99bf95-36dc-3703-9408-ca168a491190",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "00829dfa-92cd-3a9f-8b9b-50892f987767",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

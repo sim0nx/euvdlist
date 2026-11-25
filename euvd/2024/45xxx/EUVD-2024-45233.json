@@ -1,0 +1,193 @@
+{
+  "id": "EUVD-2024-45233",
+  "enisaUuid": "8f3bbb39-641b-3bfa-9375-bab0473c84a2",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\next4: dax: fix overflowing extents beyond inode size when partially writing\n\nThe dax_iomap_rw() does two things in each iteration: map written blocks\nand copy user data to blocks. If the process is killed by user(See signal\nhandling in dax_iomap_iter()), the copied data will be returned and added\non inode size, which means that the length of written extents may exceed\nthe inode size, then fsck will fail. An example is given as:\n\ndd if=/dev/urandom of=file bs=4M count=1\n dax_iomap_rw\n  iomap_iter // round 1\n   ext4_iomap_begin\n    ext4_iomap_alloc // allocate 0~2M extents(written flag)\n  dax_iomap_iter // copy 2M data\n  iomap_iter // round 2\n   iomap_iter_advance\n    iter->pos += iter->processed // iter->pos = 2M\n   ext4_iomap_begin\n    ext4_iomap_alloc // allocate 2~4M extents(written flag)\n  dax_iomap_iter\n   fatal_signal_pending\n  done = iter->pos - iocb->ki_pos // done = 2M\n ext4_handle_inode_extension\n  ext4_update_inode_size // inode size = 2M\n\nfsck reports: Inode 13, i_size is 2097152, should be 4194304.  Fix?\n\nFix the problem by truncating extents if the written length is smaller\nthan expected.",
+  "datePublished": "Oct 21, 2024, 6:54:06 PM",
+  "dateUpdated": "Oct 15, 2026, 12:56:10 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/f8a7c342326f6ad1dfdb30a18dd013c70f5e9669",
+    "https://git.kernel.org/stable/c/8c30a9a8610c314554997f86370140746aa35661",
+    "https://git.kernel.org/stable/c/abfaa876b948baaea4d14f21a1963789845c8b4c",
+    "https://git.kernel.org/stable/c/5efccdee4a7d507a483f20f880b809cc4eaef14d",
+    "https://git.kernel.org/stable/c/a9f331f51515bdb3ebc8d0963131af367ef468f6",
+    "https://git.kernel.org/stable/c/ec0dd451e236c46e4858d53e9e82bae7797a7af5",
+    "https://git.kernel.org/stable/c/dda898d7ffe85931f9cca6d702a51f33717c501e"
+  ],
+  "aliases": [
+    "GHSA-r75j-q9wj-xrc3",
+    "CVE-2024-50015"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "09044c61-222c-3b12-bf61-5d9f83a0952a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.168"
+    },
+    {
+      "id": "0eabac81-981b-3266-a8cf-f887e5739ff7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "776722e85d3b0936253ecc3d14db4fba37f191ba <abfaa876b948baaea4d14f21a1963789845c8b4c"
+    },
+    {
+      "id": "100d6879-a60e-3bac-994c-49ac3bdd165c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.14"
+    },
+    {
+      "id": "44331e73-deca-3690-888c-94d632c8f2d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "50a4a8ef-8cd8-3c7d-8390-593507186f50",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "776722e85d3b0936253ecc3d14db4fba37f191ba <8c30a9a8610c314554997f86370140746aa35661"
+    },
+    {
+      "id": "683f8ce5-8e50-33b4-9de2-c5ed1da0b3b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "776722e85d3b0936253ecc3d14db4fba37f191ba <a9f331f51515bdb3ebc8d0963131af367ef468f6"
+    },
+    {
+      "id": "7b3f1b00-d43d-3486-997a-992f2fe8c8a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "776722e85d3b0936253ecc3d14db4fba37f191ba <f8a7c342326f6ad1dfdb30a18dd013c70f5e9669"
+    },
+    {
+      "id": "7fb05940-819f-3d06-a531-0caa128afe20",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "776722e85d3b0936253ecc3d14db4fba37f191ba <ec0dd451e236c46e4858d53e9e82bae7797a7af5"
+    },
+    {
+      "id": "88f83599-0162-35d0-932f-27717f36aae8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.10"
+    },
+    {
+      "id": "89145169-7a80-3a09-97d6-f8bbd0d559f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "c38af519-b055-3a30-b1a2-5df46bbaac81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "776722e85d3b0936253ecc3d14db4fba37f191ba <dda898d7ffe85931f9cca6d702a51f33717c501e"
+    },
+    {
+      "id": "c40667bb-4e01-3da0-ab2d-317680374f8a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.113"
+    },
+    {
+      "id": "d7008071-6148-3631-9bfb-ef645624e889",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.3"
+    },
+    {
+      "id": "e09005bb-c225-34db-88f8-e613afb81792",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.227"
+    },
+    {
+      "id": "e64e6cae-419c-3230-a01f-debb5b1ee1f5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.55"
+    },
+    {
+      "id": "fd8bb8cf-dcd5-313c-b124-b6291d0bb8d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "776722e85d3b0936253ecc3d14db4fba37f191ba <5efccdee4a7d507a483f20f880b809cc4eaef14d"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6a9758b5-249d-3cd1-8070-87994f8ce1f6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

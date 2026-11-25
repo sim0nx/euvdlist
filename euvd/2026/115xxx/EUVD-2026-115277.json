@@ -3,7 +3,7 @@
   "enisaUuid": "b7dfd190-84e7-313b-86aa-f6e0ac44ee98",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntracing: Save the event file instead of the compatible histogram\n\ncreate_field_var_hist() creates a histogram on the matched event to\nsupply a field variable, and records it on the target so it can be torn\ndown later:\n\n\thist_data = find_compatible_hist(target_hist_data, file);\n\t...\n\t/* Save the compatible histogram information */\n\tvar_hist->hist_data = hist_data;\n\nhist_data is not the histogram it creates. It is one that was already\nthere, whose keys the new one copies. The saved pointer has a single\nuser, unregister_field_var_hists(), which runs when the target is\nremoved:\n\n\tfile = hist_data->field_var_hists[i]->hist_data->event_file;\n\nfind_compatible_hist() matches on keys alone, so it can pick one with no\nvariables of its own. check_var_refs() then returns false and the user\ncan remove it while the target still points at it:\n\n BUG: KASAN: slab-use-after-free in event_hist_trigger_free+0x2b2/0x320\n Read of size 8 at addr ffff8880093b90e0 by task init/1\n\n Freed by task 1:\n  kfree+0x154/0x420\n  event_hist_trigger_free+0x1d5/0x320\n  event_hist_trigger_parse+0x35f3/0x69e0\n  trigger_process_regex+0x1a6/0x250\n\nSave the event file instead. It is all the dereference ever wanted, and\nit does not go away when the user removes a trigger.",
   "datePublished": "Nov 2, 2026, 4:06:41 PM",
-  "dateUpdated": "Nov 2, 2026, 4:06:41 PM",
+  "dateUpdated": "Nov 3, 2026, 7:13:03 PM",
   "baseScore": 7.8,
   "baseScoreVersion": "3.1",
   "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
@@ -15,13 +15,15 @@
     "https://git.kernel.org/stable/c/7a111ba0d1b74c99bc8f096565dc71945f694254",
     "https://git.kernel.org/stable/c/3609ada3c12cecfb0ae5ee82ef4f86c5f18a2dea",
     "https://git.kernel.org/stable/c/9631dbccd3c649b567a5aafffea6b00634183997",
-    "https://git.kernel.org/stable/c/7cafc82e6153f05a221be678cd649d02e06ba909"
+    "https://git.kernel.org/stable/c/7cafc82e6153f05a221be678cd649d02e06ba909",
+    "https://git.kernel.org/stable/c/d5c42664fc094899af9aae5300b27fe8fdb658ef"
   ],
   "aliases": [
-    "CVE-2026-99235"
+    "CVE-2026-99235",
+    "GHSA-26q8-79pw-ggjf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "01a3ea25-926f-3317-b728-482fe28ceba4",
@@ -154,6 +156,16 @@
       "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <9631dbccd3c649b567a5aafffea6b00634183997"
     },
     {
+      "id": "cedb8252-f272-31b9-b094-c333a44167f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
       "id": "d6c2e792-4a08-3a00-9a51-21dba133ccf2",
       "product": {
         "name": "Linux",
@@ -192,6 +204,16 @@
         }
       },
       "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <ac815a379644b2ad5008a009a3516ada31b5dd82"
+    },
+    {
+      "id": "f0a5e3e6-debf-3878-a7b0-9c5d0d6de434",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <d5c42664fc094899af9aae5300b27fe8fdb658ef"
     },
     {
       "id": "f973e2e0-318c-3f61-854c-978b0490b87c",

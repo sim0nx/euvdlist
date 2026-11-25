@@ -3,18 +3,22 @@
   "enisaUuid": "86d0f6c0-b656-3bc0-b51c-cfb0c8b2364b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: bcmgenet: unshare the skb before writing the control block\n\nbcmgenet stores first_cb, last_cb and bytes_sent in the skb control\nblock and reads them back on completion to free the skb and credit BQL.\nether_setup() leaves IFF_TX_SKB_SHARING set, so the stack can resubmit\na shared skb that is still in the ring. The next transmit overwrites\nlast_cb, so the earlier slots complete without crediting their bytes\nand BQL stalls the queue until the watchdog resets it.\n\nUnshare the skb before writing the control block.\n\nReproduce with pktgen in clone_skb mode, which hands the driver the same\nskb while earlier copies are still in the ring:\n\n  modprobe pktgen\n  pg=/proc/net/pktgen\n  echo \"add_device eth0\" > $pg/kpktgend_0\n  echo \"dst_mac AA:BB:CC:DD:EE:FF\" > $pg/eth0\n  echo \"dst 192.0.2.1\" > $pg/eth0\n  echo \"clone_skb 8\" > $pg/eth0\n  echo \"count 0\" > $pg/eth0\n  echo start > $pg/pgctrl &\n  sleep 5\n  echo stop > $pg/pgctrl\n  wait\n  cat /sys/class/net/eth0/queues/tx-0/byte_queue_limits/inflight\n\ninflight stays nonzero on the now idle queue. clone_skb 0 leaves it at\nzero.",
   "datePublished": "Oct 28, 2026, 10:35:48 AM",
-  "dateUpdated": "Oct 28, 2026, 10:35:48 AM",
+  "dateUpdated": "Oct 30, 2026, 12:42:50 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/c13d43c92bc89f494592a60e624a7c0c42218d36",
+    "https://git.kernel.org/stable/c/e5aa07c62e4fda1206d314c9ea36d67cd6b95cad",
+    "https://git.kernel.org/stable/c/2e5fb9dd3aca0da534793ad8123b81deff396efe",
     "https://git.kernel.org/stable/c/40c04abcbc34e3afe338f41dae851ecbd72852ac",
     "https://git.kernel.org/stable/c/7939ad3b4db9eadf45a64f0524f38337a9494672",
     "https://git.kernel.org/stable/c/89771ce4f8f67dcffae561b2ccac95c0f6e3aa01"
   ],
   "aliases": [
+    "GHSA-gcjx-rww2-6xmm",
     "CVE-2026-99192"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "4889df68-7610-30b4-aed5-bc02365363c0",
@@ -57,6 +61,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "7848938a-9263-3dcc-9ba4-60d368a69076",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f48bed16a756f5bc0244acd581f61968f7d7c2a4 <2e5fb9dd3aca0da534793ad8123b81deff396efe"
+    },
+    {
+      "id": "92574d12-5cb2-3f26-85c5-648b5b0af3af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.161"
+    },
+    {
       "id": "9bee1bf0-fcea-3264-81c8-1184192cf808",
       "product": {
         "name": "Linux",
@@ -75,6 +99,46 @@
         }
       },
       "product_version": "f48bed16a756f5bc0244acd581f61968f7d7c2a4 <7939ad3b4db9eadf45a64f0524f38337a9494672"
+    },
+    {
+      "id": "a7fdd7ba-fa97-3906-8018-52e6873b685e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f48bed16a756f5bc0244acd581f61968f7d7c2a4 <e5aa07c62e4fda1206d314c9ea36d67cd6b95cad"
+    },
+    {
+      "id": "af6187c4-c44b-3ed8-a963-2b4041bf574b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "c42af365-22ab-3bd5-bd4a-012b2a080a87",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f48bed16a756f5bc0244acd581f61968f7d7c2a4 <c13d43c92bc89f494592a60e624a7c0c42218d36"
+    },
+    {
+      "id": "ec2ad23d-74d0-3464-be1a-eb364c43070c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
     },
     {
       "id": "eec0fc20-88b0-3af6-a4b2-83c2bbb02d94",

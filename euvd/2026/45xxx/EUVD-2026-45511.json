@@ -3,8 +3,10 @@
   "enisaUuid": "361f5f7a-22db-3d4b-bc1f-0cc8f1383085",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/tcp-ao: fix use-after-free of key in del_async path\n\nIn tcp_ao_delete_key(), the del_async path skips the current_key\nand rnext_key validity checks present in the synchronous path,\nassuming these pointers are always NULL on LISTEN sockets.  However,\nif a key was added with set_current=1/set_rnext=1 while the socket\nwas in CLOSE state, current_key and rnext_key will be non-NULL\nafter listen() transitions the socket to LISTEN.\n\nWhen such a key is deleted with del_async=1, hlist_del_rcu() and\ncall_rcu() free the key without clearing the dangling pointers.\nAfter the RCU grace period, getsockopt(TCP_AO_INFO) dereferences\ncurrent_key->sndid and rnext_key->rcvid from freed slab memory.\n\nClear current_key and rnext_key in the del_async path when they\nreference the key being deleted.",
   "datePublished": "Jul 19, 2026, 12:01:54 PM",
-  "dateUpdated": "Jul 19, 2026, 12:01:54 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:50:40 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/6ce7ef41743740ce15c2061561b784148b565b3f",
     "https://git.kernel.org/stable/c/e77fbefd1269b5c123e7c651a1ebdce1b87d19a0",
@@ -16,7 +18,7 @@
     "CVE-2026-53389"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "35232df4-7c31-3d12-bf47-074c485958c3",
@@ -59,6 +61,16 @@
       "product_version": "d6732b95b6fbbc6d5bb9d2f809e275763640c4a2 <6ce7ef41743740ce15c2061561b784148b565b3f"
     },
     {
+      "id": "9a5c83c4-c2f1-3a0d-aace-eeaf2fdf8fd2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "bdb728cf-93db-3377-b6fe-bbf0c250cd0a",
       "product": {
         "name": "Linux",
@@ -67,16 +79,6 @@
         }
       },
       "product_version": "6.7"
-    },
-    {
-      "id": "dd9a3f16-9988-3164-a14f-663bb2ed6c31",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "e537ded3-e1cd-3bf2-b07b-4042b4921ed9",

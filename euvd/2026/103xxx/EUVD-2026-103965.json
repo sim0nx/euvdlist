@@ -3,29 +3,54 @@
   "enisaUuid": "bc68167f-0cc8-39e2-b9fd-c996fa729b60",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: cw1200: fix TX padding OOB read leaking heap data to device\n\nThe TX path rounds the transfer size up to the bus alignment\n(align_size(), up to 511 bytes for SDIO, 1 byte for SPI) but sends\nthe padded length straight from the frame buffer, which has no room\nreserved for the padding.  cw1200_data_write() therefore reads past\nthe end of the frame and the bus transfer carries those bytes to the\ndevice.  A bogus device can collect up to 511 bytes of kernel heap\ndata per TX frame.\n\nThe RX path does not have this problem: it allocates the skb with\nthe aligned length (alloc_len) before reading.\n\nCompute the exact padding with the bus align_size() callback, make\nsure queued TX frames have tailroom for it, and zero the padding\nbytes before the transfer so nothing past the frame is exposed.\n\nThis is not expected to change driver behavior on most cases: frame\ncontents and transfer sizes are unchanged, only the content of the\npadding bytes (previously undefined stale memory, now zero), which\nthe device never reads since the WSM header carries the real frame\nlength.  The skb expansion can only fail under memory exhaustion,\nin which case the frame is dropped like on the existing error paths\nof cw1200_tx().\n\nDiscovered by Atuin - Automated Vulnerability Discovery Engine.",
   "datePublished": "Oct 18, 2026, 3:46:44 PM",
-  "dateUpdated": "Oct 18, 2026, 3:46:44 PM",
+  "dateUpdated": "Oct 30, 2026, 12:39:02 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/8e8e4d0b15f174d964a48b1c54dc8828e5ae87c5",
+    "https://git.kernel.org/stable/c/a7eae7547ae1443bfbca2cb90d3ef5e501d6445c",
+    "https://git.kernel.org/stable/c/5897945635aa5413595bf696127493be96c08e2d",
+    "https://git.kernel.org/stable/c/b66539a4dab128fafaad736b53ce15c19d14d561",
     "https://git.kernel.org/stable/c/71f693a0ecccf36532dd2790f7969da6c71d5d23",
     "https://git.kernel.org/stable/c/b0e97bd40e0c2cb1a3530ef8f6250aacf3224515",
     "https://git.kernel.org/stable/c/678c8f4ba285649d5418a858d5d4f30c728a54ad",
     "https://git.kernel.org/stable/c/7c1611780823b76219cb1478db53dfd890c4a9a2"
   ],
   "aliases": [
+    "GHSA-rfqv-xwf2-63qv",
     "CVE-2026-98711"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
-      "id": "223d0f96-ee73-3493-ad61-e222605295cb",
+      "id": "060b3d40-5bd1-3a35-b0d5-6407ceb1245d",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc6"
+      "product_version": "a910e4a94f6923c8c988565525f017f687bf7205 <b66539a4dab128fafaad736b53ce15c19d14d561"
+    },
+    {
+      "id": "16c35ddf-11c3-3c0e-951b-11b912b41a69",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "1ec40f23-b54e-3b2e-be96-92944d570d3c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "271628d9-fb08-3f19-8b88-4229755150bf",
@@ -68,6 +93,26 @@
       "product_version": "3.11"
     },
     {
+      "id": "3b349acd-dd93-356a-9fc3-993aa9cb384e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "3f678554-e661-3ad9-92ce-f4f667c59a11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a910e4a94f6923c8c988565525f017f687bf7205 <a7eae7547ae1443bfbca2cb90d3ef5e501d6445c"
+    },
+    {
       "id": "41f04ce2-8085-354d-a55d-d1921a3f464c",
       "product": {
         "name": "Linux",
@@ -108,6 +153,16 @@
       "product_version": "patch: 7.2.10"
     },
     {
+      "id": "925ceac7-27a5-325d-a347-c4f25faefccd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a910e4a94f6923c8c988565525f017f687bf7205 <8e8e4d0b15f174d964a48b1c54dc8828e5ae87c5"
+    },
+    {
       "id": "ae68b87b-4e5e-3e4d-9542-bb613475bc13",
       "product": {
         "name": "Linux",
@@ -116,6 +171,36 @@
         }
       },
       "product_version": "a910e4a94f6923c8c988565525f017f687bf7205 <678c8f4ba285649d5418a858d5d4f30c728a54ad"
+    },
+    {
+      "id": "d7659abe-df7e-3a17-b5a4-7650d3fe99e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a910e4a94f6923c8c988565525f017f687bf7205 <5897945635aa5413595bf696127493be96c08e2d"
+    },
+    {
+      "id": "e8d44780-d8ac-3240-9678-d8b0ae2eeb9a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "eebebcda-cb82-32ee-89bc-0b3b0fc9f37f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     }
   ],
   "enisaIdVendor": [

@@ -1,0 +1,159 @@
+{
+  "id": "EUVD-2024-35838",
+  "enisaUuid": "0c6df63d-c758-3e01-93a6-8b7f1468faa6",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/hugetlb: fix DEBUG_LOCKS_WARN_ON(1) when dissolve_free_hugetlb_folio()\n\nWhen I did memory failure tests recently, below warning occurs:\n\nDEBUG_LOCKS_WARN_ON(1)\nWARNING: CPU: 8 PID: 1011 at kernel/locking/lockdep.c:232 __lock_acquire+0xccb/0x1ca0\nModules linked in: mce_inject hwpoison_inject\nCPU: 8 PID: 1011 Comm: bash Kdump: loaded Not tainted 6.9.0-rc3-next-20240410-00012-gdb69f219f4be #3\nHardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.14.0-0-g155821a1990b-prebuilt.qemu.org 04/01/2014\nRIP: 0010:__lock_acquire+0xccb/0x1ca0\nRSP: 0018:ffffa7a1c7fe3bd0 EFLAGS: 00000082\nRAX: 0000000000000000 RBX: eb851eb853975fcf RCX: ffffa1ce5fc1c9c8\nRDX: 00000000ffffffd8 RSI: 0000000000000027 RDI: ffffa1ce5fc1c9c0\nRBP: ffffa1c6865d3280 R08: ffffffffb0f570a8 R09: 0000000000009ffb\nR10: 0000000000000286 R11: ffffffffb0f2ad50 R12: ffffa1c6865d3d10\nR13: ffffa1c6865d3c70 R14: 0000000000000000 R15: 0000000000000004\nFS:  00007ff9f32aa740(0000) GS:ffffa1ce5fc00000(0000) knlGS:0000000000000000\nCS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033\nCR2: 00007ff9f3134ba0 CR3: 00000008484e4000 CR4: 00000000000006f0\nCall Trace:\n <TASK>\n lock_acquire+0xbe/0x2d0\n _raw_spin_lock_irqsave+0x3a/0x60\n hugepage_subpool_put_pages.part.0+0xe/0xc0\n free_huge_folio+0x253/0x3f0\n dissolve_free_huge_page+0x147/0x210\n __page_handle_poison+0x9/0x70\n memory_failure+0x4e6/0x8c0\n hard_offline_page_store+0x55/0xa0\n kernfs_fop_write_iter+0x12c/0x1d0\n vfs_write+0x380/0x540\n ksys_write+0x64/0xe0\n do_syscall_64+0xbc/0x1d0\n entry_SYSCALL_64_after_hwframe+0x77/0x7f\nRIP: 0033:0x7ff9f3114887\nRSP: 002b:00007ffecbacb458 EFLAGS: 00000246 ORIG_RAX: 0000000000000001\nRAX: ffffffffffffffda RBX: 000000000000000c RCX: 00007ff9f3114887\nRDX: 000000000000000c RSI: 0000564494164e10 RDI: 0000000000000001\nRBP: 0000564494164e10 R08: 00007ff9f31d1460 R09: 000000007fffffff\nR10: 0000000000000000 R11: 0000000000000246 R12: 000000000000000c\nR13: 00007ff9f321b780 R14: 00007ff9f3217600 R15: 00007ff9f3216a00\n </TASK>\nKernel panic - not syncing: kernel: panic_on_warn set ...\nCPU: 8 PID: 1011 Comm: bash Kdump: loaded Not tainted 6.9.0-rc3-next-20240410-00012-gdb69f219f4be #3\nHardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.14.0-0-g155821a1990b-prebuilt.qemu.org 04/01/2014\nCall Trace:\n <TASK>\n panic+0x326/0x350\n check_panic_on_warn+0x4f/0x50\n __warn+0x98/0x190\n report_bug+0x18e/0x1a0\n handle_bug+0x3d/0x70\n exc_invalid_op+0x18/0x70\n asm_exc_invalid_op+0x1a/0x20\nRIP: 0010:__lock_acquire+0xccb/0x1ca0\nRSP: 0018:ffffa7a1c7fe3bd0 EFLAGS: 00000082\nRAX: 0000000000000000 RBX: eb851eb853975fcf RCX: ffffa1ce5fc1c9c8\nRDX: 00000000ffffffd8 RSI: 0000000000000027 RDI: ffffa1ce5fc1c9c0\nRBP: ffffa1c6865d3280 R08: ffffffffb0f570a8 R09: 0000000000009ffb\nR10: 0000000000000286 R11: ffffffffb0f2ad50 R12: ffffa1c6865d3d10\nR13: ffffa1c6865d3c70 R14: 0000000000000000 R15: 0000000000000004\n lock_acquire+0xbe/0x2d0\n _raw_spin_lock_irqsave+0x3a/0x60\n hugepage_subpool_put_pages.part.0+0xe/0xc0\n free_huge_folio+0x253/0x3f0\n dissolve_free_huge_page+0x147/0x210\n __page_handle_poison+0x9/0x70\n memory_failure+0x4e6/0x8c0\n hard_offline_page_store+0x55/0xa0\n kernfs_fop_write_iter+0x12c/0x1d0\n vfs_write+0x380/0x540\n ksys_write+0x64/0xe0\n do_syscall_64+0xbc/0x1d0\n entry_SYSCALL_64_after_hwframe+0x77/0x7f\nRIP: 0033:0x7ff9f3114887\nRSP: 002b:00007ffecbacb458 EFLAGS: 00000246 ORIG_RAX: 0000000000000001\nRAX: ffffffffffffffda RBX: 000000000000000c RCX: 00007ff9f3114887\nRDX: 000000000000000c RSI: 0000564494164e10 RDI: 0000000000000001\nRBP: 0000564494164e10 R08: 00007ff9f31d1460 R09: 000000007fffffff\nR10: 0000000000000000 R11: 0000000000000246 R12: 000000000000000c\nR13: 00007ff9f321b780 R14: 00007ff9f3217600 R15: 00007ff9f3216a00\n </TASK>\n\nAfter git bisecting and digging into the code, I believe the root cause is\nthat _deferred_list field of folio is unioned with _hugetlb_subpool field.\nIn __update_and_free_hugetlb_folio(), folio->_deferred_\n---truncated---",
+  "datePublished": "May 30, 2024, 3:19:42 PM",
+  "dateUpdated": "May 23, 2026, 3:46:31 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/2effe407f7563add41750fd7e03da4ea44b98099",
+    "https://git.kernel.org/stable/c/7e0a322877416e8c648819a8e441cf8c790b2cce",
+    "https://git.kernel.org/stable/c/9c9b32d46afab2d911897914181c488954012300",
+    "https://git.kernel.org/stable/c/52ccdde16b6540abe43b6f8d8e1e1ec90b0983af"
+  ],
+  "aliases": [
+    "CVE-2024-36028"
+  ],
+  "assigner": "Linux",
+  "epss": 0.18,
+  "enisaIdProduct": [
+    {
+      "id": "07883828-2383-3dc0-abec-3325ca3d103a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1b4ce2952b4f33e198d5e993acff0611dff1e399 <2effe407f7563add41750fd7e03da4ea44b98099"
+    },
+    {
+      "id": "1e368860-97b2-37db-bb4e-41c52787a26e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "33607412-85ee-3754-9802-bc82e75825b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "32c877191e022b55fe3a374f3d7e9fb5741c514d <52ccdde16b6540abe43b6f8d8e1e1ec90b0983af"
+    },
+    {
+      "id": "371795b1-48ae-32a6-bfb5-d73221042f41",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.5"
+    },
+    {
+      "id": "3eb4339d-2df6-3635-af3f-d6bb4eef8ae8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9a1a43a0e7e96911eaa00ad20b20f2edefb31d8a"
+    },
+    {
+      "id": "55a39c94-e950-3129-8dbf-bd8df81d5817",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "69f03597-9124-3f3a-b83f-d98044b0a76e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.31"
+    },
+    {
+      "id": "79eb3db4-98cb-3413-99ba-0b3a778ebd2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.91"
+    },
+    {
+      "id": "84e0def9-bbfe-30b5-8675-6875b9bf9cf4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "32c877191e022b55fe3a374f3d7e9fb5741c514d <9c9b32d46afab2d911897914181c488954012300"
+    },
+    {
+      "id": "996ef024-6479-3e99-9b8e-96934554eda3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.9"
+    },
+    {
+      "id": "a4077728-6385-316e-927a-7acabde141be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.4.11 <6.5"
+    },
+    {
+      "id": "e6beeaf4-073a-3bf7-9e28-f8cea86230ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "32c877191e022b55fe3a374f3d7e9fb5741c514d <7e0a322877416e8c648819a8e441cf8c790b2cce"
+    },
+    {
+      "id": "eb782c4d-e5db-3d10-ad0e-4dc98943e6fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.47 <6.1.91"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "fd1da49d-e21d-3134-89fa-7c265325f1fc",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,8 +3,10 @@
   "enisaUuid": "6a2ac2d3-4d6b-3882-8970-aae48debcf3f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/mempolicy: fix sleeping allocation in alloc_pages_bulk_weighted_interleave()\n\nsyzbot reported a sleeping function called from invalid context splat in\nbucket_table_alloc().\n\nWhen rhashtable_insert_slow() rehashes the table under rcu_read_lock(), it\ncalls bucket_table_alloc(..., GFP_ATOMIC | __GFP_NOWARN).  If the bucket\ntable allocation uses vmalloc, __vmalloc_node_range_noprof() invokes\nvm_area_alloc_pages() -> alloc_pages_bulk_mempolicy_noprof() with the\npassed GFP_ATOMIC flags.\n\nIf the current task has an MPOL_WEIGHTED_INTERLEAVE mempolicy,\nalloc_pages_bulk_weighted_interleave() is called and currently hardcodes\nGFP_KERNEL when allocating the temporary weights array, triggering a\nmight_alloc() splat in atomic/RCU contexts.\n\nPass the gfp flags (masked with GFP_RECLAIM_MASK to strip page-allocator\nzone modifiers like __GFP_HIGHMEM) received by\nalloc_pages_bulk_weighted_interleave() to kmalloc() instead of hardcoding\nGFP_KERNEL.  Since the weights buffer is immediately initialized in full,\nkmalloc() is sufficient.",
   "datePublished": "Sep 16, 2026, 10:33:01 AM",
-  "dateUpdated": "Sep 16, 2026, 10:33:01 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:56:00 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/bcb3d0c867ee40dc48e9c085bf328fbc679b6656",
     "https://git.kernel.org/stable/c/0ceda28f371df9e0bbdaa29214f71fe8298f23d8",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/540e583b66d6402bf556fde5e53c817a54c1afe5"
   ],
   "aliases": [
-    "CVE-2026-89986"
+    "CVE-2026-89986",
+    "GHSA-f5rq-g72v-q29m"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "10f81f1e-fb14-37a2-9639-a6e69954b322",
@@ -26,6 +29,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "12fe4e5b-66f8-3940-9696-1ab5f26c8a80",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "2095d9ac-4308-366d-85ad-3b5f3b57d7cd",
@@ -76,16 +89,6 @@
         }
       },
       "product_version": "patch: 6.18.51"
-    },
-    {
-      "id": "97848e7d-b260-3e9e-9a86-daea5cab50c2",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc2"
     },
     {
       "id": "c3d794f4-6e2d-3485-a5f6-372d3b104ac3",

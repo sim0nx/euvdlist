@@ -3,17 +3,19 @@
   "enisaUuid": "0de90487-1f3b-3d4e-ba58-84191fa945c9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs/ntfs3: fix ntfs_mount_options leak in ntfs_fill_super()\n\nIn ntfs_fill_super(), the fc->fs_private pointer is set to NULL without\nfirst freeing the memory it points to. This causes the subsequent call to\nntfs_fs_free() to skip freeing the ntfs_mount_options structure.\n\nThis results in a kmemleak report:\n\n  unreferenced object 0xff1100015378b800 (size 32):\n    comm \"mount\", pid 582, jiffies 4294890685\n    hex dump (first 32 bytes):\n      00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................\n      00 00 00 00 00 00 00 00 ed ff ed ff 00 04 00 00  ................\n    backtrace (crc ed541d8c):\n      __kmalloc_cache_noprof+0x424/0x5a0\n      __ntfs_init_fs_context+0x47/0x590\n      alloc_fs_context+0x5d8/0x960\n      __x64_sys_fsopen+0xb1/0x190\n      do_syscall_64+0x50/0x1f0\n      entry_SYSCALL_64_after_hwframe+0x76/0x7e\n\nThis issue can be reproduced using the following commands:\n        fallocate -l 100M test.file\n        mount test.file /tmp/test\n\nSince sbi->options is duplicated from fc->fs_private and does not\ndirectly use the memory allocated for fs_private, it is unnecessary to\nset fc->fs_private to NULL.\n\nAdditionally, this patch simplifies the code by utilizing the helper\nfunction put_mount_options() instead of open-coding the cleanup logic.",
   "datePublished": "May 27, 2026, 12:24:03 PM",
-  "dateUpdated": "May 27, 2026, 12:24:03 PM",
+  "dateUpdated": "Oct 26, 2026, 3:12:54 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/d977b979081ef2585a15453f309a6311c95ede02",
     "https://git.kernel.org/stable/c/dac871d833b09495198dcac81d2ebaa8db11acbc",
     "https://git.kernel.org/stable/c/f7edab0cee03a1cbe0e55a7bcab8d2d8b6b74278"
   ],
   "aliases": [
+    "GHSA-w58m-8mj8-hh8w",
     "CVE-2025-71312"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.15,
   "enisaIdProduct": [
     {
       "id": "06b6fc22-263c-37b0-9e8f-a6ea0a6a58eb",
@@ -24,6 +26,16 @@
         }
       },
       "product_version": "6.19"
+    },
+    {
+      "id": "1086ce45-dc81-391d-9831-6ad36bcc6683",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "129b0a64fe9ac5b4138cc123cccbcce7c65afdf4 <d977b979081ef2585a15453f309a6311c95ede02"
     },
     {
       "id": "24a7c910-cfe5-39db-9b2d-6b743b47b14f",

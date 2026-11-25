@@ -3,18 +3,22 @@
   "enisaUuid": "c97c8f65-6f1c-3d65-a78a-947de2af4273",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: flush dirty data before zeroing a range\n\nsmb3_zero_range() emulates FALLOC_FL_ZERO_RANGE by invalidating the\npage cache over the target range with truncate_pagecache_range() and\nthen issuing FSCTL_SET_ZERO_DATA to the server.\n\nDirty data was only flushed conditionally, when the range reached or\nextended EOF.  For a purely interior zero range that does not reach\nEOF, no flush happened, so a dirty folio overlapping the range could\nbe written back to the server after the FSCTL and refill the range\nthat was just zeroed with stale data.\n\nFix this by unconditionally flushing and waiting for dirty data in the\nrange before invalidating the page cache and issuing\nFSCTL_SET_ZERO_DATA, exactly as was done for smb3_punch_hole() in\ncommit d7d2adcd022b (\"smb/client: flush dirty data before punching a\nhole\"); the two paths are structurally identical here.\n\nThis is observed as generic/363 randomly reading stale data where a\nzeroed range is expected against Windows Server.",
   "datePublished": "Oct 18, 2026, 3:45:50 PM",
-  "dateUpdated": "Oct 18, 2026, 3:45:50 PM",
+  "dateUpdated": "Nov 23, 2026, 8:00:10 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/78a254a676c7bd18850ce6ee5e8268ad3fdd03ab",
+    "https://git.kernel.org/stable/c/2263b748e9180b14649671fd68ee80116286747a",
+    "https://git.kernel.org/stable/c/1506390a788c45af11008adc91a38dfb5beaf03c",
     "https://git.kernel.org/stable/c/cecf4114069fc19629d284710fd783d56bbca862",
     "https://git.kernel.org/stable/c/e8ba21c7e6ef3d4cb617858760673877b2e4a2bb",
     "https://git.kernel.org/stable/c/8f8d32c1044f70e46e87550e039a15ff20a4b21c"
   ],
   "aliases": [
-    "CVE-2026-98683"
+    "CVE-2026-98683",
+    "GHSA-f8wg-49h3-2qvh"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "000956d4-fd7e-3f76-827b-f2fadd70a842",
@@ -37,24 +41,14 @@
       "product_version": "91d1dfae464987aaf6c79ff51d8674880fb3be77 <8f8d32c1044f70e46e87550e039a15ff20a4b21c"
     },
     {
-      "id": "12e33ea5-e228-33a0-8b27-37cf91697cd5",
+      "id": "0a301c45-7dc5-308f-9cef-65316b79ee36",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "13af7446428771e9e529284d390e7994df8be683"
-    },
-    {
-      "id": "171fbf54-8e95-362e-b65b-0d8e7517b6bb",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0a9423f99ded38b32bd1864347332cc557e6b141"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "4361a856-1a53-336a-90d1-e7f5737af334",
@@ -87,26 +81,6 @@
       "product_version": "6.11"
     },
     {
-      "id": "5273a6bf-35eb-3183-9bfb-5dd4ec617bf8",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc6"
-    },
-    {
-      "id": "6888185d-51ba-3ede-80dd-294ed5238763",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "6.1.110 <6.2"
-    },
-    {
       "id": "6acbe182-1c90-3b06-b72b-21a2873d3a2b",
       "product": {
         "name": "Linux",
@@ -115,6 +89,26 @@
         }
       },
       "product_version": "7dfa4279c55f467a88e653a5d544817181b22aea"
+    },
+    {
+      "id": "6c285d9f-8501-3bfb-b814-8fff25dd2067",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "91d1dfae464987aaf6c79ff51d8674880fb3be77 <1506390a788c45af11008adc91a38dfb5beaf03c"
+    },
+    {
+      "id": "78b87d9a-a242-32aa-8461-f6cee744f196",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.51 <6.6.163"
     },
     {
       "id": "90e5d3f6-1457-34c4-992b-665b48fc279f",
@@ -127,6 +121,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "91210071-7324-3a6a-9551-e17123ae6b34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "13af7446428771e9e529284d390e7994df8be683 <78a254a676c7bd18850ce6ee5e8268ad3fdd03ab"
+    },
+    {
+      "id": "947d747f-1f02-35e3-9826-51640e8d6f9f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.110 <6.1.193"
+    },
+    {
       "id": "bdcb33f1-7339-3099-b751-982abc7777d8",
       "product": {
         "name": "Linux",
@@ -137,14 +151,34 @@
       "product_version": "6.10.10 <6.11"
     },
     {
-      "id": "d51865ae-59c6-3b8b-9d93-8a22f31f1641",
+      "id": "cb3947c4-dad4-3df4-89a4-d974f183d580",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.6.51 <6.7"
+      "product_version": "0a9423f99ded38b32bd1864347332cc557e6b141 <2263b748e9180b14649671fd68ee80116286747a"
+    },
+    {
+      "id": "cc347095-a5f3-35a8-8e69-9b3786eab52a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "da0711a2-b402-3e70-ad35-df5f5e0afeca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
     },
     {
       "id": "df3ec89e-cf7a-3d43-9807-5903a421db6f",
@@ -155,6 +189,16 @@
         }
       },
       "product_version": "91d1dfae464987aaf6c79ff51d8674880fb3be77 <cecf4114069fc19629d284710fd783d56bbca862"
+    },
+    {
+      "id": "f034638e-ed21-3c3c-bedb-6032192886c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     }
   ],
   "enisaIdVendor": [

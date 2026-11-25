@@ -2,20 +2,25 @@
   "id": "EUVD-2026-59279",
   "enisaUuid": "1419badd-0b1e-37ed-9270-5b3403669678",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxen/pvcalls: bound backend response req_id before indexing rsp[]\n\npvcalls_front_event_handler() takes req_id directly from the\nbackend-supplied ring response and uses it to index the fixed-size\nbedata->rsp[] array for a memcpy() and a store, with no range check. A\nmalicious or buggy backend can set req_id past PVCALLS_NR_RSP_PER_RING\nand drive an out-of-bounds write past the bedata allocation.\n\nreq_id was also declared int while the wire field rsp->req_id is u32, so\na range check on the signed value alone is insufficient: a backend\nreq_id of 0xffffffff becomes -1, passes a >= PVCALLS_NR_RSP_PER_RING\ntest and indexes bedata->rsp[-1]. Declare req_id as u32 so a single\nbound covers both ends.\n\nA backend that sends an out-of-range req_id has violated the wire\nprotocol, so rather than silently dropping the response, log once and\nstop trusting the backend: set bedata->disabled. The event handler then\nignores further responses, and the request paths that wait for a\nresponse return -EIO instead of blocking forever. This mirrors the\nfatal-error handling xen-netback uses (xenvif_fatal_tx_err()).\n\nThe pvcalls frontend currently trusts its backend, so this is not a\nclassic-Xen security issue, but it matters for hardening PV frontends\nagainst malicious backends (confidential and disaggregated deployments).",
-  "datePublished": "Aug 15, 2026, 6:32:22 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:22 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:56:12 AM",
+  "dateUpdated": "Oct 30, 2026, 12:29:12 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/4aaf7f32f1569e2c0475e073b8d7ec63b231d4c6",
+    "https://git.kernel.org/stable/c/72e27ef70a20298e60a1de438f3628c515dea895",
+    "https://git.kernel.org/stable/c/ede7a60b046d8b7288651c55198574ed7c259da7",
+    "https://git.kernel.org/stable/c/bc8f2d1c6f7cf6e6551c00eb582baf4b52a04794",
     "https://git.kernel.org/stable/c/d1297a9e2fd6ce08678b370d41bc980ca798f809",
-    "https://git.kernel.org/stable/c/d33846c8dcc06b83b7acdeac1e8bfbb5c0c26cb2",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72380"
+    "https://git.kernel.org/stable/c/d33846c8dcc06b83b7acdeac1e8bfbb5c0c26cb2"
   ],
   "aliases": [
     "CVE-2026-72380",
     "GHSA-44h4-v8mw-w74q"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.35,
   "enisaIdProduct": [
     {
       "id": "2549dade-c5ce-3323-a881-8e5f2fdff0df",
@@ -26,6 +31,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "275110a8-b99b-38ed-bf72-fa87a93bdbd6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "2d572566-f9bb-3dfa-92c7-1c42324c10c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2195046bfd69e487d9a76dc47840f15c8412840c <4aaf7f32f1569e2c0475e073b8d7ec63b231d4c6"
     },
     {
       "id": "3b402734-30a2-3d4c-980a-92f92990599d",
@@ -58,14 +83,64 @@
       "product_version": "4.15"
     },
     {
-      "id": "84d55354-2514-355d-b183-f56444e3ee12",
+      "id": "66c2355f-fb5d-3f75-978f-832f5e0a9d61",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc2"
+      "product_version": "2195046bfd69e487d9a76dc47840f15c8412840c <ede7a60b046d8b7288651c55198574ed7c259da7"
+    },
+    {
+      "id": "8bc7c32b-203a-38af-b310-bca94f2be5a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2195046bfd69e487d9a76dc47840f15c8412840c <bc8f2d1c6f7cf6e6551c00eb582baf4b52a04794"
+    },
+    {
+      "id": "a03060d1-418c-30fd-b83c-dbb9ae3c9233",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "ba0e07d5-2f72-3859-a62c-28c317f9e0e1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "c3076c1d-cf05-33bd-a04a-c4834942a588",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2195046bfd69e487d9a76dc47840f15c8412840c <72e27ef70a20298e60a1de438f3628c515dea895"
+    },
+    {
+      "id": "de5c5732-a592-3ea0-b702-4429f67ba26b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.114"
     },
     {
       "id": "e945d9ea-7b4e-3132-bee5-f4ac63af0c3e",
@@ -76,6 +151,16 @@
         }
       },
       "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "fc4076b0-eb27-3cb5-9b76-5336fea1ff5b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.57"
     }
   ],
   "enisaIdVendor": [

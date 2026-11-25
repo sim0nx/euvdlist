@@ -2,9 +2,11 @@
   "id": "EUVD-2026-59402",
   "enisaUuid": "b27774bd-126f-391d-8d93-e0762ffa020d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntipc: fix UAF in tipc_l2_send_msg()\n\nSyzbot reported a slab-use-after-free in ipvlan_hard_header() when\ncalled from tipc_l2_send_msg().\n\nThe root cause is that tipc_disable_l2_media() calls synchronize_net()\nwhile b->media_ptr is still valid. This allows concurrent RCU readers\nto obtain the device pointer after synchronize_net() has finished.\nThe pointer is cleared later in bearer_disable(), but without any\nsubsequent synchronization, allowing the device to be freed while\nstill in use by readers.\n\nFix this by clearing b->media_ptr in tipc_disable_l2_media() before\ncalling synchronize_net().\n\nThis is safe to do now because the call order in bearer_disable()\nwas reversed in 0d051bf93c06 (\"tipc: make bearer packet filtering generic\")\nto call tipc_node_delete_links() (which needs the pointer) before\ndisable_media().\n\nhttps: //lore.kernel.org/netdev/6a2c1007.428ffe26.258b27.015d.GAE@google.com/T/#u",
-  "datePublished": "Aug 15, 2026, 6:32:27 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:27 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:57:34 AM",
+  "dateUpdated": "Oct 16, 2026, 6:55:27 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/609ced2301be1df7e7ed2ef47d1d916674e6ba3b",
     "https://git.kernel.org/stable/c/71aafa16d79b107b33837f60b6cbc7d0cb8c5708",
@@ -13,15 +15,14 @@
     "https://git.kernel.org/stable/c/aef12b5ce793dea6b3a97a58fd0f946000ae8945",
     "https://git.kernel.org/stable/c/0d8a12d7143126afdf9fbe2e3d438650dd6603ed",
     "https://git.kernel.org/stable/c/35e0297a93c3c34a3924eeef816c03504e3ab5c5",
-    "https://git.kernel.org/stable/c/f4c3d89fc986b0da196ddfc6cfe0ea5d5d08bec6",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-74255"
+    "https://git.kernel.org/stable/c/f4c3d89fc986b0da196ddfc6cfe0ea5d5d08bec6"
   ],
   "aliases": [
     "CVE-2026-74255",
     "GHSA-76v9-jpj5-v4rq"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.5,
   "enisaIdProduct": [
     {
       "id": "07338134-b50d-394b-a13b-9f23cca78e5d",
@@ -32,6 +33,16 @@
         }
       },
       "product_version": "4.4"
+    },
+    {
+      "id": "1dba903f-ec2e-3721-a3ae-1f82195cebdd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "2b308936-2bb1-3125-9064-0dffec95943e",
@@ -152,16 +163,6 @@
         }
       },
       "product_version": "patch: 5.10.261"
-    },
-    {
-      "id": "c79e1b14-a697-3706-9c2e-8b116c074476",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "cc95fc3f-14ed-33ac-9cc0-f8172bce2414",

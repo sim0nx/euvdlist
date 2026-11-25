@@ -3,96 +3,101 @@
   "enisaUuid": "84347856-fbbb-3920-b779-629b0d949378",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdkfd: Fix double release compute pasid\n\nIf kfd_process_device_init_vm returns failure after vm is converted to\ncompute vm and vm->pasid set to compute pasid, KFD will not take\npdd->drm_file reference. As a result, drm close file handler maybe\ncalled to release the compute pasid before KFD process destroy worker to\nrelease the same pasid and set vm->pasid to zero, this generates below\nWARNING backtrace and NULL pointer access.\n\nAdd helper amdgpu_amdkfd_gpuvm_set_vm_pasid and call it at the last step\nof kfd_process_device_init_vm, to ensure vm pasid is the original pasid\nif acquiring vm failed or is the compute pasid with pdd->drm_file\nreference taken to avoid double release same pasid.\n\n amdgpu: Failed to create process VM object\n ida_free called for id=32770 which is not allocated.\n WARNING: CPU: 57 PID: 72542 at ../lib/idr.c:522 ida_free+0x96/0x140\n RIP: 0010:ida_free+0x96/0x140\n Call Trace:\n  amdgpu_pasid_free_delayed+0xe1/0x2a0 [amdgpu]\n  amdgpu_driver_postclose_kms+0x2d8/0x340 [amdgpu]\n  drm_file_free.part.13+0x216/0x270 [drm]\n  drm_close_helper.isra.14+0x60/0x70 [drm]\n  drm_release+0x6e/0xf0 [drm]\n  __fput+0xcc/0x280\n  ____fput+0xe/0x20\n  task_work_run+0x96/0xc0\n  do_exit+0x3d0/0xc10\n\n BUG: kernel NULL pointer dereference, address: 0000000000000000\n RIP: 0010:ida_free+0x76/0x140\n Call Trace:\n  amdgpu_pasid_free_delayed+0xe1/0x2a0 [amdgpu]\n  amdgpu_driver_postclose_kms+0x2d8/0x340 [amdgpu]\n  drm_file_free.part.13+0x216/0x270 [drm]\n  drm_close_helper.isra.14+0x60/0x70 [drm]\n  drm_release+0x6e/0xf0 [drm]\n  __fput+0xcc/0x280\n  ____fput+0xe/0x20\n  task_work_run+0x96/0xc0\n  do_exit+0x3d0/0xc10",
   "datePublished": "Sep 15, 2025, 2:45:58 PM",
-  "dateUpdated": "Sep 16, 2025, 8:02:05 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 15, 2026, 9:31:19 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/89f0d766c9e3fdeafbed6f855d433c2768cde862",
     "https://git.kernel.org/stable/c/a02c07b619899179384fde06f951530438a3512d",
-    "https://git.kernel.org/stable/c/1a799c4c190ea9f0e81028e3eb3037ed0ab17ff5",
-    "https://nvd.nist.gov/vuln/detail/CVE-2022-50303"
+    "https://git.kernel.org/stable/c/1a799c4c190ea9f0e81028e3eb3037ed0ab17ff5"
   ],
   "aliases": [
+    "GHSA-ppmr-4j3r-434x",
     "CVE-2022-50303"
   ],
   "assigner": "Linux",
-  "epss": 0.02,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "018a4470-6786-3285-9400-ab92fa76099a",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.1.5"
     },
     {
-      "id": "05318f6a-9162-3589-977f-f15d047c57ed",
+      "id": "043446af-a46d-3431-92cf-c507c35cb4f9",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "4a488a7ad71401169cecee75dc94bcce642e2c53 <1a799c4c190ea9f0e81028e3eb3037ed0ab17ff5"
+      "product_version": "4.20"
     },
     {
-      "id": "0d8e9436-7762-3b47-9f0a-f3ecbc8ce36a",
+      "id": "97320256-8ff0-3872-90f8-0295e08bd548",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a02c07b619899179384fde06f951530438a3512d"
-    },
-    {
-      "id": "183d4397-9e21-3673-a379-ebb17fc59a93",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "4a488a7ad71401169cecee75dc94bcce642e2c53 <a02c07b619899179384fde06f951530438a3512d"
-    },
-    {
-      "id": "2261cfb9-fec5-366c-aa33-00e2c118aed7",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <89f0d766c9e3fdeafbed6f855d433c2768cde862"
-    },
-    {
-      "id": "61fbd2d8-dc8a-328f-91b4-6f4ed899aab4",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "4a488a7ad71401169cecee75dc94bcce642e2c53 <89f0d766c9e3fdeafbed6f855d433c2768cde862"
+      "product_version": "1685b01a858872075bc258a350153de0c7e95404 <a02c07b619899179384fde06f951530438a3512d"
     },
     {
       "id": "aa004c07-d64b-3030-8c95-f0c41a26fc5d",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 0"
     },
     {
-      "id": "b44209e0-1947-3590-aab5-8f4d969b67cd",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <1a799c4c190ea9f0e81028e3eb3037ed0ab17ff5"
-    },
-    {
       "id": "c0770f37-8c87-3512-9119-4376ca0b72d6",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.0.19"
     },
     {
-      "id": "e05a157d-33c9-3404-a011-51b4dd2c2429",
+      "id": "c6342463-cd91-3938-87b0-07268d9055fb",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "patch: 6.2"
+      "product_version": "1685b01a858872075bc258a350153de0c7e95404 <1a799c4c190ea9f0e81028e3eb3037ed0ab17ff5"
     },
     {
-      "id": "eda6055c-3039-3e75-b449-3c188d8e9c3b",
+      "id": "dbd8acd1-7bb6-3c02-b0b8-206a2beeab85",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "3.19"
+      "product_version": "1685b01a858872075bc258a350153de0c7e95404 <89f0d766c9e3fdeafbed6f855d433c2768cde862"
+    },
+    {
+      "id": "e05a157d-33c9-3404-a011-51b4dd2c2429",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.2"
     }
   ],
   "enisaIdVendor": [

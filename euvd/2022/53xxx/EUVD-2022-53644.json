@@ -1,0 +1,109 @@
+{
+  "id": "EUVD-2022-53644",
+  "enisaUuid": "e7832ec6-f64e-32ed-b2fd-876bc1e8b95f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: LAPIC: Also cancel preemption timer during SET_LAPIC\n\nThe below warning is splatting during guest reboot.\n\n  ------------[ cut here ]------------\n  WARNING: CPU: 0 PID: 1931 at arch/x86/kvm/x86.c:10322 kvm_arch_vcpu_ioctl_run+0x874/0x880 [kvm]\n  CPU: 0 PID: 1931 Comm: qemu-system-x86 Tainted: G          I       5.17.0-rc1+ #5\n  RIP: 0010:kvm_arch_vcpu_ioctl_run+0x874/0x880 [kvm]\n  Call Trace:\n   <TASK>\n   kvm_vcpu_ioctl+0x279/0x710 [kvm]\n   __x64_sys_ioctl+0x83/0xb0\n   do_syscall_64+0x3b/0xc0\n   entry_SYSCALL_64_after_hwframe+0x44/0xae\n  RIP: 0033:0x7fd39797350b\n\nThis can be triggered by not exposing tsc-deadline mode and doing a reboot in\nthe guest. The lapic_shutdown() function which is called in sys_reboot path\nwill not disarm the flying timer, it just masks LVTT. lapic_shutdown() clears\nAPIC state w/ LVT_MASKED and timer-mode bit is 0, this can trigger timer-mode\nswitch between tsc-deadline and oneshot/periodic, which can result in preemption\ntimer be cancelled in apic_update_lvtt(). However, We can't depend on this when\nnot exposing tsc-deadline mode and oneshot/periodic modes emulated by preemption\ntimer. Qemu will synchronise states around reset, let's cancel preemption timer\nunder KVM_SET_LAPIC.",
+  "datePublished": "Jun 20, 2024, 11:13:41 AM",
+  "dateUpdated": "May 11, 2026, 6:46:30 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/54b3439c8e70e0bcfea59aeef9dd98908cbbf655",
+    "https://git.kernel.org/stable/c/ce55f63f6cea4cab8ae9212f73285648a5baa30d",
+    "https://git.kernel.org/stable/c/35fe7cfbab2e81f1afb23fc4212210b1de6d9633"
+  ],
+  "aliases": [
+    "CVE-2022-48765",
+    "GHSA-6hw2-3r9f-pmmj"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "06bba47b-804b-3401-b528-88f146ea2f0c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8003c9ae204e21204e49816c5ea629357e283b06 <54b3439c8e70e0bcfea59aeef9dd98908cbbf655"
+    },
+    {
+      "id": "2bbac06c-4b0d-30c2-b731-d49824a2d42f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.10"
+    },
+    {
+      "id": "6a1c40d5-7410-3d50-a02a-ed35f25f1b48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.19"
+    },
+    {
+      "id": "8d866f9b-a5f0-3d29-998a-3060cc77a4b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16.5"
+    },
+    {
+      "id": "987c8114-36db-3cc4-9485-845ea34eb9d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8003c9ae204e21204e49816c5ea629357e283b06 <35fe7cfbab2e81f1afb23fc4212210b1de6d9633"
+    },
+    {
+      "id": "bdd513b1-aea0-3597-9287-3635a0e5e026",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8003c9ae204e21204e49816c5ea629357e283b06 <ce55f63f6cea4cab8ae9212f73285648a5baa30d"
+    },
+    {
+      "id": "c31d6725-c5c8-3f88-8177-9aa8eddeb2dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "dedfe5c3-9541-3243-a7ee-73ae169c5e09",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.17"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "dd7064b4-1449-3f96-8526-31ec08c031c4",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

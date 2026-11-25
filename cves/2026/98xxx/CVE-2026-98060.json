@@ -3,7 +3,7 @@
   "enisaUuid": "9c03df1e-88b3-3563-a22f-6b2c56b39d71",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Reject resilient lock operations in rbtree callbacks\n\n__bpf_rbtree_add() keeps parent and link pointers live across calls to the\nprogram-supplied comparison callback. The verifier therefore requires the\nroot's lock to remain held throughout the callback.\n\nThe helper path enforces this rule for bpf_spin_lock() and\nbpf_spin_unlock(), but the resilient lock kfunc argument path does not.\nSince resilient locks may protect BPF rbtree roots, a callback can release\nthe root lock and let another CPU remove and free the node referenced by\nthe in-progress tree walk. The walk then resumes using freed pointers.\n\nReject resilient lock kfuncs in an rbtree comparison callback, matching\nthe existing policy for the spin lock helpers. Resilient-lock-protected\ntrees remain valid when their comparison callbacks leave lock state alone.",
   "datePublished": "Sep 25, 2026, 10:24:05 AM",
-  "dateUpdated": "Sep 25, 2026, 10:24:05 AM",
+  "dateUpdated": "Oct 19, 2026, 9:13:08 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/cc2e065ed206aecd9b94564779244f3ffb26e356",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/7b7b8b5960102566bd625ae829d1f330c5b5d104"
   ],
   "aliases": [
+    "GHSA-5qvg-w7qr-xhvh",
     "CVE-2026-98060"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "2057650f-7486-3368-a214-51c41614a824",
@@ -77,6 +78,16 @@
       "product_version": "0de2046137f976e7302d43ac01d9894d07ac1fff <cc2e065ed206aecd9b94564779244f3ffb26e356"
     },
     {
+      "id": "a8dab578-1307-39d9-859d-196a3d85fb0f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "b015014b-7f5c-337a-95e0-10a2e4758ba5",
       "product": {
         "name": "Linux",
@@ -85,16 +96,6 @@
         }
       },
       "product_version": "0de2046137f976e7302d43ac01d9894d07ac1fff <71930202a0a0c49f0a3b45b41907a074cb780266"
-    },
-    {
-      "id": "c67a2a3b-bc42-34d0-b339-96dbd67cc24a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc2"
     }
   ],
   "enisaIdVendor": [

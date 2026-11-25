@@ -3,19 +3,23 @@
   "enisaUuid": "31cb4106-a443-34c3-985b-194afc7ff0a1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nInput: ims-pcu - fix heap-buffer-overflow in ims_pcu_process_data()\n\nThe `ims_pcu_process_data()` processes incoming URB data byte by byte.\nHowever, it fails to check if the `read_pos` index exceeds\nIMS_PCU_BUF_SIZE.\n\nIf a malicious USB device sends a packet larger than IMS_PCU_BUF_SIZE,\n`read_pos` will increment indefinitely. Moreover, since `read_pos` is\nlocated immediately after `read_buf`, the attacker can overwrite\n`read_pos` itself to arbitrarily control the index.\n\nThis manipulated `read_pos` is subsequently used in\n`ims_pcu_handle_response()` to copy data into `cmd_buf`, leading to a\nheap buffer overflow.\n\nSpecifically, an attacker can overwrite the `cmd_done.wait.head` located\nat offset 136 relative to `cmd_buf` in the `ims_pcu_handle_response()`.\nConsequently, when the driver calls `complete(&pcu->cmd_done)`, it\ntriggers a control flow hijack by using the manipulated pointer.\n\nFix this by adding a bounds check for `read_pos` before writing to\n`read_buf`. If the packet is too long, discard it, log a warning,\nand reset the parser state.\n\n[dtor: factor out resetting packet state, reset checksum as well]",
   "datePublished": "Aug 4, 2026, 6:23:24 AM",
-  "dateUpdated": "Aug 4, 2026, 6:23:24 AM",
+  "dateUpdated": "Aug 19, 2026, 4:28:39 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/06cfff93fd40441292567b999091beab11c74504",
+    "https://git.kernel.org/stable/c/992a7173364dcf63e30012af43da3c2f279839f9",
+    "https://git.kernel.org/stable/c/3a801bc75ba1d121d0ed60e7234f93ba5651d87d",
     "https://git.kernel.org/stable/c/40bbbf2e91fd60715525bf0405c67876af817edf",
     "https://git.kernel.org/stable/c/ca9f8c09845fb8c51b6d447f6428eecd1b8b0a49",
     "https://git.kernel.org/stable/c/d03a740e087de7dcb2a26dc1123377bd3d1d84ca",
     "https://git.kernel.org/stable/c/875115b82c295277b81b6dfee7debc725f44e854"
   ],
   "aliases": [
-    "CVE-2026-64565"
+    "CVE-2026-64565",
+    "GHSA-36cq-f2m4-833w"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "333b4502-2a92-3503-8a1b-afd7f0d17425",
@@ -26,6 +30,16 @@
         }
       },
       "product_version": "patch: 7.1"
+    },
+    {
+      "id": "42caa2a1-baf8-3b78-ac55-9b0ae9fde0bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "7132e84a-e6cc-3c50-bb59-7c472589ff28",
@@ -88,6 +102,26 @@
       "product_version": "patch: 6.6.148"
     },
     {
+      "id": "a22bea6a-ed62-3a2f-93f9-8602004441b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "628329d52474323938a03826941e166bc7c8eff4 <06cfff93fd40441292567b999091beab11c74504"
+    },
+    {
+      "id": "ae2feb71-53e8-3dae-8f55-75dfcd64f71d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "628329d52474323938a03826941e166bc7c8eff4 <992a7173364dcf63e30012af43da3c2f279839f9"
+    },
+    {
       "id": "af76940d-80ee-3b2a-a501-69a6d2d6816f",
       "product": {
         "name": "Linux",
@@ -96,6 +130,36 @@
         }
       },
       "product_version": "3.10"
+    },
+    {
+      "id": "b6a34a55-8def-3fc4-9d55-c6d1892d806f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
+    {
+      "id": "cf0e3d81-ab83-3d34-814d-0ce244bc1673",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
+      "id": "d1f2cbd2-6c51-39fc-aef9-e3e7d7bed19f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "628329d52474323938a03826941e166bc7c8eff4 <3a801bc75ba1d121d0ed60e7234f93ba5651d87d"
     },
     {
       "id": "d31a3035-6a34-3971-88f0-f6f33adf89c1",

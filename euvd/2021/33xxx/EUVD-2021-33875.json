@@ -1,0 +1,109 @@
+{
+  "id": "EUVD-2021-33875",
+  "enisaUuid": "a8514441-4ac7-3fee-9146-a5c5f0bf544d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nx86/fpu: Prevent state corruption in __fpu__restore_sig()\n\nThe non-compacted slowpath uses __copy_from_user() and copies the entire\nuser buffer into the kernel buffer, verbatim.  This means that the kernel\nbuffer may now contain entirely invalid state on which XRSTOR will #GP.\nvalidate_user_xstate_header() can detect some of that corruption, but that\nleaves the onus on callers to clear the buffer.\n\nPrior to XSAVES support, it was possible just to reinitialize the buffer,\ncompletely, but with supervisor states that is not longer possible as the\nbuffer clearing code split got it backwards. Fixing that is possible but\nnot corrupting the state in the first place is more robust.\n\nAvoid corruption of the kernel XSAVE buffer by using copy_user_to_xstate()\nwhich validates the XSAVE header contents before copying the actual states\nto the kernel. copy_user_to_xstate() was previously only called for\ncompacted-format kernel buffers, but it works for both compacted and\nnon-compacted forms.\n\nUsing it for the non-compacted form is slower because of multiple\n__copy_from_user() operations, but that cost is less important than robust\ncode in an already slow path.\n\n[ Changelog polished by Dave Hansen ]",
+  "datePublished": "May 21, 2024, 2:19:31 PM",
+  "dateUpdated": "May 11, 2026, 1:50:25 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/076f732b16a5bf842686e1b43ab6021a2d98233e",
+    "https://git.kernel.org/stable/c/ec25ea1f3f05d6f8ee51d1277efea986eafd4f2a",
+    "https://git.kernel.org/stable/c/484cea4f362e1eeb5c869abbfb5f90eae6421b38"
+  ],
+  "aliases": [
+    "CVE-2021-47227",
+    "GHSA-cjw7-m4qf-xc59"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "0ec3bd8a-5a4a-38e5-8281-ed5ce57793df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b860eb8dce5906b14e3a7f3c771e0b3d6ef61b94 <484cea4f362e1eeb5c869abbfb5f90eae6421b38"
+    },
+    {
+      "id": "31e9503e-7801-3527-bdfc-2da234829970",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b860eb8dce5906b14e3a7f3c771e0b3d6ef61b94 <076f732b16a5bf842686e1b43ab6021a2d98233e"
+    },
+    {
+      "id": "346598ad-8eb1-39ed-8b81-a998debdb3c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.8"
+    },
+    {
+      "id": "4bfba935-d17d-3f95-8bba-a22db0ed4831",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b860eb8dce5906b14e3a7f3c771e0b3d6ef61b94 <ec25ea1f3f05d6f8ee51d1277efea986eafd4f2a"
+    },
+    {
+      "id": "537a2df8-42f8-3860-bdba-ba0a36e11b8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    },
+    {
+      "id": "634663c3-cb28-39e7-b9e6-8af0a94a9e49",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.46"
+    },
+    {
+      "id": "9f373bf5-21e1-3e07-a904-651048e51df8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ffe0166d-009f-3219-ba70-7741a44263da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7b2d318d-3f68-359d-b81c-da814ee34750",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

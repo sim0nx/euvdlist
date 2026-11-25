@@ -3,8 +3,10 @@
   "enisaUuid": "5b7829f1-3aa7-30ab-8fe3-47abbc1431df",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdkfd: fix uint32_t overflow in EOP ring buffer size alignment\n\neop_ring_buffer_size in struct queue_properties is a u32. In\nkfd_queue_acquire_buffers() the expected EOP buffer size is computed as\nALIGN(eop_ring_buffer_size, PAGE_SIZE); ALIGN uses typeof(x), so the\naddition is done in 32-bit. A user-supplied size of 0xFFFFF001 wraps to\n0, causing kfd_queue_buffer_get() to skip its exact-size check (gated on\nsize != 0) and accept any BO mapped at the address. On GFX8/GFX9 the MQD\ncp_hqd_eop_control is then programmed for an 8KB EOP ring backed by a 4KB\nBO, so CP EOP writes can land past the buffer and fault the GPU.\n\nCast the operand to u64 so the alignment is computed in 64-bit; the size\ncheck in kfd_queue_buffer_get() then rejects the oversized request.\n\n(cherry picked from commit ae443117b742c357bfef3a7bddabf76fcf86e9ef)",
   "datePublished": "Aug 15, 2026, 12:26:53 PM",
-  "dateUpdated": "Aug 15, 2026, 12:26:53 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:05:46 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/273548eb997c6be85230c1236b18784b09f6203c",
     "https://git.kernel.org/stable/c/6dc0b4b39ed4f11ef70f76ecea8537e35f45342b",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/83463a96ea3c7d8ae636a4d6a0ba63c9ce410724"
   ],
   "aliases": [
+    "GHSA-hxwh-98gw-89f6",
     "CVE-2026-74447"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "090e649b-667f-360e-be61-28ba3ea5cc12",
@@ -38,16 +41,6 @@
       "product_version": "acfc84cfa70aca5b970faf152979bc97b9f8b0c0 <6dc0b4b39ed4f11ef70f76ecea8537e35f45342b"
     },
     {
-      "id": "1341b28f-b234-3b74-97dd-40b1d5898700",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc6"
-    },
-    {
       "id": "15e58d8d-f5b0-3a2b-8f98-9832a315939c",
       "product": {
         "name": "Linux",
@@ -56,6 +49,16 @@
         }
       },
       "product_version": "42ea9cf2f16b7131cb7302acb3dac510968f8bdc <7c54bd225d83bc1bcb44430ed4b4d3a5c36b1961"
+    },
+    {
+      "id": "37ee006f-f5bb-35f8-b650-0ecab39e2ef3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "4721c893-5915-36f9-b46b-a8d9d47fdcd6",

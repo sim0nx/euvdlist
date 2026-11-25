@@ -3,8 +3,10 @@
   "enisaUuid": "2536ef00-5627-3dca-a075-7fe1f7278916",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nhfs/hfsplus: fix u32 overflow in check_and_correct_requested_length\n\ncheck_and_correct_requested_length() compares (off + len) against\nnode_size using u32 arithmetic.  When the caller passes a large len\nvalue (e.g. from an underflowed subtraction in hfs_brec_remove()),\noff + len can wrap past 2^32 and produce a small result, causing the\nbounds check to pass when it should fail.\n\nFor example, with off=14 and len=0xFFFFFFF2 (underflowed from\ndata_off - keyoffset - size in hfs_brec_remove), off + len wraps to 6,\nwhich is less than a typical node_size of 512, so the check passes and\nthe subsequent memmove reads ~4GB past the node buffer.\n\nFix this by widening the addition to u64 before comparing against\nnode_size.  This prevents the u32 wrap while keeping the logic\nstraightforward.",
   "datePublished": "Jul 25, 2026, 8:50:17 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:17 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:54:07 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/c8dd112173c02adf539fe2ad34a45f5e0068780d",
     "https://git.kernel.org/stable/c/fc9d1447ca3cdc78d2e4ace1ce1f3a7c77ca08b1",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/966cb76fb2857a4242cab6ea2ea17acf818a3da7"
   ],
   "aliases": [
+    "GHSA-qpqg-q3fj-94c5",
     "CVE-2026-64361"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "08308a02-3bba-3f64-969f-d86a149bf801",
@@ -40,6 +43,16 @@
         }
       },
       "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "1890288d-3fab-331c-8b44-d35789ed3cdc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "2255d629-77fe-3d34-82c5-ef1c3104f4d1",
@@ -150,16 +163,6 @@
         }
       },
       "product_version": "fe2891a9c43ab87d1a210d61e6438ca6936e2f62 <671c3fcc2ad31c1311ea6414382a2d95104ae1b9"
-    },
-    {
-      "id": "8b5ad557-cdc9-3118-80ee-1ec60277a0da",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "948ea02a-61a0-3152-845a-672562c35f9c",

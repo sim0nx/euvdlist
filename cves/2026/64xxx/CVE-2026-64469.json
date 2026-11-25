@@ -3,8 +3,10 @@
   "enisaUuid": "8af3ed87-9258-398e-8cbc-27636960cd7e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbinder: fix UAF in binder_thread_release()\n\nWhen a thread exits, binder_thread_release() walks its transaction stack\nto clear the t->from and t->to_proc that correspond with the exiting\nthread. However, a process dying in parallel might attempt to kfree some\nof these transactions. And if one of them has no associated t->to_proc,\nthe t->to_proc->inner_lock will not be acquired.\n\nThis means that transaction accesses in binder_thread_release() after\nt->to_proc has been cleared might race with binder_free_transaction()\nand cause a use-after-free error as reported by KASAN:\n\n  ==================================================================\n  BUG: KASAN: slab-use-after-free in binder_thread_release+0x5d0/0x798\n  Write of size 8 at addr ffff000016627500 by task X/715\n\n  CPU: 17 UID: 0 PID: 715 Comm: X Not tainted 7.1.0-rc5-00149-g8fde5d1d47f6 #30 PREEMPT\n  Hardware name: linux,dummy-virt (DT)\n  Call trace:\n   binder_thread_release+0x5d0/0x798\n   binder_ioctl+0x12c0/0x299c\n   [...]\n\n  Allocated by task 717 on cpu 18 at 67.267803s:\n   __kasan_kmalloc+0xa0/0xbc\n   __kmalloc_cache_noprof+0x174/0x444\n   binder_transaction+0x554/0x8150\n   binder_thread_write+0xa30/0x4354\n   binder_ioctl+0x20f0/0x299c\n   [...]\n\n  Freed by task 202 on cpu 18 at 90.416221s:\n   __kasan_slab_free+0x58/0x80\n   kfree+0x1a0/0x4a4\n   binder_free_transaction+0x150/0x294\n   binder_send_failed_reply+0x398/0x6d8\n   binder_release_work+0x3e4/0x4ec\n   binder_deferred_func+0xbd8/0x104c\n   [...]\n  ==================================================================\n\nIn order to avoid this, make sure that binder_free_transaction() reads\nthe t->to_proc under the transaction lock. This will serialize the\ntransaction release with the accesses in binder_thread_release(). Plus,\nit matches the documented locking rules for @to_proc.",
   "datePublished": "Jul 25, 2026, 8:51:34 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:34 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:56:14 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/1f96f8c0a6ed4f6d01d3dd29ad0cbf08dde96082",
     "https://git.kernel.org/stable/c/df1a17abba8d6fac5f965adcb8113ceace6e4949",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/114a116aaa5f0295376cdf12da743c5bce3b20ce"
   ],
   "aliases": [
+    "GHSA-gqjw-3mh5-7pr5",
     "CVE-2026-64469"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "012ed056-d2be-3766-9d78-ff2098b4e07f",
@@ -50,6 +53,16 @@
         }
       },
       "product_version": "patch: 5.10.261"
+    },
+    {
+      "id": "1cfded9d-68de-3832-bf40-a0643893622b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "47f6ab61-6b21-3e31-b0fb-e61251773ca8",
@@ -170,16 +183,6 @@
         }
       },
       "product_version": "7a4408c6bd3eb1dafba67986259191be081e3efb <38e1a71728e5795b670cc159c18e286a40aeebb4"
-    },
-    {
-      "id": "de7ed7cf-462a-378c-bf6a-15f1c24aaad3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     },
     {
       "id": "f8dd7755-42e3-310c-94f0-16c1c689e878",

@@ -1,0 +1,193 @@
+{
+  "id": "EUVD-2023-57202",
+  "enisaUuid": "d9f2732e-88ad-3566-b157-b55837983104",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: bridge: use DEV_STATS_INC()\n\nsyzbot/KCSAN reported data-races in br_handle_frame_finish() [1]\nThis function can run from multiple cpus without mutual exclusion.\n\nAdopt SMP safe DEV_STATS_INC() to update dev->stats fields.\n\nHandles updates to dev->stats.tx_dropped while we are at it.\n\n[1]\nBUG: KCSAN: data-race in br_handle_frame_finish / br_handle_frame_finish\n\nread-write to 0xffff8881374b2178 of 8 bytes by interrupt on cpu 1:\nbr_handle_frame_finish+0xd4f/0xef0 net/bridge/br_input.c:189\nbr_nf_hook_thresh+0x1ed/0x220\nbr_nf_pre_routing_finish_ipv6+0x50f/0x540\nNF_HOOK include/linux/netfilter.h:304 [inline]\nbr_nf_pre_routing_ipv6+0x1e3/0x2a0 net/bridge/br_netfilter_ipv6.c:178\nbr_nf_pre_routing+0x526/0xba0 net/bridge/br_netfilter_hooks.c:508\nnf_hook_entry_hookfn include/linux/netfilter.h:144 [inline]\nnf_hook_bridge_pre net/bridge/br_input.c:272 [inline]\nbr_handle_frame+0x4c9/0x940 net/bridge/br_input.c:417\n__netif_receive_skb_core+0xa8a/0x21e0 net/core/dev.c:5417\n__netif_receive_skb_one_core net/core/dev.c:5521 [inline]\n__netif_receive_skb+0x57/0x1b0 net/core/dev.c:5637\nprocess_backlog+0x21f/0x380 net/core/dev.c:5965\n__napi_poll+0x60/0x3b0 net/core/dev.c:6527\nnapi_poll net/core/dev.c:6594 [inline]\nnet_rx_action+0x32b/0x750 net/core/dev.c:6727\n__do_softirq+0xc1/0x265 kernel/softirq.c:553\nrun_ksoftirqd+0x17/0x20 kernel/softirq.c:921\nsmpboot_thread_fn+0x30a/0x4a0 kernel/smpboot.c:164\nkthread+0x1d7/0x210 kernel/kthread.c:388\nret_from_fork+0x48/0x60 arch/x86/kernel/process.c:147\nret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:304\n\nread-write to 0xffff8881374b2178 of 8 bytes by interrupt on cpu 0:\nbr_handle_frame_finish+0xd4f/0xef0 net/bridge/br_input.c:189\nbr_nf_hook_thresh+0x1ed/0x220\nbr_nf_pre_routing_finish_ipv6+0x50f/0x540\nNF_HOOK include/linux/netfilter.h:304 [inline]\nbr_nf_pre_routing_ipv6+0x1e3/0x2a0 net/bridge/br_netfilter_ipv6.c:178\nbr_nf_pre_routing+0x526/0xba0 net/bridge/br_netfilter_hooks.c:508\nnf_hook_entry_hookfn include/linux/netfilter.h:144 [inline]\nnf_hook_bridge_pre net/bridge/br_input.c:272 [inline]\nbr_handle_frame+0x4c9/0x940 net/bridge/br_input.c:417\n__netif_receive_skb_core+0xa8a/0x21e0 net/core/dev.c:5417\n__netif_receive_skb_one_core net/core/dev.c:5521 [inline]\n__netif_receive_skb+0x57/0x1b0 net/core/dev.c:5637\nprocess_backlog+0x21f/0x380 net/core/dev.c:5965\n__napi_poll+0x60/0x3b0 net/core/dev.c:6527\nnapi_poll net/core/dev.c:6594 [inline]\nnet_rx_action+0x32b/0x750 net/core/dev.c:6727\n__do_softirq+0xc1/0x265 kernel/softirq.c:553\ndo_softirq+0x5e/0x90 kernel/softirq.c:454\n__local_bh_enable_ip+0x64/0x70 kernel/softirq.c:381\n__raw_spin_unlock_bh include/linux/spinlock_api_smp.h:167 [inline]\n_raw_spin_unlock_bh+0x36/0x40 kernel/locking/spinlock.c:210\nspin_unlock_bh include/linux/spinlock.h:396 [inline]\nbatadv_tt_local_purge+0x1a8/0x1f0 net/batman-adv/translation-table.c:1356\nbatadv_tt_purge+0x2b/0x630 net/batman-adv/translation-table.c:3560\nprocess_one_work kernel/workqueue.c:2630 [inline]\nprocess_scheduled_works+0x5b8/0xa30 kernel/workqueue.c:2703\nworker_thread+0x525/0x730 kernel/workqueue.c:2784\nkthread+0x1d7/0x210 kernel/kthread.c:388\nret_from_fork+0x48/0x60 arch/x86/kernel/process.c:147\nret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:304\n\nvalue changed: 0x00000000000d7190 -> 0x00000000000d7191\n\nReported by Kernel Concurrency Sanitizer on:\nCPU: 0 PID: 14848 Comm: kworker/u4:11 Not tainted 6.6.0-rc1-syzkaller-00236-gad8a69f361b9 #0",
+  "datePublished": "Mar 2, 2024, 9:59:45 PM",
+  "dateUpdated": "May 11, 2026, 7:29:37 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/d2346e6beb699909ca455d9d20c4e577ce900839",
+    "https://git.kernel.org/stable/c/ad8d39c7b437fcdab7208a6a56c093d222c008d5",
+    "https://git.kernel.org/stable/c/04cc361f029c14dd067ad180525c7392334c9bfd",
+    "https://git.kernel.org/stable/c/8bc97117b51d68d5cea8f5351cca2d8c4153f394",
+    "https://git.kernel.org/stable/c/89f9f20b1cbd36d99d5a248a4bf8d11d4fd049a2",
+    "https://git.kernel.org/stable/c/f2ef4cb4d418fa64fe73eb84d10cc5c0e52e00fa",
+    "https://git.kernel.org/stable/c/44bdb313da57322c9b3c108eb66981c6ec6509f4"
+  ],
+  "aliases": [
+    "GHSA-3jh7-wc4v-w78v",
+    "CVE-2023-52578"
+  ],
+  "assigner": "Linux",
+  "epss": 0.19,
+  "enisaIdProduct": [
+    {
+      "id": "0a510d93-bd11-33e6-838d-f892974b85e7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1c29fc4989bc2a3838b2837adc12b8aeb0feeede <f2ef4cb4d418fa64fe73eb84d10cc5c0e52e00fa"
+    },
+    {
+      "id": "10d63dbe-8e60-39cf-8939-23f0910bd8f2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.258"
+    },
+    {
+      "id": "2828f94c-b7cd-3fc9-bbd7-5998acbf41c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.296"
+    },
+    {
+      "id": "51541ccb-360a-3a16-bb92-f3f3690c9d42",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1c29fc4989bc2a3838b2837adc12b8aeb0feeede <44bdb313da57322c9b3c108eb66981c6ec6509f4"
+    },
+    {
+      "id": "6a7c4d0c-3df9-3ca9-8f5d-368132237d9a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.134"
+    },
+    {
+      "id": "872f289b-5f6e-3f24-9b8d-16dcda74812b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.17"
+    },
+    {
+      "id": "8aea0477-5412-3086-ad55-bb4e925271e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.198"
+    },
+    {
+      "id": "8c78db05-e466-3bdc-8c00-504370fbc70e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1c29fc4989bc2a3838b2837adc12b8aeb0feeede <89f9f20b1cbd36d99d5a248a4bf8d11d4fd049a2"
+    },
+    {
+      "id": "9f9a84ad-841e-3e80-b53f-c4cef79999a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1c29fc4989bc2a3838b2837adc12b8aeb0feeede <ad8d39c7b437fcdab7208a6a56c093d222c008d5"
+    },
+    {
+      "id": "cc5ae0f5-4d4c-33c6-b56d-ad76323ff614",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6"
+    },
+    {
+      "id": "cd87783f-3b78-33e2-b5fc-6bb443977032",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1c29fc4989bc2a3838b2837adc12b8aeb0feeede <04cc361f029c14dd067ad180525c7392334c9bfd"
+    },
+    {
+      "id": "e1e2362d-8ce7-36e8-99db-def02a2819db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.5.6"
+    },
+    {
+      "id": "ea811890-fdfa-36f2-927b-3d36e483aa4f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ec66ca25-06cc-3c82-9ff0-9e9c02ea501b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1c29fc4989bc2a3838b2837adc12b8aeb0feeede <d2346e6beb699909ca455d9d20c4e577ce900839"
+    },
+    {
+      "id": "f4f44110-173b-35f7-93b2-ed0e43aa4a75",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.56"
+    },
+    {
+      "id": "f80e284c-72ca-3333-88b2-3952ba6acd80",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1c29fc4989bc2a3838b2837adc12b8aeb0feeede <8bc97117b51d68d5cea8f5351cca2d8c4153f394"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f121951d-5bf4-335d-b1e8-9e484672fd9d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

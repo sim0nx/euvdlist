@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2024-45237",
+  "enisaUuid": "9a153a71-fb44-3412-a810-64d5ee64b12c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nice: Fix improper handling of refcount in ice_sriov_set_msix_vec_count()\n\nThis patch addresses an issue with improper reference count handling in the\nice_sriov_set_msix_vec_count() function.\n\nFirst, the function calls ice_get_vf_by_id(), which increments the\nreference count of the vf pointer. If the subsequent call to\nice_get_vf_vsi() fails, the function currently returns an error without\ndecrementing the reference count of the vf pointer, leading to a reference\ncount leak. The correct behavior, as implemented in this patch, is to\ndecrement the reference count using ice_put_vf(vf) before returning an\nerror when vsi is NULL.\n\nSecond, the function calls ice_sriov_get_irqs(), which sets\nvf->first_vector_idx. If this call returns a negative value, indicating an\nerror, the function returns an error without decrementing the reference\ncount of the vf pointer, resulting in another reference count leak. The\npatch addresses this by adding a call to ice_put_vf(vf) before returning\nan error when vf->first_vector_idx < 0.\n\nThis bug was identified by an experimental static analysis tool developed\nby our team. The tool specializes in analyzing reference count operations\nand identifying potential mismanagement of reference counts. In this case,\nthe tool flagged the missing decrement operation as a potential issue,\nleading to this patch.",
+  "datePublished": "Oct 21, 2024, 7:39:26 PM",
+  "dateUpdated": "May 11, 2026, 8:43:57 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/416dbb815ca69684de148328990ba0ec53e6dbc1",
+    "https://git.kernel.org/stable/c/d517cf89874c6039e6294b18d66f40988e62502a"
+  ],
+  "aliases": [
+    "GHSA-2mfj-xm96-46wm",
+    "CVE-2024-50020"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "559e15c2-29b9-3a19-876d-2ad63faf5a6d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.7"
+    },
+    {
+      "id": "8ebb455a-707b-38ac-95c5-cff088bf6ce6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.4"
+    },
+    {
+      "id": "b265e27b-8413-3931-805c-cb4047a2af85",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "bf7ca5cd-c7ae-3603-b11b-7ca6a7b476b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4d38cb44bd321c81da3457cfbc38501ed8cb6714 <416dbb815ca69684de148328990ba0ec53e6dbc1"
+    },
+    {
+      "id": "f0a1ef56-47e2-339d-a6a5-d7975cd4a6bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "fe7b78e6-a3f2-3cd8-8d54-cbacb5a633e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4d38cb44bd321c81da3457cfbc38501ed8cb6714 <d517cf89874c6039e6294b18d66f40988e62502a"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5c530b9d-4595-34ff-b0d5-8bdf91cbc039",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

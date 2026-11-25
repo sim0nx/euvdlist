@@ -3,7 +3,7 @@
   "enisaUuid": "d21febf2-76bc-3830-861d-0d53479343ea",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npppoatm: ensure a writable skb header and linear data\n\nIn pppoatm_send(), LLC encapsulation checks whether there is sufficient\nheadroom for the 4-byte LLC header, but does not ensure that the skb header\nis writable.\n\nNormal transmit packets passing through ppp_start_xmit() have their header\nunshared via skb_cow_head(). However, packets can also reach pppoatm_send()\nvia PPP channel bridging (PPPIOCBRIDGECHAN) without going through\nppp_start_xmit().\n\nUse skb_cow_head() to ensure both sufficient headroom and a writable\nheader before pushing the LLC header.\n\nWhile at it:\n- Call pskb_may_pull(skb, 1) before inspecting skb->data[0] to prevent\n  out-of-bounds reads on zero-length or non-linear frames (e.g. from\n  bridging).\n- Defer SC_COMP_PROT protocol compression until after pppoatm_may_send()\n  succeeds. This eliminates the temporary skb allocation on admission failure\n  and completely removes the fragile \"undo\" heuristic at the nospace label,\n  avoiding any risk of reading uninitialized headroom or performing an\n  unbalanced skb_push().",
   "datePublished": "Oct 6, 2026, 8:45:47 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:47 AM",
+  "dateUpdated": "Oct 19, 2026, 9:16:58 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/208ccc4d08b1897451e9ba01c016bf93ff107966",
@@ -15,10 +15,11 @@
     "https://git.kernel.org/stable/c/ecc7253683a3c55caa868ce0ee530fcb0044bd3c"
   ],
   "aliases": [
+    "GHSA-m2p4-c77r-p2c7",
     "CVE-2026-98287"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "09610d96-5498-34e0-97c6-d299f94e8d0b",
@@ -41,6 +42,16 @@
       "product_version": "4cf476ced45d7f12df30a68e833b263e7a2202d1 <8e66c5969acd859ba72fb0a7fa895623fc1b3769"
     },
     {
+      "id": "3fa5749c-bcfe-3979-a55e-0f9082336c6b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "46c6dc59-176f-3d04-9cd6-378ba1f5c3ab",
       "product": {
         "name": "Linux",
@@ -49,16 +60,6 @@
         }
       },
       "product_version": "5.11"
-    },
-    {
-      "id": "5307cfb8-92d2-364f-a8fe-f03768d3542e",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "572ea282-0e81-3e26-afb0-ea0277d8a85d",

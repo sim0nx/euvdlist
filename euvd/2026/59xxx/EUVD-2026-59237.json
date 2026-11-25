@@ -2,24 +2,36 @@
   "id": "EUVD-2026-59237",
   "enisaUuid": "8bcb9fc1-003c-308a-ad8b-9c8062795828",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: act_pedit: fix TOCTOU heap OOB write in tc offload\n\nThere is a TOCTOU race condition in flower lockless approach between sizing\na flow_rule buffer and filling it.\nzdi-disclosures@trendmicro.com reports:\nThe cls_flower classifier operates with TCF_PROTO_OPS_DOIT_UNLOCKED\n(fl_change runs without RTNL), while RTM_NEWACTION holds RTNL, so the\nindependent locking domains make the race reachable in practice.  KASAN\nconfirms:\n  BUG: KASAN: slab-out-of-bounds in tcf_pedit_offload_act_setup+0x81b/0x930\n  Write of size 4 at addr ffff888001f27520 by task poc-toctou/312\n  The buggy address is located 0 bytes to the right of\n   allocated 288-byte region [ffff888001f27400, ffff888001f27520)\n   (cache kmalloc-512)\n\nNote: The result is a heap OOB write attacker-controlled content into the\nadjacent slab object (requires CAP_NET_ADMIN).\n\nThe fix introduces reading tcfp_nkeys under act->tcfa_lock in all places\nusing a new tcf_pedit_nkeys_locked() which replaces the old tcf_pedit_nkeys().\nAdditionally we close the remaining TOCTOU window between the sizing read and\nthe fill reads by more careful accounting.\nRather than silently truncating the key count, which leads to incorrect\naction semantics offloaded to hardware and secondary OOB writes if\nthe remaining capacity is zero or consumed by prior actions, we enforce\nremaining capacity checks and return -ENOSPC if the required space exceeds\nthe remaining capacity.",
-  "datePublished": "Aug 15, 2026, 6:32:21 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:21 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:55:45 AM",
+  "dateUpdated": "Oct 30, 2026, 12:29:08 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/1afdf2268b71251ea70d80bd8232a2f022e62a73",
     "https://git.kernel.org/stable/c/0d8532a5e972a5351cf4ee4a435e0d65cbba8f23",
     "https://git.kernel.org/stable/c/27488e1a7f19757e6146edca9458ed4ffc545557",
     "https://git.kernel.org/stable/c/6f9b23eb92a894ae1118893996943990ee0b860e",
     "https://git.kernel.org/stable/c/8e49cd891bda447c68122d672510a604a8bb6b24",
-    "https://git.kernel.org/stable/c/8b519cbcabe836a441369fbec1a8a6518a709251",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72338"
+    "https://git.kernel.org/stable/c/8b519cbcabe836a441369fbec1a8a6518a709251"
   ],
   "aliases": [
     "GHSA-hgh2-wfvr-f9mp",
     "CVE-2026-72338"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "0a931471-530f-3dc6-81af-1a57b38057c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "2ab31806-ead9-35f2-ba3e-22197ce55bb9",
       "product": {
@@ -61,16 +73,6 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "4a16a890-d3a2-3737-bf3d-eb6a679230c4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
-    },
-    {
       "id": "5099553f-5a97-366b-be0b-60803884c909",
       "product": {
         "name": "Linux",
@@ -101,6 +103,16 @@
       "product_version": "71d0ed7079dffbc5cd0941d77d9b84e04109c9bb <6f9b23eb92a894ae1118893996943990ee0b860e"
     },
     {
+      "id": "8932b6b5-dcd0-38c1-b715-c9a29a5a375f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "9841f414-db5d-3488-a28c-804acaba22e6",
       "product": {
         "name": "Linux",
@@ -129,6 +141,16 @@
         }
       },
       "product_version": "71d0ed7079dffbc5cd0941d77d9b84e04109c9bb <0d8532a5e972a5351cf4ee4a435e0d65cbba8f23"
+    },
+    {
+      "id": "b67a9c52-fad9-3738-9e12-ea984c40ad16",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "71d0ed7079dffbc5cd0941d77d9b84e04109c9bb <1afdf2268b71251ea70d80bd8232a2f022e62a73"
     },
     {
       "id": "e8d33497-ec46-3393-b640-ac730e7e9175",

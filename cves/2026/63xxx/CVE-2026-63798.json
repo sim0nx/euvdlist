@@ -3,7 +3,7 @@
   "enisaUuid": "7f6919a4-d145-39ab-9138-0eb5625297a7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nirqchip/imgpdc: Fix resource leak, add missing chained handler cleanup on remove\n\nThe driver allocates domain generic chips using\nirq_alloc_domain_generic_chips() during probe and sets up chained\nhandlers using irq_set_chained_handler_and_data(). However, on driver\nremoval, the generic chips are not freed and the chained handlers are\nnot removed.\n\nThe generic chips remain on the global gc_list and may later be accessed by\ngeneric interrupt chip suspend, resume, or shutdown callbacks after the\ndriver has been removed, potentially resulting in a use-after-free and\nkernel crash.\n\nThe chained handlers that were installed in probe for peripheral and\nsyswake interrupts are also left dangling, which can lead to spurious\ninterrupts accessing freed memory.\n\nFix these issues by:\n\n  - Setting IRQ_DOMAIN_FLAG_DESTROY_GC flag in domain->flags, so the\n    core code automatically removes generic chips when irq_domain_remove()\n    is called\n\n  - Clearing all chained handlers with NULL in pdc_intc_remove()",
   "datePublished": "Jul 19, 2026, 12:02:05 PM",
-  "dateUpdated": "Jul 19, 2026, 12:02:05 PM",
+  "dateUpdated": "Aug 17, 2026, 4:51:03 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/8176773dfceae7978b01c20b233693e072053700",
@@ -20,7 +20,7 @@
     "GHSA-2332-q5fp-53mf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "21822100-5734-39e8-8867-357045d4b207",
@@ -61,6 +61,16 @@
         }
       },
       "product_version": "b6ef9161e43ad58c3824bd76dc87716276f0cd70 <b3a3831b2eb884641906fc5e46207b205b6aea13"
+    },
+    {
+      "id": "77711244-2c84-3f61-ac73-6bb00dee46e5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "799286ed-9cc2-3bba-80ff-59b5d05807c4",
@@ -161,16 +171,6 @@
         }
       },
       "product_version": "patch: 6.12.95"
-    },
-    {
-      "id": "de9fe5b4-58c7-3fb7-9a17-273f87cd0cb6",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "ee3a5641-1dfd-39a1-b6ec-d05d8cdb1620",

@@ -3,7 +3,7 @@
   "enisaUuid": "99b71aa8-2ed9-3d77-8572-1f49897c980c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niommu/vt-d: Avoid WARNING in sva unbind path\n\nThe Intel IOMMU driver allows SVA on devices even if they do not support\nPCI/PRI. Commit 39c20c4e83b9 (\"iommu/vt-d: Only handle IOPF for SVA when\nPRI is supported\") modified the SVA bind path to allow this configuration\nby skipping IOPF enablement when PRI is missing. However, it failed to\nupdate the unbind path.\n\nThis creates an imbalance: the unbind path attempts to disable IOPF for\na device that never had it enabled, triggering a WARNING in\nintel_iommu_disable_iopf():\n\n WARNING: drivers/iommu/intel/iommu.c:3475 at intel_iommu_disable_iopf+0x4f/0x90d\n Call Trace:\n  <TASK>\n  blocking_domain_set_dev_pasid+0x50/0x70\n  iommu_detach_device_pasid+0x89/0xc0\n  iommu_sva_unbind_device+0x73/0x150\n  xe_vm_close_and_put+0x4d2/0x1200 [xe]\n\nFix this by bypassing IOPF operations for SVA domains on non-PRI hardware\nin both the bind and unbind paths.",
   "datePublished": "Aug 6, 2026, 7:13:48 AM",
-  "dateUpdated": "Aug 6, 2026, 7:13:48 AM",
+  "dateUpdated": "Aug 17, 2026, 4:58:12 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/bb354384f40bb087e7c44f0f0743a23fc945f91d",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/534b5f98ab7319d8004bbc7dab6481462243e883"
   ],
   "aliases": [
-    "CVE-2026-64591"
+    "CVE-2026-64591",
+    "GHSA-xvw3-8q2r-r787"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "002361a6-41ed-32b4-9bb0-9e4dc84044b7",
@@ -25,16 +26,6 @@
         }
       },
       "product_version": "6.18.20 <6.18.39"
-    },
-    {
-      "id": "19789b42-9334-3418-add8-127a5b587eb5",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "22f69495-5e79-3206-8605-ded63ba81623",
@@ -75,6 +66,16 @@
         }
       },
       "product_version": "7.0"
+    },
+    {
+      "id": "87c5d156-9ca0-3d4e-a077-f757402518c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "a0124392-6d2d-3cb6-a1ba-7b2b62399e66",

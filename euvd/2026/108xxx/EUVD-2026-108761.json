@@ -3,9 +3,12 @@
   "enisaUuid": "78fea2e5-4aab-3360-a92f-2c49b5fe7d32",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncxgb4/ch_ktls: disable softirqs around tid_list erases\n\nchcr_ktls_cpl_act_open_rpl() inserts into tid_list from the receive path\nusing xa_insert_bh().  The array is shared by the adapter's connections\nand initialized with XA_FLAGS_LOCK_BH.  However, chcr_ktls_dev_del() and\nthe chcr_ktls_dev_add() error path use xa_erase(), which takes the XArray\nlock without disabling softirqs.\n\nWhen cleanup runs with softirqs enabled, a receive softirq for another\nconnection on the same CPU can interrupt the erase and spin on the lock\nheld by the interrupted task.  Use xa_erase_bh() at both sites to match\nthe insertion path.",
   "datePublished": "Oct 23, 2026, 12:19:37 PM",
-  "dateUpdated": "Oct 23, 2026, 12:19:37 PM",
+  "dateUpdated": "Oct 30, 2026, 12:40:33 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/2c49ea1dd16d6dc0dd895e6aec57c9a448191cfe",
+    "https://git.kernel.org/stable/c/bafe51bb145e6ae549ae79dcbc35648292625934",
+    "https://git.kernel.org/stable/c/0c5063a898813a420e6bad93debd134ef8b3bfd1",
     "https://git.kernel.org/stable/c/8739f06e3f82cd715f7dd10ab24029ed881efc90",
     "https://git.kernel.org/stable/c/bcf97573d44e277b1744d7f1226f665aa0ccc599",
     "https://git.kernel.org/stable/c/7110c7f70c59eb7924e79853bcc00e2a026662e6",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/4c9dc0faca98084922caeb689579d338cf3e1c29"
   ],
   "aliases": [
-    "CVE-2026-98967"
+    "CVE-2026-98967",
+    "GHSA-hvvf-g7gg-pmx4"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
     {
       "id": "10f73c7e-5362-3049-b14b-608c9a4b6654",
@@ -27,6 +31,26 @@
         }
       },
       "product_version": "patch: 6.12.113"
+    },
+    {
+      "id": "227fb3d2-6241-3030-90d2-5b462c7a4893",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.42 <5.10.273"
+    },
+    {
+      "id": "2609a637-3f62-398d-b641-2f81007f0ff3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
     },
     {
       "id": "39687824-53f4-39d2-beb6-1e47a49e6453",
@@ -99,6 +123,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "844e20b6-230b-32cc-9a42-bb8cac7159aa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b96adbf6601d76ee0bdd9bfa5bcdd0cdd5333d78 <2c49ea1dd16d6dc0dd895e6aec57c9a448191cfe"
+    },
+    {
       "id": "8638c320-5731-3e95-a753-baf4b8ac185f",
       "product": {
         "name": "Linux",
@@ -109,6 +143,16 @@
       "product_version": "patch: 6.6.160"
     },
     {
+      "id": "956bf6aa-6526-3b84-b6f3-6b9566e4bb06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "65e302a9bd57b62872040d57eea1201562a7cbb2 <bafe51bb145e6ae549ae79dcbc35648292625934"
+    },
+    {
       "id": "9fc381e4-2ee9-3763-a382-eecc54942192",
       "product": {
         "name": "Linux",
@@ -117,16 +161,6 @@
         }
       },
       "product_version": "patch: 7.2.11"
-    },
-    {
-      "id": "a2aa2ae7-7160-34c8-911f-5083dfd9c5ee",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "b96adbf6601d76ee0bdd9bfa5bcdd0cdd5333d78"
     },
     {
       "id": "bb2a6768-32e7-379d-b82e-0d4915699768",
@@ -149,16 +183,6 @@
       "product_version": "65e302a9bd57b62872040d57eea1201562a7cbb2 <8739f06e3f82cd715f7dd10ab24029ed881efc90"
     },
     {
-      "id": "d8deda4d-3642-3346-88b3-2567478884a0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5.10.42 <5.11"
-    },
-    {
       "id": "e36399af-16fe-3cca-9caa-9b596a08cc2c",
       "product": {
         "name": "Linux",
@@ -177,6 +201,36 @@
         }
       },
       "product_version": "5.12.9 <5.13"
+    },
+    {
+      "id": "e3ac6f8d-8d2c-3a7e-a548-ea4afad1a2a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "f98318b7-bac5-3d59-a791-ccc648a13e37",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "65e302a9bd57b62872040d57eea1201562a7cbb2 <0c5063a898813a420e6bad93debd134ef8b3bfd1"
+    },
+    {
+      "id": "fa48de67-3aa8-3f61-8cbf-de14872c02b5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     }
   ],
   "enisaIdVendor": [

@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2024-24068",
+  "enisaUuid": "dbc7484b-a22d-3713-a7b8-474eb8f4a298",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nspi: cadence-qspi: remove system-wide suspend helper calls from runtime PM hooks\n\nThe ->runtime_suspend() and ->runtime_resume() callbacks are not\nexpected to call spi_controller_suspend() and spi_controller_resume().\nRemove calls to those in the cadence-qspi driver.\n\nThose helpers have two roles currently:\n - They stop/start the queue, including dealing with the kworker.\n - They toggle the SPI controller SPI_CONTROLLER_SUSPENDED flag. It\n   requires acquiring ctlr->bus_lock_mutex.\n\nStep one is irrelevant because cadence-qspi is not queued. Step two\nhowever has two implications:\n - A deadlock occurs, because ->runtime_resume() is called in a context\n   where the lock is already taken (in the ->exec_op() callback, where\n   the usage count is incremented).\n - It would disallow all operations once the device is auto-suspended.\n\nHere is a brief call tree highlighting the mutex deadlock:\n\nspi_mem_exec_op()\n        ...\n        spi_mem_access_start()\n                mutex_lock(&ctlr->bus_lock_mutex)\n\n        cqspi_exec_mem_op()\n                pm_runtime_resume_and_get()\n                        cqspi_resume()\n                                spi_controller_resume()\n                                        mutex_lock(&ctlr->bus_lock_mutex)\n                ...\n\n        spi_mem_access_end()\n                mutex_unlock(&ctlr->bus_lock_mutex)\n        ...",
+  "datePublished": "Apr 4, 2024, 8:20:33 AM",
+  "dateUpdated": "May 11, 2026, 8:04:31 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/041562ebc4759c9932b59a06527f8753b86da365",
+    "https://git.kernel.org/stable/c/959043afe53ae80633e810416cee6076da6e91c6"
+  ],
+  "aliases": [
+    "GHSA-w94f-xh79-q24v",
+    "CVE-2024-26806"
+  ],
+  "assigner": "Linux",
+  "epss": 0.15,
+  "enisaIdProduct": [
+    {
+      "id": "08379c42-b128-3ec9-8fbb-66e72ab4f2da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.7"
+    },
+    {
+      "id": "3162a96c-57a7-39bd-adab-cf35b26a67e1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.9"
+    },
+    {
+      "id": "661868ec-f774-38bd-bf8a-eb81d87debf2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "6b2cfcc6-87fe-3728-9058-4a2f43e32822",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0578a6dbfe7514db7134501cf93acc21cf13e479 <959043afe53ae80633e810416cee6076da6e91c6"
+    },
+    {
+      "id": "83a35882-1e04-37ba-929f-fdb10570fca1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0578a6dbfe7514db7134501cf93acc21cf13e479 <041562ebc4759c9932b59a06527f8753b86da365"
+    },
+    {
+      "id": "d14b506a-6a78-31e0-9dd8-453b09c47980",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a65b5d31-a02b-3974-a5a9-566355163507",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

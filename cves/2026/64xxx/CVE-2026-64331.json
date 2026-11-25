@@ -3,7 +3,7 @@
   "enisaUuid": "2a131189-0424-3da1-8482-9bfe4079fd58",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusbip: vudc: fix NULL deref in vep_dequeue()\n\nvep_alloc_request() wasn't initializing vrequest->udc, so cancellations\non the FunctionFS AIO path were arriving in vep_dequeue without a valid\nUDC reference.\n\nSince vrequest->udc is never actually properly used anywhere, we opt to\nremove it, and update vep_dequeue to obtain a reference to the udc with\nep_to_vudc(), consistent with the other vep_ ops.\n\nAFAICT this bug has existed for ~10 years. Seems that nobody has really\nstressed the FunctionFS AIO path on usbip's vudc.\n\nI tested this fix in a QEMU aarch64 guest driving FunctionFS endpoints\nvia AIO. Before the fix, running `usbip attach` from the host would\ncause the guest to oops with the following backtrace:\n\nCall trace:\n vep_dequeue+0x1c/0xe4 (P)\n usb_ep_dequeue+0x14/0x20\n ffs_aio_cancel+0x24/0x34\n __arm64_sys_io_cancel+0xb0/0x124\n do_el0_svc+0x68/0x100\n el0_svc+0x18/0x5c\n el0t_64_sync_handler+0x98/0xdc\n el0t_64_sync+0x154/0x158",
   "datePublished": "Jul 25, 2026, 8:49:58 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:58 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:45 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/9858c91d9ee6a13c45311569039413729fc9b757",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/c5371e0b91b24159a3ebaa61e70b0980bcf03c0a"
   ],
   "aliases": [
+    "GHSA-x846-472j-jj99",
     "CVE-2026-64331"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "0116abcf-0fcd-3fc8-a7f9-a5a6fdee0cad",
@@ -122,6 +123,16 @@
       "product_version": "patch: 5.10.261"
     },
     {
+      "id": "4b63e6c0-61e4-3636-ac02-fe66b72d8140",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "68b7ac98-142b-3378-a651-154fc0d92283",
       "product": {
         "name": "Linux",
@@ -160,16 +171,6 @@
         }
       },
       "product_version": "b6a0ca11186759ad7045d68a5447b1e89f658384 <9858c91d9ee6a13c45311569039413729fc9b757"
-    },
-    {
-      "id": "ae990dc0-e509-3dfe-9e3f-9d68d398ce9c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     },
     {
       "id": "b8b405d1-e98a-38ea-8a8e-02e567871ab5",

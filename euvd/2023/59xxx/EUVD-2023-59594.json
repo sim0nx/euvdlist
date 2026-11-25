@@ -1,0 +1,275 @@
+{
+  "id": "EUVD-2023-59594",
+  "enisaUuid": "ccf739ec-0a23-388f-979a-c234146eb988",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntcp: do not accept ACK of bytes we never sent\n\nThis patch is based on a detailed report and ideas from Yepeng Pan\nand Christian Rossow.\n\nACK seq validation is currently following RFC 5961 5.2 guidelines:\n\n   The ACK value is considered acceptable only if\n   it is in the range of ((SND.UNA - MAX.SND.WND) <= SEG.ACK <=\n   SND.NXT).  All incoming segments whose ACK value doesn't satisfy the\n   above condition MUST be discarded and an ACK sent back.  It needs to\n   be noted that RFC 793 on page 72 (fifth check) says: \"If the ACK is a\n   duplicate (SEG.ACK < SND.UNA), it can be ignored.  If the ACK\n   acknowledges something not yet sent (SEG.ACK > SND.NXT) then send an\n   ACK, drop the segment, and return\".  The \"ignored\" above implies that\n   the processing of the incoming data segment continues, which means\n   the ACK value is treated as acceptable.  This mitigation makes the\n   ACK check more stringent since any ACK < SND.UNA wouldn't be\n   accepted, instead only ACKs that are in the range ((SND.UNA -\n   MAX.SND.WND) <= SEG.ACK <= SND.NXT) get through.\n\nThis can be refined for new (and possibly spoofed) flows,\nby not accepting ACK for bytes that were never sent.\n\nThis greatly improves TCP security at a little cost.\n\nI added a Fixes: tag to make sure this patch will reach stable trees,\neven if the 'blamed' patch was adhering to the RFC.\n\ntp->bytes_acked was added in linux-4.2\n\nFollowing packetdrill test (courtesy of Yepeng Pan) shows\nthe issue at hand:\n\n0 socket(..., SOCK_STREAM, IPPROTO_TCP) = 3\n+0 setsockopt(3, SOL_SOCKET, SO_REUSEADDR, [1], 4) = 0\n+0 bind(3, ..., ...) = 0\n+0 listen(3, 1024) = 0\n\n// ---------------- Handshake ------------------- //\n\n// when window scale is set to 14 the window size can be extended to\n// 65535 * (2^14) = 1073725440. Linux would accept an ACK packet\n// with ack number in (Server_ISN+1-1073725440. Server_ISN+1)\n// ,though this ack number acknowledges some data never\n// sent by the server.\n\n+0 < S 0:0(0) win 65535 <mss 1400,nop,wscale 14>\n+0 > S. 0:0(0) ack 1 <...>\n+0 < . 1:1(0) ack 1 win 65535\n+0 accept(3, ..., ...) = 4\n\n// For the established connection, we send an ACK packet,\n// the ack packet uses ack number 1 - 1073725300 + 2^32,\n// where 2^32 is used to wrap around.\n// Note: we used 1073725300 instead of 1073725440 to avoid possible\n// edge cases.\n// 1 - 1073725300 + 2^32 = 3221241997\n\n// Oops, old kernels happily accept this packet.\n+0 < . 1:1001(1000) ack 3221241997 win 65535\n\n// After the kernel fix the following will be replaced by a challenge ACK,\n// and prior malicious frame would be dropped.\n+0 > . 1:1(0) ack 1001",
+  "datePublished": "May 29, 2024, 10:15:14 AM",
+  "dateUpdated": "Aug 5, 2026, 9:11:50 AM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/69eae75ca5255e876628ac5cee9eaab31f644b57",
+    "https://git.kernel.org/stable/c/458f07ffeccd17f99942311e09ef574ddf4a414a",
+    "https://git.kernel.org/stable/c/7ffff0cc929fdfc62a74b384c4903d6496c910f0",
+    "https://git.kernel.org/stable/c/b17a886ed29f3b70b78ccf632dad03e0c69e3c1a",
+    "https://git.kernel.org/stable/c/0d4e0afdd6658cd21dd5be61880411a2553fd1fc",
+    "https://git.kernel.org/stable/c/008b807fe487e0b15a3a6c39add4eb477f73e440",
+    "https://git.kernel.org/stable/c/2087d53a66e97a5eb5d1bf558d5bef9e5f891757",
+    "https://git.kernel.org/stable/c/3d501dd326fb1c73f1b8206d4c6e1d7b15c07e27"
+  ],
+  "aliases": [
+    "CVE-2023-52881"
+  ],
+  "assigner": "Linux",
+  "epss": 0.61,
+  "enisaIdProduct": [
+    {
+      "id": "007976eb-6975-3687-9800-7b07f0387eef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "354e4aa391ed50a4d827ff6fc11e0667d0859b25 <0d4e0afdd6658cd21dd5be61880411a2553fd1fc"
+    },
+    {
+      "id": "0209ea67-7403-3882-b0e2-36596a61c8ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.4.25 <3.5"
+    },
+    {
+      "id": "1f8309a3-a0b5-36f0-b636-6eda7cc2163c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.143"
+    },
+    {
+      "id": "22710a63-f2f8-3f8b-82a3-92009f7e1eea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "354e4aa391ed50a4d827ff6fc11e0667d0859b25 <7ffff0cc929fdfc62a74b384c4903d6496c910f0"
+    },
+    {
+      "id": "313c1c07-1c34-3dd0-98de-d494c0ff38ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "354f43a3-38ca-38f1-8adb-21708482bdef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8d15569e14cfcf9151e9e3b4c0cb98369943a2bb"
+    },
+    {
+      "id": "3926472c-42e9-3003-a426-f7272b8cb062",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.204"
+    },
+    {
+      "id": "41259cc0-9a45-35c3-8c52-3b761c7bb141",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2ee4432e82437a7c051c254b065fbf5d4581e1a3"
+    },
+    {
+      "id": "55adaa1b-30aa-3472-a37f-b0f6a209b711",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7"
+    },
+    {
+      "id": "58bcf7b1-1953-35c4-9952-06e9ca528799",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "354e4aa391ed50a4d827ff6fc11e0667d0859b25 <2087d53a66e97a5eb5d1bf558d5bef9e5f891757"
+    },
+    {
+      "id": "5e11f90e-cef7-33b6-9cfa-3735837bfd0c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e252bbd8c87b95e9cecdc01350fbb0b46a0f9bf1"
+    },
+    {
+      "id": "694b466c-c51f-3fdf-a86c-03a712591802",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "354e4aa391ed50a4d827ff6fc11e0667d0859b25 <3d501dd326fb1c73f1b8206d4c6e1d7b15c07e27"
+    },
+    {
+      "id": "6f334a76-59bc-3bd9-ab28-e14feef06d84",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.2.37 <3.3"
+    },
+    {
+      "id": "7880edaa-d988-343d-a786-967a0298366b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "354e4aa391ed50a4d827ff6fc11e0667d0859b25 <008b807fe487e0b15a3a6c39add4eb477f73e440"
+    },
+    {
+      "id": "8826d9ec-85ea-3c8b-9157-1e8c4713fd9d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.264"
+    },
+    {
+      "id": "8b33ad41-6de2-39e7-a7bc-0ef8a015a9bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "354e4aa391ed50a4d827ff6fc11e0667d0859b25 <458f07ffeccd17f99942311e09ef574ddf4a414a"
+    },
+    {
+      "id": "8dbf2dd1-01f0-3879-a61f-3e4530bd66bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.302"
+    },
+    {
+      "id": "9afd4c56-7324-3bc7-a82a-e38254053ed4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.333"
+    },
+    {
+      "id": "a8e1cff4-6766-3f5c-b327-fbec94b38df7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.7"
+    },
+    {
+      "id": "adc51085-f570-3a70-91c8-b638226cadaa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "354e4aa391ed50a4d827ff6fc11e0667d0859b25 <69eae75ca5255e876628ac5cee9eaab31f644b57"
+    },
+    {
+      "id": "b9c8effd-1b66-3c0b-8f37-79dba7ed0942",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.8"
+    },
+    {
+      "id": "c6e301d2-390d-33c3-a5a1-11834564dbed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.0.58 <3.1"
+    },
+    {
+      "id": "d79f7583-c9cc-37ab-a827-02a4b51d7bdf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.68"
+    },
+    {
+      "id": "fb38d377-bcd3-3077-a8e8-7a03a5edd400",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "354e4aa391ed50a4d827ff6fc11e0667d0859b25 <b17a886ed29f3b70b78ccf632dad03e0c69e3c1a"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ccf8d41d-806a-364f-81f2-d1d58dff9484",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

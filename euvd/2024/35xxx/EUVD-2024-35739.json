@@ -1,0 +1,102 @@
+{
+  "id": "EUVD-2024-35739",
+  "enisaUuid": "0db7c244-a23c-389a-9819-c4398238331d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmisc: lis3lv02d_i2c: Fix regulators getting en-/dis-abled twice on suspend/resume\n\nWhen not configured for wakeup lis3lv02d_i2c_suspend() will call\nlis3lv02d_poweroff() even if the device has already been turned off\nby the runtime-suspend handler and if configured for wakeup and\nthe device is runtime-suspended at this point then it is not turned\nback on to serve as a wakeup source.\n\nBefore commit b1b9f7a49440 (\"misc: lis3lv02d_i2c: Add missing setting\nof the reg_ctrl callback\"), lis3lv02d_poweroff() failed to disable\nthe regulators which as a side effect made calling poweroff() twice ok.\n\nNow that poweroff() correctly disables the regulators, doing this twice\ntriggers a WARN() in the regulator core:\n\nunbalanced disables for regulator-dummy\nWARNING: CPU: 1 PID: 92 at drivers/regulator/core.c:2999 _regulator_disable\n...\n\nFix lis3lv02d_i2c_suspend() to not call poweroff() a second time if\nalready runtime-suspended and add a poweron() call when necessary to\nmake wakeup work.\n\nlis3lv02d_i2c_resume() has similar issues, with an added weirness that\nit always powers on the device if it is runtime suspended, after which\nthe first runtime-resume will call poweron() again, causing the enabled\ncount for the regulator to increase by 1 every suspend/resume. These\nunbalanced regulator_enable() calls cause the regulator to never\nbe turned off and trigger the following WARN() on driver unbind:\n\nWARNING: CPU: 1 PID: 1724 at drivers/regulator/core.c:2396 _regulator_put\n\nFix this by making lis3lv02d_i2c_resume() mirror the new suspend().",
+  "datePublished": "May 17, 2024, 1:27:25 PM",
+  "dateUpdated": "May 11, 2026, 8:11:42 PM",
+  "baseScore": 5.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/4154e767354140db7804207117e7238fb337b0e7",
+    "https://git.kernel.org/stable/c/997ca415384612c8df76d99d9a768e0b3f42b325",
+    "https://git.kernel.org/stable/c/f6df761182fc953907b18aba5049fc2a044ecb45",
+    "https://git.kernel.org/stable/c/ac3e0384073b2408d6cb0d972fee9fcc3776053d"
+  ],
+  "aliases": [
+    "CVE-2024-35824",
+    "GHSA-wwvg-j77r-54mx"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "0747de4c-28ce-3b76-8c7f-18c2ec19c705",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2c1164ad927e62f122b151493bb183bc11dab8f8 <4154e767354140db7804207117e7238fb337b0e7"
+    },
+    {
+      "id": "5d15b142-662e-310b-82a9-96ab263f6603",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "755182e1e8667272a082506a2a20b4cdd78ab4c2 <f6df761182fc953907b18aba5049fc2a044ecb45"
+    },
+    {
+      "id": "78a940f0-f746-387d-8711-d68e1433a2c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.7.4 <6.7.12"
+    },
+    {
+      "id": "95be149a-80ed-34b4-8f93-667aff065e98",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b1b9f7a494400c0c39f8cd83de3aaa6111c55087 <ac3e0384073b2408d6cb0d972fee9fcc3776053d"
+    },
+    {
+      "id": "a641b558-1f7c-389b-b241-a76a93792cba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.16 <6.6.24"
+    },
+    {
+      "id": "ee5b6ab0-b678-37c7-81dd-004726926bd9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.77 <6.1.84"
+    },
+    {
+      "id": "fe89010b-8fc6-3c5b-80d7-7616e3939e97",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1229ce1c4acd36f5af97c996420defc43daca635 <997ca415384612c8df76d99d9a768e0b3f42b325"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5a639bc6-29f4-3c5c-a898-acc8eb6d21e2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

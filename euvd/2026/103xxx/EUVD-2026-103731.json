@@ -3,8 +3,10 @@
   "enisaUuid": "778e8b6d-773b-3d87-8e6c-0988b7b094b3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: openvswitch: conntrack: avoid modifying shared unconfirmed ct entry\n\nIn a case where skb with an unconfirmed ct entry gets cloned, we may\nend up committing both but with different sets of extensions.\n\nThe series of events:\n\n 1. The first clone wants to commit and runs the helpers wiring up\n    the extension pointer into the expectation list.\n 2. Then it looses the confirmation keeping the entry unconfirmed.\n 3. Second clone now wants to commit labels and adds the new extension\n    for that breaking the pointer in the expectation list causing\n    UAF on the destruction path later.\n\nWhile this is possible to trigger, there should be no practical\nnetwork pipeline where committing both clones without modifications\ninto the same zone is needed.  So, let's just reset the entry in case\nfor some reason we got an skb with a shared one during commit.  This\ndoesn't affect any known use cases, but avoids any potential problems\nwith sharing and modification of the unconfirmed ct entry.\n\nThe fixes tag points to the introduction of helpers, since that's the\nmain UAF trigger for the sharing.",
   "datePublished": "Oct 18, 2026, 3:16:20 PM",
-  "dateUpdated": "Oct 18, 2026, 3:16:20 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 24, 2026, 2:09:06 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/e0fa5ea434b7e8467ef3adc64e3858b1ca2a642d",
     "https://git.kernel.org/stable/c/37e3c878b183a115f9a114067f9ef3b408ad27fb",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/26b2bd70d22457556e2fa01cbf1192cb1a94d619"
   ],
   "aliases": [
+    "GHSA-xf3m-wp4c-wrgw",
     "CVE-2026-98491"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "1f651c3d-30dc-3a1b-8458-28e9cdbd34f2",
@@ -62,6 +65,16 @@
       "product_version": "cae3a2627520c3795b54533c5328b77af3405dbe <457e0df1b5711fbeb7ba1b6bfd826f5ef30e7e55"
     },
     {
+      "id": "5a556ecb-50d9-3702-b9d2-af74d6ab68f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "6360ab60-9116-34c4-b35b-ea8126fb184e",
       "product": {
         "name": "Linux",
@@ -80,16 +93,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "8b1d67c0-bca8-3538-b630-d81e2c8269e6",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "900ed064-06f3-3dda-ad08-64d478dab329",

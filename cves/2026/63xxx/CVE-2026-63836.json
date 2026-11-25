@@ -3,7 +3,7 @@
   "enisaUuid": "9eb3113e-2da9-3c52-845e-e45d91af8532",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbatman-adv: tp_meter: avoid divide-by-zero for dec_cwnd\n\nThe cwnd is always MSS <= cwnd <= 0x20000000. But the calculation in\nbatadv_tp_update_cwnd() assumes unsigned 32 bit arithmetics.\n\n    ((mss * 8) ** 2) / (cwnd * 8)\n\nIn case cwnd is actually 0x20000000, it will be shifted by 3 bit to the\nleft end up at 0x100000000 or U32_MAX + 1. It will therefore wrap around\nand be 0 - resulting in:\n\n    ((mss * 8) ** 2) / 0\n\nThis is of course invalid and cannot be calculated. The calculation should\nmust be simplified to avoid this overflow:\n\n   (mss ** 2) * 8 / cwnd\n\nIt will keep the precision enhancement from the scaling (by 8) but avoid\nthe overflow in the divisor.\n\nIn theory, there could still be an overflow in the dividend. It is at the\nmoment fixed to BATADV_TP_PLEN in batadv_tp_recv_ack() - so it is not an\nimminent problem. But allowing it to use the whole u32 bit range, would\nmean that it can still use up to 67 bits. To keep this calculation safe for\n32 bit arithmetic, mss must never use more than floor((32 - 3) / 2) bits -\nor in other words: must never be larger than 16383.",
   "datePublished": "Jul 19, 2026, 12:02:27 PM",
-  "dateUpdated": "Jul 19, 2026, 12:02:27 PM",
+  "dateUpdated": "Aug 17, 2026, 4:51:47 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/35264c4d46067d6312871488c810cef387f8c1f6",
@@ -20,7 +20,7 @@
     "GHSA-f3pj-q27g-923q"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "40c00b30-dfd0-35ed-bc0f-e379a1542698",
@@ -183,16 +183,6 @@
       "product_version": "33a3bb4a3345bb511f9c69c913da95d4693e2a4e <cd74176cf1685f35a2e5f212d15748bbfecb53b6"
     },
     {
-      "id": "eb054386-eee5-36da-b2e8-a1acb4427555",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
-    {
       "id": "f8244efe-ef41-390a-be96-bd3ddabe98bd",
       "product": {
         "name": "Linux",
@@ -201,6 +191,16 @@
         }
       },
       "product_version": "33a3bb4a3345bb511f9c69c913da95d4693e2a4e <1381b021bf886b793fa5ffb895a8efae7ba0318f"
+    },
+    {
+      "id": "fec25b60-8caf-3c13-8eab-2f1093b12f50",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

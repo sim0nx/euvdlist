@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2024-41962",
+  "enisaUuid": "ee1e0a4b-7cb3-3361-97c6-8e52117e1438",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nlibfs: fix infinite directory reads for offset dir\n\nAfter we switch tmpfs dir operations from simple_dir_operations to\nsimple_offset_dir_operations, every rename happened will fill new dentry\nto dest dir's maple tree(&SHMEM_I(inode)->dir_offsets->mt) with a free\nkey starting with octx->newx_offset, and then set newx_offset equals to\nfree key + 1. This will lead to infinite readdir combine with rename\nhappened at the same time, which fail generic/736 in xfstests(detail show\nas below).\n\n1. create 5000 files(1 2 3...) under one dir\n2. call readdir(man 3 readdir) once, and get one entry\n3. rename(entry, \"TEMPFILE\"), then rename(\"TEMPFILE\", entry)\n4. loop 2~3, until readdir return nothing or we loop too many\n   times(tmpfs break test with the second condition)\n\nWe choose the same logic what commit 9b378f6ad48cf (\"btrfs: fix infinite\ndirectory reads\") to fix it, record the last_index when we open dir, and\ndo not emit the entry which index >= last_index. The file->private_data\nnow used in offset dir can use directly to do this, and we also update\nthe last_index when we llseek the dir file.\n\n[brauner: only update last_index after seek when offset is zero like Jan suggested]",
+  "datePublished": "Sep 13, 2024, 6:27:29 AM",
+  "dateUpdated": "May 11, 2026, 8:34:42 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/308b4fc2403b335894592ee9dc212a5e58bb309f",
+    "https://git.kernel.org/stable/c/64a7ce76fb901bf9f9c36cf5d681328fc0fd4b5a"
+  ],
+  "aliases": [
+    "CVE-2024-46701",
+    "GHSA-q844-wpfg-w2h9"
+  ],
+  "assigner": "Linux",
+  "epss": 0.19,
+  "enisaIdProduct": [
+    {
+      "id": "52900f70-796f-36f7-8963-a545d4b26703",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.7"
+    },
+    {
+      "id": "606affea-4188-3df8-9e77-77619e685ba7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a2e459555c5f9da3e619b7e47a63f98574dc75f1 <308b4fc2403b335894592ee9dc212a5e58bb309f"
+    },
+    {
+      "id": "a02ba63f-b8e8-3aa4-9bd7-feeb9389df06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a2e459555c5f9da3e619b7e47a63f98574dc75f1 <64a7ce76fb901bf9f9c36cf5d681328fc0fd4b5a"
+    },
+    {
+      "id": "a30c04ef-5f7a-3a33-bdae-e43df5007b41",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d741c269-ae51-318e-aa61-5fd4967fca0d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6"
+    },
+    {
+      "id": "ebfd0ff7-2f0c-3e61-a3d9-0ab43ae90312",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a5cc49de-9353-369f-aa6f-b0d4b44414d4",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

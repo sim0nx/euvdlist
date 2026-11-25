@@ -1,0 +1,111 @@
+{
+  "id": "EUVD-2021-33874",
+  "enisaUuid": "2d73850c-1420-319f-924f-3323f77bf72d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nx86/fpu: Invalidate FPU state after a failed XRSTOR from a user buffer\n\nBoth Intel and AMD consider it to be architecturally valid for XRSTOR to\nfail with #PF but nonetheless change the register state.  The actual\nconditions under which this might occur are unclear [1], but it seems\nplausible that this might be triggered if one sibling thread unmaps a page\nand invalidates the shared TLB while another sibling thread is executing\nXRSTOR on the page in question.\n\n__fpu__restore_sig() can execute XRSTOR while the hardware registers\nare preserved on behalf of a different victim task (using the\nfpu_fpregs_owner_ctx mechanism), and, in theory, XRSTOR could fail but\nmodify the registers.\n\nIf this happens, then there is a window in which __fpu__restore_sig()\ncould schedule out and the victim task could schedule back in without\nreloading its own FPU registers. This would result in part of the FPU\nstate that __fpu__restore_sig() was attempting to load leaking into the\nvictim task's user-visible state.\n\nInvalidate preserved FPU registers on XRSTOR failure to prevent this\nsituation from corrupting any state.\n\n[1] Frequent readers of the errata lists might imagine \"complex\n    microarchitectural conditions\".",
+  "datePublished": "May 21, 2024, 2:19:30 PM",
+  "dateUpdated": "Aug 5, 2026, 8:46:49 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/a7748e021b9fb7739e3cb88449296539de0b6817",
+    "https://git.kernel.org/stable/c/002665dcba4bbec8c82f0aeb4bd3f44334ed2c14",
+    "https://git.kernel.org/stable/c/d8778e393afa421f1f117471144f8ce6deb6953a"
+  ],
+  "aliases": [
+    "GHSA-4jxh-jrgp-4422",
+    "CVE-2021-47226"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "0c06984b-f973-3ba7-aecb-daf3b53e8556",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.13"
+    },
+    {
+      "id": "0e9024f7-9c73-3454-a425-a5b6ae328cd6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1d731e731c4cd7cbd3b1aa295f0932e7610da82f <002665dcba4bbec8c82f0aeb4bd3f44334ed2c14"
+    },
+    {
+      "id": "203d5cd1-2ded-3de2-a218-771318dd0513",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1d731e731c4cd7cbd3b1aa295f0932e7610da82f <a7748e021b9fb7739e3cb88449296539de0b6817"
+    },
+    {
+      "id": "38e0ddbf-864d-36df-96e2-d5227b60e378",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.46"
+    },
+    {
+      "id": "47133400-3438-30e8-86c3-de2994251d49",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    },
+    {
+      "id": "4fee50be-17d9-3cf9-9312-944981f61038",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.2"
+    },
+    {
+      "id": "5f088c01-d9f0-37be-a244-f2e848df9867",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1d731e731c4cd7cbd3b1aa295f0932e7610da82f <d8778e393afa421f1f117471144f8ce6deb6953a"
+    },
+    {
+      "id": "c20768c4-e481-32be-bb4c-59349918d214",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3cf09d48-96f8-33e3-880a-80c8405d7a8d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

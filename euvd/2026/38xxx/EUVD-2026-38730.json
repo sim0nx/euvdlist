@@ -3,8 +3,10 @@
   "enisaUuid": "8c866fb5-587e-3bc1-aae5-34093d190c7e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: ebtables: fix OOB read in compat_mtw_from_user\n\nLuxiao Xu says:\n\n The function compat_mtw_from_user() converts ebtables extensions from\n 32-bit user structures to kernel native structures. However, it lacks\n proper validation of the user-supplied match_size/target_size.\n\n When certain extensions are processed, the kernel-side translation\n logic may perform memory accesses based on the extension's expected\n size. If the user provides a size smaller than what the extension\n requires, it results in an out-of-bounds read as reported by KASAN.\n\n This fix introduces a check to ensure match_size is at least as large\n as the extension's required compatsize. This covers matches, watchers,\n and targets, while maintaining compatibility with standard targets.\n\nAFAIU this is relevant for matches that need to go though\nmatch->compat_from_user() call.  Those that use plain memcpy with the\nuser-provided size are ok because the caller checks that size vs the\nstart of the next rule entry offset (which itself is checked vs. total\nsize copied from userspace).\n\nThe ->compat_from_user() callbacks assume they can read compatsize bytes,\nso they need this extra check.\n\nBased on an earlier patch from Luxiao Xu.",
   "datePublished": "Jun 24, 2026, 7:14:20 AM",
-  "dateUpdated": "Jun 24, 2026, 7:14:20 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:47:07 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/d7a8fb6f10d55a1c37b0bf8c20cca24dffd76e00",
     "https://git.kernel.org/stable/c/21af4c030567d2e6c89bb927bc18b51fba52a400",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/f438d1786d657d57790c5d138d6db3fc9fdac392"
   ],
   "aliases": [
-    "CVE-2026-52927"
+    "CVE-2026-52927",
+    "GHSA-c6h6-mmcc-x4qj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "0184ac77-deb9-3d95-83c0-c73ab7c679b6",

@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2024-41591",
+  "enisaUuid": "68888c06-e87a-3124-817b-4d2be2b2301a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKEYS: trusted: dcp: fix leak of blob encryption key\n\nTrusted keys unseal the key blob on load, but keep the sealed payload in\nthe blob field so that every subsequent read (export) will simply\nconvert this field to hex and send it to userspace.\n\nWith DCP-based trusted keys, we decrypt the blob encryption key (BEK)\nin the Kernel due hardware limitations and then decrypt the blob payload.\nBEK decryption is done in-place which means that the trusted key blob\nfield is modified and it consequently holds the BEK in plain text.\nEvery subsequent read of that key thus send the plain text BEK instead\nof the encrypted BEK to userspace.\n\nThis issue only occurs when importing a trusted DCP-based key and\nthen exporting it again. This should rarely happen as the common use cases\nare to either create a new trusted key and export it, or import a key\nblob and then just use it without exporting it again.\n\nFix this by performing BEK decryption and encryption in a dedicated\nbuffer. Further always wipe the plain text BEK buffer to prevent leaking\nthe key via uninitialized memory.",
+  "datePublished": "Sep 4, 2024, 7:54:46 PM",
+  "dateUpdated": "May 11, 2026, 8:33:35 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/9e3b266afcfe4294e84496f50f006f029d3100db",
+    "https://git.kernel.org/stable/c/0e28bf61a5f9ab30be3f3b4eafb8d097e39446bb"
+  ],
+  "aliases": [
+    "GHSA-g596-f5rr-4qjp",
+    "CVE-2024-45004"
+  ],
+  "assigner": "Linux",
+  "epss": 0.1,
+  "enisaIdProduct": [
+    {
+      "id": "1def8bd6-22ca-3542-8ea4-2103c7aff254",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2e8a0f40a39cc253002f21c54e1b5b995e5ec510 <0e28bf61a5f9ab30be3f3b4eafb8d097e39446bb"
+    },
+    {
+      "id": "27b40cd6-7758-375e-9d21-82c230b6b4db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.10"
+    },
+    {
+      "id": "86fea6ee-7ee6-30dd-84f9-3bd9746e0622",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.7"
+    },
+    {
+      "id": "9fa07a05-d8be-305b-826e-96c3bba04beb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "aea4d0ec-e057-3b57-9aa7-070dddb3fd71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "e89c30a1-276f-3bc4-9b13-7b6d84fe67b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2e8a0f40a39cc253002f21c54e1b5b995e5ec510 <9e3b266afcfe4294e84496f50f006f029d3100db"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "1cbe31cb-7962-39c3-94cc-5c77c86e3bde",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "id": "EUVD-2021-34557",
+  "enisaUuid": "e17986a8-7969-3dc3-9026-e5ff50c6f95b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: vlan: fix underflow for the real_dev refcnt\n\nInject error before dev_hold(real_dev) in register_vlan_dev(),\nand execute the following testcase:\n\nip link add dev dummy1 type dummy\nip link add name dummy1.100 link dummy1 type vlan id 100\nip link del dev dummy1\n\nWhen the dummy netdevice is removed, we will get a WARNING as following:\n\n=======================================================================\nrefcount_t: decrement hit 0; leaking memory.\nWARNING: CPU: 2 PID: 0 at lib/refcount.c:31 refcount_warn_saturate+0xbf/0x1e0\n\nand an endless loop of:\n\n=======================================================================\nunregister_netdevice: waiting for dummy1 to become free. Usage count = -1073741824\n\nThat is because dev_put(real_dev) in vlan_dev_free() be called without\ndev_hold(real_dev) in register_vlan_dev(). It makes the refcnt of real_dev\nunderflow.\n\nMove the dev_hold(real_dev) to vlan_dev_init() which is the call-back of\nndo_init(). That makes dev_hold() and dev_put() for vlan's real_dev\nsymmetrical.",
+  "datePublished": "May 24, 2024, 3:09:57 PM",
+  "dateUpdated": "Aug 5, 2026, 8:48:23 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/5e44178864b38dd70b877985abd7d86fdb95f27d",
+    "https://git.kernel.org/stable/c/6e800ee43218a56acc93676bbb3d93b74779e555",
+    "https://git.kernel.org/stable/c/f7fc72a508cf115c273a7a29350069def1041890",
+    "https://git.kernel.org/stable/c/01d9cc2dea3fde3bad6d27f464eff463496e2b00"
+  ],
+  "aliases": [
+    "CVE-2021-47555"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "0462e4a4-a148-39cf-8dec-683a34dfb12c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "700602b662d7eaa816b1a3cb0abe7a85de358fd4 <5e44178864b38dd70b877985abd7d86fdb95f27d"
+    },
+    {
+      "id": "0c18cb1b-024f-3b86-aecb-55daa84b7497",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.14.19 <5.15"
+    },
+    {
+      "id": "37b70d4c-66b0-32cb-8d5f-3901f1e1f4d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "21032425c36ff85f16e72ca92193a8c401e4acd5 <f7fc72a508cf115c273a7a29350069def1041890"
+    },
+    {
+      "id": "638fc0da-a830-3301-a782-5f21fc5229e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.4.160 <5.4.163"
+    },
+    {
+      "id": "6948a04f-5b96-31c6-8927-f3d9d9a31225",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fca96b3f852a1b369b7b2844ce357cd689879934"
+    },
+    {
+      "id": "c37f5c52-192e-3f3f-9912-f0faf308cf82",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.3 <5.15.6"
+    },
+    {
+      "id": "d57d0e13-8364-308d-b838-1d9dfea969cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.80 <5.10.83"
+    },
+    {
+      "id": "f6478785-4eaf-3b47-85f2-48286ce10840",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e04a7a84bb77f9cdf4475340fe931389bc72331c <6e800ee43218a56acc93676bbb3d93b74779e555"
+    },
+    {
+      "id": "f6eeec81-58a8-31d5-94bb-930c69c0610d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "563bcbae3ba233c275c244bfce2efe12938f5363 <01d9cc2dea3fde3bad6d27f464eff463496e2b00"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7182d3ee-df95-3319-84ac-43a4494a11e3",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

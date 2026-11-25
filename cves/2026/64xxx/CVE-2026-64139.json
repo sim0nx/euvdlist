@@ -3,9 +3,10 @@
   "enisaUuid": "b11710af-9095-380b-8ed9-04f86380dbc3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: fix SID memory leak in set_posix_acl_entries_dacl() on overflow\n\nCommit 299f962c0b02 (\"ksmbd: use check_add_overflow() to prevent u16\nDACL size overflow\") added check_add_overflow() guards that break out\nof the ACE-building loops in set_posix_acl_entries_dacl() when the\naccumulated DACL size would wrap past 65535.\n\nHowever, each iteration allocates a struct smb_sid via kmalloc_obj()\nat the top of the loop and relies on the kfree(sid) call at the end\nof the loop body (the 'pass_same_sid' label in the first loop, and\nthe explicit kfree at the tail of the second loop) to release it.\nThe newly introduced 'break' statements bypass those kfree() calls,\nleaking the sid buffer every time an overflow is detected.\n\nA malicious or malformed file with enough POSIX ACL entries to trip\nthe overflow check will leak one or more struct smb_sid allocations\non every request that touches the file's DACL, providing a trivial\nkernel memory exhaustion vector.\n\nFree sid before breaking out of the loops to plug the leak.",
   "datePublished": "Jul 19, 2026, 3:40:32 PM",
-  "dateUpdated": "Jul 19, 2026, 3:40:32 PM",
+  "dateUpdated": "Aug 23, 2026, 12:45:33 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/9b0a8985b419a71ee1cc9c0cc6a9e1bb7815a2c5",
     "https://git.kernel.org/stable/c/9d378e17c864da08c3a4df41dae92cfa6468b00a",
     "https://git.kernel.org/stable/c/519fb0a42ce5d7e46935577309fb282a5f2c6ea3",
     "https://git.kernel.org/stable/c/0e198f09cb2a554c04de0fea4e790f1250a943ca",
@@ -13,10 +14,11 @@
     "https://git.kernel.org/stable/c/af92ee994cc7f7e83a41c2025f32257a2f82a7ef"
   ],
   "aliases": [
+    "GHSA-3c28-w5w6-mh56",
     "CVE-2026-64139"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "088d4703-aa1e-3865-b366-de67e4ffdcd9",
@@ -37,6 +39,16 @@
         }
       },
       "product_version": "6.6.136 <6.6.142"
+    },
+    {
+      "id": "19f358fa-7405-3549-a6a3-61c35acfeccc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.175 <6.1.184"
     },
     {
       "id": "253b5659-5195-3395-998a-8e5ce379594e",
@@ -69,6 +81,16 @@
       "product_version": "7.0.2 <7.0.11"
     },
     {
+      "id": "ae262edb-b1b6-3bd5-a968-293f18cc8b0c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "41e53a773db6342ac9a689ee5ba635c31744c9f0 <9b0a8985b419a71ee1cc9c0cc6a9e1bb7815a2c5"
+    },
+    {
       "id": "b31f8ff9-d2a8-375c-96ca-86b7e0335b7b",
       "product": {
         "name": "Linux",
@@ -89,16 +111,6 @@
       "product_version": "5e7b8f3c539d69b2ed5f2408e2f75e68ce7eef43 <0e198f09cb2a554c04de0fea4e790f1250a943ca"
     },
     {
-      "id": "bcbf583b-c49b-352a-b406-beac34a8419a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "41e53a773db6342ac9a689ee5ba635c31744c9f0"
-    },
-    {
       "id": "d359b5ac-f2b8-3dd4-bdbd-d2932ac8402c",
       "product": {
         "name": "Linux",
@@ -117,16 +129,6 @@
         }
       },
       "product_version": "299f962c0b02d048fb45d248b4da493d03f3175d <af92ee994cc7f7e83a41c2025f32257a2f82a7ef"
-    },
-    {
-      "id": "e684d965-a406-337e-8e00-e46a0d3eb203",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "6.1.175 <6.2"
     }
   ],
   "enisaIdVendor": [

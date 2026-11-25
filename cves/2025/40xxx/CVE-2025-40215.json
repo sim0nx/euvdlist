@@ -3,60 +3,164 @@
   "enisaUuid": "63b2898e-0aaf-3837-9e45-3bd8e0e0576c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: delete x->tunnel as we delete x\n\nThe ipcomp fallback tunnels currently get deleted (from the various\nlists and hashtables) as the last user state that needed that fallback\nis destroyed (not deleted). If a reference to that user state still\nexists, the fallback state will remain on the hashtables/lists,\ntriggering the WARN in xfrm_state_fini. Because of those remaining\nreferences, the fix in commit f75a2804da39 (\"xfrm: destroy xfrm_state\nsynchronously on net exit path\") is not complete.\n\nWe recently fixed one such situation in TCP due to defered freeing of\nskbs (commit 9b6412e6979f (\"tcp: drop secpath at the same time as we\ncurrently drop dst\")). This can also happen due to IP reassembly: skbs\nwith a secpath remain on the reassembly queue until netns\ndestruction. If we can't guarantee that the queues are flushed by the\ntime xfrm_state_fini runs, there may still be references to a (user)\nxfrm_state, preventing the timely deletion of the corresponding\nfallback state.\n\nInstead of chasing each instance of skbs holding a secpath one by one,\nthis patch fixes the issue directly within xfrm, by deleting the\nfallback state as soon as the last user state depending on it has been\ndeleted. Destruction will still happen when the final reference is\ndropped.\n\nA separate lockdep class for the fallback state is required since\nwe're going to lock x->tunnel while x is locked.",
   "datePublished": "Dec 4, 2025, 12:38:32 PM",
-  "dateUpdated": "Dec 12, 2025, 5:48:28 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:08:40 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
-    "https://git.kernel.org/stable/c/b441cf3f8c4b8576639d20c8eb4aa32917602ecd",
-    "https://nvd.nist.gov/vuln/detail/CVE-2025-40215",
-    "https://git.kernel.org/stable/c/dc3636912d41770466543623cb76e7b88fdb42c7"
+    "https://git.kernel.org/stable/c/1b28a7fae0128fa140a7dccd995182ff6cd1c67b",
+    "https://git.kernel.org/stable/c/4b2c17d0f9be8b58bb30468bc81a4b61c985b04e",
+    "https://git.kernel.org/stable/c/0da961fa46da1b37ef868d9b603bd202136f8f8e",
+    "https://git.kernel.org/stable/c/d0e0d1097118461463b76562c7ebaabaa5b90b13",
+    "https://git.kernel.org/stable/c/dc3636912d41770466543623cb76e7b88fdb42c7",
+    "https://git.kernel.org/stable/c/b441cf3f8c4b8576639d20c8eb4aa32917602ecd"
   ],
   "aliases": [
-    "CVE-2025-40215"
+    "CVE-2025-40215",
+    "GHSA-346r-c6v5-7g38"
   ],
   "assigner": "Linux",
-  "epss": 0.03,
+  "epss": 0.15,
   "enisaIdProduct": [
     {
       "id": "03aab27a-55b5-3632-9875-b9f71c20b741",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.16"
     },
     {
+      "id": "05912918-bd96-3874-8ab8-3493389fa208",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9d4139c76905833afcb77fe8ccc17f302a0eb9ab <0da961fa46da1b37ef868d9b603bd202136f8f8e"
+    },
+    {
+      "id": "076171d6-e16d-318d-a0cb-7aef78cd8787",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9d4139c76905833afcb77fe8ccc17f302a0eb9ab <4b2c17d0f9be8b58bb30468bc81a4b61c985b04e"
+    },
+    {
+      "id": "07ceb5c3-8c79-377c-b804-727c36ffb6bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.160"
+    },
+    {
+      "id": "1b8758c9-8957-3275-a88e-4d781d0478a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.120"
+    },
+    {
       "id": "28d34a1b-1fc5-3e48-a2cf-094fdcb64437",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "2.6.29"
     },
     {
       "id": "39e23f48-033c-3929-9e73-d633c53470c0",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "9d4139c76905833afcb77fe8ccc17f302a0eb9ab <dc3636912d41770466543623cb76e7b88fdb42c7"
     },
     {
       "id": "51545861-df1e-32c8-b9f4-fadc9f75453f",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "9d4139c76905833afcb77fe8ccc17f302a0eb9ab <b441cf3f8c4b8576639d20c8eb4aa32917602ecd"
     },
     {
+      "id": "92ff927e-40cd-3a5c-b4ab-9c1b973133f4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.248"
+    },
+    {
       "id": "9a7959d3-c2be-3770-80bd-1a8552d7770e",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.12.62"
     },
     {
+      "id": "a99da912-a079-314f-bfd1-1236ee1a84ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9d4139c76905833afcb77fe8ccc17f302a0eb9ab <1b28a7fae0128fa140a7dccd995182ff6cd1c67b"
+    },
+    {
+      "id": "acb9c0e0-b65b-3687-87a7-9bd5a5ffbe23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9d4139c76905833afcb77fe8ccc17f302a0eb9ab <d0e0d1097118461463b76562c7ebaabaa5b90b13"
+    },
+    {
       "id": "c35ccbd3-42eb-38f6-b944-d4e7a12e4a99",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "db08ce79-06c4-3a7a-a9d7-459b60b29836",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.198"
     }
   ],
   "enisaIdVendor": [

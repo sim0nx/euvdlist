@@ -3,7 +3,7 @@
   "enisaUuid": "628f3e65-3d73-32c7-a8d3-60c9a38c66e4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: s2255: bound JPEG frame size before copying into the buffer\n\ns2255_fillbuff() memcpy()s vc->jpg_size bytes of a captured JPEG/MJPEG\nframe into the vb2 plane.  vc->jpg_size is taken verbatim from the\nS2255_MARKER_FRAME header the device sends (pdword[4] in save_frame())\nand, unlike the frame payload length just above it, is never bounded:\n\n\tpayload = le32_to_cpu(pdword[3]);\n\tif (payload > vc->req_image_size)\t/* payload is checked ... */\n\t\treturn -EINVAL;\n\tvc->pkt_size = payload;\n\tvc->jpg_size = le32_to_cpu(pdword[4]);\t/* ... jpg_size is not */\n\nA malicious or malfunctioning device can therefore report a jpg_size\nlarger than the destination vb2 plane, and the memcpy() writes past it.\njpg_size is a signed int, so a value with the top bit set also turns\ninto a huge length.\n\nReject a frame whose jpg_size is negative or exceeds the plane size\nbefore copying it.",
   "datePublished": "Sep 16, 2026, 10:31:45 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:45 AM",
+  "dateUpdated": "Oct 19, 2026, 8:54:12 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/32a595dd3e8634544e5cfbc47f906dff3d3c1ef8",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/e504cc888f42999dd76b6a43788c422610f2aad2"
   ],
   "aliases": [
-    "CVE-2026-89879"
+    "CVE-2026-89879",
+    "GHSA-w8vh-2wxg-frpg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "06f941b5-62ce-31eb-8826-97f5dc441b99",
@@ -30,6 +31,16 @@
         }
       },
       "product_version": "38f993ad8b1fe4caf9e989caf6e2a25aff3bbaf7 <d2ecaaab6a4f165abb54cdf61be60030b5782bf8"
+    },
+    {
+      "id": "1c98c0b5-98fa-363b-a252-d32750c53867",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "249461bd-cf26-3c82-94fe-2dc815ebc0ef",
@@ -160,16 +171,6 @@
         }
       },
       "product_version": "38f993ad8b1fe4caf9e989caf6e2a25aff3bbaf7 <68d664f1b4efe525e99154b7058fcb0378bdaff7"
-    },
-    {
-      "id": "d5ecd1a3-b3cc-3ae7-95ec-968d93916da4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "e519fc06-6601-3a86-a148-8875558e1b80",

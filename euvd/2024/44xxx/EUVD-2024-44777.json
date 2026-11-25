@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2024-44777",
+  "enisaUuid": "46acd8f1-6fcd-3e86-bbdf-b2162324d23c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ni3c: master: cdns: Fix use after free vulnerability in cdns_i3c_master Driver Due to Race Condition\n\nIn the cdns_i3c_master_probe function, &master->hj_work is bound with\ncdns_i3c_master_hj. And cdns_i3c_master_interrupt can call\ncnds_i3c_master_demux_ibis function to start the work.\n\nIf we remove the module which will call cdns_i3c_master_remove to\nmake cleanup, it will free master->base through i3c_master_unregister\nwhile the work mentioned above will be used. The sequence of operations\nthat may lead to a UAF bug is as follows:\n\nCPU0                                      CPU1\n\n                                     | cdns_i3c_master_hj\ncdns_i3c_master_remove               |\ni3c_master_unregister(&master->base) |\ndevice_unregister(&master->dev)      |\ndevice_release                       |\n//free master->base                  |\n                                     | i3c_master_do_daa(&master->base)\n                                     | //use master->base\n\nFix it by ensuring that the work is canceled before proceeding with\nthe cleanup in cdns_i3c_master_remove.",
+  "datePublished": "Oct 21, 2024, 7:39:50 PM",
+  "dateUpdated": "May 11, 2026, 8:44:39 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/2a21bad9964c91b34d65ba269914233720c0b1ce",
+    "https://git.kernel.org/stable/c/ea0256e393e0072e8c80fd941547807f0c28108b",
+    "https://git.kernel.org/stable/c/687016d6a1efbfacdd2af913e2108de6b75a28d5",
+    "https://git.kernel.org/stable/c/609366e7a06d035990df78f1562291c3bf0d4a12"
+  ],
+  "aliases": [
+    "CVE-2024-50061",
+    "GHSA-4p5q-rg67-69xg"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "2e49b4ee-6a30-3ab9-aa29-9b7247441d2f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.0"
+    },
+    {
+      "id": "3b880784-609d-3b4c-be00-e66ec4907c34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3a379bbcea0af6280e1ca0d1edfcf4e68cde6ee0 <2a21bad9964c91b34d65ba269914233720c0b1ce"
+    },
+    {
+      "id": "74593247-bfb5-389c-89b9-2ba7d39fe66c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3a379bbcea0af6280e1ca0d1edfcf4e68cde6ee0 <609366e7a06d035990df78f1562291c3bf0d4a12"
+    },
+    {
+      "id": "876ec452-ff5d-3272-8f9f-cc685e8f81b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.4"
+    },
+    {
+      "id": "8d0566dc-04ac-3c7f-9048-2f97c8fb088e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.129"
+    },
+    {
+      "id": "a1f4568f-1eb6-3ccc-b821-ae36b92fbea9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.57"
+    },
+    {
+      "id": "a6f064be-97c5-396c-90e9-6ad9707f10ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "baa7697b-12e3-3adb-b9c5-5d3b42abd9dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3a379bbcea0af6280e1ca0d1edfcf4e68cde6ee0 <ea0256e393e0072e8c80fd941547807f0c28108b"
+    },
+    {
+      "id": "bb891a5a-b07a-34f9-a6bc-696eab7436a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3a379bbcea0af6280e1ca0d1edfcf4e68cde6ee0 <687016d6a1efbfacdd2af913e2108de6b75a28d5"
+    },
+    {
+      "id": "cfcc29bf-d779-320e-b098-8539d25620e4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "1144e9ef-2e7f-35e1-a29c-416a9bdd7dd8",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@
   "enisaUuid": "1333a150-1944-31ab-ae90-723d049a91a6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncrypto: ccp - Do not initialize SNP for ioctl(SNP_VLEK_LOAD)\n\nSashiko notes:\n\n> if SEV initialization fails and KVM is actively running normal VMs, could a\n> userspace process trigger this code path via /dev/sev ioctls (e.g.,\n> SEV_PDH_GEN) and zero out MSR_VM_HSAVE_PA globally? Would the next VMRUN\n> execution for an active VM trigger a general protection fault and crash the\n> host?\n\nThe SEV firmware docs for SNP_VLEK_LOAD note:\n\n> On SNP_SHUTDOWN, the VLEK is deleted.\n\nThat is, the initialization/shutdown wrapper here is pointless, because the\nfirmware immediately throws away the key anyway. Instead, refuse to do\nanything if SNP has not been previously initialized.\n\nThis is an ABI break: before, this was a no-op and almost certainly a\nmistake by userspace, and now it returns -ENODEV. ABI compatibility could be\nmaintained here by simply returning 0 in the check instead.",
   "datePublished": "Jul 25, 2026, 8:49:41 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:41 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:44 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/61cf5eef20657bff9ca235fe938a99ce5ff65c06",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/f91e9dbb5845d1e5abf1028e6df57dcf61583e1b"
   ],
   "aliases": [
+    "GHSA-jg4q-h984-9pjc",
     "CVE-2026-64308"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0437332a-6006-39eb-b232-7ac8829574c9",
@@ -26,6 +27,16 @@
         }
       },
       "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "0d639305-fa65-3f3b-be03-aaf7e96d30ca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "1aeeadf9-19d0-3041-84ac-62a246612fe7",
@@ -76,16 +87,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "acf77504-44c9-35d8-a341-5b88e8f21fc2",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "d56acd97-3c61-3cf7-90c7-8453c896c36b",

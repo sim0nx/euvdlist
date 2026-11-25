@@ -1,0 +1,286 @@
+{
+  "id": "EUVD-2024-24028",
+  "enisaUuid": "e63305de-45df-34d3-b43a-2a9c2d4480b6",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nIB/hfi1: Fix sdma.h tx->num_descs off-by-one error\n\nUnfortunately the commit `fd8958efe877` introduced another error\ncausing the `descs` array to overflow. This reults in further crashes\neasily reproducible by `sendmsg` system call.\n\n[ 1080.836473] general protection fault, probably for non-canonical address 0x400300015528b00a: 0000 [#1] PREEMPT SMP PTI\n[ 1080.869326] RIP: 0010:hfi1_ipoib_build_ib_tx_headers.constprop.0+0xe1/0x2b0 [hfi1]\n--\n[ 1080.974535] Call Trace:\n[ 1080.976990]  <TASK>\n[ 1081.021929]  hfi1_ipoib_send_dma_common+0x7a/0x2e0 [hfi1]\n[ 1081.027364]  hfi1_ipoib_send_dma_list+0x62/0x270 [hfi1]\n[ 1081.032633]  hfi1_ipoib_send+0x112/0x300 [hfi1]\n[ 1081.042001]  ipoib_start_xmit+0x2a9/0x2d0 [ib_ipoib]\n[ 1081.046978]  dev_hard_start_xmit+0xc4/0x210\n--\n[ 1081.148347]  __sys_sendmsg+0x59/0xa0\n\ncrash> ipoib_txreq 0xffff9cfeba229f00\nstruct ipoib_txreq {\n  txreq = {\n    list = {\n      next = 0xffff9cfeba229f00,\n      prev = 0xffff9cfeba229f00\n    },\n    descp = 0xffff9cfeba229f40,\n    coalesce_buf = 0x0,\n    wait = 0xffff9cfea4e69a48,\n    complete = 0xffffffffc0fe0760 <hfi1_ipoib_sdma_complete>,\n    packet_len = 0x46d,\n    tlen = 0x0,\n    num_desc = 0x0,\n    desc_limit = 0x6,\n    next_descq_idx = 0x45c,\n    coalesce_idx = 0x0,\n    flags = 0x0,\n    descs = {{\n        qw = {0x8024000120dffb00, 0x4}  # SDMA_DESC0_FIRST_DESC_FLAG (bit 63)\n      }, {\n        qw = {  0x3800014231b108, 0x4}\n      }, {\n        qw = { 0x310000e4ee0fcf0, 0x8}\n      }, {\n        qw = {  0x3000012e9f8000, 0x8}\n      }, {\n        qw = {  0x59000dfb9d0000, 0x8}\n      }, {\n        qw = {  0x78000e02e40000, 0x8}\n      }}\n  },\n  sdma_hdr =  0x400300015528b000,  <<< invalid pointer in the tx request structure\n  sdma_status = 0x0,                   SDMA_DESC0_LAST_DESC_FLAG (bit 62)\n  complete = 0x0,\n  priv = 0x0,\n  txq = 0xffff9cfea4e69880,\n  skb = 0xffff9d099809f400\n}\n\nIf an SDMA send consists of exactly 6 descriptors and requires dword\npadding (in the 7th descriptor), the sdma_txreq descriptor array is not\nproperly expanded and the packet will overflow into the container\nstructure. This results in a panic when the send completion runs. The\nexact panic varies depending on what elements of the container structure\nget corrupted. The fix is to use the correct expression in\n_pad_sdma_tx_descs() to test the need to expand the descriptor array.\n\nWith this patch the crashes are no longer reproducible and the machine is\nstable.",
+  "datePublished": "Apr 3, 2024, 5:00:48 PM",
+  "dateUpdated": "Aug 5, 2026, 11:27:06 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/115b7f3bc1dce590a6851a2dcf23dc1100c49790",
+    "https://git.kernel.org/stable/c/5833024a9856f454a964a198c63a57e59e07baf5",
+    "https://git.kernel.org/stable/c/3f38d22e645e2e994979426ea5a35186102ff3c2",
+    "https://git.kernel.org/stable/c/47ae64df23ed1318e27bd9844e135a5e1c0e6e39",
+    "https://git.kernel.org/stable/c/52dc9a7a573dbf778625a0efca0fca55489f084b",
+    "https://git.kernel.org/stable/c/a2fef1d81becf4ff60e1a249477464eae3c3bc2a",
+    "https://git.kernel.org/stable/c/9034a1bec35e9f725315a3bb6002ef39666114d9",
+    "https://git.kernel.org/stable/c/e6f57c6881916df39db7d95981a8ad2b9c3458d6"
+  ],
+  "aliases": [
+    "CVE-2024-26766",
+    "GHSA-wm8x-c4gv-vvw5"
+  ],
+  "assigner": "Linux",
+  "epss": 0.27,
+  "enisaIdProduct": [
+    {
+      "id": "06159cae-b97e-3258-92e6-24b3cd88f990",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d1c1ee052d25ca23735eea912f843bc7834781b4 <115b7f3bc1dce590a6851a2dcf23dc1100c49790"
+    },
+    {
+      "id": "1f4bd805-8d77-343e-b771-081ea149f4a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6cf8f3d690bb5ad31ef0f41a6206ecf5a068d179 <3f38d22e645e2e994979426ea5a35186102ff3c2"
+    },
+    {
+      "id": "24c66a3e-fc9d-313f-befd-fc9ea2c90255",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.270"
+    },
+    {
+      "id": "2e8ee21d-174f-300b-bba7-1ca24ff8fb66",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bd57756a7e43c7127d0eca1fc5868e705fd0f7ba <47ae64df23ed1318e27bd9844e135a5e1c0e6e39"
+    },
+    {
+      "id": "50e93b3d-1212-36d0-9cff-9be957af2f19",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.16 <6.1.80"
+    },
+    {
+      "id": "57c8730b-98a8-3154-be70-9f349ca4b60e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.7"
+    },
+    {
+      "id": "60032adc-7977-3ad3-aa69-9ac93dde3eb0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.19.291 <4.19.308"
+    },
+    {
+      "id": "632084d1-5264-3b17-b68c-2efab0bf61b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.4.251 <5.4.270"
+    },
+    {
+      "id": "6814b2af-18bb-3aa6-83de-aeb982dfc84e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "72fca3f1-43f4-3740-9ca0-898253466e44",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.211"
+    },
+    {
+      "id": "7d3db1e7-5afd-3074-826a-cbc4ea465729",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fd8958efe8779d3db19c9124fce593ce681ac709 <e6f57c6881916df39db7d95981a8ad2b9c3458d6"
+    },
+    {
+      "id": "8eb036ec-0851-3969-b179-afc7ef6fea26",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fd8958efe8779d3db19c9124fce593ce681ac709 <9034a1bec35e9f725315a3bb6002ef39666114d9"
+    },
+    {
+      "id": "9d8ace89-a025-3cb9-9a1d-65e71541162b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "40ac5cb6cbb01afa40881f78b4d2f559fb7065c4 <5833024a9856f454a964a198c63a57e59e07baf5"
+    },
+    {
+      "id": "aaf9c853-bde7-3548-94e2-dfcd9e51866b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0ef9594936d1f078e8599a1cf683b052df2bec00"
+    },
+    {
+      "id": "b49ab381-9b63-3d26-8986-77cb244598df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fd8958efe8779d3db19c9124fce593ce681ac709 <a2fef1d81becf4ff60e1a249477464eae3c3bc2a"
+    },
+    {
+      "id": "bb208acd-fe14-3132-a901-621b7f8e26df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eeaf35f4e3b360162081de5e744cf32d6d1b0091 <52dc9a7a573dbf778625a0efca0fca55489f084b"
+    },
+    {
+      "id": "bfe19733-709b-33cf-a836-06a0f4afaba1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.3"
+    },
+    {
+      "id": "d1065642-fa85-3c33-ac3e-b5c0944301ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.308"
+    },
+    {
+      "id": "d99af687-c745-3a25-aebf-0c26322ea076",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.99 <5.15.150"
+    },
+    {
+      "id": "ded16dd2-45e1-3721-b632-760e882ccc35",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.19"
+    },
+    {
+      "id": "e47ec8f8-d132-3830-becf-fee0a2e735e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.80"
+    },
+    {
+      "id": "e69044cc-ec80-3022-ba2b-23700e998585",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "f0ca13b1-950d-3d7e-87f8-da3657d510b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.2.3 <6.3"
+    },
+    {
+      "id": "fb18f840-b8ce-3308-a1d6-2b3b73aaa07c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.150"
+    },
+    {
+      "id": "fd0a21f5-e4f0-3078-9f1e-0192304f1b2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.188 <5.10.211"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "199e9869-0585-35db-8d67-c4757f39d049",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,8 +3,10 @@
   "enisaUuid": "72277e8c-eea4-3e01-8075-d0b4cae6e1d4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Enforce regsafe base id consistency for BPF_ADD_CONST scalars\n\nWhen regsafe() compares two scalar registers that both carry\nBPF_ADD_CONST, check_scalar_ids() maps their full compound id\n(aka base | BPF_ADD_CONST flag) as one idmap entry. However,\nit never verifies that the underlying base ids, that is, with\nthe flag stripped are consistent with existing idmap mappings.\n\nThis allows construction of two verifier states where the old\nstate has R3 = R2 + 10 (both sharing base id A) while the current\nstate has R3 = R4 + 10 (base id C, unrelated to R2). The idmap\ncreates two independent entries: A->B (for R2) and A|flag->C|flag\n(for R3), without catching that A->C conflicts with A->B. State\npruning then incorrectly succeeds.\n\nFix this by additionally verifying base ID mapping consistency\nwhenever BPF_ADD_CONST is set: after mapping the compound ids,\nalso invoke check_ids() on the base IDs (flag bits stripped).\nThis ensures that if A was already mapped to B from comparing\nthe source register, any ADD_CONST derivative must also derive\nfrom B, not an unrelated C.",
   "datePublished": "Jun 24, 2026, 4:30:21 PM",
-  "dateUpdated": "Jun 24, 2026, 4:30:21 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:47:15 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/13c02881e49aac4c82b261faa26db9edf2567231",
     "https://git.kernel.org/stable/c/691adf738817275368ed56311b7d798d617823a3",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/2f2ec8e7730e21fc9bd49e0de9cdd58213ea24d0"
   ],
   "aliases": [
-    "CVE-2026-53081"
+    "CVE-2026-53081",
+    "GHSA-phj2-v9xx-8m7r"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "082f78f6-6d6c-37ce-87eb-9a51fb316343",

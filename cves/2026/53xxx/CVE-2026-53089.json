@@ -3,18 +3,85 @@
   "enisaUuid": "215b596d-7a32-354b-b89e-85a54ae6c03f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix use-after-free in offloaded map/prog info fill\n\nWhen querying info for an offloaded BPF map or program,\nbpf_map_offload_info_fill_ns() and bpf_prog_offload_info_fill_ns()\nobtain the network namespace with get_net(dev_net(offmap->netdev)).\nHowever, the associated netdev's netns may be racing with teardown\nduring netns destruction. If the netns refcount has already reached 0,\nget_net() performs a refcount_t increment on 0, triggering:\n\n  refcount_t: addition on 0; use-after-free.\n\nAlthough rtnl_lock and bpf_devs_lock ensure the netdev pointer remains\nvalid, they cannot prevent the netns refcount from reaching zero.\n\nFix this by using maybe_get_net() instead of get_net(). maybe_get_net()\nuses refcount_inc_not_zero() and returns NULL if the refcount is already\nzero, which causes ns_get_path_cb() to fail and the caller to return\n-ENOENT -- the correct behavior when the netns is being destroyed.",
   "datePublished": "Jun 24, 2026, 4:30:28 PM",
-  "dateUpdated": "Jun 24, 2026, 4:30:28 PM",
+  "dateUpdated": "Nov 6, 2026, 4:23:59 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/43d6848a2a6c92ccfd614d9f0bb6fd85b95dfa9d",
+    "https://git.kernel.org/stable/c/642943ae5bdacabc8109dc4a5e0ebb4a6b99ef3e",
+    "https://git.kernel.org/stable/c/fea55b034328feaafef75aee252f305e6f85a991",
+    "https://git.kernel.org/stable/c/5662dac41a3442aa378d7c405164903eb109fc05",
+    "https://git.kernel.org/stable/c/1a2dc103e16448d022a77ad5fc3234641436c4b7",
+    "https://git.kernel.org/stable/c/85dc711f742b192eb97c0e00b521312f5a7a415e",
     "https://git.kernel.org/stable/c/a51e7fbe94a87e236631a83973d4f558310b2cd2",
     "https://git.kernel.org/stable/c/a0c584fc18056709c8e047a82a6045d6c209f4ce"
   ],
   "aliases": [
-    "CVE-2026-53089"
+    "CVE-2026-53089",
+    "GHSA-fwh4-95hv-8xhf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
+    {
+      "id": "019b8e5c-ce02-330d-b9b3-1e9cd30ea2c3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "675fc275a3a2d905535207237402c6d8dcb5fa4b <642943ae5bdacabc8109dc4a5e0ebb4a6b99ef3e"
+    },
+    {
+      "id": "038b594c-8d3f-30a9-9338-c04688ce0a66",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "675fc275a3a2d905535207237402c6d8dcb5fa4b <43d6848a2a6c92ccfd614d9f0bb6fd85b95dfa9d"
+    },
+    {
+      "id": "0945daae-3c3d-3b92-a524-a434cd24b832",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "675fc275a3a2d905535207237402c6d8dcb5fa4b <fea55b034328feaafef75aee252f305e6f85a991"
+    },
+    {
+      "id": "1e7ececa-03b3-3bcd-94f5-d21107940fa4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.156"
+    },
+    {
+      "id": "2b7598db-5469-3a97-9032-413d8a76b83c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "675fc275a3a2d905535207237402c6d8dcb5fa4b <1a2dc103e16448d022a77ad5fc3234641436c4b7"
+    },
+    {
+      "id": "3098c7b0-5cf8-3c53-8e65-06303ab3c629",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.108"
+    },
     {
       "id": "358c2cb2-8b72-3afe-83e1-877af8f6307c",
       "product": {
@@ -24,6 +91,16 @@
         }
       },
       "product_version": "patch: 7.1"
+    },
+    {
+      "id": "4033c0cd-f1c6-3dd3-a0b5-92222ee8b168",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "675fc275a3a2d905535207237402c6d8dcb5fa4b <5662dac41a3442aa378d7c405164903eb109fc05"
     },
     {
       "id": "425eb98d-08da-3666-945b-0d936c410a88",
@@ -46,6 +123,26 @@
       "product_version": "675fc275a3a2d905535207237402c6d8dcb5fa4b <a0c584fc18056709c8e047a82a6045d6c209f4ce"
     },
     {
+      "id": "7e067385-f794-3a00-bd1b-e50a77d0f211",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.187"
+    },
+    {
+      "id": "bd19b0f9-1820-38a1-845a-25ddee58b26c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.220"
+    },
+    {
       "id": "bde40c6d-58c8-32fd-aea4-d8f3d7b09808",
       "product": {
         "name": "Linux",
@@ -54,6 +151,36 @@
         }
       },
       "product_version": "4.16"
+    },
+    {
+      "id": "c0040caa-53af-33ee-8890-3f0cc0f4b9fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.49"
+    },
+    {
+      "id": "c6e1e400-6c27-31d5-a0a2-b759cabdb93b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.269"
+    },
+    {
+      "id": "c94b17bf-9794-3399-a31d-06aa017ca1c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "675fc275a3a2d905535207237402c6d8dcb5fa4b <85dc711f742b192eb97c0e00b521312f5a7a415e"
     },
     {
       "id": "cf0cf016-4fec-3ead-9e41-ea66a87482fb",

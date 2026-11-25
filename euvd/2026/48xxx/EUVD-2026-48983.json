@@ -3,7 +3,7 @@
   "enisaUuid": "1cb6ceb9-7de5-3aa3-9746-8cf536d7ee9e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nInput: touchwin - reset the packet index on every complete packet\n\ntw_interrupt() accumulates each non-zero serial byte into a fixed\nthree-byte buffer with a running index that is only reset once a full\npacket has been received *and* the device's two Y bytes agree:\n\n\ttw->data[tw->idx++] = data;\n\tif (tw->idx == TW_LENGTH && tw->data[1] == tw->data[2]) {\n\t\t...\n\t\ttw->idx = 0;\n\t}\n\nThe reset is gated on tw->data[1] == tw->data[2], a value the device\ncontrols.  A malicious, malfunctioning or counterfeit Touchwindow\nperipheral can stream non-zero bytes whose 2nd and 3rd bytes differ: the\nindex reaches TW_LENGTH without the equality holding, is never reset, and\nkeeps growing, so tw->data[tw->idx++] walks off the end of the three-byte\narray and the rest of the heap-allocated struct tw, one attacker-chosen\nbyte at a time -- an unbounded, device-driven heap out-of-bounds write.\n\nReset the index on every completed packet and report an event only when\nthe two Y bytes match, like the other serio touchscreen drivers do.",
   "datePublished": "Jul 25, 2026, 8:49:18 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:18 AM",
+  "dateUpdated": "Nov 6, 2026, 4:34:31 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/ed9b66905407eb3d02df1aaeed82eb7a7f0eb508",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/478cdd736f2ce3114f90e775d7358136d3977b94"
   ],
   "aliases": [
+    "GHSA-v33c-vvwm-9mr7",
     "CVE-2026-64271"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "14d11f3a-5231-31fd-8ed8-30e7c7660a15",
@@ -30,16 +31,6 @@
         }
       },
       "product_version": "patch: 5.15.212"
-    },
-    {
-      "id": "1c331ae6-4b09-353c-b25a-78d05209920a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "297e62db-23ad-32d2-bae0-797293d3875a",
@@ -200,6 +191,16 @@
         }
       },
       "product_version": "11ea3173d5f2de71d037ef58ac43395795fed2bc <478cdd736f2ce3114f90e775d7358136d3977b94"
+    },
+    {
+      "id": "f40a8069-9bd1-35f0-ae45-d374dabc9284",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

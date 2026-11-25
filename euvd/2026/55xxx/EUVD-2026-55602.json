@@ -3,9 +3,11 @@
   "enisaUuid": "2c795050-2ded-367d-9404-74516fcc09eb",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmtd: fix double free and WARN_ON in add_mtd_device() error paths\n\nWhen device_register() or mtd_nvmem_add() fails inside\nadd_mtd_device() for a partition, the error handling triggers\nmtd_release() via put_device() or device_unregister(). mtd_release()\ncalls release_mtd_partition() which frees the mtd_info structure.\nHowever, callers such as mtd_add_partition() and add_mtd_partitions()\nalso call free_partition() in their error paths, resulting in a double\nfree.\n\nAdditionally, release_mtd_partition() hits WARN_ON(!list_empty(\n&mtd->part.node)) because the partition node is still linked in the\nparent's partitions list when the release callback fires from the\nadd_mtd_device() error path.\n\nFix this by overriding dev->type and dev->release before put_device()\nin the error paths, so that device_release() invokes a no-op function\ninstead of mtd_release(). For the mtd_nvmem_add() failure case,\ndevice_unregister() is replaced with device_del() to separate the\ndevice removal from the final kobject reference drop, allowing the\noverride to take effect before put_device() is called.\n\nThe callers' error paths (list_del + free_partition) remain the sole\nowners of mtd_info lifetime on add_mtd_device() failure, which is the\nexpected contract.\n\nThe normal partition teardown path is not affected: del_mtd_device()\ngoes through kref_put() -> mtd_device_release() -> device_unregister()\nwith dev->type still set to &mtd_devtype, so mtd_release() ->\nrelease_mtd_partition() continues to work correctly for the regular\nremoval case.",
   "datePublished": "Aug 10, 2026, 12:04:36 PM",
-  "dateUpdated": "Aug 10, 2026, 12:04:36 PM",
+  "dateUpdated": "Nov 6, 2026, 4:55:16 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/b1f78dc4a6869e30ff64345a5d3e7da1b6da0061",
+    "https://git.kernel.org/stable/c/1dfe90daee6080b088b65620ff690a56f59ddea2",
     "https://git.kernel.org/stable/c/ffe21a3545b439e7b11578a701c22a847c149561",
     "https://git.kernel.org/stable/c/e1e96aca1bdf391e2f49531c270ffc134e5b49a5",
     "https://git.kernel.org/stable/c/f98ae09c727dcf34f745c875661c64b642e4abfa",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/9d4af746af8ce27eefc2338b2feaa1e01f28b6c3"
   ],
   "aliases": [
+    "GHSA-qpvq-4872-pr63",
     "CVE-2026-68416"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "1bda2e43-b62c-32a7-a55a-46b4c15d4d67",
@@ -99,6 +102,26 @@
       "product_version": "patch: 6.18.42"
     },
     {
+      "id": "7d041036-b16c-3d72-9c6d-27f84b0fc715",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "97f5f018-2ffb-3470-a159-f491ce4b2707",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "93c08951d7070134b7415ca4abd0d25876aa653b <b1f78dc4a6869e30ff64345a5d3e7da1b6da0061"
+    },
+    {
       "id": "a2c2937d-cef2-375f-9b94-0e1a47c307d3",
       "product": {
         "name": "Linux",
@@ -119,16 +142,6 @@
       "product_version": "6.6"
     },
     {
-      "id": "ce4825a1-226b-3781-9ff5-779cb66de059",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
-    },
-    {
       "id": "e6b2c4fa-df6c-31b0-9c08-be23eba0d316",
       "product": {
         "name": "Linux",
@@ -137,6 +150,16 @@
         }
       },
       "product_version": "19bfa9ebebb5ec0695def57eb1d80de7e9cab369 <f98ae09c727dcf34f745c875661c64b642e4abfa"
+    },
+    {
+      "id": "f424cf1d-5162-3082-ab58-40da58a7077c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "006764e33fe9cff72f8a68ce1dab570d93662c96 <1dfe90daee6080b088b65620ff690a56f59ddea2"
     }
   ],
   "enisaIdVendor": [

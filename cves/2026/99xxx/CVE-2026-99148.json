@@ -3,18 +3,21 @@
   "enisaUuid": "1d85ec7b-c882-36e7-8348-3fe655388021",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdgpu: keep the eviction fence until the last handle is closed\n\namdgpu_gem_object_close() detaches the user queue eviction fence from\nthe BO before it checks bo_va->ref_count, so closing any handle of a BO\nremoves the fence, even when the file still has another handle to the\nBO and the bo_va with its GPU mappings stays. The BO can then be evicted\nwithout suspending the user queues of the file, which keep accessing it\nthrough mappings that are only marked for update.\n\nSeen on navi31 with a SDMA user queue: a BO opened twice in the same\nfile (GEM_FLINK + GEM_OPEN) loses its eviction fence when the second\nhandle is closed (traced attach/detach of the fence):\n\n  attach bo=ffff8c78a6c84c00\n  GEM_CLOSE handle=7\n  detach bo=ffff8c78a6c84c00\n\nwhile handle 6 and the mapping are still in use.\n\nOnly detach the fence when the last reference to the bo_va goes away,\nmatching amdgpu_gem_object_open(), which attaches it only when the\nbo_va is created. With this the fence stays until the file is closed.\n\n(cherry picked from commit 8387982f03d4026b7dc11b0b5e3118298eee4d6a)",
   "datePublished": "Oct 28, 2026, 10:35:04 AM",
-  "dateUpdated": "Oct 28, 2026, 10:35:04 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 31, 2026, 12:43:54 PM",
+  "baseScore": 7.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/dce8f7f03a47b1744dccf506268f9229b67fab47",
     "https://git.kernel.org/stable/c/6467c4cc83b94850bfea614e9f98276edf9a7c3f",
     "https://git.kernel.org/stable/c/3c44cbcec5eb370713bbd2c315ed7c34d8ccec2b"
   ],
   "aliases": [
-    "CVE-2026-99148"
+    "CVE-2026-99148",
+    "GHSA-xpw2-c5ch-25qm"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.15,
   "enisaIdProduct": [
     {
       "id": "04d4d663-c13c-3034-8e76-eaf93df56c48",

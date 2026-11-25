@@ -1,0 +1,109 @@
+{
+  "id": "EUVD-2024-35787",
+  "enisaUuid": "be3f6cd1-ea9d-3195-90ea-bf3dc55cb228",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndm-raid: really frozen sync_thread during suspend\n\n1) commit f52f5c71f3d4 (\"md: fix stopping sync thread\") remove\n   MD_RECOVERY_FROZEN from __md_stop_writes() and doesn't realize that\n   dm-raid relies on __md_stop_writes() to frozen sync_thread\n   indirectly. Fix this problem by adding MD_RECOVERY_FROZEN in\n   md_stop_writes(), and since stop_sync_thread() is only used for\n   dm-raid in this case, also move stop_sync_thread() to\n   md_stop_writes().\n2) The flag MD_RECOVERY_FROZEN doesn't mean that sync thread is frozen,\n   it only prevent new sync_thread to start, and it can't stop the\n   running sync thread; In order to frozen sync_thread, after seting the\n   flag, stop_sync_thread() should be used.\n3) The flag MD_RECOVERY_FROZEN doesn't mean that writes are stopped, use\n   it as condition for md_stop_writes() in raid_postsuspend() doesn't\n   look correct. Consider that reentrant stop_sync_thread() do nothing,\n   always call md_stop_writes() in raid_postsuspend().\n4) raid_message can set/clear the flag MD_RECOVERY_FROZEN at anytime,\n   and if MD_RECOVERY_FROZEN is cleared while the array is suspended,\n   new sync_thread can start unexpected. Fix this by disallow\n   raid_message() to change sync_thread status during suspend.\n\nNote that after commit f52f5c71f3d4 (\"md: fix stopping sync thread\"), the\ntest shell/lvconvert-raid-reshape.sh start to hang in stop_sync_thread(),\nand with previous fixes, the test won't hang there anymore, however, the\ntest will still fail and complain that ext4 is corrupted. And with this\npatch, the test won't hang due to stop_sync_thread() or fail due to ext4\nis corrupted anymore. However, there is still a deadlock related to\ndm-raid456 that will be fixed in following patches.",
+  "datePublished": "May 17, 2024, 12:25:00 PM",
+  "dateUpdated": "May 11, 2026, 8:11:10 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/af916cb66a80597f3523bc85812e790bcdcfd62b",
+    "https://git.kernel.org/stable/c/eaa8fc9b092837cf2c754bde1a15d784ce9a85ab",
+    "https://git.kernel.org/stable/c/16c4770c75b1223998adbeb7286f9a15c65fba73"
+  ],
+  "aliases": [
+    "GHSA-wmx4-9pgv-5565",
+    "CVE-2024-35794"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "0242735d-b1a3-3188-9da2-9e952ad00dcf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9dbd1aa3a81c6166608fec87994b6c464701f73a <af916cb66a80597f3523bc85812e790bcdcfd62b"
+    },
+    {
+      "id": "169a69b3-d84a-3ce9-928b-9f4b7445b533",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.8"
+    },
+    {
+      "id": "2520fb2f-6cce-3bd2-9381-2f64c401f5ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9dbd1aa3a81c6166608fec87994b6c464701f73a <16c4770c75b1223998adbeb7286f9a15c65fba73"
+    },
+    {
+      "id": "2e18d804-a0cd-31f5-a415-a15d0179dda6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.12"
+    },
+    {
+      "id": "40ab79cc-ad57-3a68-8998-73839dae0c19",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9dbd1aa3a81c6166608fec87994b6c464701f73a <eaa8fc9b092837cf2c754bde1a15d784ce9a85ab"
+    },
+    {
+      "id": "4958a1fc-08d4-34a3-b4f2-4bdfdeb3caa4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a526f165-fbd3-31ae-a448-903566e071db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.3"
+    },
+    {
+      "id": "f6907295-da1e-37d5-9e2d-2ab2af79c11d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4f9075ab-5c5d-3c07-b068-fa6126490e50",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

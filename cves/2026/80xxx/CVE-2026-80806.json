@@ -3,7 +3,7 @@
   "enisaUuid": "275360e1-8658-3005-beb6-daa4f8f6d2d1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\next4: don't enable DAX on new encrypted files\n\nCurrently, when a new encrypted regular file is created, the call to\next4_set_inode_flags(inode, init=true) in __ext4_new_inode() is made\nbefore EXT4_INODE_ENCRYPT is set.  As a result, it can set S_DAX if the\nfilesystem is mounted with \"-o dax=always\".\n\nEXT4_INODE_ENCRYPT then actually gets set a bit later in\n__ext4_new_inode(), when it calls fscrypt_set_context() which calls\next4_set_context().  ext4_set_context() sets EXT4_INODE_ENCRYPT and\ncalls ext4_set_inode_flags(inode, init=false) to set S_ENCRYPTED too.\n\nThis was intended to clear S_DAX as well.  However, this was broken by\ncommit 043546e46dc7 (\"fs/ext4: Only change S_DAX on inode load\").  This\ncauses data written to the file to bypass encryption, also causing\nxfstests failures such as generic/548 (when \"-o dax=always\" is used).\n\nFix this by simplifying the flow by making __ext4_new_inode() set\nEXT4_INODE_ENCRYPT earlier.  This makes it take effect in\next4_set_inode_flags(inode, init=true), making S_DAX never be set.\n\nSimilarly, make EXT4_STATE_MAY_INLINE_DATA never be set in the first\nplace on new encrypted inodes.  Then it doesn't need to be cleared.\n\nAs a result of these simplifications, ext4_set_context() no longer needs\nto change inode flags or state when 'handle != NULL'.  Remove that too.",
   "datePublished": "Sep 4, 2026, 3:13:20 PM",
-  "dateUpdated": "Sep 4, 2026, 3:13:20 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:59 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/add98959b220935b243170214c787bc03044a44d",
@@ -17,10 +17,11 @@
     "https://git.kernel.org/stable/c/da32af420d6d466e247c43ac0b829edeac7ae0ad"
   ],
   "aliases": [
-    "CVE-2026-80806"
+    "CVE-2026-80806",
+    "GHSA-jqxc-3f8r-hc2f"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "18ffb256-78c8-3b3f-9f8d-9cadcd93cded",
@@ -51,6 +52,16 @@
         }
       },
       "product_version": "043546e46dc70c25ff7e2cf6d09cbb0424fc9978 <5959cad3cfa852ec07bbdaf9c17f4838a94a8e6c"
+    },
+    {
+      "id": "2b76d6e2-9ef5-3604-a5f4-dc61764dec66",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "2d2ab1ce-16d6-386f-884c-aac4b7727a45",
@@ -91,16 +102,6 @@
         }
       },
       "product_version": "patch: 6.18.47"
-    },
-    {
-      "id": "867b6c50-b427-3781-b890-6946ba6cbd58",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "884012d3-677b-392c-ab38-dc794df0948f",

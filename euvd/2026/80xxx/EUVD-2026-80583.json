@@ -3,7 +3,7 @@
   "enisaUuid": "c3a49fe6-0c5c-3c29-a50d-638f2ce32cac",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ni2c: core: fix debugfs UAF on adapter removal\n\ni2c_del_adapter() frees the adapter's debugfs directory before it\nunregisters the adapter device, but the new_device sysfs attribute\nstays writable until device_del(). A write racing with removal still\nreaches i2c_device_probe(), which passes the freed adap->debugfs to\ndebugfs_create_dir() as the new client's parent:\n\n  BUG: KASAN: slab-use-after-free in lookup_noperm_common+0x407/0x430\n  Read of size 4 at addr ffff88803ef87810 by task syz.0.61/6090\n   lookup_noperm_common+0x407/0x430\n   simple_start_creating+0x9c/0x110\n   debugfs_start_creating+0xdb/0x1a0\n   debugfs_create_dir+0x24/0x350\n   i2c_device_probe+0x814/0xbf0\n\nIt's technically possible to create a client after i2c_deregister_clients\nhas run. That client will never be unregistered and make\nwait_for_completion hang.\n\nClose the window by removing the new_device attribute at the start of\ni2c_del_adapter(). device_remove_file() will drain any clients left.",
   "datePublished": "Sep 16, 2026, 10:32:59 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:59 AM",
+  "dateUpdated": "Oct 19, 2026, 8:55:57 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/dc33a9762538b3250ed6b5644a4d44c748be33a6",
@@ -15,10 +15,11 @@
     "https://git.kernel.org/stable/c/b15b548d52b43ba8ac4652bc2c7244a8dd1e9622"
   ],
   "aliases": [
-    "CVE-2026-89983"
+    "CVE-2026-89983",
+    "GHSA-xr2v-8c9q-cqgw"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "0221283b-271d-3682-9e34-3f0b218a7876",
@@ -51,6 +52,16 @@
       "product_version": "patch: 6.12.110"
     },
     {
+      "id": "27ff7c7a-7823-38ba-963e-7346121cd55e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "37f4cd83-1b0f-3288-88de-952f2b81c8e0",
       "product": {
         "name": "Linux",
@@ -79,16 +90,6 @@
         }
       },
       "product_version": "5.15.168 <5.15.221"
-    },
-    {
-      "id": "42a25a6b-044b-34ef-a0aa-cd85641918d0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "60c7c595-6c5f-3784-b3aa-8168075f3662",

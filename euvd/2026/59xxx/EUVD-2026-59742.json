@@ -3,9 +3,14 @@
   "enisaUuid": "884cc515-41d1-3868-975d-08d856da0e14",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nhwmon: (nct6775-core) Prevent access to unsupported weight registers\n\nSashiko reports:\n\nDuring initialization of the nct6116 chip, the driver sets data->pwm_num\nto 5. However, it assigns several NCT6106 register arrays (such as\nNCT6106_REG_WEIGHT_DUTY_STEP, NCT6106_REG_WEIGHT_TEMP_SEL, and\nNCT6106_REG_WEIGHT_TEMP_*) to data->REG_PWM and data->REG_WEIGHT_TEMP.\nThese arrays only contain 3 elements.\n\nIn nct6775_update_pwm(), the driver iterates up to data->pwm_num. If\ndata->has_pwm has bits 3 or 4 set (which is structurally possible for\nnct6116), the loop attempts to read elements at index 3 and 4 from these\n3-element arrays. This results in a global out-of-bounds read, which can\nbe caught by KASAN.\n\nFurthermore, the driver uses these garbage out-of-bounds values as\nhardware register addresses for subsequent read and write operations. This\nleads to invalid hardware register access, potentially causing hardware\nmisconfiguration or system crashes.\n\nThe underlying problem is that the chip does support up to five fan\ncontrol channels, but only the first three support weight control.\nFix the problem by extending the affected weight register arrays with\nzeroed fields. The driver uses zeroed register addresses to determine\nif a register is supported or not, and skips accesses for unsupported\nregisters.",
   "datePublished": "Aug 15, 2026, 12:27:56 PM",
-  "dateUpdated": "Aug 15, 2026, 12:27:56 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 19, 2026, 4:38:42 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/0d11b2a10269ace29832f584d207ff3768f79dc5",
+    "https://git.kernel.org/stable/c/4a77f1d72c6db04cbbfab0250292ac71fdea5f0a",
+    "https://git.kernel.org/stable/c/513d847f7a95bbdbeaaf55fb942c38992587734f",
     "https://git.kernel.org/stable/c/25b528816f5d83be5236dc182692369e8c9402b0",
     "https://git.kernel.org/stable/c/689082a4cb166a7ae9729f7b12339e69fdad6c52",
     "https://git.kernel.org/stable/c/1b722740ac5c2b2070f9ba922f4e0f227faf0246",
@@ -13,20 +18,31 @@
     "https://git.kernel.org/stable/c/d0b704e569ac3b8416d8e02270cdc9bf830ed395"
   ],
   "aliases": [
+    "GHSA-8cf5-68w2-4vhx",
     "CVE-2026-74549"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
-      "id": "08014f54-2542-37d6-9b84-b36d2a17e288",
+      "id": "186ace00-c5f1-3878-b862-11adf4762946",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc6"
+      "product_version": "patch: 5.10.265"
+    },
+    {
+      "id": "1c458313-1514-39d2-9294-13cf1ca7ed4d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
     },
     {
       "id": "1f085f28-e180-3880-a0be-7269e647b12f",
@@ -49,6 +65,16 @@
       "product_version": "29c7cb485b321c024dedc168bcbb04451176b163 <689082a4cb166a7ae9729f7b12339e69fdad6c52"
     },
     {
+      "id": "3b870638-839f-3aea-a76b-62501294f21a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "40cc72d1-e6a8-3014-a86a-6574c9f7e671",
       "product": {
         "name": "Linux",
@@ -69,6 +95,16 @@
       "product_version": "29c7cb485b321c024dedc168bcbb04451176b163 <25b528816f5d83be5236dc182692369e8c9402b0"
     },
     {
+      "id": "527016c0-b86d-3e2f-9e24-0ca8403937a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "29c7cb485b321c024dedc168bcbb04451176b163 <513d847f7a95bbdbeaaf55fb942c38992587734f"
+    },
+    {
       "id": "630e813f-7b60-309b-a278-5bb7a60cef6a",
       "product": {
         "name": "Linux",
@@ -77,6 +113,16 @@
         }
       },
       "product_version": "5.4"
+    },
+    {
+      "id": "78092f8c-2995-3c6e-97e9-4a6d8e5fcde4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "91674b2f-dee0-336f-9694-3c8b3011025c",
@@ -109,6 +155,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "bbe79e85-cc93-36c8-9cdf-2bc065b7f4e4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "29c7cb485b321c024dedc168bcbb04451176b163 <0d11b2a10269ace29832f584d207ff3768f79dc5"
+    },
+    {
       "id": "c79ec64e-eb9c-3062-916e-1a7edb00b5d8",
       "product": {
         "name": "Linux",
@@ -137,6 +193,16 @@
         }
       },
       "product_version": "patch: 7.1.8"
+    },
+    {
+      "id": "f284c9b5-8dbc-3809-ace9-8cd85f07d6fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "29c7cb485b321c024dedc168bcbb04451176b163 <4a77f1d72c6db04cbbfab0250292ac71fdea5f0a"
     }
   ],
   "enisaIdVendor": [

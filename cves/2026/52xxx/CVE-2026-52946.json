@@ -3,8 +3,10 @@
   "enisaUuid": "b44713cc-6932-3cfe-9c8a-06c1bb1e0192",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs/fcntl: fix SOFTIRQ-unsafe lock order in fasync signaling\n\nA SOFTIRQ-safe to SOFTIRQ-unsafe lock order deadlock can occur in\nsend_sigio() and send_sigurg() when a process group receives a signal.\n\nWhen FASYNC is configured for a process group (PIDTYPE_PGID), both\nfunctions use read_lock(&tasklist_lock) to traverse the task list.\nHowever, they are frequently called from softirq context:\n- send_sigio() via input_inject_event -> kill_fasync\n- send_sigurg() via tcp_check_urg -> sk_send_sigurg (NET_RX_SOFTIRQ)\n\nThe deadlock is caused by the rwlock writer fairness mechanism:\n1. CPU 0 (process context) holds read_lock(&tasklist_lock) in do_wait().\n2. CPU 1 (process context) attempts write_lock(&tasklist_lock) in\n   fork() or exit() and spins, which blocks all new readers.\n3. CPU 0 is interrupted by a softirq (e.g., TCP URG packet reception).\n4. The softirq calls send_sigurg() and attempts to acquire\n   read_lock(&tasklist_lock), deadlocking because CPU 1 is waiting.\n\nSince PID hashing and do_each_pid_task() traversals are already\nRCU-protected, the read_lock on tasklist_lock is no longer strictly\nrequired for safe traversal. Fix this by replacing tasklist_lock with\nrcu_read_lock(), aligning the process group signaling path with the\nsingle-PID path. This also mitigates a potential remote denial of\nservice vector via TCP URG packets.\n\nLockdep splat:\n=====================================================\nWARNING: SOFTIRQ-safe -> SOFTIRQ-unsafe lock order detected\n[...]\nChain exists of:\n  &dev->event_lock --> &f_owner->lock --> tasklist_lock\n\nPossible interrupt unsafe locking scenario:\n       CPU0                    CPU1\n       ----                    ----\n  lock(tasklist_lock);\n                           local_irq_disable();\n                           lock(&dev->event_lock);\n                           lock(&f_owner->lock);\n  <Interrupt>\n    lock(&dev->event_lock);\n\n*** DEADLOCK ***",
   "datePublished": "Jun 24, 2026, 4:26:04 PM",
-  "dateUpdated": "Jun 24, 2026, 4:26:04 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 10, 2026, 12:47:51 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/54626335ea4174ab2d9a183b511d825f6765e47b",
     "https://git.kernel.org/stable/c/897d6a7247739fb1528f98c575df4f2e5de7f994",
@@ -13,13 +15,15 @@
     "https://git.kernel.org/stable/c/1bee417678f1135e35b25a37734db46aa94258d2",
     "https://git.kernel.org/stable/c/20a93e397abe850c49b6fa0e8cc827b5f634a8f5",
     "https://git.kernel.org/stable/c/bfcc8e8d8a495bb34cae9e620adfb75fb13a3954",
-    "https://git.kernel.org/stable/c/36c1b57b2ecf3c61ac93f5f07bd29b6f21e226ed"
+    "https://git.kernel.org/stable/c/36c1b57b2ecf3c61ac93f5f07bd29b6f21e226ed",
+    "https://git.kernel.org/stable/c/00633c4683828acd5256fa8d5163f440d74bbe71"
   ],
   "aliases": [
-    "CVE-2026-52946"
+    "CVE-2026-52946",
+    "GHSA-9h35-hqff-9v3w"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.47,
   "enisaIdProduct": [
     {
       "id": "040d7eef-4e78-3b20-bd35-913f624699d6",
@@ -30,16 +34,6 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <897d6a7247739fb1528f98c575df4f2e5de7f994"
-    },
-    {
-      "id": "29ec3eb2-146d-3624-bfd0-2db2474cda77",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <7.0.13"
     },
     {
       "id": "3e2b4170-deee-301b-8160-39f255a8eb97",
@@ -72,26 +66,6 @@
       "product_version": "patch: 6.1.176"
     },
     {
-      "id": "5f503512-5b8a-3830-90dd-51d1c9f351c3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <5.15.210"
-    },
-    {
-      "id": "60adc05d-3e60-3823-ad94-6a290c02320b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.1.176"
-    },
-    {
       "id": "63119bfd-eb4c-3a99-ac09-5e765b0e2854",
       "product": {
         "name": "Linux",
@@ -100,6 +74,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <54626335ea4174ab2d9a183b511d825f6765e47b"
+    },
+    {
+      "id": "6a2f307c-5851-3689-a272-59e7248adaab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
     },
     {
       "id": "706250ba-48c6-38a1-97f1-61fedf4b3a8a",
@@ -112,6 +96,16 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <32dbd5ce4be3a3ed7e00f8af18795cc84fc50a33"
     },
     {
+      "id": "75b71087-7b3f-3c9c-b307-594755d2c3a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "7cad1416-68ef-3c3e-b3d2-c49d46497b88",
       "product": {
         "name": "Linux",
@@ -120,26 +114,6 @@
         }
       },
       "product_version": "patch: 5.10.259"
-    },
-    {
-      "id": "7fd2b4ae-9055-327f-a201-88f02b79055c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <7.1.1"
-    },
-    {
-      "id": "962fe057-8679-3258-9aa9-b3f110ae42b9",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <5.10.259"
     },
     {
       "id": "974de442-db7b-3354-b408-c63f69ff0731",
@@ -162,16 +136,6 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b5fa9e32fb6718f70c986ee14dd5d01b4846f331"
     },
     {
-      "id": "ac295be6-08b2-31d2-ae4d-bc41c91100f4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.12.94"
-    },
-    {
       "id": "b39aa352-fad6-3c40-8d1b-0952ba6ea5fa",
       "product": {
         "name": "Linux",
@@ -190,6 +154,26 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <20a93e397abe850c49b6fa0e8cc827b5f634a8f5"
+    },
+    {
+      "id": "bb438a74-9429-37e8-a115-2370f72427f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <00633c4683828acd5256fa8d5163f440d74bbe71"
+    },
+    {
+      "id": "c47ebd20-1c1e-3adb-9f76-1da409dc829d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
     },
     {
       "id": "c5b5b192-e1f3-3906-a3e1-8b79a5fe71be",
@@ -212,16 +196,6 @@
       "product_version": "patch: 6.18.36"
     },
     {
-      "id": "d409d267-d846-37ec-817f-dfb667910588",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.18.36"
-    },
-    {
       "id": "db38c104-111b-3dda-966a-3127345c0d41",
       "product": {
         "name": "Linux",
@@ -240,16 +214,6 @@
         }
       },
       "product_version": "patch: 7.1.1"
-    },
-    {
-      "id": "ea043957-f3c6-3ac2-a461-2437a1e21d91",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.6.143"
     },
     {
       "id": "f30d182a-ef82-3773-83d3-95a361b17ac8",

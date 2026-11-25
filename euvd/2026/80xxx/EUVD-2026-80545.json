@@ -3,7 +3,7 @@
   "enisaUuid": "b4592def-417d-397b-bd3e-8bd2a2120b21",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nASoC: cs35l34: drain threaded IRQ before runtime suspend\n\ncs35l34_runtime_suspend() currently switches the codec into\nregcache_cache_only(true), asserts reset low, and powers the device off\nwithout first quiescing the threaded IRQ registered by\ndevm_request_threaded_irq(). That leaves a window where\ncs35l34_irq_thread() can still run after suspend has removed live\nhardware access.\n\nA running system can reach this during runtime PM while the driver still\nhas critical fault IRQs unmasked. If the threaded handler runs in that\nwindow, it reads volatile INT_STATUS_1..4 after cache_only has been\nenabled, ignores the regmap_read() failures, and can still execute the\nPROT_RELEASE_CTL release sequence or the BST fault power-down writes.\n\nUse disable_irq() before entering cache_only/reset-low/power-off so any\nin-flight threaded handler is drained and no new IRQ thread can run\nwhile the device is suspended. Re-enable the IRQ only after\nruntime_resume() has restored live register access with regcache_sync().\nSince probe only logs request_threaded_irq() failures and keeps going,\ntrack whether the IRQ was actually installed before disabling or\nre-enabling it.",
   "datePublished": "Sep 16, 2026, 10:32:31 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:31 AM",
+  "dateUpdated": "Oct 19, 2026, 8:55:19 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/3be8380fb14d602cd833e5852e6d83c1e7eb1ceb",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/4105a4c0678b2808fc8046b60321b4f1cc7dae75"
   ],
   "aliases": [
+    "GHSA-w3mv-pmf4-r863",
     "CVE-2026-89945"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "02894ab9-762e-3f69-9748-670210f0da85",
@@ -72,16 +73,6 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "31920611-56c3-3146-9aff-401ac20892b5",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "33a170a6-49f4-3bec-bc9d-6552d6fb1a98",
       "product": {
         "name": "Linux",
@@ -100,6 +91,16 @@
         }
       },
       "product_version": "patch: 5.10.270"
+    },
+    {
+      "id": "44d99ca0-fc34-3c27-87a6-8f7d42f371d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "4e7956e9-8e9e-3464-878c-3fba55a12cf9",

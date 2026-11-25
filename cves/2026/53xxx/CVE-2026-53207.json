@@ -3,7 +3,7 @@
   "enisaUuid": "751db1f8-5510-3682-874d-04f4c274de3f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/memory-failure: fix hugetlb_lock AA deadlock in get_huge_page_for_hwpoison\n\nTwo concurrent madvise(MADV_HWPOISON) calls on the same hugetlb page can\ntrigger a recursive spinlock self-deadlock (AA deadlock) on hugetlb_lock\nwhen racing with a concurrent unmap:\n\n  thread#0                              thread#1\n  --------                              --------\n  madvise(folio, MADV_HWPOISON)\n    -> poisons the folio successfully\n  madvise(folio, MADV_HWPOISON)         unmap(folio)\n    try_memory_failure_hugetlb\n      get_huge_page_for_hwpoison\n        spin_lock_irq(&hugetlb_lock)    <- held\n        __get_huge_page_for_hwpoison\n          hugetlb_update_hwpoison()\n            -> MF_HUGETLB_FOLIO_PRE_POISONED\n          goto out:\n            folio_put()\n              refcount: 1 -> 0\n              free_huge_folio()\n                spin_lock_irqsave(&hugetlb_lock)\n                  -> AA DEADLOCK!\n\nThe out: path in __get_huge_page_for_hwpoison() calls folio_put() to drop\nthe GUP reference while the hugetlb_lock is still held by the hugetlb.c\nwrapper get_huge_page_for_hwpoison().  If concurrent unmap has released\nthe page table mapping reference, folio_put() drops the folio refcount to\nzero, triggering free_huge_folio() which attempts to re-acquire the\nnon-recursive hugetlb_lock.\n\nFix this by moving hugetlb_lock acquisition from the hugetlb.c wrapper\ninto get_huge_page_for_hwpoison().  Place spin_unlock_irq() before the\nfolio_put() at the out: label so the folio is always released outside the\nlock.\n\n[akpm@linux-foundation.org: fix race, rename label per Miaohe]",
   "datePublished": "Jun 25, 2026, 8:39:13 AM",
-  "dateUpdated": "Jun 25, 2026, 8:39:13 AM",
+  "dateUpdated": "Nov 6, 2026, 4:24:07 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/fc3ff42cb0cbf947e4600ae9761c3783760050e2",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/3c2d42b8ee345b17a4ba56b0f6492d1ff4c1178e"
   ],
   "aliases": [
-    "CVE-2026-53207"
+    "CVE-2026-53207",
+    "GHSA-hfrj-r4v7-3997"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.1,
   "enisaIdProduct": [
     {
       "id": "15a62727-8783-35c9-a623-e621f48a6493",

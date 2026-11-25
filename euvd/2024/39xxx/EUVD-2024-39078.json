@@ -1,0 +1,174 @@
+{
+  "id": "EUVD-2024-39078",
+  "enisaUuid": "6af1e1a1-0547-36f7-9f0e-504eed339ee4",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nskmsg: Skip zero length skb in sk_msg_recvmsg\n\nWhen running BPF selftests (./test_progs -t sockmap_basic) on a Loongarch\nplatform, the following kernel panic occurs:\n\n  [...]\n  Oops[#1]:\n  CPU: 22 PID: 2824 Comm: test_progs Tainted: G           OE  6.10.0-rc2+ #18\n  Hardware name: LOONGSON Dabieshan/Loongson-TC542F0, BIOS Loongson-UDK2018\n     ... ...\n     ra: 90000000048bf6c0 sk_msg_recvmsg+0x120/0x560\n    ERA: 9000000004162774 copy_page_to_iter+0x74/0x1c0\n   CRMD: 000000b0 (PLV0 -IE -DA +PG DACF=CC DACM=CC -WE)\n   PRMD: 0000000c (PPLV0 +PIE +PWE)\n   EUEN: 00000007 (+FPE +SXE +ASXE -BTE)\n   ECFG: 00071c1d (LIE=0,2-4,10-12 VS=7)\n  ESTAT: 00010000 [PIL] (IS= ECode=1 EsubCode=0)\n   BADV: 0000000000000040\n   PRID: 0014c011 (Loongson-64bit, Loongson-3C5000)\n  Modules linked in: bpf_testmod(OE) xt_CHECKSUM xt_MASQUERADE xt_conntrack\n  Process test_progs (pid: 2824, threadinfo=0000000000863a31, task=...)\n  Stack : ...\n  Call Trace:\n  [<9000000004162774>] copy_page_to_iter+0x74/0x1c0\n  [<90000000048bf6c0>] sk_msg_recvmsg+0x120/0x560\n  [<90000000049f2b90>] tcp_bpf_recvmsg_parser+0x170/0x4e0\n  [<90000000049aae34>] inet_recvmsg+0x54/0x100\n  [<900000000481ad5c>] sock_recvmsg+0x7c/0xe0\n  [<900000000481e1a8>] __sys_recvfrom+0x108/0x1c0\n  [<900000000481e27c>] sys_recvfrom+0x1c/0x40\n  [<9000000004c076ec>] do_syscall+0x8c/0xc0\n  [<9000000003731da4>] handle_syscall+0xc4/0x160\n  Code: ...\n  ---[ end trace 0000000000000000 ]---\n  Kernel panic - not syncing: Fatal exception\n  Kernel relocated by 0x3510000\n   .text @ 0x9000000003710000\n   .data @ 0x9000000004d70000\n   .bss  @ 0x9000000006469400\n  ---[ end Kernel panic - not syncing: Fatal exception ]---\n  [...]\n\nThis crash happens every time when running sockmap_skb_verdict_shutdown\nsubtest in sockmap_basic.\n\nThis crash is because a NULL pointer is passed to page_address() in the\nsk_msg_recvmsg(). Due to the different implementations depending on the\narchitecture, page_address(NULL) will trigger a panic on Loongarch\nplatform but not on x86 platform. So this bug was hidden on x86 platform\nfor a while, but now it is exposed on Loongarch platform. The root cause\nis that a zero length skb (skb->len == 0) was put on the queue.\n\nThis zero length skb is a TCP FIN packet, which was sent by shutdown(),\ninvoked in test_sockmap_skb_verdict_shutdown():\n\n\tshutdown(p1, SHUT_WR);\n\nIn this case, in sk_psock_skb_ingress_enqueue(), num_sge is zero, and no\npage is put to this sge (see sg_set_page in sg_set_page), but this empty\nsge is queued into ingress_msg list.\n\nAnd in sk_msg_recvmsg(), this empty sge is used, and a NULL page is got by\nsg_page(sge). Pass this NULL page to copy_page_to_iter(), which passes it\nto kmap_local_page() and to page_address(), then kernel panics.\n\nTo solve this, we should skip this zero length skb. So in sk_msg_recvmsg(),\nif copy is zero, that means it's a zero length skb, skip invoking\ncopy_page_to_iter(). We are using the EFAULT return triggered by\ncopy_page_to_iter to check for is_fin in tcp_bpf.c.",
+  "datePublished": "Jul 29, 2024, 2:32:05 PM",
+  "dateUpdated": "Oct 30, 2026, 12:18:45 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/ddf6f5179638ef0716d32e8fc04a72822b135351",
+    "https://git.kernel.org/stable/c/195b7bcdfc5adc5b2468f279dd9eb7eebd2e7632",
+    "https://git.kernel.org/stable/c/fb61d7b9fb6ef0032de469499a54dab4c7260d0d",
+    "https://git.kernel.org/stable/c/b180739b45a38b4caa88fe16bb5273072e6613dc",
+    "https://git.kernel.org/stable/c/f8bd689f37f4198a4c61c4684f591ba639595b97",
+    "https://git.kernel.org/stable/c/f0c18025693707ec344a70b6887f7450bf4c826b"
+  ],
+  "aliases": [
+    "CVE-2024-41048",
+    "GHSA-r2cq-rw93-xwch"
+  ],
+  "assigner": "Linux",
+  "epss": 0.82,
+  "enisaIdProduct": [
+    {
+      "id": "0585ac89-6996-32a8-a8fd-ae54c617f3f2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "0a3ac618-ee15-3b8c-9d3f-d1fb78891798",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "604326b41a6fb9b4a78b6179335decee0365cd8c <f8bd689f37f4198a4c61c4684f591ba639595b97"
+    },
+    {
+      "id": "13815a7d-b42d-3131-9ab6-90963fc29f3c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "604326b41a6fb9b4a78b6179335decee0365cd8c <ddf6f5179638ef0716d32e8fc04a72822b135351"
+    },
+    {
+      "id": "3ba47261-c226-32c7-afda-8283c5ab25b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "604326b41a6fb9b4a78b6179335decee0365cd8c <195b7bcdfc5adc5b2468f279dd9eb7eebd2e7632"
+    },
+    {
+      "id": "50cb24a2-f143-3413-8f55-62b40a05fbbc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "6cb19986-fa13-360f-9208-8b297fc1f468",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "604326b41a6fb9b4a78b6179335decee0365cd8c <f0c18025693707ec344a70b6887f7450bf4c826b"
+    },
+    {
+      "id": "78789eb1-e9c4-3099-9f2e-31ef0945dae8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.41"
+    },
+    {
+      "id": "85979776-fa35-3fa0-87be-c067b6feb95d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "a62fafd9-190f-3764-ba15-4827294ceb11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "604326b41a6fb9b4a78b6179335decee0365cd8c <b180739b45a38b4caa88fe16bb5273072e6613dc"
+    },
+    {
+      "id": "b4a80efb-1045-3c14-824c-4a4f47109bfe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.163"
+    },
+    {
+      "id": "b920ea50-a9aa-3d44-bad4-51806001e281",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.10"
+    },
+    {
+      "id": "bc31d0fa-77e7-3c02-ae4a-3f8d4b5c3983",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "604326b41a6fb9b4a78b6179335decee0365cd8c <fb61d7b9fb6ef0032de469499a54dab4c7260d0d"
+    },
+    {
+      "id": "ccdfad84-7537-397c-bbb7-4a3f5fd4ea2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.20"
+    },
+    {
+      "id": "e5387668-e9be-3e21-abbe-efbd16a5fe98",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.100"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "06222771-17f4-3833-b644-a5410a9e5674",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

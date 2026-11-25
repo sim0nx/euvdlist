@@ -3,19 +3,45 @@
   "enisaUuid": "ba353315-a842-396d-ae95-7c3705fa7576",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsctp: validate chunk length in the inqueue parser\n\nSCTP chunks always include a four-byte generic header, but\nsctp_inq_pop() currently accepts shorter declared lengths. A zero-length\nchunk leaves chunk_end at the current header.\n\nWhen ASCONF is covered by the association's SCTP-AUTH policy,\nsctp_assoc_bh_rcv() can continue before the state machine performs its\nnormal chunk-length check. sctp_inq_pop() then returns the same malformed\nchunk repeatedly and the receive softirq can lock up.\n\nA remote SCTP peer can trigger this after establishing an association on\na kernel built with CONFIG_IP_SCTP and configured with\nnet.sctp.addip_enable=1 and net.sctp.auth_enable=1. The reproducer did\nnot require application credentials, a shared SCTP AUTH key, or\nnet.sctp.addip_noauth_enable=1.\n\nOn commit f967455fb2a5 (\"seg6: reset IP6CB after IPv6 decapsulation\"),\none zero-length ASCONF caused repeated\nwatchdog soft-lockup reports in a two-vCPU KVM guest. All 3 pre-trigger\nhealth probes succeeded, while 36 of 37 post-trigger probes failed. With\nthis change, all 37 post-trigger probes succeeded and no equivalent\nsoft-lockup signature appeared.\n\nReject chunks shorter than the generic SCTP header at the shared inqueue\nparser boundary. Mark the packet for discard before either caller can\ncontinue processing it, while preserving the four-byte generic minimum.\nDeclared-length 1 through 4 controls and kernel-generated ASCONF traffic\nremained healthy. The patched sctp_hello selftest passed for IPv4 and\nIPv6.\n\nThe complete private reproducer and validation evidence are available\ndirectly to maintainers on request.",
   "datePublished": "Oct 28, 2026, 10:34:42 AM",
-  "dateUpdated": "Oct 28, 2026, 10:34:42 AM",
+  "dateUpdated": "Oct 30, 2026, 12:42:02 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/cc4a4f1d6b6d725438dc37b97f03d95ed9feb63f",
+    "https://git.kernel.org/stable/c/b0dbd53b242609c88e81b0a49093bdbef5d5a418",
+    "https://git.kernel.org/stable/c/d28ea1a62e27210d8ea3cf496dfae85dbdd7b84f",
+    "https://git.kernel.org/stable/c/5a7ee52589dae36c93dc64d7a97c5ded84618572",
+    "https://git.kernel.org/stable/c/e0fb7fe180488a5afa2e91509ea838e8df8cb771",
     "https://git.kernel.org/stable/c/40507f59f230dcf60ae13cb48d34f8c6e9f40659",
     "https://git.kernel.org/stable/c/9ac57e4c62e93c287b36080e5da3645690549990",
     "https://git.kernel.org/stable/c/6cfc1b90cb86f4aabc69fb8e30128e07e2cdfa3a"
   ],
   "aliases": [
+    "GHSA-c382-phc9-mxqc",
     "CVE-2026-99128"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
+    {
+      "id": "5f53180a-9ac1-3e4f-abd3-7d0ae222082e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "6ad34d10-060c-3a4f-932c-08a70ef6cd02",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bbd0d59809f923ea2b540cbd781b32110e249f6e <5a7ee52589dae36c93dc64d7a97c5ded84618572"
+    },
     {
       "id": "6b1b45f4-56bd-35d0-bef0-e135529c5af2",
       "product": {
@@ -37,6 +63,16 @@
       "product_version": "patch: 6.18.59"
     },
     {
+      "id": "9648314c-3ade-352d-8e03-45f74644aa7b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bbd0d59809f923ea2b540cbd781b32110e249f6e <e0fb7fe180488a5afa2e91509ea838e8df8cb771"
+    },
+    {
       "id": "adb7176e-c027-3d6e-9c83-a95c96e73aff",
       "product": {
         "name": "Linux",
@@ -47,6 +83,26 @@
       "product_version": "bbd0d59809f923ea2b540cbd781b32110e249f6e <6cfc1b90cb86f4aabc69fb8e30128e07e2cdfa3a"
     },
     {
+      "id": "aed444c6-18b8-3c41-854f-7b9284a6674e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "b130e84b-f6a5-3013-afe8-4363bdc83c6c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.161"
+    },
+    {
       "id": "bcdec3c5-94d4-39f4-a1e8-a3d4122fd5be",
       "product": {
         "name": "Linux",
@@ -55,6 +111,16 @@
         }
       },
       "product_version": "patch: 7.3"
+    },
+    {
+      "id": "c03ad829-5aea-3ef4-a920-8bea1dda1354",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bbd0d59809f923ea2b540cbd781b32110e249f6e <d28ea1a62e27210d8ea3cf496dfae85dbdd7b84f"
     },
     {
       "id": "c4c578e6-5b66-30c0-adf9-d704b1b042fa",
@@ -77,6 +143,16 @@
       "product_version": "bbd0d59809f923ea2b540cbd781b32110e249f6e <9ac57e4c62e93c287b36080e5da3645690549990"
     },
     {
+      "id": "d20b1400-f9c6-3813-8b95-6596a5ec1e73",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
       "id": "daad6055-c1d1-337e-894a-401822e0004e",
       "product": {
         "name": "Linux",
@@ -85,6 +161,36 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "ddab7d45-684a-34d3-a3cb-91862bfa05fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bbd0d59809f923ea2b540cbd781b32110e249f6e <b0dbd53b242609c88e81b0a49093bdbef5d5a418"
+    },
+    {
+      "id": "e2fdba7f-fe89-3a8c-947b-8d1683f9a9d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
+    },
+    {
+      "id": "e57f8ca1-30f7-3f41-9a06-6d069992702a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bbd0d59809f923ea2b540cbd781b32110e249f6e <cc4a4f1d6b6d725438dc37b97f03d95ed9feb63f"
     },
     {
       "id": "e91d77fa-1b6f-39da-83b8-8b07586979fc",

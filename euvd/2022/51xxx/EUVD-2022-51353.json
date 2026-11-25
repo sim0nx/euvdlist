@@ -1,0 +1,111 @@
+{
+  "id": "EUVD-2022-51353",
+  "enisaUuid": "680b52bd-a7a7-37b3-b697-2ed94039db89",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm: slub: fix flush_cpu_slab()/__free_slab() invocations in task context.\n\nCommit 5a836bf6b09f (\"mm: slub: move flush_cpu_slab() invocations\n__free_slab() invocations out of IRQ context\") moved all flush_cpu_slab()\ninvocations to the global workqueue to avoid a problem related\nwith deactivate_slab()/__free_slab() being called from an IRQ context\non PREEMPT_RT kernels.\n\nWhen the flush_all_cpu_locked() function is called from a task context\nit may happen that a workqueue with WQ_MEM_RECLAIM bit set ends up\nflushing the global workqueue, this will cause a dependency issue.\n\n workqueue: WQ_MEM_RECLAIM nvme-delete-wq:nvme_delete_ctrl_work [nvme_core]\n   is flushing !WQ_MEM_RECLAIM events:flush_cpu_slab\n WARNING: CPU: 37 PID: 410 at kernel/workqueue.c:2637\n   check_flush_dependency+0x10a/0x120\n Workqueue: nvme-delete-wq nvme_delete_ctrl_work [nvme_core]\n RIP: 0010:check_flush_dependency+0x10a/0x120[  453.262125] Call Trace:\n __flush_work.isra.0+0xbf/0x220\n ? __queue_work+0x1dc/0x420\n flush_all_cpus_locked+0xfb/0x120\n __kmem_cache_shutdown+0x2b/0x320\n kmem_cache_destroy+0x49/0x100\n bioset_exit+0x143/0x190\n blk_release_queue+0xb9/0x100\n kobject_cleanup+0x37/0x130\n nvme_fc_ctrl_free+0xc6/0x150 [nvme_fc]\n nvme_free_ctrl+0x1ac/0x2b0 [nvme_core]\n\nFix this bug by creating a workqueue for the flush operation with\nthe WQ_MEM_RECLAIM bit set.",
+  "datePublished": "Apr 28, 2024, 1:01:12 PM",
+  "dateUpdated": "Aug 5, 2026, 8:51:39 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/61703b248be993eb4997b00ae5d3318e6d8f3c5b",
+    "https://git.kernel.org/stable/c/df6cb39335cf5a1b918e8dbd8ba7cd9f1d00e45a",
+    "https://git.kernel.org/stable/c/e45cc288724f0cfd497bb5920bcfa60caa335729"
+  ],
+  "aliases": [
+    "GHSA-qr7h-9g6j-jwg3",
+    "CVE-2022-48658"
+  ],
+  "assigner": "Linux",
+  "epss": 0.67,
+  "enisaIdProduct": [
+    {
+      "id": "0175a155-0b7a-376c-b787-71fc5afff218",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a836bf6b09f99ead1b69457ff39ab3011ece57b <61703b248be993eb4997b00ae5d3318e6d8f3c5b"
+    },
+    {
+      "id": "07a277e2-581b-3c02-8c9a-506078d01247",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7c80c4fa-3ffc-37d3-acb2-5cfdba8de579",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.0"
+    },
+    {
+      "id": "8ddbb34b-d39f-3708-aad2-fa35ca2a841f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15"
+    },
+    {
+      "id": "afaf570d-8145-3944-98b8-33034c550256",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.71"
+    },
+    {
+      "id": "b19e698f-240e-34db-b2cb-4d35d3da5040",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a836bf6b09f99ead1b69457ff39ab3011ece57b <df6cb39335cf5a1b918e8dbd8ba7cd9f1d00e45a"
+    },
+    {
+      "id": "c01d0efe-064f-3512-8d2d-7e7056f98fe7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.19.12"
+    },
+    {
+      "id": "df9ec4bd-e271-30c9-a37f-ded6b509e5f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a836bf6b09f99ead1b69457ff39ab3011ece57b <e45cc288724f0cfd497bb5920bcfa60caa335729"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c30281b3-957c-3227-ad23-a903a7601256",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+{
+  "id": "EUVD-2024-35688",
+  "enisaUuid": "82f2a723-8b6f-3184-943c-b460c06638d9",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\naf_unix: Clear stale u->oob_skb.\n\nsyzkaller started to report deadlock of unix_gc_lock after commit\n4090fa373f0e (\"af_unix: Replace garbage collection algorithm.\"), but\nit just uncovers the bug that has been there since commit 314001f0bf92\n(\"af_unix: Add OOB support\").\n\nThe repro basically does the following.\n\n  from socket import *\n  from array import array\n\n  c1, c2 = socketpair(AF_UNIX, SOCK_STREAM)\n  c1.sendmsg([b'a'], [(SOL_SOCKET, SCM_RIGHTS, array(\"i\", [c2.fileno()]))], MSG_OOB)\n  c2.recv(1)  # blocked as no normal data in recv queue\n\n  c2.close()  # done async and unblock recv()\n  c1.close()  # done async and trigger GC\n\nA socket sends its file descriptor to itself as OOB data and tries to\nreceive normal data, but finally recv() fails due to async close().\n\nThe problem here is wrong handling of OOB skb in manage_oob().  When\nrecvmsg() is called without MSG_OOB, manage_oob() is called to check\nif the peeked skb is OOB skb.  In such a case, manage_oob() pops it\nout of the receive queue but does not clear unix_sock(sk)->oob_skb.\nThis is wrong in terms of uAPI.\n\nLet's say we send \"hello\" with MSG_OOB, and \"world\" without MSG_OOB.\nThe 'o' is handled as OOB data.  When recv() is called twice without\nMSG_OOB, the OOB data should be lost.\n\n  >>> from socket import *\n  >>> c1, c2 = socketpair(AF_UNIX, SOCK_STREAM, 0)\n  >>> c1.send(b'hello', MSG_OOB)  # 'o' is OOB data\n  5\n  >>> c1.send(b'world')\n  5\n  >>> c2.recv(5)  # OOB data is not received\n  b'hell'\n  >>> c2.recv(5)  # OOB date is skipped\n  b'world'\n  >>> c2.recv(5, MSG_OOB)  # This should return an error\n  b'o'\n\nIn the same situation, TCP actually returns -EINVAL for the last\nrecv().\n\nAlso, if we do not clear unix_sk(sk)->oob_skb, unix_poll() always set\nEPOLLPRI even though the data has passed through by previous recv().\n\nTo avoid these issues, we must clear unix_sk(sk)->oob_skb when dequeuing\nit from recv queue.\n\nThe reason why the old GC did not trigger the deadlock is because the\nold GC relied on the receive queue to detect the loop.\n\nWhen it is triggered, the socket with OOB data is marked as GC candidate\nbecause file refcount == inflight count (1).  However, after traversing\nall inflight sockets, the socket still has a positive inflight count (1),\nthus the socket is excluded from candidates.  Then, the old GC lose the\nchance to garbage-collect the socket.\n\nWith the old GC, the repro continues to create true garbage that will\nnever be freed nor detected by kmemleak as it's linked to the global\ninflight list.  That's why we couldn't even notice the issue.",
+  "datePublished": "May 20, 2024, 9:41:58 AM",
+  "dateUpdated": "May 11, 2026, 8:14:43 PM",
+  "baseScore": 6.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+  "references": [
+    "https://git.kernel.org/stable/c/b4bc99d04c689b5652665394ae8d3e02fb754153",
+    "https://git.kernel.org/stable/c/84a352b7eba1142a95441380058985ff19f25ec9",
+    "https://git.kernel.org/stable/c/601a89ea24d05089debfa2dc896ea9f5937ac7a6",
+    "https://git.kernel.org/stable/c/698a95ade1a00e6494482046902b986dfffd1caf",
+    "https://git.kernel.org/stable/c/b46f4eaa4f0ec38909fb0072eea3aeddb32f954e"
+  ],
+  "aliases": [
+    "GHSA-p8xf-2w27-6wqx",
+    "CVE-2024-35970"
+  ],
+  "assigner": "Linux",
+  "epss": 0.5,
+  "enisaIdProduct": [
+    {
+      "id": "0e7ff521-ec2e-3d6e-b376-eb2f4511533d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "314001f0bf927015e459c9d387d62a231fe93af3 <698a95ade1a00e6494482046902b986dfffd1caf"
+    },
+    {
+      "id": "188d3057-1eb9-30d2-800c-1f58572bc639",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.7"
+    },
+    {
+      "id": "485cdc85-f052-3f31-9ecb-f795419c89d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "55662207-6d39-3506-afe0-3e54d1437326",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "314001f0bf927015e459c9d387d62a231fe93af3 <b4bc99d04c689b5652665394ae8d3e02fb754153"
+    },
+    {
+      "id": "572f6f9a-0580-3379-8473-bc3252f1458b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "6577cc6d-7078-31d0-8ee6-7a57ab512c24",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15"
+    },
+    {
+      "id": "6ee1093d-15d7-3e8d-acad-22f51f167f76",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "314001f0bf927015e459c9d387d62a231fe93af3 <b46f4eaa4f0ec38909fb0072eea3aeddb32f954e"
+    },
+    {
+      "id": "9b06c7c9-e172-30e7-91eb-1271f196d4eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "314001f0bf927015e459c9d387d62a231fe93af3 <601a89ea24d05089debfa2dc896ea9f5937ac7a6"
+    },
+    {
+      "id": "9fbccc0e-c68d-3053-9fcb-8dc7f515d821",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.87"
+    },
+    {
+      "id": "b6ec3348-753e-33ac-ad51-83c86aefebbf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.156"
+    },
+    {
+      "id": "d7bf1bcc-31f6-399c-8c62-9e31f6d3bbd7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.28"
+    },
+    {
+      "id": "f3951f3f-193d-3e8c-87de-a842a7df05e5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "314001f0bf927015e459c9d387d62a231fe93af3 <84a352b7eba1142a95441380058985ff19f25ec9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "18ec70b3-a0ee-31e4-bd10-56e6741cc0e1",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

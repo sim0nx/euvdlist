@@ -1,0 +1,109 @@
+{
+  "id": "EUVD-2021-34586",
+  "enisaUuid": "f0083deb-ef9f-3d6c-a165-fbe5f134ea15",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niocost: Fix divide-by-zero on donation from low hweight cgroup\n\nThe donation calculation logic assumes that the donor has non-zero\nafter-donation hweight, so the lowest active hweight a donating cgroup can\nhave is 2 so that it can donate 1 while keeping the other 1 for itself.\nEarlier, we only donated from cgroups with sizable surpluses so this\ncondition was always true. However, with the precise donation algorithm\nimplemented, f1de2439ec43 (\"blk-iocost: revamp donation amount\ndetermination\") made the donation amount calculation exact enabling even low\nhweight cgroups to donate.\n\nThis means that in rare occasions, a cgroup with active hweight of 1 can\nenter donation calculation triggering the following warning and then a\ndivide-by-zero oops.\n\n WARNING: CPU: 4 PID: 0 at block/blk-iocost.c:1928 transfer_surpluses.cold+0x0/0x53 [884/94867]\n ...\n RIP: 0010:transfer_surpluses.cold+0x0/0x53\n Code: 92 ff 48 c7 c7 28 d1 ab b5 65 48 8b 34 25 00 ae 01 00 48 81 c6 90 06 00 00 e8 8b 3f fe ff 48 c7 c0 ea ff ff ff e9 95 ff 92 ff <0f> 0b 48 c7 c7 30 da ab b5 e8 71 3f fe ff 4c 89 e8 4d 85 ed 74 0\n4\n ...\n Call Trace:\n  <IRQ>\n  ioc_timer_fn+0x1043/0x1390\n  call_timer_fn+0xa1/0x2c0\n  __run_timers.part.0+0x1ec/0x2e0\n  run_timer_softirq+0x35/0x70\n ...\n iocg: invalid donation weights in /a/b: active=1 donating=1 after=0\n\nFix it by excluding cgroups w/ active hweight < 2 from donating. Excluding\nthese extreme low hweight donations shouldn't affect work conservation in\nany meaningful way.",
+  "datePublished": "Jun 19, 2024, 2:53:50 PM",
+  "dateUpdated": "May 11, 2026, 1:57:22 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/a7c80674538f15f85d68138240aae440b8039519",
+    "https://git.kernel.org/stable/c/3a1a4eb574178c21241a6200f4785572e661c472",
+    "https://git.kernel.org/stable/c/edaa26334c117a584add6053f48d63a988d25a6e"
+  ],
+  "aliases": [
+    "CVE-2021-47584",
+    "GHSA-9777-6rgr-2wc6"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "0f852fc5-1737-3ffd-add3-77a105689021",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f1de2439ec43b74764f2a26e3a310b24407e3bde <edaa26334c117a584add6053f48d63a988d25a6e"
+    },
+    {
+      "id": "1c9522b2-eae3-3bfa-b315-bd506dcfa59f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.11"
+    },
+    {
+      "id": "6e4cc460-d790-3d76-8280-9aa927e16154",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16"
+    },
+    {
+      "id": "793cf022-9416-3fa4-9ac1-f1421671ed2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "bbe81b0e-28d1-36d6-ae25-76079ceb5420",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10"
+    },
+    {
+      "id": "d8f4ec79-0f13-3c17-af3c-d3cbf5509bb7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f1de2439ec43b74764f2a26e3a310b24407e3bde <3a1a4eb574178c21241a6200f4785572e661c472"
+    },
+    {
+      "id": "ed44a2dc-8d79-3003-b1e5-5133d069b4f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f1de2439ec43b74764f2a26e3a310b24407e3bde <a7c80674538f15f85d68138240aae440b8039519"
+    },
+    {
+      "id": "fb4fc4ca-a050-39c4-8cda-2bd5f0c1fb17",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.88"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "adc243ee-f371-3970-9085-58c008f28f4f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

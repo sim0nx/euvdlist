@@ -1,0 +1,237 @@
+{
+  "id": "EUVD-2024-35801",
+  "enisaUuid": "d0271cc6-d1cc-337c-993a-f135ca3fcafc",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nPCI/PM: Drain runtime-idle callbacks before driver removal\n\nA race condition between the .runtime_idle() callback and the .remove()\ncallback in the rtsx_pcr PCI driver leads to a kernel crash due to an\nunhandled page fault [1].\n\nThe problem is that rtsx_pci_runtime_idle() is not expected to be running\nafter pm_runtime_get_sync() has been called, but the latter doesn't really\nguarantee that.  It only guarantees that the suspend and resume callbacks\nwill not be running when it returns.\n\nHowever, if a .runtime_idle() callback is already running when\npm_runtime_get_sync() is called, the latter will notice that the runtime PM\nstatus of the device is RPM_ACTIVE and it will return right away without\nwaiting for the former to complete.  In fact, it cannot wait for\n.runtime_idle() to complete because it may be called from that callback (it\narguably does not make much sense to do that, but it is not strictly\nprohibited).\n\nThus in general, whoever is providing a .runtime_idle() callback needs\nto protect it from running in parallel with whatever code runs after\npm_runtime_get_sync().  [Note that .runtime_idle() will not start after\npm_runtime_get_sync() has returned, but it may continue running then if it\nhas started earlier.]\n\nOne way to address that race condition is to call pm_runtime_barrier()\nafter pm_runtime_get_sync() (not before it, because a nonzero value of the\nruntime PM usage counter is necessary to prevent runtime PM callbacks from\nbeing invoked) to wait for the .runtime_idle() callback to complete should\nit be running at that point.  A suitable place for doing that is in\npci_device_remove() which calls pm_runtime_get_sync() before removing the\ndriver, so it may as well call pm_runtime_barrier() subsequently, which\nwill prevent the race in question from occurring, not just in the rtsx_pcr\ndriver, but in any PCI drivers providing .runtime_idle() callbacks.",
+  "datePublished": "May 17, 2024, 1:23:16 PM",
+  "dateUpdated": "Oct 15, 2026, 12:40:53 AM",
+  "baseScore": 5.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/9a87375bb586515c0af63d5dcdcd58ec4acf20a6",
+    "https://git.kernel.org/stable/c/47d8aafcfe313511a98f165a54d0adceb34e54b1",
+    "https://git.kernel.org/stable/c/bbe068b24409ef740657215605284fc7cdddd491",
+    "https://git.kernel.org/stable/c/7cc94dd36e48879e76ae7a8daea4ff322b7d9674",
+    "https://git.kernel.org/stable/c/900b81caf00c89417172afe0e7e49ac4eb110f4b",
+    "https://git.kernel.org/stable/c/d86ad8c3e152349454b82f37007ff6ba45f26989",
+    "https://git.kernel.org/stable/c/d534198311c345e4b062c4b88bb609efb8bd91d5",
+    "https://git.kernel.org/stable/c/6347348c6aba52dda0b33296684cbb627bdc6970",
+    "https://git.kernel.org/stable/c/9d5286d4e7f68beab450deddbb6a32edd5ecf4bf"
+  ],
+  "aliases": [
+    "CVE-2024-35809",
+    "GHSA-3r3f-7rrr-c2h9"
+  ],
+  "assigner": "Linux",
+  "epss": 0.2,
+  "enisaIdProduct": [
+    {
+      "id": "039eadda-b9f9-32d6-a90b-eb611b1c2c27",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3ec4f87d607f40497afdb5ac03f11e2ea253d52 <9d5286d4e7f68beab450deddbb6a32edd5ecf4bf"
+    },
+    {
+      "id": "05573dea-a71f-3f4c-87b2-fb28d6744da2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.36"
+    },
+    {
+      "id": "12fdc1cf-eb5a-31a7-ab06-a924d731fc29",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3ec4f87d607f40497afdb5ac03f11e2ea253d52 <bbe068b24409ef740657215605284fc7cdddd491"
+    },
+    {
+      "id": "1f90f314-0e2d-3da2-9600-ddd2904c2498",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.12"
+    },
+    {
+      "id": "308b36da-b5ab-334c-b2dd-fb1ec42435b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "44bc1c53-a149-3a51-b1f6-bf80b48bb601",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.312"
+    },
+    {
+      "id": "45c9fa54-b38a-3036-b6a4-7f57f24eb5a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "54fbe6ec-6179-3afb-b7dc-1d98f94afefc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3ec4f87d607f40497afdb5ac03f11e2ea253d52 <9a87375bb586515c0af63d5dcdcd58ec4acf20a6"
+    },
+    {
+      "id": "5f35f0e7-51eb-3d5c-abf0-759830d085d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.3"
+    },
+    {
+      "id": "6531f50a-10c3-3ed9-89e8-ea61b5c968eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3ec4f87d607f40497afdb5ac03f11e2ea253d52 <900b81caf00c89417172afe0e7e49ac4eb110f4b"
+    },
+    {
+      "id": "76c114af-d328-338d-ac9d-2c6e81558007",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.274"
+    },
+    {
+      "id": "7a2463be-01a1-3097-b33a-b0061601588e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.154"
+    },
+    {
+      "id": "7cc3799c-273c-3df0-9b8c-40ee326ff1e4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3ec4f87d607f40497afdb5ac03f11e2ea253d52 <d534198311c345e4b062c4b88bb609efb8bd91d5"
+    },
+    {
+      "id": "891fa886-a361-3d98-958d-3894b95a3d62",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3ec4f87d607f40497afdb5ac03f11e2ea253d52 <47d8aafcfe313511a98f165a54d0adceb34e54b1"
+    },
+    {
+      "id": "9e21a781-a5be-3161-b1bc-62250f888fdd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3ec4f87d607f40497afdb5ac03f11e2ea253d52 <d86ad8c3e152349454b82f37007ff6ba45f26989"
+    },
+    {
+      "id": "b5d4c1c3-d85d-3d35-8a04-c25f5acb1e0a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3ec4f87d607f40497afdb5ac03f11e2ea253d52 <7cc94dd36e48879e76ae7a8daea4ff322b7d9674"
+    },
+    {
+      "id": "b9732b9a-e4d1-36f2-a26c-eade243d35be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.84"
+    },
+    {
+      "id": "ca56148a-5f3b-387a-a4f1-53d2d7a306ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.24"
+    },
+    {
+      "id": "d2000481-f17a-32ea-b6be-63dd729db79e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.215"
+    },
+    {
+      "id": "d55e241c-3bb0-32a6-b66f-bdd318f3f391",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3ec4f87d607f40497afdb5ac03f11e2ea253d52 <6347348c6aba52dda0b33296684cbb627bdc6970"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "45103fc4-3551-3881-9d0a-6a12e37a4048",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

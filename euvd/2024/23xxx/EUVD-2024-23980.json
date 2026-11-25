@@ -1,0 +1,153 @@
+{
+  "id": "EUVD-2024-23980",
+  "enisaUuid": "1edf4bfd-13d5-3521-bb8a-4540e73cf19c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndm-crypt, dm-verity: disable tasklets\n\nTasklets have an inherent problem with memory corruption. The function\ntasklet_action_common calls tasklet_trylock, then it calls the tasklet\ncallback and then it calls tasklet_unlock. If the tasklet callback frees\nthe structure that contains the tasklet or if it calls some code that may\nfree it, tasklet_unlock will write into free memory.\n\nThe commits 8e14f610159d and d9a02e016aaf try to fix it for dm-crypt, but\nit is not a sufficient fix and the data corruption can still happen [1].\nThere is no fix for dm-verity and dm-verity will write into free memory\nwith every tasklet-processed bio.\n\nThere will be atomic workqueues implemented in the kernel 6.9 [2]. They\nwill have better interface and they will not suffer from the memory\ncorruption problem.\n\nBut we need something that stops the memory corruption now and that can be\nbackported to the stable kernels. So, I'm proposing this commit that\ndisables tasklets in both dm-crypt and dm-verity. This commit doesn't\nremove the tasklet support, because the tasklet code will be reused when\natomic workqueues will be implemented.\n\n[1] https://lore.kernel.org/all/d390d7ee-f142-44d3-822a-87949e14608b@suse.de/T/\n[2] https://lore.kernel.org/lkml/20240130091300.2968534-1-tj@kernel.org/",
+  "datePublished": "Apr 3, 2024, 2:55:18 PM",
+  "dateUpdated": "Aug 5, 2026, 11:26:50 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/b825e0f9d68c178072bffd32dd34c39e3d2d597a",
+    "https://git.kernel.org/stable/c/30884a44e0cedc3dfda8c22432f3ba4078ec2d94",
+    "https://git.kernel.org/stable/c/5735a2671ffb70ea29ca83969fe01316ee2ed6fc",
+    "https://git.kernel.org/stable/c/0c45a20cbe68bc4d681734f5c03891124a274257",
+    "https://git.kernel.org/stable/c/0a9bab391e336489169b95cb0d4553d921302189"
+  ],
+  "aliases": [
+    "GHSA-5qvv-jjxx-82r8",
+    "CVE-2024-26718"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "0681cb28-b366-3cd6-b6f2-f87690eff70d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.9"
+    },
+    {
+      "id": "0694814a-0b17-3a32-9e33-24733c28cfab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.169"
+    },
+    {
+      "id": "1ba14c37-cf94-3168-ad07-ffc8d6067484",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39d42fa96ba1b7d2544db3f8ed5da8fb0d5cb877 <b825e0f9d68c178072bffd32dd34c39e3d2d597a"
+    },
+    {
+      "id": "2bcb3120-030d-3aa1-9169-aad77a31ec3e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39d42fa96ba1b7d2544db3f8ed5da8fb0d5cb877 <30884a44e0cedc3dfda8c22432f3ba4078ec2d94"
+    },
+    {
+      "id": "42c314a9-ec63-3bd8-8953-8aedf7e01558",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.18"
+    },
+    {
+      "id": "4745beb2-57e9-382d-93e4-d89574871009",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.6"
+    },
+    {
+      "id": "679c3d3c-a50b-37d3-9956-29fae5ffc1e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a4bba13a-468e-3cac-85a4-c9d696de2935",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39d42fa96ba1b7d2544db3f8ed5da8fb0d5cb877 <0c45a20cbe68bc4d681734f5c03891124a274257"
+    },
+    {
+      "id": "ae73aaa8-6983-3f90-ab76-7459128189d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39d42fa96ba1b7d2544db3f8ed5da8fb0d5cb877 <5735a2671ffb70ea29ca83969fe01316ee2ed6fc"
+    },
+    {
+      "id": "ca2fa35e-88b4-318c-9e8e-6bb1cdabcbb9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "d9fb55f1-27df-3d1e-acdf-6b4ced06e7dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39d42fa96ba1b7d2544db3f8ed5da8fb0d5cb877 <0a9bab391e336489169b95cb0d4553d921302189"
+    },
+    {
+      "id": "f0121a8f-f10d-3ba8-aab4-a6bbfbeeea10",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.79"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a233c31f-f202-3026-9662-60fb38360058",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

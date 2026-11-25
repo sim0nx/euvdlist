@@ -3,7 +3,7 @@
   "enisaUuid": "32451b2f-c1e7-3603-b60d-04b84644bb09",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncpufreq: Fix hotplug-suspend race during reboot\n\nDuring system reboot, cpufreq_suspend() is called via the\nkernel_restart() -> device_shutdown() path. Unlike the normal system\nsuspend path, the reboot path does not call freeze_processes(), so\nuserspace processes and kernel threads remain active.\n\nThis allows CPU hotplug operations to run concurrently with\ncpufreq_suspend(). The original code has no synchronization with CPU\nhotplug, leading to a race condition where governor_data can be freed\nby the hotplug path while cpufreq_suspend() is still accessing it,\nresulting in a null pointer dereference:\n\n  Unable to handle kernel NULL pointer dereference\n  Call Trace:\n   do_kernel_fault+0x28/0x3c\n   cpufreq_suspend+0xdc/0x160\n   device_shutdown+0x18/0x200\n   kernel_restart+0x40/0x80\n   arm64_sys_reboot+0x1b0/0x200\n\nFix this by adding cpus_read_lock()/cpus_read_unlock() to\ncpufreq_suspend() to block CPU hotplug operations while suspend is in\nprogress.\n\n[ rjw: Changelog edits ]",
   "datePublished": "Jul 25, 2026, 8:50:25 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:25 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:50 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/6d5dd354c37abaf4d60400c55c71f23ba2b33639",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/a9029dd55696c651ee46912afa2a166fa456bb3e"
   ],
   "aliases": [
+    "GHSA-r493-vrrx-v3x2",
     "CVE-2026-64373"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.09,
   "enisaIdProduct": [
     {
       "id": "10df3710-15f0-336f-8882-b2535ffd6436",
@@ -202,6 +203,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "a6bf1a79-f00e-31b9-b1ca-d5e745e80aca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "b252da98-898f-3374-aa53-48f8750e214f",
       "product": {
         "name": "Linux",
@@ -230,16 +241,6 @@
         }
       },
       "product_version": "4.14.151 <4.15"
-    },
-    {
-      "id": "b725ccbe-3646-35f2-b3b9-d61adfd11172",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "d24f3ec2-20b8-320c-bacc-d7a74e5fbaaa",

@@ -3,19 +3,36 @@
   "enisaUuid": "7d72293b-37ad-3acc-946e-c45ac1e97948",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvsock/virtio: validate packet source for connected sockets\n\nvirtio_transport_recv_pkt() looks up sockets first by the full source and\ndestination tuple, then by destination only in the bound table. The\nfallback is needed for listening and connecting sockets, but sockets remain\nin the bound table after connect(), so it can also return a non-listening\nsocket.\n\nThe fallback does not validate the source address. In TCP_SYN_SENT, a\nRESPONSE from an unrelated source can transition the victim socket to\nTCP_ESTABLISHED while its stored remote address remains unchanged.\nSubsequent RW packets from that source are delivered through the same\ndestination-only fallback.\n\nThis was reproduced with capability-empty processes under different UIDs.\nThe attacker discovered the target tuple through unprivileged AF_VSOCK\nsock_diag and caused the victim socket to read 16 attacker-chosen bytes;\nthe intended peer-side socket read 0 of those 16 bytes.\n\nAdd vsock_check_source() to validate the transport, source port and source\nCID against the peer stored in a non-listening socket. The local transport\nis the CID exception because its packets are generated internally with\nVMADDR_CID_LOCAL as their source, including connections using CID aliases.\n\nUse the helper after lock_sock() in the virtio receive path.",
   "datePublished": "Oct 28, 2026, 10:34:38 AM",
-  "dateUpdated": "Oct 28, 2026, 10:34:38 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 31, 2026, 12:43:28 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/bda841af86cdfe7fcf4a2f4db22e27f1b852b1ff",
+    "https://git.kernel.org/stable/c/c0a3a786a5e8b5007d6a3c34721ab052399ab2ad",
+    "https://git.kernel.org/stable/c/f77fb90edca5385d0eecbfd6d2c8ef60afff24a9",
+    "https://git.kernel.org/stable/c/ec231dd3b14e541ba1c4f842a7d152fb61037333",
     "https://git.kernel.org/stable/c/6cd829de69efd9ed3a53aa2421004a0396eb2bd7",
     "https://git.kernel.org/stable/c/e9bf92de436ba55f33eaa55d7008e68551123cfd",
     "https://git.kernel.org/stable/c/dee44f41f206becb41c492899c1996cfd7f82a1b"
   ],
   "aliases": [
-    "CVE-2026-99123"
+    "CVE-2026-99123",
+    "GHSA-vf8c-hhh3-5w4x"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
+    {
+      "id": "0acc9d99-6591-388d-ab63-19e488b36d93",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
     {
       "id": "0be74772-f3c3-3184-9f9d-987290df1bcf",
       "product": {
@@ -57,6 +74,16 @@
       "product_version": "06a8fc78367d070720af960dcecec917d3ae5f3b <dee44f41f206becb41c492899c1996cfd7f82a1b"
     },
     {
+      "id": "53309c61-19af-3681-b7eb-dcda9ba0532a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "6eb12b64-f5e7-3a79-9e56-331598f706e5",
       "product": {
         "name": "Linux",
@@ -77,6 +104,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "7df0f796-95bb-32b6-890e-7a774a115440",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.161"
+    },
+    {
+      "id": "811da6df-d099-33b0-ae40-7b80679b311b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "06a8fc78367d070720af960dcecec917d3ae5f3b <bda841af86cdfe7fcf4a2f4db22e27f1b852b1ff"
+    },
+    {
       "id": "9de43d62-fdf2-38a0-97a6-48554d64fac5",
       "product": {
         "name": "Linux",
@@ -87,6 +134,36 @@
       "product_version": "06a8fc78367d070720af960dcecec917d3ae5f3b <6cd829de69efd9ed3a53aa2421004a0396eb2bd7"
     },
     {
+      "id": "a23f71b9-9c82-3514-af3c-604b5996192b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "06a8fc78367d070720af960dcecec917d3ae5f3b <f77fb90edca5385d0eecbfd6d2c8ef60afff24a9"
+    },
+    {
+      "id": "cac9f37c-0629-304c-8b6e-caf4ac86eec2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "06a8fc78367d070720af960dcecec917d3ae5f3b <ec231dd3b14e541ba1c4f842a7d152fb61037333"
+    },
+    {
+      "id": "cf81b3c7-9623-370a-b401-c33745922b48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "06a8fc78367d070720af960dcecec917d3ae5f3b <c0a3a786a5e8b5007d6a3c34721ab052399ab2ad"
+    },
+    {
       "id": "da2b14d1-5f32-3b4c-aaec-8c55d8ad67f1",
       "product": {
         "name": "Linux",
@@ -95,6 +172,16 @@
         }
       },
       "product_version": "patch: 7.2.13"
+    },
+    {
+      "id": "e3ae2744-41fc-3ddc-88af-4eedebae8062",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
     }
   ],
   "enisaIdVendor": [

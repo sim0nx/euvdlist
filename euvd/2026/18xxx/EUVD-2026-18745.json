@@ -3,9 +3,12 @@
   "enisaUuid": "d606eb31-d1f1-3e17-8d2b-664bf41408e9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nserial: core: fix infinite loop in handle_tx() for PORT_UNKNOWN\n\nuart_write_room() and uart_write() behave inconsistently when\nxmit_buf is NULL (which happens for PORT_UNKNOWN ports that were\nnever properly initialized):\n\n- uart_write_room() returns kfifo_avail() which can be > 0\n- uart_write() checks xmit_buf and returns 0 if NULL\n\nThis inconsistency causes an infinite loop in drivers that rely on\ntty_write_room() to determine if they can write:\n\n  while (tty_write_room(tty) > 0) {\n      written = tty->ops->write(...);\n      // written is always 0, loop never exits\n  }\n\nFor example, caif_serial's handle_tx() enters an infinite loop when\nused with PORT_UNKNOWN serial ports, causing system hangs.\n\nFix by making uart_write_room() also check xmit_buf and return 0 if\nit's NULL, consistent with uart_write().\n\nReproducer: https://gist.github.com/mrpre/d9a694cc0e19828ee3bc3b37983fde13",
   "datePublished": "Apr 3, 2026, 3:15:51 PM",
-  "dateUpdated": "Apr 3, 2026, 3:15:51 PM",
+  "dateUpdated": "Nov 5, 2026, 9:33:48 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/91c2a5d201daf66fa3f42b8a383bb89174bde2c8",
+    "https://git.kernel.org/stable/c/c9e845014723d552944cec4e146ec7b841cda34d",
+    "https://git.kernel.org/stable/c/d45cfa70bf0159afb31cb03d2d16ec5a5053460c",
     "https://git.kernel.org/stable/c/efe85a557186b7fe915572ae93a8f3f78bfd9a22",
     "https://git.kernel.org/stable/c/bc70f2b36cf474d5cc8ecbcaf57f3e326fdec67c",
     "https://git.kernel.org/stable/c/455ce986fa356ff43a43c0d363ba95fa152f21d5"
@@ -14,49 +17,147 @@
     "CVE-2026-23472"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "05977b0b-98a8-32dd-b6f2-c4b4599b393e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "163ead34-2130-3533-8c56-205187831913",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <91c2a5d201daf66fa3f42b8a383bb89174bde2c8"
+    },
     {
       "id": "426f841d-1f72-305d-9a34-7c8f09766dbd",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <455ce986fa356ff43a43c0d363ba95fa152f21d5"
     },
     {
+      "id": "5ca46600-682d-345a-8ca4-2879610efaac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6530c0fb-cb17-3b26-9e40-c93a457913dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d45cfa70bf0159afb31cb03d2d16ec5a5053460c"
+    },
+    {
       "id": "678dc1b5-b362-3f2c-b8ce-bae4ca991432",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.18.20"
     },
     {
+      "id": "73b8fd83-6906-3b0c-b2b0-529e3250894f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0"
+    },
+    {
+      "id": "7b5be6c7-67fd-3949-a3c2-4aedca51609d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "89bc9321-75ea-3923-b18c-f601c4187234",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <bc70f2b36cf474d5cc8ecbcaf57f3e326fdec67c"
     },
     {
-      "id": "a148cec8-0681-3a09-b273-4ee1e07551c6",
+      "id": "a2c0f629-ea8b-3c61-916e-04ca625e6ef8",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "patch: 7.0-rc5"
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c9e845014723d552944cec4e146ec7b841cda34d"
     },
     {
       "id": "b74e6ab0-3385-38d1-9db2-27b7178e353b",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <efe85a557186b7fe915572ae93a8f3f78bfd9a22"
     },
     {
       "id": "bb82fb37-b95c-3dca-b151-d28757e9a4f0",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.19.10"
+    },
+    {
+      "id": "bc81b8a3-54cc-3cd9-962b-93bb77d676e5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "eccd52ee-5ef2-3de6-91e1-50701deff5a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.114"
     }
   ],
   "enisaIdVendor": [

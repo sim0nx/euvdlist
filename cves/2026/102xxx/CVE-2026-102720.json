@@ -1,9 +1,9 @@
 {
   "id": "EUVD-2026-89184",
   "enisaUuid": "d8f51d91-77eb-303b-b368-544caa3789e2",
-  "description": "A DHCP server, or anyone on the LAN who answers a DISCOVER first, can make the client read about a\n\n\n\nkilobyte past the end of the received message.\n\n\n\nThe option walk keeps a pointer and an offset in step, and the only bound check uses the offset:\n\n\n\n```c\n\n\n\n/* addons/dhcp/nxd_dhcp_client.c:7538, 7572 */\n\n\n\nwhile (i < length - 1)\n\n\n\n{\n\n    ...\n    size = *(++data);      /* data moves 1: type -> length byte */\n    data += size + 1;      /* data moves size + 1 more          */\n    i += size + 1;         /* i moves only size + 1             */\n\n\n}\n\n\n\n```\n\n\n\nA TLV option occupies size + 2 bytes. `data` is advanced by size + 2 in total, `i` by size + 1, so\n\n\n\nthe offset falls one byte behind the real read position for every option the walk skips. After\n\n\n\nenough skipped options the check `i < length - 1` still holds while `data` is already past the end\n\n\n\nof the message, and the subsequent read of the type and length bytes comes from whatever follows.\n\n\n\nA single OFFER carrying a long run of skippable options is enough:\n\n\n\n```\n\n\n\nERROR: AddressSanitizer: heap-buffer-overflow\n\n\n\nREAD of size 1 at 0x61b000000794 thread T5\n\n    #0 _nx_dhcp_search_buffer     addons/dhcp/nxd_dhcp_client.c:7541\n    #1 _nx_dhcp_get_option_value  addons/dhcp/nxd_dhcp_client.c:7082\n\n\n0x61b000000794 is located 164 bytes to the right of 1648-byte region\n\n\n\n```\n\n\n\nA well formed OFFER through the same path is handled normally, the client records the offer and\n\n\n\nmoves to REQUESTING, so the difference is the option layout rather than the harness.\n\n\n\nThe read runs in the DHCP client thread while the client is still unconfigured, so it happens on\n\n\n\nevery boot in reach of a hostile DHCP responder. The values read are used to configure the\n\n\n\ninterface, which is how the disclosed bytes become observable.\n\n\n\nAdvance `i` by size + 2, or derive the bound from `data` rather than keeping a second counter.",
+  "description": "In Eclipse ThreadX NetX Duo versions 6.0 through 6.5.2.202603a, the DHCP client's option walk advances its offset one byte less than its read pointer for every option it skips. A DHCP server, or any host on the link that answers first, can make the client read up to about a kilobyte past the received message, and the same walk copies out-of-bounds bytes into the application's buffer when it retrieves a user option.",
   "datePublished": "Sep 29, 2026, 5:46:23 PM",
-  "dateUpdated": "Sep 29, 2026, 5:46:23 PM",
+  "dateUpdated": "Nov 4, 2026, 9:42:34 AM",
   "baseScore": 5.3,
   "baseScoreVersion": "4.0",
   "baseScoreVector": "CVSS:4.0/AV:A/AC:L/AT:N/PR:N/UI:N/VC:L/VI:N/VA:L/SC:N/SI:N/SA:N",
@@ -11,20 +11,21 @@
     "https://github.com/eclipse-threadx/netxduo/security/advisories/GHSA-8hj5-p46x-5h28"
   ],
   "aliases": [
-    "CVE-2026-102720"
+    "CVE-2026-102720",
+    "GHSA-rw53-r2p7-qgmf"
   ],
   "assigner": "eclipse",
-  "epss": 0.0,
+  "epss": 0.15,
   "enisaIdProduct": [
     {
-      "id": "83d89ec8-9508-375d-8b80-862882c8c7f4",
+      "id": "e7500308-3cd0-3b6c-b55e-400a44c05671",
       "product": {
-        "name": "eclipse-threadx/netxduo",
+        "name": "Eclipse ThreadX NetX Duo",
         "vendor": {
           "name": "Eclipse Foundation"
         }
       },
-      "product_version": "0 \u22646.5.1"
+      "product_version": "6.0 \u22646.5.2.202603a"
     }
   ],
   "enisaIdVendor": [

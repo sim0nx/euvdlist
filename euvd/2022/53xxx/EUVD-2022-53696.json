@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2022-53696",
+  "enisaUuid": "4e58ce8e-e725-3b6d-9d26-964a2d370eea",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: dsa: ar9331: register the mdiobus under devres\n\nAs explained in commits:\n74b6d7d13307 (\"net: dsa: realtek: register the MDIO bus under devres\")\n5135e96a3dd2 (\"net: dsa: don't allocate the slave_mii_bus using devres\")\n\nmdiobus_free() will panic when called from devm_mdiobus_free() <-\ndevres_release_all() <- __device_release_driver(), and that mdiobus was\nnot previously unregistered.\n\nThe ar9331 is an MDIO device, so the initial set of constraints that I\nthought would cause this (I2C or SPI buses which call ->remove on\n->shutdown) do not apply. But there is one more which applies here.\n\nIf the DSA master itself is on a bus that calls ->remove from ->shutdown\n(like dpaa2-eth, which is on the fsl-mc bus), there is a device link\nbetween the switch and the DSA master, and device_links_unbind_consumers()\nwill unbind the ar9331 switch driver on shutdown.\n\nSo the same treatment must be applied to all DSA switch drivers, which\nis: either use devres for both the mdiobus allocation and registration,\nor don't use devres at all.\n\nThe ar9331 driver doesn't have a complex code structure for mdiobus\nremoval, so just replace of_mdiobus_register with the devres variant in\norder to be all-devres and ensure that we don't free a still-registered\nbus.",
+  "datePublished": "Jul 16, 2024, 11:44:05 AM",
+  "dateUpdated": "May 11, 2026, 6:47:42 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/475ce5dcf2d88fd4f3c213a0ac944e3e40702970",
+    "https://git.kernel.org/stable/c/aae1c6a1d3d696fc33b609fb12fe744a556d1dc5",
+    "https://git.kernel.org/stable/c/f1842a8cb71de4d7eb75a86f76e88c7ee739218c",
+    "https://git.kernel.org/stable/c/50facd86e9fbc4b93fe02e5fe05776047f45dbfb"
+  ],
+  "aliases": [
+    "GHSA-pff2-hvq5-ccc8",
+    "CVE-2022-48817"
+  ],
+  "assigner": "Linux",
+  "epss": 0.27,
+  "enisaIdProduct": [
+    {
+      "id": "00c600bf-3866-39d8-b053-c0737d12504a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ac3a68d56651c3dad2c12c7afce065fe15267f44 <475ce5dcf2d88fd4f3c213a0ac944e3e40702970"
+    },
+    {
+      "id": "03d0bafd-4e46-34d9-88f6-16190e9c8ccc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.101"
+    },
+    {
+      "id": "2aedc797-989e-3b3a-b7a4-c923c73cab8b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ac3a68d56651c3dad2c12c7afce065fe15267f44 <50facd86e9fbc4b93fe02e5fe05776047f45dbfb"
+    },
+    {
+      "id": "2f97c024-d47f-3e53-ab5d-6b6e81173759",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.9"
+    },
+    {
+      "id": "3dc83ae7-fc87-3b26-9a84-293714727be3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ac3a68d56651c3dad2c12c7afce065fe15267f44 <aae1c6a1d3d696fc33b609fb12fe744a556d1dc5"
+    },
+    {
+      "id": "46718784-199a-38b0-975e-25b832572bf1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.24"
+    },
+    {
+      "id": "47cc14af-2904-3a89-b7ca-e15c14d9aad6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ac3a68d56651c3dad2c12c7afce065fe15267f44 <f1842a8cb71de4d7eb75a86f76e88c7ee739218c"
+    },
+    {
+      "id": "5151902b-4503-342c-90ae-ffc941144a86",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "bc8e2cd4-5a74-33a7-b722-6a19fda1705b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16.10"
+    },
+    {
+      "id": "ecc317cf-8e20-3744-a756-7b8217999f72",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.17"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "928e2db4-49ec-3bd3-bfaf-f54913af4df2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

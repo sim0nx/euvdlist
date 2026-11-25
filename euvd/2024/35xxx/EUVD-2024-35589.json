@@ -1,0 +1,172 @@
+{
+  "id": "EUVD-2024-35589",
+  "enisaUuid": "93e6d932-5be0-332c-9075-c4c6bfac3d68",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: process: Fix kernel gp leakage\n\nchildregs represents the registers which are active for the new thread\nin user context. For a kernel thread, childregs->gp is never used since\nthe kernel gp is not touched by switch_to. For a user mode helper, the\ngp value can be observed in user space after execve or possibly by other\nmeans.\n\n[From the email thread]\n\nThe /* Kernel thread */ comment is somewhat inaccurate in that it is also used\nfor user_mode_helper threads, which exec a user process, e.g. /sbin/init or\nwhen /proc/sys/kernel/core_pattern is a pipe. Such threads do not have\nPF_KTHREAD set and are valid targets for ptrace etc. even before they exec.\n\nchildregs is the *user* context during syscall execution and it is observable\nfrom userspace in at least five ways:\n\n1. kernel_execve does not currently clear integer registers, so the starting\n   register state for PID 1 and other user processes started by the kernel has\n   sp = user stack, gp = kernel __global_pointer$, all other integer registers\n   zeroed by the memset in the patch comment.\n\n   This is a bug in its own right, but I'm unwilling to bet that it is the only\n   way to exploit the issue addressed by this patch.\n\n2. ptrace(PTRACE_GETREGSET): you can PTRACE_ATTACH to a user_mode_helper thread\n   before it execs, but ptrace requires SIGSTOP to be delivered which can only\n   happen at user/kernel boundaries.\n\n3. /proc/*/task/*/syscall: this is perfectly happy to read pt_regs for\n   user_mode_helpers before the exec completes, but gp is not one of the\n   registers it returns.\n\n4. PERF_SAMPLE_REGS_USER: LOCKDOWN_PERF normally prevents access to kernel\n   addresses via PERF_SAMPLE_REGS_INTR, but due to this bug kernel addresses\n   are also exposed via PERF_SAMPLE_REGS_USER which is permitted under\n   LOCKDOWN_PERF. I have not attempted to write exploit code.\n\n5. Much of the tracing infrastructure allows access to user registers. I have\n   not attempted to determine which forms of tracing allow access to user\n   registers without already allowing access to kernel registers.",
+  "datePublished": "May 19, 2024, 8:34:29 AM",
+  "dateUpdated": "May 11, 2026, 8:12:52 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/9abc3e6f1116adb7a2d4fbb8ce20c37916976bf5",
+    "https://git.kernel.org/stable/c/dff6072124f6df77bfd36951fbd88565746980ef",
+    "https://git.kernel.org/stable/c/f6583444d7e78dae750798552b65a2519ff3ca84",
+    "https://git.kernel.org/stable/c/00effef72c98294edb1efa87ffa0f6cfb61b36a4",
+    "https://git.kernel.org/stable/c/d8dcba0691b8e42bddb61aab201e4d918a08e5d9",
+    "https://git.kernel.org/stable/c/d14fa1fcf69db9d070e75f1c4425211fa619dfc8"
+  ],
+  "aliases": [
+    "GHSA-wjqf-4c62-v6g5",
+    "CVE-2024-35871"
+  ],
+  "assigner": "Linux",
+  "epss": 0.27,
+  "enisaIdProduct": [
+    {
+      "id": "1b5c5427-90f9-3405-88a6-34c5afa89c4a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7db91e57a0acde126a162ababfb1e0ab190130cb <d14fa1fcf69db9d070e75f1c4425211fa619dfc8"
+    },
+    {
+      "id": "1bed171b-24ee-3524-9a70-c63492c0289d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.26"
+    },
+    {
+      "id": "41af1114-7697-3112-8cdb-5fac2975df12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7db91e57a0acde126a162ababfb1e0ab190130cb <dff6072124f6df77bfd36951fbd88565746980ef"
+    },
+    {
+      "id": "4bcbc38a-aacc-3f53-b863-f76cc06f5fb8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "55f1814e-21b2-3b23-bdcd-f8657c40fb07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.15"
+    },
+    {
+      "id": "7893aff7-0d8f-3c1f-aa8d-c6868a75523e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.216"
+    },
+    {
+      "id": "7edeb84d-b6d6-3c20-9ffc-bb0ffc87a050",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7db91e57a0acde126a162ababfb1e0ab190130cb <d8dcba0691b8e42bddb61aab201e4d918a08e5d9"
+    },
+    {
+      "id": "87443f20-c98d-3aab-87d0-6be8ff759978",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.154"
+    },
+    {
+      "id": "a29184b6-4b7b-3678-b430-6f90595362c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7db91e57a0acde126a162ababfb1e0ab190130cb <00effef72c98294edb1efa87ffa0f6cfb61b36a4"
+    },
+    {
+      "id": "a3c98512-cb01-3b9b-81cf-b3e94cdec31c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.5"
+    },
+    {
+      "id": "cdaf6b8c-3b7c-398d-9350-99184515879b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7db91e57a0acde126a162ababfb1e0ab190130cb <f6583444d7e78dae750798552b65a2519ff3ca84"
+    },
+    {
+      "id": "f9e3897a-75e9-3aa1-a13f-6de235b08ec9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "fad4a3e3-57f8-3605-97b6-25ac6b0a0147",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7db91e57a0acde126a162ababfb1e0ab190130cb <9abc3e6f1116adb7a2d4fbb8ce20c37916976bf5"
+    },
+    {
+      "id": "fbfef1b9-e348-3ac1-92d8-ae3de5cc1c86",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.85"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "77c14b41-c0b4-3566-8d68-25ed0f1ef6c4",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

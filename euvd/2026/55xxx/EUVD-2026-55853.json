@@ -3,7 +3,7 @@
   "enisaUuid": "67f21967-dfd7-35c4-b189-00be09547fdc",
   "description": "tls_opt_dtls_peer_connection_id_value_get() in subsys/net/lib/sockets/sockets_tls.c, which handles getsockopt(SOL_TLS, TLS_DTLS_PEER_CID_VALUE), passed the caller-supplied optval directly to mbedtls_ssl_get_peer_cid() without verifying the buffer was at least MBEDTLS_SSL_CID_OUT_LEN_MAX (default 32) bytes. mbedtls_ssl_get_peer_cid() copies the peer-negotiated DTLS Connection ID (length 1..MBEDTLS_SSL_CID_OUT_LEN_MAX) into that buffer without a destination-size parameter, so a caller-supplied optlen smaller than the CID causes a write of up to 31 bytes past the buffer end.\n\nIn CONFIG_USERSPACE builds the getsockopt syscall verifier (z_vrfy_zsock_getsockopt) bounce-buffers the user's optval into a kernel allocation of exactly optlen bytes (k_usermode_alloc_from_copy -> z_thread_malloc), so an unprivileged user thread that passes a small optlen on a connected DTLS socket with Connection ID enabled induces a kernel-heap buffer overflow, with the overflowing content being the remote peer's CID.\n\nThe defect requires CONFIG_MBEDTLS_SSL_DTLS_CONNECTION_ID, an established DTLS session with a negotiated peer CID, and (for the kernel-crossing case) CONFIG_USERSPACE. Introduced when the TLS_DTLS_CID option was added (v3.5.0).\n\nThe fix rejects callers whose optlen is below MBEDTLS_SSL_CID_OUT_LEN_MAX with -EINVAL.",
   "datePublished": "Aug 10, 2026, 10:40:26 PM",
-  "dateUpdated": "Aug 10, 2026, 10:40:26 PM",
+  "dateUpdated": "Nov 4, 2026, 4:59:18 AM",
   "baseScore": 8.4,
   "baseScoreVersion": "3.1",
   "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:N/I:H/A:H",
@@ -15,17 +15,27 @@
     "CVE-2026-8718"
   ],
   "assigner": "zephyr",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
-      "id": "c4fb0589-8daf-3a50-8a35-461529ac2b69",
+      "id": "8dce5b0b-7af2-3e9e-a0c9-7218e07cd412",
       "product": {
         "name": "Zephyr",
         "vendor": {
           "name": "zephyrproject-rtos"
         }
       },
-      "product_version": "3.5.0 <4.4.1"
+      "product_version": "4.4.0 <4.4.1"
+    },
+    {
+      "id": "d72a5cd8-33e4-3a02-a6df-e3398a6d83e2",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "3.5.0 <4.3.2"
     }
   ],
   "enisaIdVendor": [

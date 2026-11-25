@@ -3,7 +3,7 @@
   "enisaUuid": "05257e7d-38d7-3f8c-8286-36af415a6fcf",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nkeys: Check the authorization payload in process keyring searches\n\nAn authorization payload and its saved credentials must remain valid\nwhile search_process_keyrings_rcu() searches the requestor's keyrings.\nThe function validates the authorization key, then separately loads\npayload.data[0] and unconditionally reads rka->cred. Validation does\nnot prevent request_key_auth_revoke() from clearing the payload.\n\nA request-key helper can assume authority and fork a descendant that\ninherits the authorization key. If the descendant misses in its own\nkeyrings, it falls back to the saved requestor credentials. Successful\ntarget instantiation invalidates the authorization key without clearing\nthe payload. After the helper exits, UMH_WAIT_PROC returns to the\nrequester, which calls complete_request_key() and revokes that key.\n\nWith the descendant paused after validation, the paths can interleave\nas follows:\n\n  1. The descendant enters search_process_keyrings_rcu() under RCU and\n     key_validate() succeeds.\n  2. The helper instantiates the target, invalidates the authorization\n     key, and exits.\n  3. The requester resumes from UMH_WAIT_PROC, calls\n     complete_request_key(), and revokes the authorization key.\n     request_key_auth_revoke() sets its payload pointer to NULL.\n  4. The descendant loads NULL and dereferences rka->cred.\n\nThis NULL dereference can oops the kernel. RCU delays payload disposal\nbut does not prevent the pointer from being cleared.\n\nLoad the payload with dereference_key_rcu() and require a non-NULL\nresult before validating the authorization key and searching its saved\ncredentials. A non-NULL payload and its credentials remain alive for\nthe caller's RCU read-side section; a cleared payload skips the fallback\nsearch and follows the existing error selection.\n\nKASAN report as below:\n\n    Oops: general protection fault, probably for non-canonical address 0xdffffc0000000005: 0000 [#1] SMP KASAN NOPTI\n    KASAN: null-ptr-deref in range [0x0000000000000028-0x000000000000002f]\n    RIP: 0010:search_process_keyrings_rcu+0x32b/0x790",
   "datePublished": "Nov 2, 2026, 4:06:34 PM",
-  "dateUpdated": "Nov 2, 2026, 4:06:34 PM",
+  "dateUpdated": "Nov 3, 2026, 7:12:58 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/14fb6fad526b35a7ebd121f1dd313abe652e0aa6",
@@ -13,13 +13,15 @@
     "https://git.kernel.org/stable/c/984a178d54515779a1bee100b92a6cee8777c830",
     "https://git.kernel.org/stable/c/b86db7993051d05810601654e886a1e78e1fa495",
     "https://git.kernel.org/stable/c/b4dfda438fee3c6faa15d9b421c373de6a0e476f",
-    "https://git.kernel.org/stable/c/49f4e768540d25d8852ef750313afda6a4774871"
+    "https://git.kernel.org/stable/c/49f4e768540d25d8852ef750313afda6a4774871",
+    "https://git.kernel.org/stable/c/0a0ec45bf577a9b4d4960567f20d3877ef480de9"
   ],
   "aliases": [
-    "CVE-2026-99225"
+    "CVE-2026-99225",
+    "GHSA-fm9c-q6vv-f7qq"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "07f7b15b-8a4a-3b39-9784-8e285679bdae",
@@ -102,6 +104,16 @@
       "product_version": "e59428f721ee096d8a020504ea908a6f0d952735 <7d3d2fffe933e538472ccafe5bbc7109488b9ce3"
     },
     {
+      "id": "8ac78096-d315-36f4-8b1e-347867e176d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e59428f721ee096d8a020504ea908a6f0d952735 <0a0ec45bf577a9b4d4960567f20d3877ef480de9"
+    },
+    {
       "id": "8c050132-a9de-3df3-826c-511c5185657e",
       "product": {
         "name": "Linux",
@@ -140,6 +152,16 @@
         }
       },
       "product_version": "e59428f721ee096d8a020504ea908a6f0d952735 <b4dfda438fee3c6faa15d9b421c373de6a0e476f"
+    },
+    {
+      "id": "bafc16df-2db0-3ee1-ab92-96a1f3c4c7b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
     },
     {
       "id": "bd272f94-3773-3d0c-8dd8-6a98e86f662d",

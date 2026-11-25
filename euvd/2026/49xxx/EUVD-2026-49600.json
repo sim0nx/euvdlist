@@ -3,7 +3,7 @@
   "enisaUuid": "93e43803-ba68-318f-b770-e856638ac4ac",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: bpa10x: avoid OOB read of revision string in bpa10x_setup()\n\nbpa10x_setup() sends the vendor command 0xfc0e and passes the response\nto bt_dev_info() and hci_set_fw_info() as a \"%s\" string starting at\nskb->data + 1, without checking the length:\n\n\tbt_dev_info(hdev, \"%s\", (char *)(skb->data + 1));\n\thci_set_fw_info(hdev, \"%s\", skb->data + 1);\n\nA device that returns a one-byte response (status only) leaves\nskb->data + 1 past the end of the data, and the %s walk reads adjacent\nslab memory until it meets a NUL. The same happens when the payload is\nnot NUL-terminated within skb->len. The out-of-bounds bytes end up in\nthe kernel log and the firmware-info debugfs file.\n\nPrint the revision string with a bounded \"%.*s\" limited to skb->len - 1\ninstead. This keeps the string readable for well-behaved devices while\nnever reading past the received data, and does not fail setup, so a\ndevice returning a short or unterminated response keeps working.",
   "datePublished": "Jul 27, 2026, 8:10:38 PM",
-  "dateUpdated": "Jul 27, 2026, 8:10:38 PM",
+  "dateUpdated": "Nov 6, 2026, 4:44:56 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1813add71e386f77b3040e6c8dc9b7b3ff965a6c",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/dd068ef044128db655f48323a4acfd5907e04903"
   ],
   "aliases": [
-    "CVE-2026-64549"
+    "CVE-2026-64549",
+    "GHSA-4pq4-7m8r-frpc"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "2190135d-aa2c-3e80-a6c1-fb5956d6c220",
@@ -82,16 +83,6 @@
       "product_version": "ddd68ec8f4847b460c9f580076eafe13b031a6fd <1813add71e386f77b3040e6c8dc9b7b3ff965a6c"
     },
     {
-      "id": "66b4601b-0c3c-3a0d-abf0-63dfa049982a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
-    },
-    {
       "id": "6873673d-f037-3733-8b98-33b18104bd98",
       "product": {
         "name": "Linux",
@@ -140,6 +131,16 @@
         }
       },
       "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "b940953c-a795-3168-a366-475f5a1c8c65",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "c36c1686-d31d-37ba-b735-b3b5ca52c552",

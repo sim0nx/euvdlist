@@ -3,7 +3,7 @@
   "enisaUuid": "18a4f94b-d6b5-3e14-89cf-53eb119163a6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/hugetlb: restore reservation on error in hugetlb folio copy paths\n\nTwo sites in mm/hugetlb.c allocate a hugetlb folio via\nalloc_hugetlb_folio() (consuming a VMA reservation) and then call\ncopy_user_large_folio(), which became int-returning in commit 1cb9dc4b475c\n(\"mm: hwpoison: support recovery from HugePage copy-on-write faults\") and\ncan now fail (e.g.  -EHWPOISON on a hwpoisoned source page).  On the\nfailure path, folio_put() restores the global hugetlb pool count through\nfree_huge_folio(), but the per-VMA reservation map entry is left marked\nconsumed:\n\n  - hugetlb_mfill_atomic_pte() resubmission path (UFFDIO_COPY)\n  - copy_hugetlb_page_range() fork-time CoW path when\n    hugetlb_try_dup_anon_rmap() fails (rare: pinned hugetlb anon\n    folio under fork)\n\nUser-visible effect: on UFFDIO_COPY into a private hugetlb VMA where the\nresubmission copy fails, the reservation for that address is leaked from\nthe VMA's reserve map.  A subsequent fault at the same address takes the\nno-reservation path, and under hugetlb pool pressure the task is SIGBUSed\nat an address it had previously reserved.  The fork-time CoW path leaks\nthe same way in the child VMA's reserve map, though it requires the much\nrarer combination of pinned hugetlb anon page + hwpoisoned source.\n\nAdd the missing restore_reserve_on_error() call before folio_put() on both\nerror paths.",
   "datePublished": "Jun 25, 2026, 8:38:38 AM",
-  "dateUpdated": "Jun 25, 2026, 8:38:38 AM",
+  "dateUpdated": "Nov 6, 2026, 4:24:05 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/8d6e1dd3ad1340cd8b6d554b7aa93d8f0a1c6d38",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/40c81856e622a9dc59294a90d169ac07ea25b0b0"
   ],
   "aliases": [
+    "GHSA-6828-fj37-mvwr",
     "CVE-2026-53154"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "30cf0aff-07d1-37b9-8e0d-526ca02f531d",

@@ -2,8 +2,8 @@
   "id": "EUVD-2026-58951",
   "enisaUuid": "74aa8049-5598-312f-b00f-cb129a3fc53e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nntfs3: cap RESTART_TABLE free-chain walker at rt->used\n\nA crafted NTFS3 disk image triggers an in-kernel infinite loop at\nmount time, hanging the mounting thread and firing the soft-lockup\nwatchdog within ~22s on multi-CPU hosts (panic with\nkernel.softlockup_panic=1).  The bug is reachable from desktop USB\nauto-mount on distributions where udisks2 routes the NTFS signature\nto the in-tree ntfs3 driver (Arch family and an increasing fraction\nof Fedora / openSUSE / RHEL deployments); CAP_SYS_ADMIN-class manual\nmount elsewhere.\n\ncheck_rstbl()'s second walker iterates the free-entry singly-linked\nlist headed by rt->first_free with no upper bound on iteration count:\n\n  for (off = ff; off;) {\n      if (off == RESTART_ENTRY_ALLOCATED)\n          return false;\n      off = le32_to_cpu(*(__le32 *)Add2Ptr(rt, off));\n      if (off > ts - sizeof(__le32))\n          return false;\n  }\n\nThe existing guards cover three exits: end-of-list (off == 0), the\nin-use marker (off == RESTART_ENTRY_ALLOCATED), and out-of-bounds\n(off > ts - sizeof(__le32)).  None of the three prevents an\nin-bounds cycle.\n\nA crafted on-disk RESTART_TABLE whose free chain contains a\nself-loop or A->B->A cycle whose offsets satisfy:\n\n  - in range [sizeof(struct RESTART_TABLE), ts - sizeof(__le32)]\n  - (off - sizeof(struct RESTART_TABLE)) % rsize == 0\n\npasses all existing guards and spins the mount-time thread forever.\nReproduced in UML by hand-forging a 2 MB NTFS3 image whose journal\nRESTART_TABLE first_free = 0x18 and whose entry at offset 0x18\nstores 0x18 as its next pointer; mount of the forged image with\nthe in-tree ntfs3 driver never returns.\n\nBound the walker by rt->used.  Each entry on a legitimate free\nchain is unique, and the total slot count is ne = le16_to_cpu\n(rt->used).  A traversal that visits more than ne slots is by\nconstruction malformed; reject it as a corrupt RESTART_TABLE.\n\nAfter this patch, mount of the forged image returns with -EINVAL\nand a log_replay failure message, and mkntfs-produced legitimate\nimages mount cleanly (verified in the same UML harness).",
-  "datePublished": "Aug 15, 2026, 6:32:15 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:15 AM",
+  "datePublished": "Aug 15, 2026, 5:53:53 AM",
+  "dateUpdated": "Nov 6, 2026, 4:55:22 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/8128bec895075253c779d67afdc90ae513265fca",
@@ -12,15 +12,14 @@
     "https://git.kernel.org/stable/c/29b86dbe88cbbef53bb9aaec2e279359f8c450f8",
     "https://git.kernel.org/stable/c/0fad25687d4d3fa1fdd313d31b9cb5817c425029",
     "https://git.kernel.org/stable/c/d313416280d41bea272f02a6034dfa88008692a0",
-    "https://git.kernel.org/stable/c/9611f644302c07d21bc8af97e3e06a3d30064253",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72193"
+    "https://git.kernel.org/stable/c/9611f644302c07d21bc8af97e3e06a3d30064253"
   ],
   "aliases": [
     "GHSA-33rw-p5m7-q9c2",
     "CVE-2026-72193"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "1d3e3036-21fc-31be-88b4-8639cd2e8fa8",
@@ -31,16 +30,6 @@
         }
       },
       "product_version": "b46acd6a6a627d876898e1c84d3f84902264b445 <7ac4c86915c24c208a0f0611b71d9676686fe756"
-    },
-    {
-      "id": "2aa4c460-1538-3517-9010-2080f0cbfb1a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "37297ab6-dc50-35be-98bd-cb8ba1b0ca40",
@@ -181,6 +170,16 @@
         }
       },
       "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "e5f32808-d7bf-3176-8180-a6d13320cec4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

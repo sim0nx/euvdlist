@@ -3,8 +3,10 @@
   "enisaUuid": "0ec42de7-3df5-3ff7-8e55-77a11280b99b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs/ntfs3: validate Dirty Page Table capacity in log_replay copy_lcns\n\nIn the analysis pass of $LogFile journal replay, log_replay() copies\nLCNs from each action log record into an existing Dirty Page Table\n(DPT) entry without bounding the destination index. A crafted NTFS\nimage with DPT entry lcns_follow=1 and an action log record with\nlcns_follow=2 produces a kernel slab out-of-bounds write at mount\ntime:\n\n  BUG: KASAN: slab-out-of-bounds in log_replay+0x654c/0xdb60\n  Write of size 8 at addr ffff8880095e1040 by task mount\n\nTwo attacker-controlled fields can drive j+i past the allocated\npage_lcns[] array:\n\n  1. dp->lcns_follow (capacity) can be smaller than lrh->lcns_follow.\n  2. lrh->target_vcn may be smaller than dp->vcn, making the u64\n     subtraction wrap to a huge size_t.\n\nValidate target VCN delta and per-record LCN count against the\nDPT entry capacity, bail via the existing out: cleanup label with\n-EINVAL.\n\nThis mirrors the bounds-check pattern added in commit b2bc7c44ed17\n(\"fs/ntfs3: Fix slab-out-of-bounds read in DeleteIndexEntryRoot\")\nand commit 0ca0485e4b2e (\"fs/ntfs3: validate rec->used in\njournal-replay file record check\").",
   "datePublished": "Jul 25, 2026, 8:51:07 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:07 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:38:28 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/964c3fae1dfc49dde5468eace940f199cda234e9",
     "https://git.kernel.org/stable/c/3aa96956ca2200674e2a8f9c23ec6ecd45e5010f",
@@ -15,11 +17,22 @@
     "https://git.kernel.org/stable/c/57382ec6ac63b63dce2789e835fded28b698ae79"
   ],
   "aliases": [
-    "CVE-2026-64432"
+    "CVE-2026-64432",
+    "GHSA-4xg7-26qr-mccf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
+    {
+      "id": "16f4dbe0-0480-39d5-940d-3393972069cf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "1e1a8424-107e-3a55-bccf-c637e8ca7e1e",
       "product": {
@@ -149,16 +162,6 @@
         }
       },
       "product_version": "b46acd6a6a627d876898e1c84d3f84902264b445 <c6f9e804f73ef809529865fbc7256dd189ff8c33"
-    },
-    {
-      "id": "d0892fb1-636e-3d65-88a3-a3df1464bc66",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "e7ca7468-b6ea-3795-9900-6505e8c66b84",

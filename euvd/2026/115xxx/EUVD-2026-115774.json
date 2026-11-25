@@ -3,7 +3,7 @@
   "enisaUuid": "6f84c431-7053-38d5-b2a6-0ebee0b806a1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npid_namespace: prevent TIF_NOTIFY_SIGNAL from interrupting the reaper\n\nSince commit 7fea700e04bd (\"zap_pid_ns_processes: clear\nTIF_NOTIFY_SIGNAL along with TIF_SIGPENDING\") zap_pid_ns_processes()\nclears TIF_NOTIFY_SIGNAL before every kernel_wait4() call. Otherwise\nkernel_wait4() doesn't sleep and returns -ERESTARTSYS if\nsignal_pending() is true and the reaper busy-waits.\n\nBut clearing TIF_NOTIFY_SIGNAL doesn't fix it. It can get raised again.\nFor example, klp_send_signals() sets it raw against any task that hasn't\ntransitioned yet. And it keeps sending it until the livepatch finishes.\n\nThe sleep loop waiting for pid_allocated to drop has the same problem\nand it doesn't even clear anything. So a schedule() in\nTASK_INTERRUPTIBLE returns immediately.\n\nUse a no_notify_signal guard. signal_pending() will ignore\nTIF_NOTIFY_SIGNAL and the pid namespace reaper sleeps until a child\nexits or free_pid() wakes it.",
   "datePublished": "Nov 3, 2026, 11:15:14 AM",
-  "dateUpdated": "Nov 3, 2026, 11:15:43 AM",
+  "dateUpdated": "Nov 3, 2026, 7:13:09 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2c20ace1698d03a23467351be1d281e89b36ade3",
@@ -11,13 +11,15 @@
     "https://git.kernel.org/stable/c/30b274508c743f243c82904954c4e416d7143d4c",
     "https://git.kernel.org/stable/c/70178691c467c8f9f722765299fd8524c3121a35",
     "https://git.kernel.org/stable/c/3d15ac36ce174477efa5365e424dbd47950fd2b9",
-    "https://git.kernel.org/stable/c/f46cd8241d9b83f2279cc0db3e9d3e181b548a59"
+    "https://git.kernel.org/stable/c/f46cd8241d9b83f2279cc0db3e9d3e181b548a59",
+    "https://git.kernel.org/stable/c/5c0985dd3c32fc2bbd0e8beaf13cf52cd97376a2"
   ],
   "aliases": [
-    "CVE-2026-99244"
+    "CVE-2026-99244",
+    "GHSA-7cwf-57xm-qrxg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "0b02cc48-a339-3a68-a44a-b9fc80a658ff",
@@ -80,6 +82,16 @@
       "product_version": "6.6.35 <6.6.161"
     },
     {
+      "id": "5b880c9d-94b7-3e31-9892-c3a70cf34302",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
       "id": "5f8e9387-ab95-35c6-b204-17e07492eb3b",
       "product": {
         "name": "Linux",
@@ -98,6 +110,16 @@
         }
       },
       "product_version": "patch: 6.12.115"
+    },
+    {
+      "id": "79433c5b-f24d-3457-800c-08c3994fa62e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7fea700e04bd3f424c2d836e98425782f97b494e <5c0985dd3c32fc2bbd0e8beaf13cf52cd97376a2"
     },
     {
       "id": "897d07d9-1db5-34da-9e35-7886a35eb8d5",

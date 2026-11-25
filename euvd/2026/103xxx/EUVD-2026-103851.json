@@ -3,19 +3,24 @@
   "enisaUuid": "02bad450-5bfd-3bdc-aa5a-acdc7d80b185",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: aspeed-vhub: cancel wake work on device removal\n\nwake_work is armed from the gadget .wakeup callback to resume suspended\ndownstream ports, and it is never cancelled in ast_vhub_remove(), so a\nwork item queued before or during removal can run after devm has freed\nvhub and its ports, a use-after-free.\n\nCancelling the work alone is not sufficient: usb_gadget_wakeup() takes\nno lock and the unbind path never clears wakeup_en, so a remote-wakeup\nrequest in flight on another CPU can re-arm the work after the cancel\nand before vhub is freed.\n\nast_vhub_del_dev() already clears d->registered under vhub->lock before\nunregistering the gadget. Refuse the wakeup in ast_vhub_udc_wakeup()\nonce d->registered is clear: the check and the schedule_work() are then\natomic against the unbind, so a wakeup that passed before the flag was\ncleared is drained by the cancel_work_sync() after the del_dev loop,\nand one that arrives later returns without arming. Also move INIT_WORK()\nto the top of ast_vhub_probe(), since the probe error path reuses\nast_vhub_remove() and would otherwise cancel a never-initialized work\nitem.\n\nThis issue was found by an in-house static analysis tool.",
   "datePublished": "Oct 18, 2026, 3:47:59 PM",
-  "dateUpdated": "Oct 18, 2026, 3:47:59 PM",
+  "dateUpdated": "Oct 30, 2026, 12:39:35 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/89b3fef8809ec1a9acf5f753eb89b9508d7e4466",
+    "https://git.kernel.org/stable/c/3aed0c86afa7877d08722233a8b15e8c1ff8bcb8",
+    "https://git.kernel.org/stable/c/552f580a18787cfbd83d28d7d76d584c29f2c4c2",
+    "https://git.kernel.org/stable/c/0d39ac4f65f9357469518c70e42940e0d8b0e497",
     "https://git.kernel.org/stable/c/f343bfa3fc9f6255602d66f4a7dbe7ddef13ba41",
     "https://git.kernel.org/stable/c/474e9e1852fb5ba0bfb26f123dd0cb361d0f4f4d",
     "https://git.kernel.org/stable/c/c81504dfd2d93e345c98e7a012c2f2e74ce5b6a1",
     "https://git.kernel.org/stable/c/20388c8d1d74c203fec8194c45cd31afdfab934e"
   ],
   "aliases": [
+    "GHSA-5m27-6x28-p9v6",
     "CVE-2026-98766"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "12517e64-b65f-39c0-987f-d6c46b296f15",
@@ -26,6 +31,36 @@
         }
       },
       "product_version": "patch: 6.18.56"
+    },
+    {
+      "id": "1a6ea2c1-b393-3780-8d62-028f0513508e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "375e0dc1-ad8c-3f10-a0c2-1d404e2c7903",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ecca2a4080cb6b1fa174adc588fce9e9014c43c <0d39ac4f65f9357469518c70e42940e0d8b0e497"
+    },
+    {
+      "id": "3ee42155-03a3-3c88-b4ab-94119f9c945f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ecca2a4080cb6b1fa174adc588fce9e9014c43c <3aed0c86afa7877d08722233a8b15e8c1ff8bcb8"
     },
     {
       "id": "4c1bafae-3811-31c2-b1a6-46bebebf7161",
@@ -48,6 +83,16 @@
       "product_version": "7ecca2a4080cb6b1fa174adc588fce9e9014c43c <474e9e1852fb5ba0bfb26f123dd0cb361d0f4f4d"
     },
     {
+      "id": "6c2f3449-497b-30ab-8e5a-d1fcd059b6a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
       "id": "6d20a7bc-f0d7-39a9-b3b3-ee6fc7956933",
       "product": {
         "name": "Linux",
@@ -56,6 +101,26 @@
         }
       },
       "product_version": "4.18"
+    },
+    {
+      "id": "6e85f86a-aaeb-3454-90d8-cdd4edffcfd6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "86a345ec-372d-323b-b3aa-fb688b32102d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "901bda85-0e47-3298-b659-f7bd5897f057",
@@ -88,16 +153,6 @@
       "product_version": "7ecca2a4080cb6b1fa174adc588fce9e9014c43c <c81504dfd2d93e345c98e7a012c2f2e74ce5b6a1"
     },
     {
-      "id": "a9985c4f-0f8c-3a9d-93b9-c97532f79358",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc6"
-    },
-    {
       "id": "aac79c52-a45d-3fff-8ae1-1b8af0981936",
       "product": {
         "name": "Linux",
@@ -108,6 +163,26 @@
       "product_version": "patch: 6.12.113"
     },
     {
+      "id": "b7a38f83-3e76-31ac-82e5-2657f76a9c5e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ecca2a4080cb6b1fa174adc588fce9e9014c43c <552f580a18787cfbd83d28d7d76d584c29f2c4c2"
+    },
+    {
+      "id": "c265b82a-62c6-34e0-9a2c-1c486d0ca85c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "c79eb936-a095-3abd-a3b4-7100e13c0968",
       "product": {
         "name": "Linux",
@@ -116,6 +191,16 @@
         }
       },
       "product_version": "patch: 7.2.10"
+    },
+    {
+      "id": "dec49256-448a-3e1f-953e-8f6e2f5e2dd1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ecca2a4080cb6b1fa174adc588fce9e9014c43c <89b3fef8809ec1a9acf5f753eb89b9508d7e4466"
     }
   ],
   "enisaIdVendor": [

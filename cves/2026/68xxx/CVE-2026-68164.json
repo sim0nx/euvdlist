@@ -3,9 +3,10 @@
   "enisaUuid": "ad8de0c0-b7af-3dcd-bb6b-1d5b573f69f1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/damon/core: disallow overlapping input ranges for damon_set_regions()\n\ndamon_set_regions() assumes the input ranges are sorted by the address and\ndon't overlap each other.  Hence the assumption was initially to be\nexplicitly validated.  But commit 97d482f4592f (\"mm/damon/sysfs: reuse\ndamon_set_regions() for regions setting\") has mistakenly removed the\nvalidation.\n\nThis can make DAMON behave in unexpected ways.  At the best, the\nmonitoring results snapshot will just look weird since there will be\noverlapping regions.  DAMOS will also work weirdly, applying the same\naction multiple times for overlapping regions, and make DAMOS quota weird.\nMore seriously, depending on the setup and regions updates sequence,\nnegative size regions can be made.  It will trigger WARN_ONCE() if the\nkernel is built with CONFIG_DAMON_DEBUG_SANITY=y.  Depending on the\nmonitoring results, the negative size region can further trigger division\nby zero in damon_merge_two_regions().\n\nNote that some of the consequences including the WARN_ONCE() and the\ndivide by zero depend on commits that were introduced after the root cause\ncommit 97d482f4592f (\"mm/damon/sysfs: reuse damon_set_regions() for\nregions setting\").\n\nFix the problems by checking the assumption and returning an error if\nthe input ranges don't meet the assumption.\n\nThe issue was discovered [1] by Sashiko.",
   "datePublished": "Aug 10, 2026, 11:59:31 AM",
-  "dateUpdated": "Aug 10, 2026, 11:59:31 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:59 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/a5c453fffb6f2ce75fc10b5d8bc475f1758010bd",
     "https://git.kernel.org/stable/c/4b4a3e7ef7bb622237495db9ba4dfd7417d6530e",
     "https://git.kernel.org/stable/c/06a4beeeec8f03f0b3e9c78a98f1ae4f0f18cfbd",
     "https://git.kernel.org/stable/c/6ce0db97fb37ab8cf8596edca0e3de8618ab009a",
@@ -13,11 +14,22 @@
     "https://git.kernel.org/stable/c/954157679ec34661c2e87e7eb796104a797c32db"
   ],
   "aliases": [
-    "CVE-2026-68164"
+    "CVE-2026-68164",
+    "GHSA-9xf8-5fr7-rcpw"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
+    {
+      "id": "145f021a-2d04-34c7-9e03-de196d9ccdfb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "97d482f4592fde2322c319f07bc54f3a0d37861c <a5c453fffb6f2ce75fc10b5d8bc475f1758010bd"
+    },
     {
       "id": "275b7451-c089-3ca7-997c-3c826184e01b",
       "product": {
@@ -59,16 +71,6 @@
       "product_version": "patch: 6.12.101"
     },
     {
-      "id": "724af48e-f8a8-3370-bdce-ea3d69c45bb0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
-    },
-    {
       "id": "7f17d79b-2923-36d8-8cf5-8d632d08239a",
       "product": {
         "name": "Linux",
@@ -89,6 +91,16 @@
       "product_version": "patch: 7.1.6"
     },
     {
+      "id": "902f5f02-a1d7-3d49-b54c-a862c4d1e15d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
       "id": "ad74aad2-8af9-3bc4-a62e-97e1358c1aec",
       "product": {
         "name": "Linux",
@@ -107,6 +119,16 @@
         }
       },
       "product_version": "97d482f4592fde2322c319f07bc54f3a0d37861c <4b4a3e7ef7bb622237495db9ba4dfd7417d6530e"
+    },
+    {
+      "id": "e27c2163-68af-3874-844d-7ab45caaf695",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "e7bf6370-eff3-3276-983c-6f0dfc23c5b5",

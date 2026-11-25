@@ -3,20 +3,34 @@
   "enisaUuid": "9acbacc7-25c7-33d1-ad67-d99d899d3e04",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: nf_tables: skip expired catchall elements on insert and delete\n\nnft_setelem_catchall_insert() looks up duplicates with\nnft_set_elem_active() only, while nft_set_catchall_lookup() and the\ndump path additionally skip expired elements.\n\nOnce a catchall element with a timeout expires, this predicate drift\nmakes it invisible to userspace dumps, yet it still blocks\nre-insertion: with NLM_F_EXCL the request fails with -EEXIST, and\nwithout it the request reports success but silently inserts nothing.\nThe stale entry only goes away when the (user-tunable) gc interval\nelapses, so the catchall rule may silently stop matching for an\narbitrarily long time after its first expiration.\n\nThe delete path shows the same drift: nft_setelem_catchall_deactivate()\npicks the first active-next entry in the catchall list, so with an\nexpired entry still pending GC it retires the stale entry instead of\nthe fresh one, and it deactivates an element that userspace no longer\nsees instead of failing with -ENOENT.\n\nAlign both walks with the lookup and dump predicates: only an element\nthat is active and not expired counts as a duplicate or delete\ncandidate, using the per-netns timestamp taken at transaction start,\nin line with the set backend .insert/.deactivate and catchall GC sync\npaths.",
   "datePublished": "Oct 18, 2026, 3:15:58 PM",
-  "dateUpdated": "Oct 18, 2026, 3:15:58 PM",
+  "dateUpdated": "Oct 30, 2026, 12:38:15 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/2462ff0861f0dd5b2abdc3e95c3360d8566ab081",
+    "https://git.kernel.org/stable/c/f347d71d0d1a2157d8ecadbe1fba69cff32fce98",
+    "https://git.kernel.org/stable/c/5e20b39aa7844769a7a782484bc1a809ffbc513e",
     "https://git.kernel.org/stable/c/2f07da3881525f7cbfed1ced2796c71a201505b9",
     "https://git.kernel.org/stable/c/12cf803edfffef96f6415f0b5dbc7ec88842ea0f",
     "https://git.kernel.org/stable/c/4fb8b1ccc475651e480e509de126bb9ce7f3cff9",
     "https://git.kernel.org/stable/c/70194dc37670bd08e44b471389861cc01bd3a3c9"
   ],
   "aliases": [
+    "GHSA-j4h7-w628-h5g3",
     "CVE-2026-98484"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "0126b449-081d-3ff3-9399-0c4f8113d66e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
     {
       "id": "02b893ba-dbb9-39a5-8297-f0ac80391478",
       "product": {
@@ -38,6 +52,16 @@
       "product_version": "aaa31047a6d25da0fa101da1ed544e1247949b40 <2f07da3881525f7cbfed1ced2796c71a201505b9"
     },
     {
+      "id": "1b3f2f60-cdd6-3e85-9a7f-f875c9649f27",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "aaa31047a6d25da0fa101da1ed544e1247949b40 <5e20b39aa7844769a7a782484bc1a809ffbc513e"
+    },
+    {
       "id": "25310706-4e18-37a9-bfca-ab959e688dc2",
       "product": {
         "name": "Linux",
@@ -46,6 +70,16 @@
         }
       },
       "product_version": "aaa31047a6d25da0fa101da1ed544e1247949b40 <12cf803edfffef96f6415f0b5dbc7ec88842ea0f"
+    },
+    {
+      "id": "29add1db-0025-3e22-9b0c-db8fbebec925",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "aaa31047a6d25da0fa101da1ed544e1247949b40 <f347d71d0d1a2157d8ecadbe1fba69cff32fce98"
     },
     {
       "id": "55d925f9-988c-32e6-9b40-f7a9246d7c29",
@@ -78,6 +112,16 @@
       "product_version": "aaa31047a6d25da0fa101da1ed544e1247949b40 <4fb8b1ccc475651e480e509de126bb9ce7f3cff9"
     },
     {
+      "id": "6fd1f673-3032-30f8-a386-ce0dcd3128cf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "aaa31047a6d25da0fa101da1ed544e1247949b40 <2462ff0861f0dd5b2abdc3e95c3360d8566ab081"
+    },
+    {
       "id": "70d13fad-0ce4-3452-9b2c-4c37fb28241a",
       "product": {
         "name": "Linux",
@@ -98,14 +142,34 @@
       "product_version": "patch: 6.12.112"
     },
     {
-      "id": "c7deec5d-3413-3c08-a39c-c5da1a318507",
+      "id": "786dfd6f-0b98-3dad-97d3-6ce8900a11aa",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc5"
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "9809056f-8de1-341d-b1b0-f87237077bba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "a5c40c58-0413-3bae-a345-d7dcebdde727",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
     },
     {
       "id": "d3af9060-29b5-3aa0-bac0-471e582f2d81",

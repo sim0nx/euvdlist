@@ -1,0 +1,151 @@
+{
+  "id": "EUVD-2022-53748",
+  "enisaUuid": "ed4a6c1b-2787-3579-aed0-cc3d4246bbdd",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nUSB: gadgetfs: Fix race between mounting and unmounting\n\nThe syzbot fuzzer and Gerald Lee have identified a use-after-free bug\nin the gadgetfs driver, involving processes concurrently mounting and\nunmounting the gadgetfs filesystem.  In particular, gadgetfs_fill_super()\ncan race with gadgetfs_kill_sb(), causing the latter to deallocate\nthe_device while the former is using it.  The output from KASAN says,\nin part:\n\nBUG: KASAN: use-after-free in instrument_atomic_read_write include/linux/instrumented.h:102 [inline]\nBUG: KASAN: use-after-free in atomic_fetch_sub_release include/linux/atomic/atomic-instrumented.h:176 [inline]\nBUG: KASAN: use-after-free in __refcount_sub_and_test include/linux/refcount.h:272 [inline]\nBUG: KASAN: use-after-free in __refcount_dec_and_test include/linux/refcount.h:315 [inline]\nBUG: KASAN: use-after-free in refcount_dec_and_test include/linux/refcount.h:333 [inline]\nBUG: KASAN: use-after-free in put_dev drivers/usb/gadget/legacy/inode.c:159 [inline]\nBUG: KASAN: use-after-free in gadgetfs_kill_sb+0x33/0x100 drivers/usb/gadget/legacy/inode.c:2086\nWrite of size 4 at addr ffff8880276d7840 by task syz-executor126/18689\n\nCPU: 0 PID: 18689 Comm: syz-executor126 Not tainted 6.1.0-syzkaller #0\nHardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/26/2022\nCall Trace:\n <TASK>\n...\n atomic_fetch_sub_release include/linux/atomic/atomic-instrumented.h:176 [inline]\n __refcount_sub_and_test include/linux/refcount.h:272 [inline]\n __refcount_dec_and_test include/linux/refcount.h:315 [inline]\n refcount_dec_and_test include/linux/refcount.h:333 [inline]\n put_dev drivers/usb/gadget/legacy/inode.c:159 [inline]\n gadgetfs_kill_sb+0x33/0x100 drivers/usb/gadget/legacy/inode.c:2086\n deactivate_locked_super+0xa7/0xf0 fs/super.c:332\n vfs_get_super fs/super.c:1190 [inline]\n get_tree_single+0xd0/0x160 fs/super.c:1207\n vfs_get_tree+0x88/0x270 fs/super.c:1531\n vfs_fsconfig_locked fs/fsopen.c:232 [inline]\n\nThe simplest solution is to ensure that gadgetfs_fill_super() and\ngadgetfs_kill_sb() are serialized by making them both acquire a new\nmutex.",
+  "datePublished": "Aug 21, 2024, 6:09:59 AM",
+  "dateUpdated": "May 11, 2026, 6:48:43 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/9a39f4626b361ee7aa10fd990401c37ec3b466ae",
+    "https://git.kernel.org/stable/c/856e4b5e53f21edbd15d275dde62228dd94fb2b4",
+    "https://git.kernel.org/stable/c/a2e075f40122d8daf587db126c562a67abd69cf9",
+    "https://git.kernel.org/stable/c/616fd34d017000ecf9097368b13d8a266f4920b3",
+    "https://git.kernel.org/stable/c/d18dcfe9860e842f394e37ba01ca9440ab2178f4"
+  ],
+  "aliases": [
+    "CVE-2022-48869",
+    "GHSA-cvqf-8622-79m2"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "0f927c79-b75f-3c6b-ada3-1585b7b30fa5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.8"
+    },
+    {
+      "id": "17da7527-2654-3078-b543-e4d45a93a348",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e5d82a7360d124ae1a38c2a5eac92ba49b125191 <d18dcfe9860e842f394e37ba01ca9440ab2178f4"
+    },
+    {
+      "id": "582337d2-bf21-37fc-998a-0c542278dfd4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.165"
+    },
+    {
+      "id": "695a50ba-4207-36ae-ad93-9afda15024fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e5d82a7360d124ae1a38c2a5eac92ba49b125191 <a2e075f40122d8daf587db126c562a67abd69cf9"
+    },
+    {
+      "id": "7c80d54b-4985-3d4d-b348-83bc6f188264",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.2"
+    },
+    {
+      "id": "812ef5fe-f112-33de-95e8-b4bd8ae52dea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "830dde9e-35a4-369a-af8e-3f4a65d081f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.230"
+    },
+    {
+      "id": "8eb2bb1b-298d-3065-bc43-85ececcf4419",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e5d82a7360d124ae1a38c2a5eac92ba49b125191 <9a39f4626b361ee7aa10fd990401c37ec3b466ae"
+    },
+    {
+      "id": "a258e656-336e-313e-a927-d8ceb5e76ffe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.90"
+    },
+    {
+      "id": "a294877c-aef1-32eb-aace-ae5260af119f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.3"
+    },
+    {
+      "id": "b86b9853-5e21-39d1-8e7d-0a35db23ea87",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e5d82a7360d124ae1a38c2a5eac92ba49b125191 <856e4b5e53f21edbd15d275dde62228dd94fb2b4"
+    },
+    {
+      "id": "cab6b669-9656-3217-8319-1027798a7a0a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e5d82a7360d124ae1a38c2a5eac92ba49b125191 <616fd34d017000ecf9097368b13d8a266f4920b3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e987dda6-acd0-3f15-9793-9ad0a93bfcdd",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@
   "enisaUuid": "a7543d98-9ff0-3d0a-99d3-84b5cd7529a7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncrypto: ccp - Do not initialize SNP for ioctl(SNP_CONFIG)\n\nSashiko notes:\n\n> if SEV initialization fails and KVM is actively running normal VMs, could a\n> userspace process trigger this code path via /dev/sev ioctls (e.g.,\n> SEV_PDH_GEN) and zero out MSR_VM_HSAVE_PA globally? Would the next VMRUN\n> execution for an active VM trigger a general protection fault and crash the\n> host?\n\nRefuse to re-try initialization if SNP is not already initialized for\nSNP_CONFIG.\n\nThis is technically an ABI break: before if SNP initialization failed it\ncould be transparently retriggered by this ioctl, and if no VMs were\nrunning, everything worked fine. Hopefully this is enough of a corner case\nthat nobody will notice, but someone does, there are a few options:\n\n* do something like symbol_get() for kvm and refuse to initialize if KVM is\n  loaded\n* check each cpu's HSAVE_PA for non-zero data before re-initializing\n* once initialization has failed, continue to refuse to initialize until\n  the ccp module is unloaded",
   "datePublished": "Jul 25, 2026, 8:49:40 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:40 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:44 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/345a6e869b33687e9268044bcaeeefd7c61da675",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/08f0e65e784c4b20e6e620dd4f68d8636073a3d2"
   ],
   "aliases": [
-    "CVE-2026-64307"
+    "CVE-2026-64307",
+    "GHSA-wv9v-6465-83fw"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "13bf8241-0d3c-3093-9137-82ccef6cec47",
@@ -88,14 +89,14 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "78132afe-7fc4-340e-af18-19f2766e341f",
+      "id": "85ae543f-f6cd-3489-9767-6514566edcb6",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "9a1ffef0-8e20-36b9-b501-e80bc83716cd",

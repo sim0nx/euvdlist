@@ -1,0 +1,90 @@
+{
+  "id": "EUVD-2024-45154",
+  "enisaUuid": "4e32dd8f-6212-3366-8d69-d35c799ca8b5",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbtrfs: fix use-after-free of block device file in __btrfs_free_extra_devids()\n\nMounting btrfs from two images (which have the same one fsid and two\ndifferent dev_uuids) in certain executing order may trigger an UAF for\nvariable 'device->bdev_file' in __btrfs_free_extra_devids(). And\nfollowing are the details:\n\n1. Attach image_1 to loop0, attach image_2 to loop1, and scan btrfs\n   devices by ioctl(BTRFS_IOC_SCAN_DEV):\n\n             /  btrfs_device_1 \u2192 loop0\n   fs_device\n             \\  btrfs_device_2 \u2192 loop1\n2. mount /dev/loop0 /mnt\n   btrfs_open_devices\n    btrfs_device_1->bdev_file = btrfs_get_bdev_and_sb(loop0)\n    btrfs_device_2->bdev_file = btrfs_get_bdev_and_sb(loop1)\n   btrfs_fill_super\n    open_ctree\n     fail: btrfs_close_devices // -ENOMEM\n\t    btrfs_close_bdev(btrfs_device_1)\n             fput(btrfs_device_1->bdev_file)\n\t      // btrfs_device_1->bdev_file is freed\n\t    btrfs_close_bdev(btrfs_device_2)\n             fput(btrfs_device_2->bdev_file)\n\n3. mount /dev/loop1 /mnt\n   btrfs_open_devices\n    btrfs_get_bdev_and_sb(&bdev_file)\n     // EIO, btrfs_device_1->bdev_file is not assigned,\n     // which points to a freed memory area\n    btrfs_device_2->bdev_file = btrfs_get_bdev_and_sb(loop1)\n   btrfs_fill_super\n    open_ctree\n     btrfs_free_extra_devids\n      if (btrfs_device_1->bdev_file)\n       fput(btrfs_device_1->bdev_file) // UAF !\n\nFix it by setting 'device->bdev_file' as 'NULL' after closing the\nbtrfs_device in btrfs_close_one_device().",
+  "datePublished": "Nov 9, 2024, 10:14:28 AM",
+  "dateUpdated": "Aug 5, 2026, 11:42:34 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/47a83f8df39545f3f552bb6a1b6d9c30e37621dd",
+    "https://git.kernel.org/stable/c/aec8e6bf839101784f3ef037dcdb9432c3f32343"
+  ],
+  "aliases": [
+    "GHSA-5684-4xfg-mxj4",
+    "CVE-2024-50217"
+  ],
+  "assigner": "Linux",
+  "epss": 0.28,
+  "enisaIdProduct": [
+    {
+      "id": "0c10e8e2-9f66-3b82-b70a-a1cc68879abb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.8"
+    },
+    {
+      "id": "16b69751-4921-3c59-b7c6-cb3b7625aea4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "142388194191a3edc9ba01cfcfd8b691e0971fb2 <aec8e6bf839101784f3ef037dcdb9432c3f32343"
+    },
+    {
+      "id": "30a3731f-c5e1-3416-8b50-57e1bb83ccf6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "142388194191a3edc9ba01cfcfd8b691e0971fb2 <47a83f8df39545f3f552bb6a1b6d9c30e37621dd"
+    },
+    {
+      "id": "5924456d-001b-382a-8dbd-0e00d3d7d1ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "6e9692b0-1908-36b2-8bcf-fae4e96693f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "f816307c-5758-3e13-8019-e140ab7771f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.7"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "50a3d0ae-b710-303b-8138-fad6f271a944",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,8 +3,10 @@
   "enisaUuid": "675ac66f-01f6-3783-ac03-04d932df30f2",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: target: iscsi: Bound iscsi_encode_text_output() appends to rsp_buf\n\niscsi_encode_text_output() concatenates \"key=value\\0\" records into\nlogin->rsp_buf, an 8192-byte kzalloc(MAX_KEY_VALUE_PAIRS) buffer\nallocated in iscsit_alloc_login_setup_buffer(). The three sprintf() call\nsites in this function (lines 1398, 1411, 1424 in v7.1-rc2) never check\nthe remaining buffer capacity:\n\n\t*length += sprintf(output_buf, \"%s=%s\", er->key, er->value);\n\t*length += 1;\n\toutput_buf = textbuf + *length;\n\nThe 8192-byte ceiling at iscsi_target_check_login_request() bounds the\n*input* Login PDU payload, but a single PDU can carry up to 2048 minimal\nfour-byte \"a=b\\0\" pairs, each unknown key expanding to a 16-byte\n\"a=NotUnderstood\\0\" output record via iscsi_add_notunderstood_response().\n2048 * 16 = 32 KiB of output into an 8 KiB buffer, producing a ~24 KiB\nheap overrun in the kmalloc-8k slab.\n\nThe fix introduces a static iscsi_encode_text_record() helper that uses\nsnprintf() with a per-call bounds check against the remaining buffer,\nand threads a u32 textbuf_size parameter through\niscsi_encode_text_output(). Both call sites in\niscsi_target_handle_csg_zero() (PHASE_SECURITY) and\niscsi_target_handle_csg_one() (PHASE_OPERATIONAL) pass\nMAX_KEY_VALUE_PAIRS. On overflow the encoder logs the condition, calls\niscsi_release_extra_responses() to drop queued records, and returns -1;\nboth caller sites now emit ISCSI_STATUS_CLS_INITIATOR_ERR /\nISCSI_LOGIN_STATUS_INIT_ERR via iscsit_tx_login_rsp() before returning,\nso the initiator sees an explicit failed-login response rather than a\nsilent connection drop. (Prior to this patch only the PHASE_OPERATIONAL\ncaller did that; the PHASE_SECURITY caller is converted to the same\nshape.)",
   "datePublished": "Jul 19, 2026, 2:55:00 PM",
-  "dateUpdated": "Jul 19, 2026, 2:55:00 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:17:54 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/cb84e974fb172bc71386289f37b78ea679410b39",
     "https://git.kernel.org/stable/c/b19382dfc6e7dee6d3859ba44b6ca29e97a51627",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/bf33e01f88388c43e285492a63e539df6ffed64c"
   ],
   "aliases": [
+    "GHSA-cccw-rxpj-wfqf",
     "CVE-2026-63887"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.78,
   "enisaIdProduct": [
     {
       "id": "011a8a87-6797-3cb8-ac6c-f3f5896e304c",

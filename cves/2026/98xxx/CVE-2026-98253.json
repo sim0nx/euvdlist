@@ -3,8 +3,10 @@
   "enisaUuid": "58e2d786-b6ca-31de-8c16-1e96826a65de",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/ucma: Serialize join and leave on copy_to_user failure\n\nrdma_join_multicast() queues RoCE work that later reads the ucma_multicast\nthrough event->param.ud.private_data, then list_add()s the CMA multicast\nat the head of id_priv->mc_list. rdma_leave_multicast() matches only by\nsockaddr and destroys the first hit.\n\nucma_process_join() used to drop ctx->mutex after a successful join and\nretake it only if copy_to_user() failed. Two concurrent JOIN_MCAST calls\nwith the same address can therefore insert a second CMA entry before the\nfirst thread's leave. leave then cancels the newer work and the older\nworker still dereferences the ucma_multicast that the first thread frees.\n\nKeep ctx->mutex held from rdma_join_multicast() through copy_to_user() and,\non -EFAULT, through rdma_leave_multicast() so leave cannot miss this join.\nDo not leave if join itself failed: that path never published this address\non mc_list, and a leave-by-addr would destroy an earlier successful join.",
   "datePublished": "Oct 6, 2026, 8:45:20 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:20 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:16:24 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/29b9ed83d8bfab5c6e11fcbf1aa836aa4ae26cb9",
     "https://git.kernel.org/stable/c/52172e11bd074ccaded21740ffeb67123f01dd00",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/662ade4de9ff5eceb0820a9f8e9fac70ba6a815b"
   ],
   "aliases": [
-    "CVE-2026-98253"
+    "CVE-2026-98253",
+    "GHSA-6rqw-4vwj-ww2r"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "15163246-c965-34d1-8530-6cfcd4ddc009",
@@ -92,16 +95,6 @@
       "product_version": "patch: 5.15.222"
     },
     {
-      "id": "83284e66-e2aa-3104-9194-51641b629d64",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
-    {
       "id": "85a3f4ae-c16c-38de-9ac7-92a9cfadd5bf",
       "product": {
         "name": "Linux",
@@ -130,6 +123,16 @@
         }
       },
       "product_version": "5.11.3 <5.12"
+    },
+    {
+      "id": "c62e24bb-9220-36ae-9f77-ab12cfd0e844",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "c9627ac3-a041-33cc-81ea-38f86df0dfac",

@@ -3,19 +3,24 @@
   "enisaUuid": "6e40e26a-f6e5-38d8-8588-57fe24710e38",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdgpu: Fix context pstate override handling\n\nThere are several problems in the context pstate handling code.\n\nThe most serious ones are potential use-after-free and NULL pointer\ndereferences at context initialization time. Both are due\namdgpu_ctx_init() not holding the adev->pm.stable_pstate_ctx_lock, which\nis otherwise used from both sysfs and the context code itself for\nmodifying and clearing the stored context pointer.\n\nSecond issue is that context fini can trample over the pstate\nconfiguration set via sysfs. This is due the restore state\n(ctx->stable_pstate) being saved at context init time, and not if, or when\nthe context actually changes the pstate. As the context exits it will\ntherefore incorrectly restore to what was set before the sysfs override\nwas requested.\n\nThe simplest fix is to drastically simplify how the state is tracked, by\nclearly defining the points at which pstate ownership is taken and\nreleased, and to handle all transitions under the correct lock.\n\nInstead of at context init time, the previous state is saved only at the\npoint the context overrides the current state, and is restored on context\nexit only if the context is still the owner of the current override state.\n\n(cherry picked from commit 1b5e413713c0a93bc1818394d0ce49aaad21bd27)",
   "datePublished": "Aug 10, 2026, 12:01:48 PM",
-  "dateUpdated": "Aug 10, 2026, 12:01:48 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:28:18 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/ebed6179c993f07da24d0a454816e7da790377af",
+    "https://git.kernel.org/stable/c/3531910845165dcf1a213267199ccc97e03cd58a",
     "https://git.kernel.org/stable/c/23a8726e1d7597fe7c9a59d5dc42ba8b7d345b8a",
     "https://git.kernel.org/stable/c/e06c39cc1c48dca68a5ffd971c23025a52d46634",
     "https://git.kernel.org/stable/c/9f9c88eb298c54348be3ca4087f4f4c615065b87",
     "https://git.kernel.org/stable/c/c1dc4ccb82c9e56325d8e7514ca4c90bd1efb351"
   ],
   "aliases": [
+    "GHSA-vqhc-jp86-9g52",
     "CVE-2026-68273"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "023f2e4c-041f-36cd-9d1b-2d8d3ff64ca2",
@@ -26,6 +31,16 @@
         }
       },
       "product_version": "6607901fce79959130db485e7549dacaaeef034e"
+    },
+    {
+      "id": "2adad387-b920-3b1e-8bdd-c5b71b887ebd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "79610d3041338dc1ef554d6fd8b3b3e23be527f5 <ebed6179c993f07da24d0a454816e7da790377af"
     },
     {
       "id": "300697b9-9fab-37f2-8253-0dac6fd2d90f",
@@ -56,6 +71,16 @@
         }
       },
       "product_version": "79610d3041338dc1ef554d6fd8b3b3e23be527f5 <e06c39cc1c48dca68a5ffd971c23025a52d46634"
+    },
+    {
+      "id": "5dffb8f5-a7bd-384e-b108-8de63ef1b87d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "79c2ff8c-87b3-36f3-b169-17a4189a0bd9",
@@ -118,6 +143,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "d49f8e20-3b4c-3499-bbcb-8235988594a3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "e9c5fa9a-029f-39c2-9d14-083193e09ce7",
       "product": {
         "name": "Linux",
@@ -128,14 +163,24 @@
       "product_version": "patch: 6.18.44"
     },
     {
-      "id": "ec63c553-26b3-37f0-b08d-1441c15b68d5",
+      "id": "f52361a9-9054-3aa4-b8f3-616e54bf6cd6",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "f5af6892-ebdf-3bd7-9eaa-8d576194e631",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "79610d3041338dc1ef554d6fd8b3b3e23be527f5 <3531910845165dcf1a213267199ccc97e03cd58a"
     }
   ],
   "enisaIdVendor": [

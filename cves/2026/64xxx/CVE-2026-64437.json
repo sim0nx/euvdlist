@@ -3,8 +3,10 @@
   "enisaUuid": "bdb4369d-b04f-32c6-af2c-d036f361d748",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: fix use-after-free of a deferred file_lock on SMB2_CLOSE then SMB2_CANCEL\n\nCommit f580d27e8928 (\"ksmbd: fix use-after-free of a deferred file_lock on\ndouble SMB2_CANCEL\") made smb2_cancel() skip a work whose state is\nKSMBD_WORK_CANCELLED, so its cancel_fn cannot be fired a second time. But\nKSMBD_WORK has three states (ACTIVE, CANCELLED, CLOSED), and the same\nfreeing producer path is reached for CLOSED too:\n\n  SMB2_CLOSE on the locking handle -> set_close_state_blocked_works() sets\n  the deferred work's state to KSMBD_WORK_CLOSED and wakes the smb2_lock()\n  worker. The worker takes the non-ACTIVE early-exit, locks_free_lock()s\n  the file_lock and, because the state is not KSMBD_WORK_CANCELLED, takes\n  the STATUS_RANGE_NOT_LOCKED branch with \"goto out2\" -- which, like the\n  cancelled branch, skips release_async_work(). The work stays on\n  conn->async_requests with a live cancel_fn = smb2_remove_blocked_lock\n  pointing at the freed file_lock.\n\nA subsequent SMB2_CANCEL for the same AsyncId then passes the\nKSMBD_WORK_CANCELLED-only guard (its state is KSMBD_WORK_CLOSED), so\nsmb2_cancel() fires cancel_fn again over the freed file_lock -- the same\nuse-after-free fixed, via SMB2_CLOSE instead of a first SMB2_CANCEL:\n\n  BUG: KASAN: slab-use-after-free in __locks_delete_block\n    __locks_delete_block\n    locks_delete_block\n    ksmbd_vfs_posix_lock_unblock\n    smb2_remove_blocked_lock\n    smb2_cancel                 <- 2nd SMB2_CANCEL fires cancel_fn\n    handle_ksmbd_work\n  Allocated by ...: locks_alloc_lock <- smb2_lock\n  Freed by ...:     locks_free_lock  <- smb2_lock (non-ACTIVE early-exit)\n  ... cache file_lock_cache of size 192\n\nReproduced on mainline 7.1-rc7 (which already contains f580d27e8928) with\nKASAN by an authenticated SMB client; the double-SMB2_CANCEL control is\nsilent on that kernel, so the splat is attributable to the CLOSE trigger.\n\nOnly an ACTIVE deferred work may have its cancel_fn fired: both terminal\nstates (CANCELLED and CLOSED) reach the smb2_lock() early-exit that frees\nthe file_lock and skips release_async_work(). Guard on KSMBD_WORK_ACTIVE\nso any non-active work is skipped.",
   "datePublished": "Jul 25, 2026, 8:51:11 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:11 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:55:38 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/a796ba4e61d5e14e07b79a359faac69f8f9b22a3",
     "https://git.kernel.org/stable/c/b8e274e69ab09222c7a552c7c0c1eef9ce627fc1",
@@ -14,10 +16,11 @@
     "https://git.kernel.org/stable/c/10f293a07f9e10e988b0ae44e2e99c631f5a68e0"
   ],
   "aliases": [
+    "GHSA-x5p7-hg5v-9p54",
     "CVE-2026-64437"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.44,
   "enisaIdProduct": [
     {
       "id": "0f2196f2-2be9-310b-86b0-9a2a17554fd3",
@@ -28,6 +31,16 @@
         }
       },
       "product_version": "6.18.36 <6.18.39"
+    },
+    {
+      "id": "1971fe73-4d53-3486-9d78-a17a38e63062",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "2bdaa7b4-7f6d-3fe3-b5be-6af0bfc5ebf0",
@@ -68,16 +81,6 @@
         }
       },
       "product_version": "7.0.13 <7.1"
-    },
-    {
-      "id": "50eddff8-6244-3b6d-a820-158c308b4689",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "544cb0a8-b4f2-3e70-a4bc-df68a32664e0",

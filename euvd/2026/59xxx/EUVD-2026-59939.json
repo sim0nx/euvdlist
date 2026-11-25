@@ -3,8 +3,10 @@
   "enisaUuid": "ce3f66b8-ee77-3a2f-ae16-4ff05e1c888c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncrypto: algif_skcipher - force synchronous processing on trees without ctx->state\n\nThe AIO/async path in skcipher_recvmsg() passes the socket-wide ctx->iv\ndirectly into the skcipher request. After io_submit() the socket lock is\ndropped and the request is processed asynchronously, so a concurrent\nsendmsg(ALG_SET_IV) can overwrite ctx->iv and make the in-flight request\nrun under an attacker-controlled IV. For CTR/stream modes this is\nIV/keystream reuse and lets an unprivileged user recover the plaintext of\na concurrent operation.\n\nSnapshotting ctx->iv into per-request storage for the async path is not\nsufficient. For ciphers with statesize == 0 - which includes cbc and ctr -\nthe MSG_MORE inter-chunk IV chaining is carried solely by the in-place\nreq->iv writeback, which a snapshot redirects into per-request memory that\naf_alg_free_resources() releases on completion, silently producing wrong\noutput. Writing the IV back from the completion callback instead is not\npossible either: that would require lock_sock() there, but the callback can\nrun in softirq/atomic context, so it must not sleep.\n\nMake the operation synchronous instead, which removes both the IV race and\nany writeback race. This is equivalent to the upstream resolution, commit\nfcc77d33a34c (\"net: Remove support for AIO on sockets\"), which removed the\nAIO socket path across net/ entirely and so produces the same end state for\nthis file. This patch deviates from that commit deliberately: rather than\nremoving AIO socket support tree-wide, which would be far too invasive for\nstable, it removes only the AIO branch in crypto/algif_skcipher.c.\nio_submit() now completes synchronously; AF_ALG async is rarely used in\npractice.\n\nThe -EIOCBQUEUED check in skcipher_recvmsg() is now dead but harmless,\nand is left alone to keep the fix minimal.\n\nTested on 6.6.y: attacker IV injection dropped from 2296/200000 to 0/200000\nafter the change; MSG_MORE chunked CTR output bit-identical to single-shot.",
   "datePublished": "Aug 16, 2026, 8:20:32 AM",
-  "dateUpdated": "Aug 16, 2026, 8:20:32 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:05:57 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
   "references": [
     "https://git.kernel.org/stable/c/bf09b0be8e851f050e98da702d247c14d81b591a",
     "https://git.kernel.org/stable/c/73dd3bf704ca6c20639de70c08e9a10bee904a95",
@@ -16,11 +18,22 @@
     "https://git.kernel.org/stable/c/fcc77d33a34cf271702e8daafb6c593e4626776d"
   ],
   "aliases": [
-    "CVE-2026-74578"
+    "CVE-2026-74578",
+    "GHSA-fh4p-v6r7-6956"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.15,
   "enisaIdProduct": [
+    {
+      "id": "0a88593f-901b-3551-8d34-750a9e52a85b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "1ecef3bd-95cf-3b0a-8665-080ee78f428c",
       "product": {
@@ -40,16 +53,6 @@
         }
       },
       "product_version": "patch: 6.18.40"
-    },
-    {
-      "id": "225c9aa0-776d-35c3-a688-be0584bc89bf",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "27ef92ec-8d4d-330a-b063-069451fd4a6b",

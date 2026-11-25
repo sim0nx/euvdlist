@@ -3,7 +3,7 @@
   "enisaUuid": "8a46a2cd-c936-3507-93d1-930e2b3fcacd",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: core: Validate MODE SENSE lengths in scsi_cdl_enable()\n\nscsi_cdl_enable() uses length fields returned by MODE SENSE to locate\nthe ATA feature mode page in a 64-byte stack buffer. A target can report\na total length shorter than its mode header and block descriptors. The\nunsigned subtraction used for the MODE SELECT length can wrap, and the\nseparately computed buf_data can point beyond buf.\n\nDuring automatic scan, enable is false, so the read-modify-write of\nbuf_data[4] can clear the low two bits of a target-selected\nout-of-bounds stack byte. scsi_mode_select() can then copy up to 64\nbytes from outside the buffer into the outgoing MODE SELECT payload,\ndisclosing stack contents to the target.\n\nThis is reachable while scanning a USB storage device that identifies as\nan ATA device and advertises CDL support. No filesystem mount or\nuserspace access to the block device is required.\n\nOn upstream commit cee9395acd80 (\"Linux 7.3-rc1\"), a build-specific,\none-vCPU QEMU/Raw Gadget proof using QEMU-only multi-UDC allocator\nsampling executed a fixed proof command inside the guest and created a\nUID-0-owned marker during automatic enumeration, with KASLR and NX\nenabled.\n\nThe issue was independently found during security research at Drivesec\nS.r.l.\n\nCap the available length to the buffer size. Validate and consume the\nmode header and block descriptor lengths before using the page, and\nrequire the five bytes needed to access the CDL field.",
   "datePublished": "Oct 6, 2026, 8:45:05 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:05 AM",
+  "dateUpdated": "Oct 19, 2026, 9:16:04 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/39491a1ae93054fea10b4030180e5c797b2c0343",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/3d676e458fe0c566f5a62753dc696b6a862fc412"
   ],
   "aliases": [
-    "CVE-2026-98232"
+    "CVE-2026-98232",
+    "GHSA-32q6-xj2g-42pm"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "1677dbed-cc39-35a7-b3f1-898cf6489d2c",
@@ -27,6 +28,16 @@
         }
       },
       "product_version": "6.5"
+    },
+    {
+      "id": "1d85b92a-e302-3a70-b95b-1e322b478552",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "2a5de442-233d-30ec-a8c1-9b58e27d845e",
@@ -107,16 +118,6 @@
         }
       },
       "product_version": "1b22cfb14142aba7742d307c4f8d7006f919308c <3d676e458fe0c566f5a62753dc696b6a862fc412"
-    },
-    {
-      "id": "c0ab26e5-bcea-3cc3-a0f7-f934df3b174e",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "c0b474df-8339-3fc6-a078-91d277af1171",

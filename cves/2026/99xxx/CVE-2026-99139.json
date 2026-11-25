@@ -3,19 +3,43 @@
   "enisaUuid": "2091cb51-4068-3b5c-8e8e-9a22a37a7f13",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntcp: fix use-after-free in do_tcp_getsockopt(TCP_CONGESTION)\n\ndo_tcp_getsockopt() reads icsk->icsk_ca_ops->name without holding\nrcu_read_lock(). Since commit 0baf26b0fcd7 (\"bpf: tcp: Support\ntcp_congestion_ops in bpf\"), icsk_ca_ops can point to dynamically\nallocated BPF struct_ops memory that may be freed concurrently via\nsetsockopt(TCP_CONGESTION), leading to a use-after-free.\n\n  BUG: KASAN: slab-use-after-free in _copy_to_user+0x37/0x60\n  Read of size 16 at addr ffff888013505260 by task exploit/149\n   _copy_to_user+0x37/0x60\n   do_tcp_getsockopt+0x158a/0x2460 (net/ipv4/tcp.c:4585)\n   tcp_getsockopt+0x91/0xf0\n   __sys_getsockopt+0xf7/0x170\n\nFix this by holding rcu_read_lock() around the ca_ops->name access,\nusing READ_ONCE() to load icsk_ca_ops, and copying the name to a\nstack buffer before releasing the lock. Also annotate the relevant\nicsk_ca_ops stores with WRITE_ONCE() to fix the accompanying KCSAN\ndata-race issue.",
   "datePublished": "Oct 28, 2026, 10:34:50 AM",
-  "dateUpdated": "Oct 28, 2026, 10:34:50 AM",
+  "dateUpdated": "Oct 30, 2026, 12:42:11 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/a60e62705c17534d6b6539de7b3a40c259e6827f",
+    "https://git.kernel.org/stable/c/4b0930d66dde0a1d1898f0edbbb5496c4dfa5f03",
+    "https://git.kernel.org/stable/c/08dc5c62c09653d1c4ba67a009beb138486c2604",
     "https://git.kernel.org/stable/c/c1804ef016392dd91267d2207ee43b1de34302ca",
     "https://git.kernel.org/stable/c/a8e45471afa230c1431c26c8e99ec24377e3b514",
     "https://git.kernel.org/stable/c/5271b79b7ad68dcb222e893773f92bdabf7750f3"
   ],
   "aliases": [
-    "CVE-2026-99139"
+    "CVE-2026-99139",
+    "GHSA-48cq-p2fm-8444"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "0a0b0807-55ea-35c9-a9eb-5b3c77e94f4a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0baf26b0fcd74bbfcef53c5d5e8bad2b99c8d0d2 <a60e62705c17534d6b6539de7b3a40c259e6827f"
+    },
+    {
+      "id": "11286e79-d537-30a2-b30e-4857435df8f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
     {
       "id": "4141c89e-c67e-3187-8ae3-383060a50880",
       "product": {
@@ -45,6 +69,46 @@
         }
       },
       "product_version": "0baf26b0fcd74bbfcef53c5d5e8bad2b99c8d0d2 <c1804ef016392dd91267d2207ee43b1de34302ca"
+    },
+    {
+      "id": "79f125d8-fa11-3d00-8d37-c2a16ad2f584",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0baf26b0fcd74bbfcef53c5d5e8bad2b99c8d0d2 <4b0930d66dde0a1d1898f0edbbb5496c4dfa5f03"
+    },
+    {
+      "id": "7e1b4efa-acef-3616-87ab-61bf6d830bdc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.161"
+    },
+    {
+      "id": "9f190d97-d8ef-3689-927a-837c900b1d86",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0baf26b0fcd74bbfcef53c5d5e8bad2b99c8d0d2 <08dc5c62c09653d1c4ba67a009beb138486c2604"
+    },
+    {
+      "id": "ae09c26b-4c8d-3a94-bb24-976c78e88a27",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
     },
     {
       "id": "c18c6c04-76b3-3687-9eee-823b51ea249e",

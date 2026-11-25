@@ -3,47 +3,101 @@
   "enisaUuid": "04b25494-e69d-3c9d-a11a-4fe48f1906f7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npinctrl: mediatek: paris: bypass pinctrl GPIO layer in set GPIO direction\n\npinctrl_gpio_direction_input() / pinctrl_gpio_direction_output() take\nthe pinctrl mutex. This causes a gpiochip operations to need to sleep.\nWorse yet, the .can_sleep field in the gpiochip is not set. This causes\nthe shared GPIO proxy to trip over, as it uses gpiod_cansleep() to check\nwhether it can use a spinlock or needs a mutex. In this case, it ends\nup taking a spinlock, then calls pinctrl_gpio_direction_output(), which\ntakes a mutex. This causes a huge warning.\n\nWhile this class of Mediatek hardware does not have separate clear/set\nregisters, the pinctrl context has a spinlock that is taken whenever\na register read-modify-write is done. Also, once the GPIO function is\nselected / muxed in, further GPIO operations do not involve pinctrl\noperations or state. The GPIO direction and level values do not require\ntoggling the pinmux or any other pin config options.\n\nSwitch to directly calling mtk_pinmux_gpio_set_direction() in the GPIO\nset direction callbacks to avoid taking the pinctrl mutex. Drop the\n.gpio_set_direction field in mtk_pmxops to signal we are no longer using\nthe pinctrl GPIO layer for setting the direction.",
   "datePublished": "Sep 24, 2026, 4:04:48 PM",
-  "dateUpdated": "Sep 24, 2026, 4:04:48 PM",
+  "dateUpdated": "Oct 30, 2026, 12:37:06 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/f1536772cb3e4aa8d63988051f6fd6e4bb005cf7",
+    "https://git.kernel.org/stable/c/482ba972f9638f467df2d498b46384a1d1f80529",
+    "https://git.kernel.org/stable/c/3c4897861759fd8bd81dc2ada92121ac76332592",
     "https://git.kernel.org/stable/c/428b031dad390edd5da729b9afd474a95dc4f76b",
     "https://git.kernel.org/stable/c/c87c9046c4e00d599454e033a477176c4d73ac2a"
   ],
   "aliases": [
+    "GHSA-gwq5-76j7-fm2x",
     "CVE-2026-97501"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
-      "id": "2370fb23-6c34-367e-aae4-e916aaf7e287",
+      "id": "2450b19c-321a-3d30-ae22-2f44ca898f1b",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.18.53"
+      "product_version": "805250982bb5c5ce4a6e52e1d87204c5feea0dd1 <f1536772cb3e4aa8d63988051f6fd6e4bb005cf7"
     },
     {
-      "id": "3ec08167-2139-367d-850f-26941fecbd3c",
+      "id": "434a8560-a237-3162-b24c-e52f2e340f80",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c87c9046c4e00d599454e033a477176c4d73ac2a"
+      "product_version": "805250982bb5c5ce4a6e52e1d87204c5feea0dd1 <c87c9046c4e00d599454e033a477176c4d73ac2a"
     },
     {
-      "id": "58570ec5-675a-35b0-a1a1-0b84d2172170",
+      "id": "5849b5e7-5646-3562-a5d5-f279d747e033",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <428b031dad390edd5da729b9afd474a95dc4f76b"
+      "product_version": "805250982bb5c5ce4a6e52e1d87204c5feea0dd1 <428b031dad390edd5da729b9afd474a95dc4f76b"
+    },
+    {
+      "id": "64c42df0-20cf-36c7-9d5e-769d09388160",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "9f92c04f-9885-3d55-b5df-6f25797b06a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "a53ba38b-e8ee-36f2-bf87-209eaa46683c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.20"
+    },
+    {
+      "id": "ac722013-ab20-3da4-aeea-c555cbc488d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.114"
+    },
+    {
+      "id": "cf24e54c-9544-31f1-8b40-85c2ab525713",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "805250982bb5c5ce4a6e52e1d87204c5feea0dd1 <482ba972f9638f467df2d498b46384a1d1f80529"
     },
     {
       "id": "d0a53e24-fc4e-3425-8b85-c79bb1c4d05f",
@@ -56,6 +110,16 @@
       "product_version": "patch: 7.2"
     },
     {
+      "id": "de376cff-2a89-347b-a9c3-bd0f06a99b88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
       "id": "e3e6e1d9-0391-33b2-830d-26059b23f2b6",
       "product": {
         "name": "Linux",
@@ -64,6 +128,16 @@
         }
       },
       "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "fca38f9a-0e4d-3d50-86d6-b09adee30d46",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "805250982bb5c5ce4a6e52e1d87204c5feea0dd1 <3c4897861759fd8bd81dc2ada92121ac76332592"
     }
   ],
   "enisaIdVendor": [

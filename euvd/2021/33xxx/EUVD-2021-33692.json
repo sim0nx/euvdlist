@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2021-33692",
+  "enisaUuid": "ad613d60-2c82-389f-8dc5-d8b89e59f01b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsched/fair: Fix shift-out-of-bounds in load_balance()\n\nSyzbot reported a handful of occurrences where an sd->nr_balance_failed can\ngrow to much higher values than one would expect.\n\nA successful load_balance() resets it to 0; a failed one increments\nit. Once it gets to sd->cache_nice_tries + 3, this *should* trigger an\nactive balance, which will either set it to sd->cache_nice_tries+1 or reset\nit to 0. However, in case the to-be-active-balanced task is not allowed to\nrun on env->dst_cpu, then the increment is done without any further\nmodification.\n\nThis could then be repeated ad nauseam, and would explain the absurdly high\nvalues reported by syzbot (86, 149). VincentG noted there is value in\nletting sd->cache_nice_tries grow, so the shift itself should be\nfixed. That means preventing:\n\n  \"\"\"\n  If the value of the right operand is negative or is greater than or equal\n  to the width of the promoted left operand, the behavior is undefined.\n  \"\"\"\n\nThus we need to cap the shift exponent to\n  BITS_PER_TYPE(typeof(lefthand)) - 1.\n\nI had a look around for other similar cases via coccinelle:\n\n  @expr@\n  position pos;\n  expression E1;\n  expression E2;\n  @@\n  (\n  E1 >> E2@pos\n  |\n  E1 >> E2@pos\n  )\n\n  @cst depends on expr@\n  position pos;\n  expression expr.E1;\n  constant cst;\n  @@\n  (\n  E1 >> cst@pos\n  |\n  E1 << cst@pos\n  )\n\n  @script:python depends on !cst@\n  pos << expr.pos;\n  exp << expr.E2;\n  @@\n  # Dirty hack to ignore constexpr\n  if exp.upper() != exp:\n     coccilib.report.print_report(pos[0], \"Possible UB shift here\")\n\nThe only other match in kernel/sched is rq_clock_thermal() which employs\nsched_thermal_decay_shift, and that exponent is already capped to 10, so\nthat one is fine.",
+  "datePublished": "Feb 28, 2024, 8:13:49 AM",
+  "dateUpdated": "May 11, 2026, 1:46:57 PM",
+  "baseScore": 7.7,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/80862cbf76c2646f709a57c4517aefe0b094c774",
+    "https://git.kernel.org/stable/c/2f3eab368e313dba35fc2f51ede778bf7b030b54",
+    "https://git.kernel.org/stable/c/805cea93e66ca7deaaf6ad3b67224ce47c104c2f",
+    "https://git.kernel.org/stable/c/39a2a6eb5c9b66ea7c8055026303b3aa681b49a5"
+  ],
+  "aliases": [
+    "GHSA-8g29-7ww6-62wf",
+    "CVE-2021-47044"
+  ],
+  "assigner": "Linux",
+  "epss": 0.27,
+  "enisaIdProduct": [
+    {
+      "id": "08802172-e622-3ee3-bbe5-94853162d5e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a7f555904671c0737819fe4d19bd6143de3f6c0 <2f3eab368e313dba35fc2f51ede778bf7b030b54"
+    },
+    {
+      "id": "36b2c3e2-9441-355f-8e56-96d055f8795f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.37"
+    },
+    {
+      "id": "42d687fd-4787-3230-80c9-49528752ae3f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "437e02d5-8472-38df-87bf-9ac180e2f14c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.11.21"
+    },
+    {
+      "id": "4f90c6b1-4dae-3cc4-bfb9-80a2c566cbc1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a7f555904671c0737819fe4d19bd6143de3f6c0 <39a2a6eb5c9b66ea7c8055026303b3aa681b49a5"
+    },
+    {
+      "id": "528253b9-2195-3d0c-8474-2f5c4ebf7a13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.4"
+    },
+    {
+      "id": "65edf54f-5f27-33b1-8ebe-bfa76f550b4f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10"
+    },
+    {
+      "id": "b1c64990-bcfb-3ffb-b98a-ae01c4952238",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a7f555904671c0737819fe4d19bd6143de3f6c0 <805cea93e66ca7deaaf6ad3b67224ce47c104c2f"
+    },
+    {
+      "id": "d8e65349-b1bb-361b-8e4e-633b14ff1956",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5a7f555904671c0737819fe4d19bd6143de3f6c0 <80862cbf76c2646f709a57c4517aefe0b094c774"
+    },
+    {
+      "id": "f2e6f4df-84cb-349d-bffd-0e22c3715d95",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "96c3d298-ecbf-3a60-9533-3ad36aa66f52",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

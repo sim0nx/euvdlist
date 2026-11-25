@@ -3,9 +3,12 @@
   "enisaUuid": "397296cc-c05b-3937-af24-0060a14a692c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: ch: Do not keep references to data transfer element devices\n\nch_readconfig() looks up the scsi_device of every data transfer element\nwhose SCSI id the changer reports in READ ELEMENT STATUS, and stores it in\nch->dt[]. scsi_device_lookup() takes a reference, and nothing ever drops\nit: ch_destroy() frees the array with kfree(). ch->dt[] is read nowhere\nelse - it only supplies the vendor, model and revision printed in the same\nloop.\n\nOnce such a drive is removed, its scsi_device can never be released. It\nstays on the host's device list at its address, so a new device there is\nrefused by anything that walks the list - target_core_pscsi reports\n\"scsi_device_get() failed for H:C:T:L\" - and the low-level driver's module\ncan no longer be unloaded. Only a reboot recovers.\n\nIt shows with any changer that reports its drives' ids; with the mhvtl\nvirtual library (IBM 3573-TL personality), each create and remove of a\nlibrary with four drives leaves four references behind, counted by the\nmodule's use count in lsmod. With ch not bound the count is unchanged, and\nwith this patch applied it is unchanged too.\n\nDrop the reference as soon as the name has been printed, and remove the now\nunused dt[] array. That also removes the array leaked when ch_probe() fails\nafter ch_readconfig().\n\nThe same leak was reported with an RFC patch in 2022, which was not merged.",
   "datePublished": "Oct 23, 2026, 12:20:55 PM",
-  "dateUpdated": "Oct 23, 2026, 12:20:55 PM",
+  "dateUpdated": "Oct 30, 2026, 12:40:58 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/7412c6fb671dda9776deebb283daf0bb2f1b48e5",
+    "https://git.kernel.org/stable/c/03287b176e8f7cc5680a7053e2d53bd5cb05d80c",
+    "https://git.kernel.org/stable/c/72ad7b08ffd5d9495715db0d74ce325a485f1b52",
     "https://git.kernel.org/stable/c/ec6ecab1b7577ae555ee6b81480814d123dd9ec0",
     "https://git.kernel.org/stable/c/cef2cedb6f7a394b278775b3d6ffb9b20ecd61db",
     "https://git.kernel.org/stable/c/a34a230ccea1b8b667ae59dca11295a2c8f81738",
@@ -13,11 +16,22 @@
     "https://git.kernel.org/stable/c/27c0f718d3b3c99e6d315308e95d987d0382a8a8"
   ],
   "aliases": [
-    "CVE-2026-99019"
+    "CVE-2026-99019",
+    "GHSA-3xf5-26fr-5wmr"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
+    {
+      "id": "00bf7ac3-f6ae-3991-801b-321991e96159",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
     {
       "id": "09cb586c-87e1-3800-aea2-9f08f6520dc1",
       "product": {
@@ -99,6 +113,16 @@
       "product_version": "daa6eda65a53e5addf86c6bc829129ff51b08bda <27c0f718d3b3c99e6d315308e95d987d0382a8a8"
     },
     {
+      "id": "7696e2a5-9fee-3527-a450-8128b38ae669",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "daa6eda65a53e5addf86c6bc829129ff51b08bda <7412c6fb671dda9776deebb283daf0bb2f1b48e5"
+    },
+    {
       "id": "77fdb89c-218d-38e9-b6b4-1bbae3409020",
       "product": {
         "name": "Linux",
@@ -107,6 +131,16 @@
         }
       },
       "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "8cd19a7e-66a0-3071-b548-d50a40c7a706",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "daa6eda65a53e5addf86c6bc829129ff51b08bda <72ad7b08ffd5d9495715db0d74ce325a485f1b52"
     },
     {
       "id": "9c6b413a-ba4c-311f-959d-ad1edaac48e0",
@@ -129,6 +163,26 @@
       "product_version": "patch: 6.12.114"
     },
     {
+      "id": "c70805e7-f8d3-3d86-8357-c70b1e3de8dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "c791d829-3e28-3b95-b77e-521ca38e3320",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "daa6eda65a53e5addf86c6bc829129ff51b08bda <03287b176e8f7cc5680a7053e2d53bd5cb05d80c"
+    },
+    {
       "id": "d956915a-1c51-3a1f-b6de-43ce70851ab0",
       "product": {
         "name": "Linux",
@@ -137,6 +191,16 @@
         }
       },
       "product_version": "patch: 6.18.58"
+    },
+    {
+      "id": "e8f9dcf7-3460-30e6-bb18-545c55cc5bad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     }
   ],
   "enisaIdVendor": [

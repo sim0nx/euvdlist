@@ -1,0 +1,109 @@
+{
+  "id": "EUVD-2021-34419",
+  "enisaUuid": "5517a117-27f1-33e7-b97e-62c730380479",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: Flush current cpu icache before other cpus\n\nOn SiFive Unmatched, I recently fell onto the following BUG when booting:\n\n[    0.000000] ftrace: allocating 36610 entries in 144 pages\n[    0.000000] Oops - illegal instruction [#1]\n[    0.000000] Modules linked in:\n[    0.000000] CPU: 0 PID: 0 Comm: swapper Not tainted 5.13.1+ #5\n[    0.000000] Hardware name: SiFive HiFive Unmatched A00 (DT)\n[    0.000000] epc : riscv_cpuid_to_hartid_mask+0x6/0xae\n[    0.000000]  ra : __sbi_rfence_v02+0xc8/0x10a\n[    0.000000] epc : ffffffff80007240 ra : ffffffff80009964 sp : ffffffff81803e10\n[    0.000000]  gp : ffffffff81a1ea70 tp : ffffffff8180f500 t0 : ffffffe07fe30000\n[    0.000000]  t1 : 0000000000000004 t2 : 0000000000000000 s0 : ffffffff81803e60\n[    0.000000]  s1 : 0000000000000000 a0 : ffffffff81a22238 a1 : ffffffff81803e10\n[    0.000000]  a2 : 0000000000000000 a3 : 0000000000000000 a4 : 0000000000000000\n[    0.000000]  a5 : 0000000000000000 a6 : ffffffff8000989c a7 : 0000000052464e43\n[    0.000000]  s2 : ffffffff81a220c8 s3 : 0000000000000000 s4 : 0000000000000000\n[    0.000000]  s5 : 0000000000000000 s6 : 0000000200000100 s7 : 0000000000000001\n[    0.000000]  s8 : ffffffe07fe04040 s9 : ffffffff81a22c80 s10: 0000000000001000\n[    0.000000]  s11: 0000000000000004 t3 : 0000000000000001 t4 : 0000000000000008\n[    0.000000]  t5 : ffffffcf04000808 t6 : ffffffe3ffddf188\n[    0.000000] status: 0000000200000100 badaddr: 0000000000000000 cause: 0000000000000002\n[    0.000000] [<ffffffff80007240>] riscv_cpuid_to_hartid_mask+0x6/0xae\n[    0.000000] [<ffffffff80009474>] sbi_remote_fence_i+0x1e/0x26\n[    0.000000] [<ffffffff8000b8f4>] flush_icache_all+0x12/0x1a\n[    0.000000] [<ffffffff8000666c>] patch_text_nosync+0x26/0x32\n[    0.000000] [<ffffffff8000884e>] ftrace_init_nop+0x52/0x8c\n[    0.000000] [<ffffffff800f051e>] ftrace_process_locs.isra.0+0x29c/0x360\n[    0.000000] [<ffffffff80a0e3c6>] ftrace_init+0x80/0x130\n[    0.000000] [<ffffffff80a00f8c>] start_kernel+0x5c4/0x8f6\n[    0.000000] ---[ end trace f67eb9af4d8d492b ]---\n[    0.000000] Kernel panic - not syncing: Attempted to kill the idle task!\n[    0.000000] ---[ end Kernel panic - not syncing: Attempted to kill the idle task! ]---\n\nWhile ftrace is looping over a list of addresses to patch, it always failed\nwhen patching the same function: riscv_cpuid_to_hartid_mask. Looking at the\nbacktrace, the illegal instruction is encountered in this same function.\nHowever, patch_text_nosync, after patching the instructions, calls\nflush_icache_range. But looking at what happens in this function:\n\nflush_icache_range -> flush_icache_all\n                   -> sbi_remote_fence_i\n                   -> __sbi_rfence_v02\n                   -> riscv_cpuid_to_hartid_mask\n\nThe icache and dcache of the current cpu are never synchronized between the\npatching of riscv_cpuid_to_hartid_mask and calling this same function.\n\nSo fix this by flushing the current cpu's icache before asking for the other\ncpus to do the same.",
+  "datePublished": "May 21, 2024, 3:04:04 PM",
+  "dateUpdated": "May 11, 2026, 1:54:14 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/427faa29e06f0709476ea1bd59758f997ec8b64e",
+    "https://git.kernel.org/stable/c/f1c7aa87c423e765e3862349c2f095fdfccdd9b3",
+    "https://git.kernel.org/stable/c/bb8958d5dc79acbd071397abb57b8756375fe1ce"
+  ],
+  "aliases": [
+    "CVE-2021-47414",
+    "GHSA-whrp-vxvh-9rj2"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "56cb771c-48e5-36de-96bc-44a0403fe3e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15"
+    },
+    {
+      "id": "6aecb5cd-2d66-3dd4-b469-a13d5b6b65d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fab957c11efe2f405e08b9f0d080524bc2631428 <bb8958d5dc79acbd071397abb57b8756375fe1ce"
+    },
+    {
+      "id": "7c48b6dd-824d-3bf8-a3be-5476b994a2d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fab957c11efe2f405e08b9f0d080524bc2631428 <427faa29e06f0709476ea1bd59758f997ec8b64e"
+    },
+    {
+      "id": "94a3f1f2-7126-3004-8156-f2cfcd22f053",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.14.12"
+    },
+    {
+      "id": "a0583776-552e-3d72-853c-79cf8ae4cde9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.15"
+    },
+    {
+      "id": "b590ab97-e6f8-3467-8be1-bb6d8e7e359f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.73"
+    },
+    {
+      "id": "d77fffb3-ed0b-3957-9ff3-a279ffb0fbbb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "f1b8ed5a-ddb9-382d-8ec0-9731456ec129",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fab957c11efe2f405e08b9f0d080524bc2631428 <f1c7aa87c423e765e3862349c2f095fdfccdd9b3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "33108781-6a48-3fbf-a26c-823e69459356",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

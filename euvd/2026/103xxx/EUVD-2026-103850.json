@@ -3,19 +3,24 @@
   "enisaUuid": "faca4e8b-c27c-3af8-b089-b98415c21cdc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nUSB: gadget: dummy-hcd: Fix wait for outstanding request completions\n\nThe dummy-hcd driver emulates synchronize_irq() by waiting until its\nprivate callback_usage counter drops to 0 (with the private lock not\nheld).  This counter is incremented whenever a gadget driver callback\noccurs (which requires the private lock to be dropped), but not when a\nrequest completion handler is called.\n\nThis is an oversight.  Request completion is triggered by timer\ninterrupts (emulating device IRQs in a real UDC), and the interrupt\nhandlers are supposed to have completed when the synchronize_irq()\nemulation routine returns -- they aren't supposed to be in the middle\nof a completion callback.  If this happens it can lead to a gadget\ndriver's unbind routine running before all outstanding request\ncompletions have finished, maybe even allowing the gadget driver's\nmodule to be unloaded while a completion handler is still running.\n\nFix the oversight by incrementing the callback_usage value across\nrequest completion callbacks.",
   "datePublished": "Oct 18, 2026, 3:47:57 PM",
-  "dateUpdated": "Oct 18, 2026, 3:47:57 PM",
+  "dateUpdated": "Oct 30, 2026, 12:39:34 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/32721319e89a2be610b0518b88f0d188ce878063",
+    "https://git.kernel.org/stable/c/48ef54100ceffbd1a055f193873574c45f408eb5",
+    "https://git.kernel.org/stable/c/d77cc7c0d739fb17413714c5c4914bd396502e20",
+    "https://git.kernel.org/stable/c/6849e51b89de5b6fc7447dc8e612b58df19c7dea",
     "https://git.kernel.org/stable/c/7ce4dca0d53b1c3cb2b7e7bb2e42bf5db860caf2",
     "https://git.kernel.org/stable/c/5298c96bf0068f3160969f7ddad81976d01a9b66",
     "https://git.kernel.org/stable/c/3070806a7bc7bb36ed04a21022c09dafcc5619f4",
     "https://git.kernel.org/stable/c/b263ff9b0fc5c1f371d65c4eb196b31263d039ff"
   ],
   "aliases": [
+    "GHSA-84fc-mwqj-5rjh",
     "CVE-2026-98765"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "016f8631-ae5e-33b4-8424-079d994e8ca6",
@@ -38,6 +43,16 @@
       "product_version": "4.14"
     },
     {
+      "id": "12a5dbe6-af5a-3217-aed2-83773a83b7fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7dbd8f4cabd96db5a50513de9d83a8105a5ffc81 <6849e51b89de5b6fc7447dc8e612b58df19c7dea"
+    },
+    {
       "id": "16c60ab1-a4a2-3a72-a098-6f563c745499",
       "product": {
         "name": "Linux",
@@ -58,14 +73,14 @@
       "product_version": "4f8ae1fcb0dfbb72a7678f81bf01fb7fc85c6715"
     },
     {
-      "id": "470f8214-6af1-3b17-8334-af0fb942671b",
+      "id": "2372b2ee-2d1c-3c1f-929e-4e5b3b8ddc65",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc6"
+      "product_version": "patch: 5.10.273"
     },
     {
       "id": "4cce0188-c44d-34d5-8b7d-4792881a807a",
@@ -106,6 +121,16 @@
         }
       },
       "product_version": "3.2.97 <3.3"
+    },
+    {
+      "id": "5cff1fc6-ef21-39e9-8835-f9d3ac1db026",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
     },
     {
       "id": "85e10178-5fda-3185-b4f4-67b3248f5900",
@@ -158,6 +183,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "971ea63e-c77c-359a-b570-c176d18aab3d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "ac451649-01ab-3f34-829d-59f34b27cb58",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7dbd8f4cabd96db5a50513de9d83a8105a5ffc81 <32721319e89a2be610b0518b88f0d188ce878063"
+    },
+    {
       "id": "af3eeba5-d4ae-3245-9182-fce10238d645",
       "product": {
         "name": "Linux",
@@ -198,6 +243,36 @@
       "product_version": "7dbd8f4cabd96db5a50513de9d83a8105a5ffc81 <7ce4dca0d53b1c3cb2b7e7bb2e42bf5db860caf2"
     },
     {
+      "id": "cab423f9-42ae-36bb-bf8b-e764cf3b3788",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7dbd8f4cabd96db5a50513de9d83a8105a5ffc81 <48ef54100ceffbd1a055f193873574c45f408eb5"
+    },
+    {
+      "id": "cb6bf6a9-4d87-3820-9ded-9ae7ae4f182c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7dbd8f4cabd96db5a50513de9d83a8105a5ffc81 <d77cc7c0d739fb17413714c5c4914bd396502e20"
+    },
+    {
+      "id": "d1492dce-a356-3168-a6a3-c5f1c2965892",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
       "id": "e6b8eef5-f5f7-3da5-8fdc-82644482e410",
       "product": {
         "name": "Linux",
@@ -216,6 +291,16 @@
         }
       },
       "product_version": "7b416b9dac6ede26d4ca0c1a88b448b543623ff3"
+    },
+    {
+      "id": "f24e161b-2e2b-31c5-adb2-2c33a56b43bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "f3d8a3a8-d46e-3028-ab7f-933a89be34be",

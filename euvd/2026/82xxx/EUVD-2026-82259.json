@@ -3,8 +3,10 @@
   "enisaUuid": "8ed0ddd6-5789-3ebb-9e30-62eb8c5f0fe1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnvmet-rdma: fix response resource leak on queue teardown\n\nWhen an nvme target with rdma transport is removed while I/Os are in\nflight, a response can be posted but its send completion is never\ndelivered before the connection is torn down. As a result\nnvmet_rdma_send_done() and nvmet_rdma_release_rsp() are never called for\nthe response, and this leaks the allocated RDMA read/write context and\nrequest SGLs.\n\nThese leaks are recreated by running blktests nvme/061 with the rdma\ntransport and the siw driver. Kernel kmemleak feature reports them as\nfollows:\n\n  unreferenced object 0xffff88812bc490c0 (size 32):\n    comm \"kworker/2:1H\", pid 409, jiffies 4307744490\n    backtrace (crc 89afd339):\n      __kmalloc_noprof+0x5f9/0x890\n      sgl_alloc_order+0x7b/0x380\n      nvmet_req_alloc_sgls+0x290/0x4f0 [nvmet]\n      nvmet_rdma_map_sgl_keyed+0x241/0x12e0 [nvmet_rdma]\n      nvmet_rdma_handle_command+0x73e/0xb80 [nvmet_rdma]\n      __ib_process_cq+0x149/0x4c0 [ib_core]\n      ib_cq_poll_work+0x49/0x160 [ib_core]\n      process_one_work+0x8b2/0x1640\n      worker_thread+0x5fd/0xfe0\n      kthread+0x367/0x460\n      ret_from_fork+0x655/0x9d0\n      ret_from_fork_asm+0x1a/0x30\n\n  unreferenced object 0xffff88814bd05e80 (size 64):\n    comm \"kworker/3:1H\", pid 148, jiffies 4295195428\n    backtrace (crc e35510cb):\n      __kmalloc_noprof+0x5f9/0x890\n      rdma_rw_ctx_init+0x333/0x1fa0 [ib_core]\n      nvmet_rdma_map_sgl_keyed+0x5c8/0x12e0 [nvmet_rdma]\n      nvmet_rdma_handle_command+0x73e/0xb80 [nvmet_rdma]\n      __ib_process_cq+0x149/0x4c0 [ib_core]\n      ib_cq_poll_work+0x49/0x160 [ib_core]\n      process_one_work+0x8b2/0x1640\n      worker_thread+0x5fd/0xfe0\n      kthread+0x367/0x460\n      ret_from_fork+0x655/0x9d0\n      ret_from_fork_asm+0x1a/0x30\n\nTo avoid the memory leaks, reclaim the memory of the in-flight responses\nwhen the queue QP is torn down. Call nvmet_rdma_free_rsp_resources()\nthat frees up the RDMA read/write context and the request SGLs of such\nresponses.",
   "datePublished": "Sep 17, 2026, 4:11:47 PM",
-  "dateUpdated": "Sep 17, 2026, 4:11:47 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:06:23 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/91cfa74f1f3772e8c3662c064a45d8633e00c78e",
     "https://git.kernel.org/stable/c/156ec10a8be2c33b0c279d8b2f4fe8e16fa89ef7",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/0114dd303b373522dea06053aabae34bdd33a7c4"
   ],
   "aliases": [
-    "CVE-2026-93151"
+    "CVE-2026-93151",
+    "GHSA-fxwv-gg7j-r6jf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.68,
   "enisaIdProduct": [
     {
       "id": "14195997-bcd1-30e4-b9d7-a4cc5bba959e",
@@ -49,16 +52,6 @@
         }
       },
       "product_version": "8f000cac6e7a6edca7ab93bafc7ed28b27c1545b <91cfa74f1f3772e8c3662c064a45d8633e00c78e"
-    },
-    {
-      "id": "3bfb66d4-6ba3-36b5-beb2-dcf272e35f5d",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "42b7bdd0-b1a0-36cf-924e-a26ebdd278ed",
@@ -149,6 +142,16 @@
         }
       },
       "product_version": "patch: 5.15.221"
+    },
+    {
+      "id": "d12ce8a8-9711-3afa-abeb-51c53bc1cbf6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "d9855347-0889-3d89-aeac-9fc6929f37f4",

@@ -3,19 +3,23 @@
   "enisaUuid": "40052c4e-290c-357b-a0ce-c281ee54f084",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: stmmac: fix TX descriptor availability check for TSO traffic\n\nstmmac_tso_xmit() estimates the number of free TX descriptors required by\na TSO skb as:\n\n\t(skb->len - proto_hdr_len) / TSO_MAX_BUFF_SIZE + 1\n\nwhich assumes the payload is split into TSO_MAX_BUFF_SIZE chunks. This\nunderestimates the descriptors actually consumed by stmmac_tso_allocator(),\nsince each fragment is mapped individually and so it needs at least one\ndescriptor regardless of its size. Moreover, one descriptor is used for\nthe L2/L3/L4 headers and, when the MSS changes, one more is consumed for\nthe MSS context descriptor.\nFor a highly fragmented TSO skb the check can therefore pass even when the\nring has too few free slots. stmmac_tso_allocator() then writes past the\navailable descriptors, overwriting descriptors still owned by the DMA\nengine, corrupting the TX ring.\nAdd stmmac_tso_get_num_desc() to compute the exact number of descriptors\nneeded for the header, the linear payload and each fragment, plus the MSS\ncontext descriptor when required, and use it in the availability check.",
   "datePublished": "Sep 25, 2026, 10:23:00 AM",
-  "dateUpdated": "Sep 25, 2026, 10:23:00 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 21, 2026, 12:53:49 PM",
+  "baseScore": 7.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/09c30547da2c45bb79f7d3adffc860af332c2d42",
     "https://git.kernel.org/stable/c/ffa6d2481bc1c87f822ecd626561484e4ee24cef",
     "https://git.kernel.org/stable/c/c28175220f808c867d5618de8ecc6dbcc815c773",
     "https://git.kernel.org/stable/c/65820fc743eae322f7f94f6a64d07861211d4b21",
     "https://git.kernel.org/stable/c/5e38d732ec67a5b1f9a56e6c73add480c4b6030a"
   ],
   "aliases": [
-    "CVE-2026-97953"
+    "CVE-2026-97953",
+    "GHSA-4j3p-7h59-gp38"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.41,
   "enisaIdProduct": [
     {
       "id": "0af137f1-c2a3-349a-934c-db9b518e3b4e",
@@ -68,6 +72,16 @@
       "product_version": "f748be531d7012c456b97f66091d86b3675c5fef <5e38d732ec67a5b1f9a56e6c73add480c4b6030a"
     },
     {
+      "id": "6a31f568-a6ab-3e73-b3e6-b8043ffb27d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "a97bb861-a2bf-318e-8b64-d3015709518d",
       "product": {
         "name": "Linux",
@@ -78,16 +92,6 @@
       "product_version": "4.7"
     },
     {
-      "id": "c660d902-1ed6-3a42-80aa-d758b976cb1f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc3"
-    },
-    {
       "id": "c9517cfc-7b92-3ca9-9a5d-a1f70824daaf",
       "product": {
         "name": "Linux",
@@ -96,6 +100,26 @@
         }
       },
       "product_version": "f748be531d7012c456b97f66091d86b3675c5fef <c28175220f808c867d5618de8ecc6dbcc815c773"
+    },
+    {
+      "id": "e615403e-6242-3656-819a-bd5be4831ae2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "e9becb5b-0905-3386-be1f-6f6808d61ea8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f748be531d7012c456b97f66091d86b3675c5fef <09c30547da2c45bb79f7d3adffc860af332c2d42"
     },
     {
       "id": "ebd90203-5913-3b0c-a1b3-5ae8647ae636",

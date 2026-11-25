@@ -3,7 +3,7 @@
   "enisaUuid": "791c855c-2d4e-3aa9-b170-a4cdf0e84c6e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnvmet-fc: fix invalid free in LS IOD error path\n\nnvmet_fc_alloc_ls_iodlist() advances iod while initializing the LS IOD\narray. If an rqstbuf allocation or response buffer DMA mapping fails,\nthe unwind loop decrements iod past the start of the array. The final\nkfree(iod) therefore frees an address before the allocated object.\n\nThis can be reproduced with nvme-fcloop and failslab by setting\nfail-nth to 6 before creating a target port. KASAN reports:\n\n  BUG: KASAN: invalid-free in nvmet_fc_register_targetport\n  Free of addr ffff88816cf8ff48 by task nvmet_fail_nth/9552\n\nFree the original allocation base stored in tgtport->iod instead. With\nthis fix applied, the same sysfs write with fail-nth=6 returns -ENOMEM\nwithout any KASAN report.",
   "datePublished": "Sep 4, 2026, 3:13:02 PM",
-  "dateUpdated": "Sep 4, 2026, 3:13:02 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:43 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b189c6e408896ccc23d2e76d7738847cdebf1532",
@@ -17,10 +17,11 @@
     "https://git.kernel.org/stable/c/ba98d6796d12258e837ece065d2ecb59d76ce4ff"
   ],
   "aliases": [
+    "GHSA-8g5c-jgpx-6xcv",
     "CVE-2026-80790"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "282506dd-104c-33f3-b716-9e902993829a",
@@ -73,16 +74,6 @@
       "product_version": "patch: 5.10.267"
     },
     {
-      "id": "89841c49-7073-3883-8924-0aa45fe37cf9",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "98d57122-465b-3b75-bfd8-56557dbd220c",
       "product": {
         "name": "Linux",
@@ -121,6 +112,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "b3f816c2-6c7e-3f69-8e63-ab7ffddfa231",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "bae9e23c-dab4-3f93-bc69-152c46d6da26",

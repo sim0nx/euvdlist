@@ -3,19 +3,22 @@
   "enisaUuid": "0295b07f-b56d-3ec0-af03-61813ca13ea4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: fq: add overflow bounds to quantum and initial quantum\n\nfq_init() computes quantum = 2 * psched_mtu() and initial_quantum = 10 *\npsched_mtu() with no overflow check. A device with a huge MTU (e.g. dummy\nwith max_mtu == 0 accepting MTU 2147483634) makes psched_mtu() return\n0x80000000; the 2 * and 10 * multiplications wrap to 0 in 32-bit\narithmetic, so q->quantum == 0. Then in fq_dequeue() the credit-refill\nloop adds 0 to f->credit (which stays <= 0) and goto begin loops\nforever under the qdisc lock, creating a soft lockup.\n\nClamp psched_mtu() to [1, 1 << 20] before multiplying so the product\ncannot wrap, then cap the result at 1 << 20, matching the bound already\nenforced on TCA_FQ_QUANTUM in fq_change().\n\nConditions to recreate the bug: a device whose MTU (plus\nhard_header_len) is large enough that 2 * psched_mtu() wraps (e.g. a\ndummy device with max_mtu == 0 accepting MTU 2147483634). Requires\nCAP_NET_ADMIN in a user namespace.",
   "datePublished": "Sep 17, 2026, 4:05:55 PM",
-  "dateUpdated": "Sep 17, 2026, 4:05:55 PM",
+  "dateUpdated": "Oct 30, 2026, 12:34:01 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/cf398f67d9caa71af3b9fb9319058b22fe6b524e",
+    "https://git.kernel.org/stable/c/fd63409b669f9951f1cc6b02486a5254103800d1",
     "https://git.kernel.org/stable/c/d16dac3925be95ad46e986d4b139c9898b6e227f",
     "https://git.kernel.org/stable/c/f6b3e3848a5fca63438984acd6d9eceac80814c1",
     "https://git.kernel.org/stable/c/e35acd56f244d94355f9ab237c2ecc8fba5e6f04",
     "https://git.kernel.org/stable/c/709f34f7c28dc4dd6c40343d101850f11e172312"
   ],
   "aliases": [
+    "GHSA-6j38-2pg6-m9mv",
     "CVE-2026-90076"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "032ef855-09d5-3cc5-98ba-a58401222abb",
@@ -38,6 +41,16 @@
       "product_version": "patch: 6.12.110"
     },
     {
+      "id": "052ebd46-1b1c-3832-a1f6-9dec6120200e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "246badea-e2b4-39ee-bd5a-37d626e526af",
       "product": {
         "name": "Linux",
@@ -46,6 +59,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "31b5f751-2767-31c5-8be8-6e76ce9726c2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "afe4fd062416b158a8a8538b23adc1930a9b88dc <cf398f67d9caa71af3b9fb9319058b22fe6b524e"
+    },
+    {
+      "id": "31d7343d-ce1e-38c7-8ce3-1bb16a76a824",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     },
     {
       "id": "32bbe03d-7f30-3dc7-a529-54264d8d5e12",
@@ -58,14 +91,24 @@
       "product_version": "afe4fd062416b158a8a8538b23adc1930a9b88dc <d16dac3925be95ad46e986d4b139c9898b6e227f"
     },
     {
-      "id": "44851d9c-eb1d-38c1-af7b-cba5fab32653",
+      "id": "4ecef096-4203-3568-b8b8-be6684d1bf16",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "5a1043a0-d5e0-3d16-b0cc-022f216d8164",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "afe4fd062416b158a8a8538b23adc1930a9b88dc <fd63409b669f9951f1cc6b02486a5254103800d1"
     },
     {
       "id": "693c57d0-34cb-3a8b-83c7-ac87569605f7",

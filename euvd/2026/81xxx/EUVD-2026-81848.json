@@ -3,8 +3,10 @@
   "enisaUuid": "9b7d075b-a980-3c19-8a90-770c78b5b15c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: hci_conn: fix the SCO setup context lifetime\n\nhci_setup_sync() queues a conn_handle_t with a NULL destroy callback, so\nthe context is only freed if hci_enhanced_setup_sync() actually runs. An\nentry that is cancelled instead is leaked, as\n_hci_cmd_sync_cancel_entry() does not release entry->data when there is\nno destroy callback, and hci_cmd_sync_clear() cancels every pending entry\nwhen the controller is unregistered.\n\nThe context also stores a bare hci_conn pointer, so the connection can be\nfreed while the work is queued. The dequeue in hci_conn_del() does not\ncover it either, as it matches on entry->data == conn and entry->data is\nthe wrapper here. Same problem as commit 2f5d635ad590 (\"Bluetooth:\nhci_sync: hold conn in hci_connect_acl/le_sync() callbacks\").\n\nHold the connection and release both from a destroy callback. The\nsubmission failure path drops both, since hci_cmd_sync_submit() does not\ncall the destroy callback when it fails to queue.",
   "datePublished": "Sep 17, 2026, 4:07:54 PM",
-  "dateUpdated": "Sep 17, 2026, 4:07:54 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:00:31 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/37cfec41365c826d5496ef5d00c9e215eee53aa2",
     "https://git.kernel.org/stable/c/9a2ba69cebe3fc5a3d4fa8eaaad3c42862723c27",
@@ -14,10 +16,11 @@
     "https://git.kernel.org/stable/c/42de40abe25db9211107af8896d0fd741f10648d"
   ],
   "aliases": [
-    "CVE-2026-90255"
+    "CVE-2026-90255",
+    "GHSA-wjxp-4hww-crmx"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.34,
   "enisaIdProduct": [
     {
       "id": "07a145e7-728f-3597-bd5b-4c5a59d0f537",
@@ -140,14 +143,14 @@
       "product_version": "patch: 6.12.110"
     },
     {
-      "id": "f95f7b1e-2191-3326-8b49-6c019b44b8af",
+      "id": "fe5a7656-ace6-3b77-874c-d84d2f2f3a3d",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "ff3ef386-bb70-39aa-8938-af2fb7ef25f8",

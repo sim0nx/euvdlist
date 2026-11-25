@@ -3,18 +3,21 @@
   "enisaUuid": "d098c47c-0f5b-3923-8cfc-00679483e2ce",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngpio: mpsse: fix race when arming the IRQ poll worker\n\ngpio_mpsse_irq_enable() arms the poll worker before publishing it:\nschedule_work() runs before the worker is added to priv->workers. If\ngpio_mpsse_disconnect() walks the list in that window it misses the\nworker, and once disconnect returns, the USB core frees mpsse_priv\nwhile the orphaned gpio_mpsse_poll() work keeps accessing it, causing\na use-after-free.\n\nFix this by publishing and arming the worker in one irq_spin\ncritical section. Teardown walks the same list under irq_spin, so a\nworker found on the list is guaranteed to be armed, and\ncancel_work_sync() handles it whether it is queued or running.\n\nA worker armed after the disconnect walk would still be missed, so\nalso set a new priv->dying flag under irq_spin before the teardown\nwalk, and check it in the same critical section, freeing it via\nkfree_rcu() instead when the device is going away, since kfree()\nwould be called with the IRQ core's raw spinlock held and may sleep\non PREEMPT_RT. schedule_work() is safe to call with irq_spin held,\nand the next probe gets a fresh mpsse_priv, so the flag never needs\nto be cleared.\n\nThis issue was found by an in-house static analysis tool.",
   "datePublished": "Oct 23, 2026, 12:22:29 PM",
-  "dateUpdated": "Oct 23, 2026, 12:22:29 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 24, 2026, 2:10:11 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/76390ac0bca7e5058b7482eb4d951c3bda5df812",
     "https://git.kernel.org/stable/c/c0071ee496e1228976c72b096f529503222708a0",
     "https://git.kernel.org/stable/c/7efa1a1953cd6b20b23a3524d5b4b81789c6ef25"
   ],
   "aliases": [
+    "GHSA-77g9-3gmv-7p3q",
     "CVE-2026-99050"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "31419c18-cbcd-394f-ab7d-8a00f28da151",

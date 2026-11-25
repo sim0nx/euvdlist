@@ -3,7 +3,7 @@
   "enisaUuid": "4bb48273-3cd8-3d2c-b523-a6c63b2c6806",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nuprobes: Fix NULL pointer dereference in hprobe_expire()\n\nForking a task that has a pending uretprobe can oops the kernel with a\nNULL pointer dereference in the clone() path:\n\n  BUG: kernel NULL pointer dereference, address: 0000000000000018\n  Oops: 0002 [#1] SMP NOPTI\n  RIP: 0010:hprobe_expire\n  CR2: 0000000000000018\n  Call Trace:\n   uprobe_copy_process\n   copy_process\n   kernel_clone\n   __x64_sys_clone\n   do_syscall_64\n   entry_SYSCALL_64_after_hwframe\n\nThis was found on real hosts on Meta fleet.\n\nI've got the impression that this is what is happening:\n\n  CPU 1                          CPU 2 (traced task)\n  -----                          -------------------\n                                 hit uprobe, prepare_uretprobe():\n                                   hprobe LEASED, refcount >= 1\n  uprobe_unregister()\n    put_uprobe(): refcount -> 0\n                                 fork() -> dup_utask()\n                                   hprobe_expire(hprobe, true)\n                                     try_get_uprobe() -> NULL\n                                     get_uprobe(NULL)   <-- Oops\n\nOnly take the extra reference when the uprobe is non-NULL; a NULL means\nit is gone and is the correct value to return.",
   "datePublished": "Aug 15, 2026, 12:27:11 PM",
-  "dateUpdated": "Aug 15, 2026, 12:27:11 PM",
+  "dateUpdated": "Aug 17, 2026, 5:20:09 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/3bd35a5e272a1b7a3fb43acad9bdc599281b13fa",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/cc679d7a6303e84d769f2afcde1fc51c51f127cd"
   ],
   "aliases": [
-    "CVE-2026-74477"
+    "CVE-2026-74477",
+    "GHSA-pgww-xqqj-6xv5"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0fd3e830-82f5-3969-86b3-727910cc1011",
@@ -57,6 +58,16 @@
       "product_version": "dd1a7567784e2b1f80258be04f57bcfa82c997eb <06c275a6c0a953ef1d763d11a6891fcc69ae2ac0"
     },
     {
+      "id": "a3714aca-0894-36fa-bd7e-77b613e9c4d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "a9da411a-40f2-33d6-9329-32011196bb2c",
       "product": {
         "name": "Linux",
@@ -85,16 +96,6 @@
         }
       },
       "product_version": "dd1a7567784e2b1f80258be04f57bcfa82c997eb <cc679d7a6303e84d769f2afcde1fc51c51f127cd"
-    },
-    {
-      "id": "d3d30b2d-ddd1-33f0-99d9-269a792191f0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc6"
     }
   ],
   "enisaIdVendor": [

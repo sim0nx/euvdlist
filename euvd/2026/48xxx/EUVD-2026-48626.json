@@ -3,8 +3,10 @@
   "enisaUuid": "16010c9e-f9b9-3d0b-b6fd-173951d4cef1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbatman-adv: bla: fix report_work leak on backbone_gw purge\n\nbatadv_bla_purge_backbone_gw() removes stale backbone gateway entries,\nbut fails to properly handle their associated report_work:\n\n- If report_work is running, the purge must wait for it to finish before\n  freeing the backbone_gw, otherwise the worker may access freed memory\n  (e.g. bat_priv).\n- If report_work is pending, the purge must cancel it and release the\n  reference held for that pending work item.\n\nThe previous implementation called hlist_for_each_entry_safe() inside a\nspin_lock_bh() section, but cancel_work_sync() may sleep and therefore\ncannot be called from within a spinlock-protected region.\n\nRestructure the loop to handle one entry per spinlock critical section:\nacquire the lock, find the next entry to purge, remove it from the hash\nlist, then release the lock before calling cancel_work_sync() and\ndropping the hash_entry reference. Repeat until no more entries require\npurging.",
   "datePublished": "Jul 24, 2026, 3:23:05 PM",
-  "dateUpdated": "Jul 24, 2026, 3:23:05 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:40:06 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ce2c0ee4d76d5ee4b391fe0e31334361e25030ec",
     "https://git.kernel.org/stable/c/3423a45e5c3d3c5129f88143a9a969787d7d5a0a",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/0459430add32ea41f3e2ef9351610e6d33627a6b"
   ],
   "aliases": [
-    "CVE-2026-64218"
+    "CVE-2026-64218",
+    "GHSA-jcwg-v5j7-jrrq"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "169261b3-ea30-3304-a949-6b91af16be7d",

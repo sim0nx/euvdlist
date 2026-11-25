@@ -1,0 +1,111 @@
+{
+  "id": "EUVD-2022-53798",
+  "enisaUuid": "a9a214c1-e322-3c9e-b1ec-c29674fb05f1",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncifs: fix double free race when mount fails in cifs_get_root()\n\nWhen cifs_get_root() fails during cifs_smb3_do_mount() we call\ndeactivate_locked_super() which eventually will call delayed_free() which\nwill free the context.\nIn this situation we should not proceed to enter the out: section in\ncifs_smb3_do_mount() and free the same resources a second time.\n\n[Thu Feb 10 12:59:06 2022] BUG: KASAN: use-after-free in rcu_cblist_dequeue+0x32/0x60\n[Thu Feb 10 12:59:06 2022] Read of size 8 at addr ffff888364f4d110 by task swapper/1/0\n\n[Thu Feb 10 12:59:06 2022] CPU: 1 PID: 0 Comm: swapper/1 Tainted: G           OE     5.17.0-rc3+ #4\n[Thu Feb 10 12:59:06 2022] Hardware name: Microsoft Corporation Virtual Machine/Virtual Machine, BIOS Hyper-V UEFI Release v4.0 12/17/2019\n[Thu Feb 10 12:59:06 2022] Call Trace:\n[Thu Feb 10 12:59:06 2022]  <IRQ>\n[Thu Feb 10 12:59:06 2022]  dump_stack_lvl+0x5d/0x78\n[Thu Feb 10 12:59:06 2022]  print_address_description.constprop.0+0x24/0x150\n[Thu Feb 10 12:59:06 2022]  ? rcu_cblist_dequeue+0x32/0x60\n[Thu Feb 10 12:59:06 2022]  kasan_report.cold+0x7d/0x117\n[Thu Feb 10 12:59:06 2022]  ? rcu_cblist_dequeue+0x32/0x60\n[Thu Feb 10 12:59:06 2022]  __asan_load8+0x86/0xa0\n[Thu Feb 10 12:59:06 2022]  rcu_cblist_dequeue+0x32/0x60\n[Thu Feb 10 12:59:06 2022]  rcu_core+0x547/0xca0\n[Thu Feb 10 12:59:06 2022]  ? call_rcu+0x3c0/0x3c0\n[Thu Feb 10 12:59:06 2022]  ? __this_cpu_preempt_check+0x13/0x20\n[Thu Feb 10 12:59:06 2022]  ? lock_is_held_type+0xea/0x140\n[Thu Feb 10 12:59:06 2022]  rcu_core_si+0xe/0x10\n[Thu Feb 10 12:59:06 2022]  __do_softirq+0x1d4/0x67b\n[Thu Feb 10 12:59:06 2022]  __irq_exit_rcu+0x100/0x150\n[Thu Feb 10 12:59:06 2022]  irq_exit_rcu+0xe/0x30\n[Thu Feb 10 12:59:06 2022]  sysvec_hyperv_stimer0+0x9d/0xc0\n...\n[Thu Feb 10 12:59:07 2022] Freed by task 58179:\n[Thu Feb 10 12:59:07 2022]  kasan_save_stack+0x26/0x50\n[Thu Feb 10 12:59:07 2022]  kasan_set_track+0x25/0x30\n[Thu Feb 10 12:59:07 2022]  kasan_set_free_info+0x24/0x40\n[Thu Feb 10 12:59:07 2022]  ____kasan_slab_free+0x137/0x170\n[Thu Feb 10 12:59:07 2022]  __kasan_slab_free+0x12/0x20\n[Thu Feb 10 12:59:07 2022]  slab_free_freelist_hook+0xb3/0x1d0\n[Thu Feb 10 12:59:07 2022]  kfree+0xcd/0x520\n[Thu Feb 10 12:59:07 2022]  cifs_smb3_do_mount+0x149/0xbe0 [cifs]\n[Thu Feb 10 12:59:07 2022]  smb3_get_tree+0x1a0/0x2e0 [cifs]\n[Thu Feb 10 12:59:07 2022]  vfs_get_tree+0x52/0x140\n[Thu Feb 10 12:59:07 2022]  path_mount+0x635/0x10c0\n[Thu Feb 10 12:59:07 2022]  __x64_sys_mount+0x1bf/0x210\n[Thu Feb 10 12:59:07 2022]  do_syscall_64+0x5c/0xc0\n[Thu Feb 10 12:59:07 2022]  entry_SYSCALL_64_after_hwframe+0x44/0xae\n\n[Thu Feb 10 12:59:07 2022] Last potentially related work creation:\n[Thu Feb 10 12:59:07 2022]  kasan_save_stack+0x26/0x50\n[Thu Feb 10 12:59:07 2022]  __kasan_record_aux_stack+0xb6/0xc0\n[Thu Feb 10 12:59:07 2022]  kasan_record_aux_stack_noalloc+0xb/0x10\n[Thu Feb 10 12:59:07 2022]  call_rcu+0x76/0x3c0\n[Thu Feb 10 12:59:07 2022]  cifs_umount+0xce/0xe0 [cifs]\n[Thu Feb 10 12:59:07 2022]  cifs_kill_sb+0xc8/0xe0 [cifs]\n[Thu Feb 10 12:59:07 2022]  deactivate_locked_super+0x5d/0xd0\n[Thu Feb 10 12:59:07 2022]  cifs_smb3_do_mount+0xab9/0xbe0 [cifs]\n[Thu Feb 10 12:59:07 2022]  smb3_get_tree+0x1a0/0x2e0 [cifs]\n[Thu Feb 10 12:59:07 2022]  vfs_get_tree+0x52/0x140\n[Thu Feb 10 12:59:07 2022]  path_mount+0x635/0x10c0\n[Thu Feb 10 12:59:07 2022]  __x64_sys_mount+0x1bf/0x210\n[Thu Feb 10 12:59:07 2022]  do_syscall_64+0x5c/0xc0\n[Thu Feb 10 12:59:07 2022]  entry_SYSCALL_64_after_hwframe+0x44/0xae",
+  "datePublished": "Aug 22, 2024, 1:32:43 AM",
+  "dateUpdated": "Aug 5, 2026, 8:52:54 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/546d60859ecf13380fcabcbeace53a5971493a2b",
+    "https://git.kernel.org/stable/c/563431c1f3c8f2230e4a9c445fa23758742bc4f0",
+    "https://git.kernel.org/stable/c/3d6cc9898efdfb062efb74dc18cfc700e082f5d5"
+  ],
+  "aliases": [
+    "GHSA-j96q-j829-h7g8",
+    "CVE-2022-48919"
+  ],
+  "assigner": "Linux",
+  "epss": 0.47,
+  "enisaIdProduct": [
+    {
+      "id": "045f6659-eb22-37ca-9527-0661f88d1ab0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d17abdf7566566fc402c31899b353044a7ff3cf4 <3d6cc9898efdfb062efb74dc18cfc700e082f5d5"
+    },
+    {
+      "id": "0d6f3583-f5bd-3ade-8554-d9fe7d26be5b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d17abdf7566566fc402c31899b353044a7ff3cf4 <546d60859ecf13380fcabcbeace53a5971493a2b"
+    },
+    {
+      "id": "1069fc26-21b5-3259-a12a-25e7c8f2cf63",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.11"
+    },
+    {
+      "id": "28314da2-de55-3fc9-939d-45b46faadd26",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.17"
+    },
+    {
+      "id": "6458f773-688b-370f-a2fa-a862a624e6cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7fa5cb4a-592f-33fd-9ed3-5c52b9abbb00",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16.13"
+    },
+    {
+      "id": "d25f2664-ab05-3f92-9912-a730b146bf2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d17abdf7566566fc402c31899b353044a7ff3cf4 <563431c1f3c8f2230e4a9c445fa23758742bc4f0"
+    },
+    {
+      "id": "ea50b368-41b7-3b12-af46-1933d0c12885",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.27"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2930d979-7b24-3d96-8465-bbe178a6915a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

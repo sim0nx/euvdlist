@@ -3,8 +3,10 @@
   "enisaUuid": "632eb9b3-c8eb-3905-9c91-4e6d383892bb",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: remove CAP_SYS_RAWIO zero-padding in dev_validate_header\n\ndev_validate_header() reads dev->hard_header_len directly when\nzero-padding short link layer headers for CAP_SYS_RAWIO holders:\n\n    if (capable(CAP_SYS_RAWIO)) {\n        memset(ll_header + len, 0, dev->hard_header_len - len);\n        return true;\n    }\n\nPacket send paths call dev_validate_header() on skbs whose headroom was\nallocated from an earlier hard_header_len read. If the device is\nreconfigured so that dev->hard_header_len increases before validation,\nthe memset writes past the reserved buffer, an out-of-bounds write.\n\nThis out-of-bounds write is masked in some SOCK_RAW paths today because\nthe same concurrent increase can first make skb_push() exceed the\nreserved headroom and trigger skb_under_panic(). Remove the zero-padding\nbranch before making those hard_header_len reads consistent, so the\nsnapshot fixes do not turn a loud panic into a silent overwrite.\n\nThis path is only reached for variable length L2 protocols, where\nlen < hard_header_len but len >= min_header_len. No remaining in-tree\nvariable length L2 protocol implements header_ops->validate, and the\nCAP_SYS_RAWIO bypass that zero-pads and accepts short headers has no\nreal value beyond allowing testing of intentionally malformed input.\n\nDrop the CAP_SYS_RAWIO branch. The remaining reads of\ndev->hard_header_len in dev_validate_header() are comparisons only and\nhave no memory safety impact.",
   "datePublished": "Sep 3, 2026, 8:21:48 AM",
-  "dateUpdated": "Sep 3, 2026, 8:21:48 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:26:36 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/53fd7f912c0877647d6a1e1877f5ea8535ee0b4a",
     "https://git.kernel.org/stable/c/fa6d98dd925e72fc028b26a0cbbff9d2f0601ff6",
@@ -17,10 +19,11 @@
     "https://git.kernel.org/stable/c/3b9a324e646d3657a8d9806dfbfe4f3e4066e882"
   ],
   "aliases": [
-    "CVE-2026-80731"
+    "CVE-2026-80731",
+    "GHSA-534x-f2qc-fghv"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "06026d3e-f1eb-30c8-930a-fca4f23f7d81",

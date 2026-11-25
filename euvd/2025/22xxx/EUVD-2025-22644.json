@@ -3,50 +3,139 @@
   "enisaUuid": "4616d443-63b5-3a3e-a0f0-4a8aa516d625",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ns390/mm: Fix in_atomic() handling in do_secure_storage_access()\n\nKernel user spaces accesses to not exported pages in atomic context\nincorrectly try to resolve the page fault.\nWith debug options enabled call traces like this can be seen:\n\nBUG: sleeping function called from invalid context at kernel/locking/rwsem.c:1523\nin_atomic(): 1, irqs_disabled(): 0, non_block: 0, pid: 419074, name: qemu-system-s39\npreempt_count: 1, expected: 0\nRCU nest depth: 0, expected: 0\nINFO: lockdep is turned off.\nPreemption disabled at:\n[<00000383ea47cfa2>] copy_page_from_iter_atomic+0xa2/0x8a0\nCPU: 12 UID: 0 PID: 419074 Comm: qemu-system-s39\nTainted: G        W           6.16.0-20250531.rc0.git0.69b3a602feac.63.fc42.s390x+debug #1 PREEMPT\nTainted: [W]=WARN\nHardware name: IBM 3931 A01 703 (LPAR)\nCall Trace:\n [<00000383e990d282>] dump_stack_lvl+0xa2/0xe8\n [<00000383e99bf152>] __might_resched+0x292/0x2d0\n [<00000383eaa7c374>] down_read+0x34/0x2d0\n [<00000383e99432f8>] do_secure_storage_access+0x108/0x360\n [<00000383eaa724b0>] __do_pgm_check+0x130/0x220\n [<00000383eaa842e4>] pgm_check_handler+0x114/0x160\n [<00000383ea47d028>] copy_page_from_iter_atomic+0x128/0x8a0\n([<00000383ea47d016>] copy_page_from_iter_atomic+0x116/0x8a0)\n [<00000383e9c45eae>] generic_perform_write+0x16e/0x310\n [<00000383e9eb87f4>] ext4_buffered_write_iter+0x84/0x160\n [<00000383e9da0de4>] vfs_write+0x1c4/0x460\n [<00000383e9da123c>] ksys_write+0x7c/0x100\n [<00000383eaa7284e>] __do_syscall+0x15e/0x280\n [<00000383eaa8417e>] system_call+0x6e/0x90\nINFO: lockdep is turned off.\n\nIt is not allowed to take the mmap_lock while in atomic context. Therefore\nhandle such a secure storage access fault as if the accessed page is not\nmapped: the uaccess function will return -EFAULT, and the caller has to\ndeal with this. Usually this means that the access is retried in process\ncontext, which allows to resolve the page fault (or in this case export the\npage).",
   "datePublished": "Jul 25, 2025, 12:47:30 PM",
-  "dateUpdated": "Jul 28, 2025, 4:19:52 AM",
+  "dateUpdated": "Nov 5, 2026, 9:02:35 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/2990e937eaff741eda531f4190455ed7f3d5c348",
+    "https://git.kernel.org/stable/c/9bcfbd58fc5a02777fed3e582f22503ef3289a43",
+    "https://git.kernel.org/stable/c/7aee3e5163cade3f4cf1cc0710dfbadb47f1ba84",
     "https://git.kernel.org/stable/c/d2e317dfd2d1fe416c77315d17c5d57dbe374915",
     "https://git.kernel.org/stable/c/11709abccf93b08adde95ef313c300b0d4bc28f1"
   ],
   "aliases": [
+    "GHSA-62f3-xhhg-6p74",
     "CVE-2025-38359"
   ],
   "assigner": "Linux",
-  "epss": 0.03,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "34761d89-6b5c-34d5-9ffc-e4c5e0a0d568",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.16"
     },
     {
-      "id": "3775f485-5fdf-35b8-9ddf-e6ae7871782d",
+      "id": "5df111f0-1326-3dd8-bd3c-dce57d73f0ac",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d2e317dfd2d1fe416c77315d17c5d57dbe374915"
+      "product_version": "084ea4d611a3d00ee3930400b262240e10895900 <2990e937eaff741eda531f4190455ed7f3d5c348"
     },
     {
-      "id": "86781f91-5897-35e6-89e6-948e09db0a61",
+      "id": "66723349-fad9-32a3-832d-789e2eee4d14",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <11709abccf93b08adde95ef313c300b0d4bc28f1"
+      "product_version": "084ea4d611a3d00ee3930400b262240e10895900 <d2e317dfd2d1fe416c77315d17c5d57dbe374915"
     },
     {
-      "id": "edc4c916-7b41-38c8-b580-fe71e6046216",
+      "id": "6748b978-2c71-37bb-aa9d-aaa0152a7772",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "patch: 6.16-rc1"
+      "product_version": "patch: 6.12.114"
+    },
+    {
+      "id": "7c98feab-d62f-37c0-af5f-720315fb3c81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "084ea4d611a3d00ee3930400b262240e10895900 <9bcfbd58fc5a02777fed3e582f22503ef3289a43"
+    },
+    {
+      "id": "94006c53-41b8-3a98-bb22-d03388397347",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9f4bceee-feb3-3b75-87ed-c2f85d613645",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "084ea4d611a3d00ee3930400b262240e10895900 <11709abccf93b08adde95ef313c300b0d4bc28f1"
+    },
+    {
+      "id": "9f72c0f1-9168-3e39-b199-5441b844cf3b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "084ea4d611a3d00ee3930400b262240e10895900 <7aee3e5163cade3f4cf1cc0710dfbadb47f1ba84"
+    },
+    {
+      "id": "a1134747-2c40-33e5-b850-4081d67b60e4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "cb1a284c-0bb3-3ca7-b392-2e6c0dc32edc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.7"
+    },
+    {
+      "id": "fab6a5fa-bab4-3717-879e-3c60fa2bf6c3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "fd471c24-dc19-337d-999e-51c2fc213e35",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.15.5"
     }

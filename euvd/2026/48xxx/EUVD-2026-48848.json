@@ -3,7 +3,7 @@
   "enisaUuid": "7c232cb0-5e95-346e-91f6-1c3f8f773378",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niio: accel: bmc150: clamp the device-reported FIFO frame count\n\n__bmc150_accel_fifo_flush() copies the number of samples the device\nreports in its hardware FIFO into an on-stack buffer\n\n\tu16 buffer[BMC150_ACCEL_FIFO_LENGTH * 3];\n\nwhich is sized for at most BMC150_ACCEL_FIFO_LENGTH (32) samples. The\nframe count is read from the FIFO_STATUS register and only masked to its\n7 valid bits:\n\n\tcount = val & 0x7F;\n\nso it can be 0..127. The only other limit applied to it is the optional\ncaller-supplied sample budget:\n\n\tif (samples && count > samples)\n\t\tcount = samples;\n\nwhich does not constrain count on the flush-all path (samples == 0), and\nleaves it well above 32 whenever samples is larger. count samples are\nthen transferred into buffer[]:\n\n\tbmc150_accel_fifo_transfer(data, (u8 *)buffer, count);\n\nbmc150_accel_fifo_transfer() reads count * 6 bytes through regmap, so a\nmalfunctioning, malicious or counterfeit accelerometer (or an attacker\ntampering with the I2C/SPI bus) that reports up to 127 frames writes up\nto 762 bytes into the 192-byte buffer: a stack out-of-bounds write of up\nto 570 bytes that clobbers the stack canary, saved registers and the\nreturn address.\n\nClamp count to BMC150_ACCEL_FIFO_LENGTH, the number of samples buffer[]\nis sized for, before the transfer, mirroring the watermark clamp already\ndone in bmc150_accel_set_watermark(). A well-formed flush reports at most\nBMC150_ACCEL_FIFO_LENGTH frames, so legitimate devices are unaffected.",
   "datePublished": "Jul 25, 2026, 8:51:58 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:58 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:55 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b5a9f521e0a49a0266200fd535b32a9668ecb33b",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/ce0e1cae26096fe959a0da5563a6d6d5a801d5fb"
   ],
   "aliases": [
-    "CVE-2026-64504"
+    "CVE-2026-64504",
+    "GHSA-4j8x-6qx9-p4gc"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "31130113-e222-3900-b93c-687ac1c6c56e",
@@ -142,16 +143,6 @@
       "product_version": "3bbec9773389112330954a6a64422eaa78d546c1 <bfffc98f3de92e0f76be7c7b72e63ac1776a6dbc"
     },
     {
-      "id": "98645506-dc82-3ae2-93ac-a3094680928a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
-    },
-    {
       "id": "9914ea9d-dc73-3f5f-9b03-998c0ab53846",
       "product": {
         "name": "Linux",
@@ -200,6 +191,16 @@
         }
       },
       "product_version": "3bbec9773389112330954a6a64422eaa78d546c1 <b5a9f521e0a49a0266200fd535b32a9668ecb33b"
+    },
+    {
+      "id": "fcf48741-377d-3e98-8ddd-fbe814a27486",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

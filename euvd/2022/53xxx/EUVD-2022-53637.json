@@ -1,0 +1,235 @@
+{
+  "id": "EUVD-2022-53637",
+  "enisaUuid": "c3117e6b-5fd2-3a69-be3c-0e71120acc13",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: bnx2fc: Flush destroy_work queue before calling bnx2fc_interface_put()\n\nThe bnx2fc_destroy() functions are removing the interface before calling\ndestroy_work. This results multiple WARNings from sysfs_remove_group() as\nthe controller rport device attributes are removed too early.\n\nReplace the fcoe_port's destroy_work queue. It's not needed.\n\nThe problem is easily reproducible with the following steps.\n\nExample:\n\n  $ dmesg -w &\n  $ systemctl enable --now fcoe\n  $ fipvlan -s -c ens2f1\n  $ fcoeadm -d ens2f1.802\n  [  583.464488] host2: libfc: Link down on port (7500a1)\n  [  583.472651] bnx2fc: 7500a1 - rport not created Yet!!\n  [  583.490468] ------------[ cut here ]------------\n  [  583.538725] sysfs group 'power' not found for kobject 'rport-2:0-0'\n  [  583.568814] WARNING: CPU: 3 PID: 192 at fs/sysfs/group.c:279 sysfs_remove_group+0x6f/0x80\n  [  583.607130] Modules linked in: dm_service_time 8021q garp mrp stp llc bnx2fc cnic uio rpcsec_gss_krb5 auth_rpcgss nfsv4 ...\n  [  583.942994] CPU: 3 PID: 192 Comm: kworker/3:2 Kdump: loaded Not tainted 5.14.0-39.el9.x86_64 #1\n  [  583.984105] Hardware name: HP ProLiant DL120 G7, BIOS J01 07/01/2013\n  [  584.016535] Workqueue: fc_wq_2 fc_rport_final_delete [scsi_transport_fc]\n  [  584.050691] RIP: 0010:sysfs_remove_group+0x6f/0x80\n  [  584.074725] Code: ff 5b 48 89 ef 5d 41 5c e9 ee c0 ff ff 48 89 ef e8 f6 b8 ff ff eb d1 49 8b 14 24 48 8b 33 48 c7 c7 ...\n  [  584.162586] RSP: 0018:ffffb567c15afdc0 EFLAGS: 00010282\n  [  584.188225] RAX: 0000000000000000 RBX: ffffffff8eec4220 RCX: 0000000000000000\n  [  584.221053] RDX: ffff8c1586ce84c0 RSI: ffff8c1586cd7cc0 RDI: ffff8c1586cd7cc0\n  [  584.255089] RBP: 0000000000000000 R08: 0000000000000000 R09: ffffb567c15afc00\n  [  584.287954] R10: ffffb567c15afbf8 R11: ffffffff8fbe7f28 R12: ffff8c1486326400\n  [  584.322356] R13: ffff8c1486326480 R14: ffff8c1483a4a000 R15: 0000000000000004\n  [  584.355379] FS:  0000000000000000(0000) GS:ffff8c1586cc0000(0000) knlGS:0000000000000000\n  [  584.394419] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033\n  [  584.421123] CR2: 00007fe95a6f7840 CR3: 0000000107674002 CR4: 00000000000606e0\n  [  584.454888] Call Trace:\n  [  584.466108]  device_del+0xb2/0x3e0\n  [  584.481701]  device_unregister+0x13/0x60\n  [  584.501306]  bsg_unregister_queue+0x5b/0x80\n  [  584.522029]  bsg_remove_queue+0x1c/0x40\n  [  584.541884]  fc_rport_final_delete+0xf3/0x1d0 [scsi_transport_fc]\n  [  584.573823]  process_one_work+0x1e3/0x3b0\n  [  584.592396]  worker_thread+0x50/0x3b0\n  [  584.609256]  ? rescuer_thread+0x370/0x370\n  [  584.628877]  kthread+0x149/0x170\n  [  584.643673]  ? set_kthread_struct+0x40/0x40\n  [  584.662909]  ret_from_fork+0x22/0x30\n  [  584.680002] ---[ end trace 53575ecefa942ece ]---",
+  "datePublished": "Jun 20, 2024, 11:13:37 AM",
+  "dateUpdated": "May 11, 2026, 6:46:21 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/2a12fe8248a38437b95b942bbe85aced72e6e2eb",
+    "https://git.kernel.org/stable/c/262550f29c750f7876b6ed1244281e72b64ebffb",
+    "https://git.kernel.org/stable/c/c93a290c862ccfa404e42d7420565730d67cbff9",
+    "https://git.kernel.org/stable/c/de6336b17a1376db1c0f7a528cce8783db0881c0",
+    "https://git.kernel.org/stable/c/bf2bd892a0cb14dd2d21f2c658f4b747813be311",
+    "https://git.kernel.org/stable/c/00849de10f798a9538242824a51b1756e7110754",
+    "https://git.kernel.org/stable/c/b11e34f7bab21df36f02a5e54fb69e858c09a65d",
+    "https://git.kernel.org/stable/c/ace7b6ef41251c5fe47f629a9a922382fb7b0a6b",
+    "https://git.kernel.org/stable/c/847f9ea4c5186fdb7b84297e3eeed9e340e83fce"
+  ],
+  "aliases": [
+    "CVE-2022-48758",
+    "GHSA-2x6c-642q-vfcc"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "00bf6974-e733-3375-a2cf-e6325c2fdcc1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.96"
+    },
+    {
+      "id": "16a934a1-74bd-3e1e-8d84-bed2b596cad8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0cbf32e1681d870632a1772601cbaadd996dc978 <de6336b17a1376db1c0f7a528cce8783db0881c0"
+    },
+    {
+      "id": "30c067c0-dc00-3ed6-ba3a-f2eae82d99ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0cbf32e1681d870632a1772601cbaadd996dc978 <bf2bd892a0cb14dd2d21f2c658f4b747813be311"
+    },
+    {
+      "id": "32d4545c-252b-3376-b187-da43e682884d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.265"
+    },
+    {
+      "id": "32e40727-20ce-35b2-a8a5-fbed031f10e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0cbf32e1681d870632a1772601cbaadd996dc978 <c93a290c862ccfa404e42d7420565730d67cbff9"
+    },
+    {
+      "id": "3bfbaea3-1957-3ec7-817c-9fd63d1d5b8c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0cbf32e1681d870632a1772601cbaadd996dc978 <00849de10f798a9538242824a51b1756e7110754"
+    },
+    {
+      "id": "4e98115b-0020-3d90-aeb1-062419f1ed4b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0cbf32e1681d870632a1772601cbaadd996dc978 <262550f29c750f7876b6ed1244281e72b64ebffb"
+    },
+    {
+      "id": "4eee63fe-cb5e-3f4c-a6ce-03f2db260cea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.228"
+    },
+    {
+      "id": "5261f610-822d-315e-897d-a8e6942acd9d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0cbf32e1681d870632a1772601cbaadd996dc978 <2a12fe8248a38437b95b942bbe85aced72e6e2eb"
+    },
+    {
+      "id": "54a3f6b5-4e61-3058-ab4f-91c3a63f5a1b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0cbf32e1681d870632a1772601cbaadd996dc978 <847f9ea4c5186fdb7b84297e3eeed9e340e83fce"
+    },
+    {
+      "id": "593ebb6f-f655-3d0c-88c7-24ef27bbeeaf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.2"
+    },
+    {
+      "id": "611e5522-23e5-3f93-9728-6dd3d47921f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.9.300"
+    },
+    {
+      "id": "76544af9-903e-359a-8dfd-a9b683147b3d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.176"
+    },
+    {
+      "id": "8afaee7e-17b7-3536-a378-548c5d94b5f4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.4.302"
+    },
+    {
+      "id": "962cc4eb-eaaf-3572-95ca-28ad2e490a42",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "cab67de3-aa12-3388-8a77-4373d5f09325",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0cbf32e1681d870632a1772601cbaadd996dc978 <b11e34f7bab21df36f02a5e54fb69e858c09a65d"
+    },
+    {
+      "id": "e19c116e-92f7-324c-8edb-efbcb5308dd1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16.5"
+    },
+    {
+      "id": "e4b670ad-339d-3f8c-99fb-f942f6005db2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.17"
+    },
+    {
+      "id": "efecc061-0b57-3e8f-af07-4e9e97241b6a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.19"
+    },
+    {
+      "id": "f78c6f51-ca10-3338-b253-07cbedb339d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0cbf32e1681d870632a1772601cbaadd996dc978 <ace7b6ef41251c5fe47f629a9a922382fb7b0a6b"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "72e7797f-1b1c-3b76-ac18-ea18da06ac28",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

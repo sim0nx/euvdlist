@@ -3,8 +3,10 @@
   "enisaUuid": "522f4677-50e7-344c-9b26-d1c86f90970a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfsd: clear opcnt on compound arg release to prevent OOB read\n\nnfsd4_release_compoundargs() resets args->ops to the inline iops[8]\narray when the dynamically-allocated ops buffer is freed, but leaves\nargs->opcnt at its original value (which can be up to 200 for NFSv4.1+\ncompounds).\n\nIf rq_status_counter is stuck at an odd value (which can happen when\nnfsd_dispatch() hits an error path after setting it odd), the RPC\nstatus dumpit handler reads min(opcnt, 16) entries from args->ops[].\nSince iops only has 8 elements and is the last field in struct\nnfsd4_compoundargs, reading indices 8-15 accesses adjacent slab memory\nand leaks it to userspace via netlink.\n\nZero opcnt unconditionally in nfsd4_release_compoundargs() so stale\ncompound metadata is never exposed through the status interface.\n\n[ cel: Remove the kvfree_rcu_mightsleep() sleep from the exposure window ]",
   "datePublished": "Sep 11, 2026, 7:46:11 PM",
-  "dateUpdated": "Sep 11, 2026, 7:46:11 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:51:04 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/58bcdfb2b2e412088839ae740b1a95154dc0b8d0",
     "https://git.kernel.org/stable/c/e879148867bd4c4cac42e063ffaffa187dddc6fe",
@@ -12,20 +14,21 @@
     "https://git.kernel.org/stable/c/ae4c38555e81563b8dc5eae55ffd70f0ea97aa5a"
   ],
   "aliases": [
-    "CVE-2026-89691"
+    "CVE-2026-89691",
+    "GHSA-v764-gh88-p9gg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
-      "id": "02b6096a-4209-3fb4-96a2-3ff6022dc983",
+      "id": "087a9f8d-0c65-34bc-b0e1-183e5e891e4b",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "2bdda2c4-6453-369f-ae89-4c79d57d32cf",

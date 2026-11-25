@@ -3,7 +3,7 @@
   "enisaUuid": "a23093d2-107b-3d49-ad87-18d9f68852da",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\neth: fbnic: ring the doorbell if a burst ends in a drop\n\nfbnic_tx_map() skips the doorbell write, and the completion request,\nfor every packet handed to it with xmit_more set, counting on the\npacket which ends the burst to publish them all. When that packet is\ndropped instead - skb_put_padto(), skb_cow_head() or a DMA mapping\nfailure - nothing rings. The descriptors of the preceding packets stay\ninvisible to the HW until the next transmit on that queue, which for a\nburst-then-idle workload may never come.\n\nRemember the meta descriptor of the last packet left without a doorbell\nand flush it from the error paths. The completion request has to be set\non that descriptor rather than simply writing the tail, otherwise the HW\nwould transmit the packets but never report a head, and the ring would\nfill up and stall for good.\n\nThis is very similar to Joe's recent series of fixes for bnxt.\nNot seen in real life, reproduced under QEMU with failure injection.",
   "datePublished": "Oct 6, 2026, 8:45:37 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:37 AM",
+  "dateUpdated": "Oct 19, 2026, 9:16:48 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/60ef74357a36ed2a102a75bb68d37aa7f305b94e",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/490599ab23134962a6d18a024e84541d77bdb999"
   ],
   "aliases": [
-    "CVE-2026-98277"
+    "CVE-2026-98277",
+    "GHSA-xjm7-64jw-75jr"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "07e5da3e-0e47-3979-b97d-3785c10ee5e2",
@@ -67,6 +68,16 @@
       "product_version": "patch: 6.18.54"
     },
     {
+      "id": "9248d7c9-4809-39f1-87a3-889bd3839c29",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "a1d9376c-4e3e-370d-b153-b1ecdc617736",
       "product": {
         "name": "Linux",
@@ -75,16 +86,6 @@
         }
       },
       "product_version": "patch: 7.2.8"
-    },
-    {
-      "id": "a77d7de3-0918-377a-81ea-365681f8d4b5",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "b9a2b35e-9cd9-3af5-acae-ed4923aac3f7",

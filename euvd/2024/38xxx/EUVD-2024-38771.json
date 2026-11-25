@@ -1,0 +1,216 @@
+{
+  "id": "EUVD-2024-38771",
+  "enisaUuid": "cbb35b3b-dc7d-32c5-85c3-709c78129493",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npowerpc/pseries: Enforce hcall result buffer validity and size\n\nplpar_hcall(), plpar_hcall9(), and related functions expect callers to\nprovide valid result buffers of certain minimum size. Currently this\nis communicated only through comments in the code and the compiler has\nno idea.\n\nFor example, if I write a bug like this:\n\n  long retbuf[PLPAR_HCALL_BUFSIZE]; // should be PLPAR_HCALL9_BUFSIZE\n  plpar_hcall9(H_ALLOCATE_VAS_WINDOW, retbuf, ...);\n\nThis compiles with no diagnostics emitted, but likely results in stack\ncorruption at runtime when plpar_hcall9() stores results past the end\nof the array. (To be clear this is a contrived example and I have not\nfound a real instance yet.)\n\nTo make this class of error less likely, we can use explicitly-sized\narray parameters instead of pointers in the declarations for the hcall\nAPIs. When compiled with -Warray-bounds[1], the code above now\nprovokes a diagnostic like this:\n\nerror: array argument is too small;\nis of size 32, callee requires at least 72 [-Werror,-Warray-bounds]\n   60 |                 plpar_hcall9(H_ALLOCATE_VAS_WINDOW, retbuf,\n      |                 ^                                   ~~~~~~\n\n[1] Enabled for LLVM builds but not GCC for now. See commit\n    0da6e5fd6c37 (\"gcc: disable '-Warray-bounds' for gcc-13 too\") and\n    related changes.",
+  "datePublished": "Jul 12, 2024, 12:32:11 PM",
+  "dateUpdated": "Aug 5, 2026, 11:34:20 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/acf2b80c31c37acab040baa3cf5f19fbd5140b18",
+    "https://git.kernel.org/stable/c/19c166ee42cf16d8b156a6cb4544122d9a65d3ca",
+    "https://git.kernel.org/stable/c/a8c988d752b3d98d5cc1e3929c519a55ef55426c",
+    "https://git.kernel.org/stable/c/262e942ff5a839b9e4f3302a8987928b0c8b8a2d",
+    "https://git.kernel.org/stable/c/8aa11aa001576bf3b00dcb8559564ad7a3113588",
+    "https://git.kernel.org/stable/c/3ad0034910a57aa88ed9976b1431b7b8c84e0048",
+    "https://git.kernel.org/stable/c/aa6107dcc4ce9a3451f2d729204713783b657257",
+    "https://git.kernel.org/stable/c/ff2e185cf73df480ec69675936c4ee75a445c3e4"
+  ],
+  "aliases": [
+    "GHSA-gv48-p56m-p3qj",
+    "CVE-2024-40974"
+  ],
+  "assigner": "Linux",
+  "epss": 0.3,
+  "enisaIdProduct": [
+    {
+      "id": "12f0410f-0e9b-3fb4-a009-1b8ec6befc89",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b9377ffc3a03cde558d76349a262a1adbb6d3112 <a8c988d752b3d98d5cc1e3929c519a55ef55426c"
+    },
+    {
+      "id": "16ba1312-45c5-3ddd-829c-78ae1dde817f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.96"
+    },
+    {
+      "id": "19003fdd-4ab9-30e3-bdb5-e1009598d6bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b9377ffc3a03cde558d76349a262a1adbb6d3112 <19c166ee42cf16d8b156a6cb4544122d9a65d3ca"
+    },
+    {
+      "id": "195a7940-3ba2-3cf8-8dc5-5d596529a5fa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b9377ffc3a03cde558d76349a262a1adbb6d3112 <acf2b80c31c37acab040baa3cf5f19fbd5140b18"
+    },
+    {
+      "id": "2d77def8-4ed8-32cd-a4b0-454afbb09eee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.36"
+    },
+    {
+      "id": "428d5abd-2330-3e6f-9988-7aedcb5198c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b9377ffc3a03cde558d76349a262a1adbb6d3112 <ff2e185cf73df480ec69675936c4ee75a445c3e4"
+    },
+    {
+      "id": "5d86f474-8ee4-3efe-9168-2a4d83e73e0f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.19"
+    },
+    {
+      "id": "76cb3e67-6e97-308f-9c3d-cbf901b66b8c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b9377ffc3a03cde558d76349a262a1adbb6d3112 <3ad0034910a57aa88ed9976b1431b7b8c84e0048"
+    },
+    {
+      "id": "8016fd5b-7bb7-38f2-a328-99edd4ced5ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.279"
+    },
+    {
+      "id": "829b4fd6-9168-3f79-a46b-b7b13bb7fb77",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.317"
+    },
+    {
+      "id": "a05814e1-9376-3488-b81c-75a50e24129f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "a2fabb2b-b8db-3b55-bf20-4bbb8db764c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.221"
+    },
+    {
+      "id": "b8fe4178-35dd-3e6b-996b-1a4061ff02f2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "beb54485-bf06-319f-b93c-286438e99ed2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b9377ffc3a03cde558d76349a262a1adbb6d3112 <aa6107dcc4ce9a3451f2d729204713783b657257"
+    },
+    {
+      "id": "c3cf3be4-da50-3d86-9b29-2608a4fb3aec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.7"
+    },
+    {
+      "id": "c891ebda-cf63-32a8-b997-170293ededdc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b9377ffc3a03cde558d76349a262a1adbb6d3112 <262e942ff5a839b9e4f3302a8987928b0c8b8a2d"
+    },
+    {
+      "id": "dfe42d3b-2362-3e28-aef2-9011906df07f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b9377ffc3a03cde558d76349a262a1adbb6d3112 <8aa11aa001576bf3b00dcb8559564ad7a3113588"
+    },
+    {
+      "id": "e923d32b-095c-340a-bc9e-df6336547f0f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.162"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "162f56a7-25aa-3bf2-a405-f0a4c9b1db5f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

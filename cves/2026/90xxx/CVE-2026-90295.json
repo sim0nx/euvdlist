@@ -3,7 +3,7 @@
   "enisaUuid": "984c8cf1-9416-38f9-9377-6238b2e3441e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncpufreq: imx6q: fix out-of-bounds write when probed more than once\n\nimx6_soc_volt is allocated fresh on every probe, sized to the number of\nARM OPPs:\n\n\timx6_soc_volt = devm_kcalloc(cpu_dev, num, sizeof(*imx6_soc_volt),\n\t\t\t\t     GFP_KERNEL);\n\nbut it is filled through soc_opp_count, which has static storage and is\nnever reset. A second bind after an unbind keeps indexing from where the\nfirst one stopped, and writes past the end of the new array.\n\nUnbinding and rebinding the driver on qemu's mcimx6ul-evk, under KASAN:\n\n  BUG: KASAN: slab-out-of-bounds in imx6q_cpufreq_probe+0x3b0/0xa34\n  Write of size 4 at addr c5e90480 by task binder/73\n   imx6q_cpufreq_probe from platform_probe+0x88/0xe4\n   platform_probe from really_probe+0x108/0x384\n   bind_store from kernfs_fop_write_iter+0x1b4/0x28c\n\nThe write lands one u32 past the end of the allocation.\n\nsoc_opp_count is only read a few lines below the loop that fills it, so it\nnever needed static storage. Make it a local.",
   "datePublished": "Sep 17, 2026, 4:08:21 PM",
-  "dateUpdated": "Sep 17, 2026, 4:08:21 PM",
+  "dateUpdated": "Oct 19, 2026, 9:01:13 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/263a35331169390f7f9ccb51d74e668610199af4",
@@ -16,11 +16,22 @@
     "https://git.kernel.org/stable/c/8c3afcf27fa4582c1ab912503dc8a4ebb8dc0f82"
   ],
   "aliases": [
-    "CVE-2026-90295"
+    "CVE-2026-90295",
+    "GHSA-mqwh-wx53-vxj4"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "0188502d-d6e8-335b-bf89-aa790d5b81bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "1eed7ab0-3239-34a8-aaca-c330de1977ad",
       "product": {
@@ -100,16 +111,6 @@
         }
       },
       "product_version": "b4573d1d657aae28bedf3a9a1f5367e09c80d1d6 <aaa66e60c0e21d19993a95bc3718dc29eb2d3192"
-    },
-    {
-      "id": "910f8ffa-388d-3e94-b7ab-14118998e459",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "982243ed-6207-36aa-80ce-ca4496941ae1",

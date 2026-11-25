@@ -2,21 +2,20 @@
   "id": "EUVD-2026-59584",
   "enisaUuid": "f5bbc5b3-c2cc-3d41-854c-2f34063e1e75",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: uvcvideo: Fix deadlock if uvc_status_stop is called from async_ctrl.work\n\nIf a UVC camera has an asynchronous control, uvc_status_stop may be\ncalled from async_ctrl.work:\n\nuvc_ctrl_status_event_work()\n    uvc_ctrl_status_event()\n        uvc_ctrl_clear_handle()\n\t    uvc_pm_put()\n\t        uvc_status_put()\n\t\t    uvc_status_stop()\n\t\t        cancel_work_sync()\n\nThis will cause a deadlock, since cancel_work_sync will wait for\nuvc_ctrl_status_event_work to complete before returning.\n\nFix this by returning early from uvc_status_stop if we are currently in\nthe work function. flush_status now remains false until uvc_status_start\nis called again, ensuring that uvc_ctrl_status_event_work won't resubmit\nthe URB.",
-  "datePublished": "Aug 15, 2026, 6:32:34 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:34 AM",
+  "datePublished": "Aug 15, 2026, 5:59:35 AM",
+  "dateUpdated": "Aug 17, 2026, 5:19:23 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/3659deaf7bf690510899a73906b772740d94342c",
     "https://git.kernel.org/stable/c/7f6c5fe1633272c926361b73d83dfc6ae01b1504",
-    "https://git.kernel.org/stable/c/6d27f92c54ce28cfbd2a8a479a96d6f4a781b7d2",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-74437"
+    "https://git.kernel.org/stable/c/6d27f92c54ce28cfbd2a8a479a96d6f4a781b7d2"
   ],
   "aliases": [
     "GHSA-5vf9-4h4x-m5f6",
     "CVE-2026-74437"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "07c820fe-d56e-3a61-826c-c030b41e22ba",
@@ -69,14 +68,14 @@
       "product_version": "a32d9c41bdb86e09ce731aa5fd3add89ac2103a5 <7f6c5fe1633272c926361b73d83dfc6ae01b1504"
     },
     {
-      "id": "a451857d-10e4-38df-9bb9-c7deb3770081",
+      "id": "ad51c917-42a4-3628-a760-7ca4f4b55201",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "ba3936d7-9c14-3dc0-9a82-bf1375290793",

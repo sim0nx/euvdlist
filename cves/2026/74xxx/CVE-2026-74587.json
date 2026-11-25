@@ -3,8 +3,10 @@
   "enisaUuid": "e8ad9455-a585-3f40-90c6-aec062fb95cb",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsctp: fix use-after-free of cached ASCONF chunk\n\naddip_last_asconf caches the outstanding outbound ASCONF chunk. The normal\nASCONF-ACK completion path releases the chunk and clears the pointer.\n\nHowever, sctp_asconf_queue_teardown() releases the cached chunk without\nclearing addip_last_asconf. During peer restart handling,\nsctp_sf_do_dupcook_a() queues SCTP_CMD_PURGE_ASCONF_QUEUE, which invokes\nsctp_asconf_queue_teardown() while the association remains alive and leaves\nthe pointer dangling.\n\nA delayed authenticated ASCONF-ACK can then reach sctp_sf_do_asconf_ack(),\nwhich accesses the stale chunk and passes it to sctp_process_asconf_ack(),\ncausing a use-after-free and a second release.\n\nClearing the pointer exposes a race with T4 expiry. Peer restart handling\nqueues the timer stop before the purge, but SCTP_CMD_TIMER_STOP uses\ntimer_delete(), which does not wait for a callback already running on\nanother CPU. Such a callback can reach sctp_sf_t4_timer_expire() after\nthe purge and dereference NULL.\n\nClear addip_last_asconf after releasing the cached chunk, and make\nsctp_sf_t4_timer_expire() consume a stale T4 expiry if no outstanding\nASCONF remains.",
   "datePublished": "Aug 22, 2026, 3:31:39 PM",
-  "dateUpdated": "Aug 22, 2026, 3:31:39 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:05:58 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/10459b03e2d9ee12435e96f587de4d4cacdbf435",
     "https://git.kernel.org/stable/c/e1bb114e09372fd6e03387ced9ef566da336ed6c",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/8c283e7b56adce00193837f3311b06662466fb21"
   ],
   "aliases": [
+    "GHSA-5vmc-fx99-r54r",
     "CVE-2026-74587"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.5,
   "enisaIdProduct": [
     {
       "id": "125bf6a8-a0a9-3444-a598-3f047bbde430",

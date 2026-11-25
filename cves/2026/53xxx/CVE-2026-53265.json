@@ -3,8 +3,10 @@
   "enisaUuid": "b5bf00b3-76a3-3284-8acb-6c8af8b08aef",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndm cache policy smq: check allocation under invalidate lock\n\ncommit 2d1f7b65f5de (\"dm cache policy smq: fix missing locks in\ninvalidating cache blocks\") added mq->lock around the destructive part of\nsmq_invalidate_mapping(), but left the e->allocated check outside the\ncritical section.\n\nThat leaves a check-then-act race. Two concurrent invalidators can both\nobserve e->allocated as true before either of them takes mq->lock. The\nfirst invalidator that acquires the lock removes the entry from the\nqueues and hash table and then calls free_entry(), which clears\ne->allocated and puts the entry back on the free list. The second\ninvalidator can then acquire mq->lock and continue with the stale result\nof the unlocked check.\n\nThis can corrupt the SMQ queues or hash table by deleting an entry that\nis no longer on those structures. It can also hit the allocation check in\nfree_entry() when the same entry is freed again.\n\nMove the allocation check under mq->lock so the predicate and the\ndestructive operations are serialized by the same lock.",
   "datePublished": "Jun 25, 2026, 8:39:52 AM",
-  "dateUpdated": "Jun 25, 2026, 8:39:52 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:57:32 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/c242c7af2aecf0b538b8623bdb86b8b441da38d9",
     "https://git.kernel.org/stable/c/13da856c86fb8c2ccab95034fd77da1bb2c2a17c",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/d3f0a606b9f278ece8a0df626ded9c4044071235"
   ],
   "aliases": [
-    "CVE-2026-53265"
+    "CVE-2026-53265",
+    "GHSA-257g-7vrp-j9f8"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.1,
   "enisaIdProduct": [
     {
       "id": "0242bbbd-483d-3abb-ae7e-55081bf304a8",

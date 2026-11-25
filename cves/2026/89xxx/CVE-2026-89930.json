@@ -3,9 +3,12 @@
   "enisaUuid": "3e4c4dbb-7320-377d-8fcd-a9de43cc8c62",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: nVMX: Service local TLB flushes on failed nested VM-Enter\n\nKVM services local TLB flushes on \"full\" nested VM-Exits (through\n__nested_vmx_vmexit()), but not if a nested VM-Enter fails (e.g. due to\nfailed VMCS checks in nested_vmx_enter_non_root_mode()).\n\nHowever, it is possible that KVM had queued TLB flushes that need to be\nperformed, even if the nested VM-Enter was not successful. For example,\nif VPID is disabled for L2 (via nested_vmx_transition_tlb_flush(), or if\nvia the MSR load lists, as the SDM says:\n\n  If any MSR is being loaded in such a way that would architecturally\n  require a TLB flush, the TLBs are updated so that, after VM entry, the\n  logical processor will not use any translations that were cached before\n  the transition.\n\nThe SDM is unclear about when the TLB flush should occur, and whether or\nnot a failed VM entry would flush the TLB, so it is safer to always\ndo the TLB flush in this case.\n\nMore concretely, KVM also updates the last VPID L1 used for L2 in\nnested_vmx_transition_tlb_flush() (i.e. last_vpid), even if the VM entry\nultimately fails. With the current code, KVM could miss a TLB flush if\nL1 changes L2's VPID, then does a failed VM entry followed by a\nsuccessful one, as the failed VM entry would update last_vpid but not\nactually flush the TLB. Servicing local TLB flushes on failed VM entries\nmakes sure that the TLB is always flushed when last_vpid is updated.",
   "datePublished": "Sep 16, 2026, 10:32:21 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:21 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:33:29 PM",
+  "baseScore": 9.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/b577a7cd6d984dd430af88ee1c9e03da71b73ee0",
     "https://git.kernel.org/stable/c/c0c66cd575e31218da6a7d104c6ef80b0830b60c",
     "https://git.kernel.org/stable/c/1025b938dc439b75c720a568a855a13eeb245686",
     "https://git.kernel.org/stable/c/312cdb6d8940827dea63a7a52fb714a5049f06d1",
@@ -15,11 +18,22 @@
     "https://git.kernel.org/stable/c/05a0b701d1089fb57beeb8982f23c3bbafe0fa8b"
   ],
   "aliases": [
-    "CVE-2026-89930"
+    "CVE-2026-89930",
+    "GHSA-j569-2qg3-pw8x"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
+    {
+      "id": "00d15553-9071-35ba-a3a7-95e05532679f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "054bb772-75da-3b54-9fd6-cb0b79a58595",
       "product": {
@@ -49,16 +63,6 @@
         }
       },
       "product_version": "patch: 7.2.5"
-    },
-    {
-      "id": "103a1084-a55e-3ec4-bd2c-dedeb436d922",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "122e0fca-cf0a-30a7-a39e-87cc11c3badd",
@@ -159,6 +163,26 @@
         }
       },
       "product_version": "5c614b3583e7b6dab0c86356fa36c2bcbb8322a0 <05a0b701d1089fb57beeb8982f23c3bbafe0fa8b"
+    },
+    {
+      "id": "790dcc67-feaf-3d83-b7b0-89c023a210ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "81581001-5ce3-32da-abf8-4c51c7a41353",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5c614b3583e7b6dab0c86356fa36c2bcbb8322a0 <b577a7cd6d984dd430af88ee1c9e03da71b73ee0"
     },
     {
       "id": "8d5b38bc-46eb-3d68-999c-db6d87d9dd15",

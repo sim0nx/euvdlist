@@ -1,0 +1,89 @@
+{
+  "id": "EUVD-2021-34563",
+  "enisaUuid": "00c231cb-b28f-347e-9751-aa64f9c4540d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ni2c: virtio: disable timeout handling\n\nIf a timeout is hit, it can result is incorrect data on the I2C bus\nand/or memory corruptions in the guest since the device can still be\noperating on the buffers it was given while the guest has freed them.\n\nHere is, for example, the start of a slub_debug splat which was\ntriggered on the next transfer after one transfer was forced to timeout\nby setting a breakpoint in the backend (rust-vmm/vhost-device):\n\n BUG kmalloc-1k (Not tainted): Poison overwritten\n First byte 0x1 instead of 0x6b\n Allocated in virtio_i2c_xfer+0x65/0x35c age=350 cpu=0 pid=29\n \t__kmalloc+0xc2/0x1c9\n \tvirtio_i2c_xfer+0x65/0x35c\n \t__i2c_transfer+0x429/0x57d\n \ti2c_transfer+0x115/0x134\n \ti2cdev_ioctl_rdwr+0x16a/0x1de\n \ti2cdev_ioctl+0x247/0x2ed\n \tvfs_ioctl+0x21/0x30\n \tsys_ioctl+0xb18/0xb41\n Freed in virtio_i2c_xfer+0x32e/0x35c age=244 cpu=0 pid=29\n \tkfree+0x1bd/0x1cc\n \tvirtio_i2c_xfer+0x32e/0x35c\n \t__i2c_transfer+0x429/0x57d\n \ti2c_transfer+0x115/0x134\n \ti2cdev_ioctl_rdwr+0x16a/0x1de\n \ti2cdev_ioctl+0x247/0x2ed\n \tvfs_ioctl+0x21/0x30\n \tsys_ioctl+0xb18/0xb41\n\nThere is no simple fix for this (the driver would have to always create\nbounce buffers and hold on to them until the device eventually returns\nthe buffers), so just disable the timeout support for now.",
+  "datePublished": "May 24, 2024, 3:12:50 PM",
+  "dateUpdated": "Aug 5, 2026, 8:48:25 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/cc432b0727ce404cc13e8f6b5ce29f412c3f9f1f",
+    "https://git.kernel.org/stable/c/84e1d0bf1d7121759622dabf8fbef4c99ad597c5"
+  ],
+  "aliases": [
+    "CVE-2021-47561"
+  ],
+  "assigner": "Linux",
+  "epss": 0.2,
+  "enisaIdProduct": [
+    {
+      "id": "130eaee3-5f70-355a-9596-0ca281b4947d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.6"
+    },
+    {
+      "id": "29faa5e7-386a-3cab-a3cd-b341fba5087b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16"
+    },
+    {
+      "id": "70b0ba61-302e-3630-abbc-9a36dfa69199",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3cfc88380413d20f777dc6648a38f683962e52bf <84e1d0bf1d7121759622dabf8fbef4c99ad597c5"
+    },
+    {
+      "id": "88dcdb91-a4fe-34bd-a51f-eb32197916d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3cfc88380413d20f777dc6648a38f683962e52bf <cc432b0727ce404cc13e8f6b5ce29f412c3f9f1f"
+    },
+    {
+      "id": "ac121b74-d1a7-3ae5-88c2-c107b911fa34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "dd219659-73b8-3009-a794-1370187edb00",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e3ebd468-1e34-35cd-9584-eb22911a4573",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

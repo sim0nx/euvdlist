@@ -3,7 +3,7 @@
   "enisaUuid": "4514835a-4993-349a-9e30-1886567be264",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: isci: Fix use-after-free in device removal path\n\nThe ISCI completion tasklet is initialized in isci_host_alloc()\n(drivers/scsi/isci/init.c:496) and scheduled from both MSI-X and legacy\ninterrupt handlers (drivers/scsi/isci/host.c:223,613).\n\nisci_host_deinit() stops the controller and waits for stop completion,\nbut it never kills completion_tasklet before teardown continues. A\ntop-of-function tasklet_kill() is not sufficient here: interrupts are\nonly disabled when isci_host_stop_complete() runs, so until\nwait_for_stop() returns the IRQ handlers can still requeue the\ntasklet. The tasklet callback also re-enables interrupts after draining\ncompletions, so killing the tasklet before the source is quiesced leaves\nthe same race open.\n\nOnce wait_for_stop() returns, no further IRQ-driven scheduling can\noccur. Kill completion_tasklet there so teardown cannot race a queued\ntasklet running on a dead ihost. On remove or unload, the stale callback\ncan otherwise dereference ihost and touch ihost->smu_registers after the\nhost lifetime ends.\n\nA UML + KASAN analogue reproduced the failure class both with no\ntasklet_kill() and with tasklet_kill() placed before source quiesce, and\nstayed clean once the kill happened after quiescing the scheduling\nsource.\n\nThis mirrors commit f6ab594672d4 (\"scsi: aic94xx: fix use-after-free in\ndevice removal path\"), but ISCI needs the kill after wait_for_stop().",
   "datePublished": "Jul 19, 2026, 3:40:07 PM",
-  "dateUpdated": "Jul 19, 2026, 3:40:07 PM",
+  "dateUpdated": "Nov 6, 2026, 4:34:25 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1412995e10c74644b47f242aea6e4f3d4180e806",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/b52a8d52c3125ec9a93106ed816582368de34426"
   ],
   "aliases": [
-    "CVE-2026-64103"
+    "CVE-2026-64103",
+    "GHSA-2g34-2vmv-m9r2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "0115a3f5-ea26-3d35-a059-67f6eb14789d",

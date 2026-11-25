@@ -3,19 +3,22 @@
   "enisaUuid": "8e7c9455-3a5c-3619-b632-9ff05eb5b8d6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: hci_core: Fix race condition during device registration\n\nIn hci_register_dev(), the power_on work item is queued to\nhdev->req_workqueue before initializing hdev->adv_monitors_idr and\nregistering the MSFT extension via msft_register(). For devices marked with\nquirks such as HCI_QUIRK_RAW_DEVICE, the HCI_UNCONFIGURED flag is set on\nthe device. When the power_on work item runs concurrently on another CPU,\nhci_power_on() detects that the device is unconfigured and immediately\ninvokes hci_dev_do_close(), which calls msft_do_close().\n\nConcurrently, msft_register() allocates the msft structure and exposes it\nto hdev->msft_data prior to calling mutex_init(&msft->filter_lock). If\nmsft_do_close() executes while hdev->msft_data is already assigned but the\nmutex has not yet been initialized, mutex_lock(&msft->filter_lock) operates\non an uninitialized mutex, triggering a DEBUG_LOCKS warning:\n\nDEBUG_LOCKS_WARN_ON(lock->magic != lock)\nWARNING: kernel/locking/mutex.c:625 at __mutex_lock_common\nkernel/locking/mutex.c:625 [inline]\nWARNING: kernel/locking/mutex.c:625 at __mutex_lock+0x12d8/0x1550\nkernel/locking/mutex.c:821\n...\nCall Trace:\n <TASK>\n msft_do_close+0x308/0x7b0 net/bluetooth/msft.c:693\n hci_dev_close_sync+0x86b/0x10a0 net/bluetooth/hci_sync.c:5522\n hci_dev_do_close net/bluetooth/hci_core.c:499 [inline]\n hci_power_on+0x32c/0x750 net/bluetooth/hci_core.c:937\n process_one_work kernel/workqueue.c:3322 [inline]\n process_scheduled_works+0xa8e/0x14e0 kernel/workqueue.c:3405\n worker_thread+0x92d/0xe10 kernel/workqueue.c:3486\n kthread+0x388/0x470 kernel/kthread.c:436\n ret_from_fork+0x514/0xb70 arch/x86/kernel/process.c:158\n ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245\n </TASK>\n\nFix this by moving the queue_work() call in hci_register_dev() to after\nidr_init(&hdev->adv_monitors_idr) and msft_register(hdev) so that device\nstructures and extensions are fully initialized before asynchronous tasks\ncan access them. Additionally, assign hdev->msft_data in msft_register()\nonly after mutex_init(&msft->filter_lock) has completed.",
   "datePublished": "Sep 25, 2026, 10:35:57 AM",
-  "dateUpdated": "Sep 25, 2026, 10:35:57 AM",
+  "dateUpdated": "Nov 23, 2026, 7:59:29 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/f25b96a424e0ba0ae3176c9681412c020f0f0054",
+    "https://git.kernel.org/stable/c/593e64f64a20b25e4042c3ee863119eb7f991785",
     "https://git.kernel.org/stable/c/b1faf348c29e6f8302ec7769cbf1c1ef05be014f",
     "https://git.kernel.org/stable/c/a11ebe8dc0333fb870bbbb656b34690e87ee3f98",
     "https://git.kernel.org/stable/c/d427b1c71d9798083e954d3c13469dc0a2305868",
     "https://git.kernel.org/stable/c/57938bbdb9bf7fd41cbd5cd509ec10c4b22bec18"
   ],
   "aliases": [
+    "GHSA-2gv9-7823-fxfm",
     "CVE-2026-98109"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.09,
   "enisaIdProduct": [
     {
       "id": "0865f45b-7b68-3aad-9502-ccb77c4f7013",
@@ -48,16 +51,6 @@
       "product_version": "6.6"
     },
     {
-      "id": "25c7b178-dc38-39cf-b92f-8e643c94f050",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc2"
-    },
-    {
       "id": "33064987-ddeb-365b-93a0-7bcedc99303f",
       "product": {
         "name": "Linux",
@@ -78,6 +71,26 @@
       "product_version": "patch: 6.12.111"
     },
     {
+      "id": "516145ff-4361-3d8d-be2f-e740e07a0149",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.158"
+    },
+    {
+      "id": "63ee4c89-0da1-3e5a-80b5-fc1a52dae0eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "6bd64cea-1001-364d-b4c0-e0d480940a4a",
       "product": {
         "name": "Linux",
@@ -86,6 +99,16 @@
         }
       },
       "product_version": "6.5.3 <6.6"
+    },
+    {
+      "id": "6fbf03ae-c44f-3bd4-93d3-693dae48ac6b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9e14606d8f38ea52a38c27692a9c1513c987a5da <593e64f64a20b25e4042c3ee863119eb7f991785"
     },
     {
       "id": "8188b133-ddc8-3c97-adc1-b7485abfba7d",
@@ -146,6 +169,16 @@
         }
       },
       "product_version": "80fe27811c56ecd3896c3d511ab8298146071d98"
+    },
+    {
+      "id": "f26407ff-f767-34c9-8cfc-ac6f89c2de31",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "58ec7da3d83f49c42f3c73fea7e7c2374f532e54 <f25b96a424e0ba0ae3176c9681412c020f0f0054"
     },
     {
       "id": "fc40e29c-1707-3d81-bcbd-a75985063cd9",

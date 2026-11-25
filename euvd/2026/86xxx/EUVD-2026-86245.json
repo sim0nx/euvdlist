@@ -3,9 +3,12 @@
   "enisaUuid": "e9dda9a7-cef3-395e-bd70-5ccd90690c1e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\narm64: mm: Fix the lockless page-table walk in show_pte()\n\nshow_pte() walks page tables locklessly and can run with interrupts\nenabled. A concurrent teardown can free a table page while it is being\nwalked. It can also clear a parent entry after show_pte() checked it; the\nregular pXd_offset() helpers then reread the cleared entry and can derive a\nbogus lower-level pointer and fault again.\n\nUse the lockless offset helpers with the saved parent entries, as\ngup_fast() does, and pass the saved PMD to pte_offset_map().\n\nFor task page tables, arm64 selects MMU_GATHER_RCU_TABLE_FREE. Disable\nlocal interrupts around the walk to hold off RCU-deferred table frees and\nblock the tlb_remove_table_sync_one() IPI until the walk is finished.\n\nPlace the IRQ guard after the header print. This does not make the output a\nconsistent snapshot, but prevents the task page-table walk from\ndereferencing a released table page or deriving a pointer from a different\nparent value.",
   "datePublished": "Sep 24, 2026, 3:34:27 PM",
-  "dateUpdated": "Sep 24, 2026, 3:34:27 PM",
+  "dateUpdated": "Oct 30, 2026, 12:36:29 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/b8f06b73ad146d84a33c124563c93eeef4f5b674",
+    "https://git.kernel.org/stable/c/b3535b6cb2c48f97b8c3378eb9ea12538425bf14",
+    "https://git.kernel.org/stable/c/e1b06278a7e241da0cd3187871e67255f956d184",
     "https://git.kernel.org/stable/c/08d931a0a850ad16a64f2cd23a19f40795cdbdf7",
     "https://git.kernel.org/stable/c/b28fe65a36b8209b6adcf2722c7ce974cf9ac8d1",
     "https://git.kernel.org/stable/c/68cbd70795dd8c06e7ccdc4eb0b74c5b180076c3",
@@ -13,11 +16,22 @@
     "https://git.kernel.org/stable/c/a77644d009dece1104b6fcc6e322b0e4503db0d6"
   ],
   "aliases": [
+    "GHSA-5wwm-gpr7-9rm3",
     "CVE-2026-93239"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
+    {
+      "id": "0a50af3c-6b38-3e75-af13-4b997e6e7b6f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
     {
       "id": "2ae860fd-a771-36ff-92e4-35bac500bc6c",
       "product": {
@@ -29,16 +43,6 @@
       "product_version": "patch: 6.12.110"
     },
     {
-      "id": "2ed43d52-5244-3e41-94b1-9f9f9d0acd69",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc2"
-    },
-    {
       "id": "3092b46b-7f9f-3c93-b8af-0115a93504ce",
       "product": {
         "name": "Linux",
@@ -47,6 +51,26 @@
         }
       },
       "product_version": "1d18c47c735e8adfe531fc41fae31e98f86b68fe <08d931a0a850ad16a64f2cd23a19f40795cdbdf7"
+    },
+    {
+      "id": "32171ad8-1ff8-30f6-9f5c-b62403c9dd6d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1d18c47c735e8adfe531fc41fae31e98f86b68fe <b3535b6cb2c48f97b8c3378eb9ea12538425bf14"
+    },
+    {
+      "id": "37ec7fb2-0319-3bd4-bea1-3485f363561a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "3968e0c3-e097-3e68-9da5-a76fd98ff2e0",
@@ -69,6 +93,16 @@
       "product_version": "1d18c47c735e8adfe531fc41fae31e98f86b68fe <68cbd70795dd8c06e7ccdc4eb0b74c5b180076c3"
     },
     {
+      "id": "4937dfca-41b6-380d-86dd-9936d4eab57a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1d18c47c735e8adfe531fc41fae31e98f86b68fe <e1b06278a7e241da0cd3187871e67255f956d184"
+    },
+    {
       "id": "4a82a544-b620-3acd-9172-c161cef1ec9f",
       "product": {
         "name": "Linux",
@@ -77,6 +111,16 @@
         }
       },
       "product_version": "patch: 6.18.51"
+    },
+    {
+      "id": "503cf9b8-2483-3b2b-86c3-51aeefeb81f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1d18c47c735e8adfe531fc41fae31e98f86b68fe <b8f06b73ad146d84a33c124563c93eeef4f5b674"
     },
     {
       "id": "69ceff6f-12e0-3653-bdab-fd141589ca16",
@@ -127,6 +171,26 @@
         }
       },
       "product_version": "1d18c47c735e8adfe531fc41fae31e98f86b68fe <0f05d95b99164a9ccc4cf4a4920e0ff0228138ad"
+    },
+    {
+      "id": "b6c6db73-1225-30b2-bacd-6d546b35633a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "c3db1181-be1b-3314-9a1c-d94f3252c55f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "e44ece30-b2a7-32b2-b88d-eab1d66fd7be",

@@ -1,0 +1,174 @@
+{
+  "id": "EUVD-2022-51324",
+  "enisaUuid": "1ca69f42-82f6-3bcc-a5ac-90385dc95309",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncrypto: qcom-rng - ensure buffer for generate is completely filled\n\nThe generate function in struct rng_alg expects that the destination\nbuffer is completely filled if the function returns 0. qcom_rng_read()\ncan run into a situation where the buffer is partially filled with\nrandomness and the remaining part of the buffer is zeroed since\nqcom_rng_generate() doesn't check the return value. This issue can\nbe reproduced by running the following from libkcapi:\n\n    kcapi-rng -b 9000000 > OUTFILE\n\nThe generated OUTFILE will have three huge sections that contain all\nzeros, and this is caused by the code where the test\n'val & PRNG_STATUS_DATA_AVAIL' fails.\n\nLet's fix this issue by ensuring that qcom_rng_read() always returns\nwith a full buffer if the function returns success. Let's also have\nqcom_rng_generate() return the correct value.\n\nHere's some statistics from the ent project\n(https://www.fourmilab.ch/random/) that shows information about the\nquality of the generated numbers:\n\n    $ ent -c qcom-random-before\n    Value Char Occurrences Fraction\n      0           606748   0.067416\n      1            33104   0.003678\n      2            33001   0.003667\n    ...\n    253   \ufffd        32883   0.003654\n    254   \ufffd        33035   0.003671\n    255   \ufffd        33239   0.003693\n\n    Total:       9000000   1.000000\n\n    Entropy = 7.811590 bits per byte.\n\n    Optimum compression would reduce the size\n    of this 9000000 byte file by 2 percent.\n\n    Chi square distribution for 9000000 samples is 9329962.81, and\n    randomly would exceed this value less than 0.01 percent of the\n    times.\n\n    Arithmetic mean value of data bytes is 119.3731 (127.5 = random).\n    Monte Carlo value for Pi is 3.197293333 (error 1.77 percent).\n    Serial correlation coefficient is 0.159130 (totally uncorrelated =\n    0.0).\n\nWithout this patch, the results of the chi-square test is 0.01%, and\nthe numbers are certainly not random according to ent's project page.\nThe results improve with this patch:\n\n    $ ent -c qcom-random-after\n    Value Char Occurrences Fraction\n      0            35432   0.003937\n      1            35127   0.003903\n      2            35424   0.003936\n    ...\n    253   \ufffd        35201   0.003911\n    254   \ufffd        34835   0.003871\n    255   \ufffd        35368   0.003930\n\n    Total:       9000000   1.000000\n\n    Entropy = 7.999979 bits per byte.\n\n    Optimum compression would reduce the size\n    of this 9000000 byte file by 0 percent.\n\n    Chi square distribution for 9000000 samples is 258.77, and randomly\n    would exceed this value 42.24 percent of the times.\n\n    Arithmetic mean value of data bytes is 127.5006 (127.5 = random).\n    Monte Carlo value for Pi is 3.141277333 (error 0.01 percent).\n    Serial correlation coefficient is 0.000468 (totally uncorrelated =\n    0.0).\n\nThis change was tested on a Nexus 5 phone (msm8974 SoC).",
+  "datePublished": "Mar 5, 2024, 11:18:06 AM",
+  "dateUpdated": "Aug 5, 2026, 8:51:33 AM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N",
+  "references": [
+    "https://git.kernel.org/stable/c/a8e32bbb96c25b7ab29b1894dcd45e0b3b08fd9d",
+    "https://git.kernel.org/stable/c/184f7bd08ce56f003530fc19f160d54e75bf5c9d",
+    "https://git.kernel.org/stable/c/0f9b7b8df17525e464294c916acc8194ce38446b",
+    "https://git.kernel.org/stable/c/ab9337c7cb6f875b6286440b1adfbeeef2b2b2bd",
+    "https://git.kernel.org/stable/c/485995cbc98a4f77cfd4f8ed4dd7ff8ab262964d",
+    "https://git.kernel.org/stable/c/a680b1832ced3b5fa7c93484248fd221ea0d614b"
+  ],
+  "aliases": [
+    "GHSA-2689-83hc-5vvp",
+    "CVE-2022-48629"
+  ],
+  "assigner": "Linux",
+  "epss": 0.54,
+  "enisaIdProduct": [
+    {
+      "id": "12865e5f-6585-3247-aaf3-3091c9ed827a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ceec5f5b59882b871a722ca4d49b767a09a4bde9 <a8e32bbb96c25b7ab29b1894dcd45e0b3b08fd9d"
+    },
+    {
+      "id": "3e74bcb4-cf54-3fa3-9feb-a5ecf5ced27b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16.17"
+    },
+    {
+      "id": "42a59603-697e-3314-aea4-905c49651fde",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.187"
+    },
+    {
+      "id": "473093e3-3c3b-3f6f-b428-a3e7a6a16581",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ceec5f5b59882b871a722ca4d49b767a09a4bde9 <ab9337c7cb6f875b6286440b1adfbeeef2b2b2bd"
+    },
+    {
+      "id": "5b3b0f6b-938d-3c62-ba1f-a29a2befba95",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7dee3708-83ec-3180-93ab-c5951edd5dfe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ceec5f5b59882b871a722ca4d49b767a09a4bde9 <485995cbc98a4f77cfd4f8ed4dd7ff8ab262964d"
+    },
+    {
+      "id": "8572ab62-c303-3f88-8d87-6d15cf1dbbbf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ceec5f5b59882b871a722ca4d49b767a09a4bde9 <0f9b7b8df17525e464294c916acc8194ce38446b"
+    },
+    {
+      "id": "8ea14694-f8ba-3633-8399-5ad89c9ddf74",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ceec5f5b59882b871a722ca4d49b767a09a4bde9 <184f7bd08ce56f003530fc19f160d54e75bf5c9d"
+    },
+    {
+      "id": "9ab70cb4-f612-3a33-9b75-b9b3b717633f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.108"
+    },
+    {
+      "id": "9e4de422-26f0-3a4b-b4ca-099074f03995",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.17"
+    },
+    {
+      "id": "b7eea00d-366f-32f1-b5e6-33cca3477b74",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.31"
+    },
+    {
+      "id": "d018b917-87a5-3044-99d3-29e08585e2ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.236"
+    },
+    {
+      "id": "d72f3e1c-647e-3f3b-9f71-08d1da127fe7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ceec5f5b59882b871a722ca4d49b767a09a4bde9 <a680b1832ced3b5fa7c93484248fd221ea0d614b"
+    },
+    {
+      "id": "fbd91993-4f92-3046-91fb-cd1270b8605a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.19"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3a518ec7-9157-3452-a97a-4fe974b9fc99",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

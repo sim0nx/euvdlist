@@ -3,8 +3,10 @@
   "enisaUuid": "45eb7562-c302-3a5d-9042-852fce5b1363",
   "description": "Issue summary: QUIC server may double free QRX (QUIC record layer RX) object\nwhen channel creation fails for initial packet.\n\nImpact summary: Double free leads to heap corruption, which typically results in \ntermination of QUIC server process, leading to Denial of Service. There is so\nfar no evidence that this double free is exploitable for remote code execution,\nthus it is considered highly improbable.\n\nCWE: CWE-415: Double Free\n\nDescription: In order to validate initial packet, OpenSSL QUIC stack default\npacket handler (port_default_packet_handler()) creates a so-called QRX object.\nIf the initial packet validates successfully with QRX object, the default packet\nhandler proceeds to channel (connection object) creation. The QRX object used\nfor packet validation is passed to port_bind_channel(), so it becomes part of\nthe newly created connection. If port_bind_channel() fails, then it also frees\nthe QRX object. Once port_bind_channel() returns, the port_default_packet_handler()\ndetects the failure and proceeds to the error branch, where the same QRX object is\nfreed for the second time.\n\nThe failure in port_bind_channel() function can be induced with a relatively\nlow effort by a malformed (non RFC 9000 compliant) INITIAL packet. If the packet\ncarries DCID (destination connection ID) which is shorter than 8 bytes, then\nport_bind_channel() jumps to the error path after ossl_quic_lcidm_enrol_odcid()\ndetects that the DCID has invalid length.\n\nFIPS impact: no\nThe FIPS module is not affected, as the QUIC implementation is outside of\nthe OpenSSL FIPS module boundary.",
   "datePublished": "Aug 25, 2026, 12:59:04 PM",
-  "dateUpdated": "Aug 25, 2026, 12:59:04 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 25, 2026, 2:15:04 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://openssl-library.org/news/secadv/20260825.txt",
     "https://github.com/openssl/openssl/commit/a14a1deac403522fbeafabcb198503cf6caa7dc4",
@@ -12,10 +14,11 @@
     "https://github.com/openssl/openssl/commit/967582d5037f01a26b6d19beae19af62a1b15c3c"
   ],
   "aliases": [
-    "CVE-2026-18798"
+    "CVE-2026-18798",
+    "GHSA-3j55-qf57-hqc2"
   ],
   "assigner": "openssl",
-  "epss": 0.0,
+  "epss": 1.73,
   "enisaIdProduct": [
     {
       "id": "1df41954-1568-35fb-8f68-3fcdaf543a65",

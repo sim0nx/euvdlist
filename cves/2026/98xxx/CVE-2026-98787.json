@@ -3,17 +3,18 @@
   "enisaUuid": "7238d2cb-da5a-363a-bb55-a5b91b1a9ea0",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix missing migration protection in __rhtab_map_lookup_and_delete_batch()\n\nbpf_mem_cache_free_rcu() uses this_cpu_ptr() which requires migration\nto be disabled. All callers of rhtab_delete_elem() disable migration\nexcept __rhtab_map_lookup_and_delete_batch(), which calls it under\nrcu_read_lock() only.\n\nOn CONFIG_PREEMPT_RCU, rcu_read_lock() does not disable preemption or\nmigration, so the task can migrate between CPUs during the delete loop,\ncausing this_cpu_ptr() to trigger:\n\n  BUG: using smp_processor_id() in preemptible [00000000] code\n\nFix by wrapping the delete loop in migrate_disable()/migrate_enable()\nin __rhtab_map_lookup_and_delete_batch(), matching the migration\nprotection that the other callers already provide.",
   "datePublished": "Oct 18, 2026, 3:48:23 PM",
-  "dateUpdated": "Oct 18, 2026, 3:48:23 PM",
+  "dateUpdated": "Oct 19, 2026, 9:25:40 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/94f41ec5fa578765b74ad5736c2f029e7aabc46d",
     "https://git.kernel.org/stable/c/de020dc8049bfb2b22e3b6d99c031feb2e22d112"
   ],
   "aliases": [
+    "GHSA-c3cw-2pj9-44qj",
     "CVE-2026-98787"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "52e2f429-872a-3f43-b290-0ae057afef55",
@@ -46,16 +47,6 @@
       "product_version": "818e0084822742fc00eacbf5df3476a5e72c7d0e <94f41ec5fa578765b74ad5736c2f029e7aabc46d"
     },
     {
-      "id": "9e44e76b-e2d9-3f87-93b2-483ce4a2f095",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc6"
-    },
-    {
       "id": "ac6d3472-9e89-39eb-aaf8-a6944df67937",
       "product": {
         "name": "Linux",
@@ -74,6 +65,16 @@
         }
       },
       "product_version": "7.2"
+    },
+    {
+      "id": "edef12f5-b18e-3b1d-a33a-e0cad1f16c3c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

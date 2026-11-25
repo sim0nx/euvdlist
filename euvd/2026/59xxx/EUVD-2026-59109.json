@@ -2,8 +2,8 @@
   "id": "EUVD-2026-59109",
   "enisaUuid": "a6664eb0-3899-3d68-aa6f-129272d01371",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncgroup/cpuset: rebind mm mempolicy to effective_mems, not mems_allowed\n\nCreating a child cpuset where cpuset.mems is never set leads to a div/0\nwhen a VMA mempolicy with MPOL_F_RELATIVE_NODES rebinds in response to a\nCPU hotplug event.\n\nReproduction steps:\n 1) Create a cgroup w/ cpuset controls (do not set cpuset.mems)\n 2) Move the task into the child cpuset\n 3) Create a VMA mempolicy for that task with MPOL_F_RELATIVE_NODES\n 4) unplug and hotplug a cpu\n      echo 0 > /sys/devices/system/cpu/cpu1/online\n      echo 1 > /sys/devices/system/cpu/cpu1/online\n 5) mempolicy rebind does a div/0 in mpol_relative_nodemask on the\n    call to __nodes_fold()\n\nThe cpuset code passes (cs->mems_allowed) which is not guaranteed to have\nnodes to the rebind routine.  Use cs->effective_mems instead, which is\nguaranteed to have a non-empty nodemask once we reach that code path.\n\n[ david: add a comment, slightly rephrase description ]",
-  "datePublished": "Aug 15, 2026, 6:32:09 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:09 AM",
+  "datePublished": "Aug 15, 2026, 5:51:39 AM",
+  "dateUpdated": "Nov 6, 2026, 4:55:18 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b7adeba2a21c98c7b20f18e27e3ead86bdb5e08d",
@@ -13,15 +13,14 @@
     "https://git.kernel.org/stable/c/fc680afc510157f6b137956011c09abc23eb0842",
     "https://git.kernel.org/stable/c/c844b7d9a9586de15dd28c06da5cc7f6ab28787d",
     "https://git.kernel.org/stable/c/c17f06d8a085d6be58b544a440ce243f5e441a60",
-    "https://git.kernel.org/stable/c/b983c56426383e4a06fa5970c4e33cee879b1482",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72010"
+    "https://git.kernel.org/stable/c/b983c56426383e4a06fa5970c4e33cee879b1482"
   ],
   "aliases": [
     "GHSA-m46q-74wj-vxmp",
     "CVE-2026-72010"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0b07ec7c-6c89-31b5-a546-986c6b8085da",
@@ -64,14 +63,14 @@
       "product_version": "patch: 6.12.97"
     },
     {
-      "id": "38a06196-f0de-38a3-aec4-19798372c326",
+      "id": "3d11e3dd-17fe-3992-b11b-c4111b1f73c9",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc4"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "4780c4c5-3fac-3bdb-83bb-56c50e3b923e",

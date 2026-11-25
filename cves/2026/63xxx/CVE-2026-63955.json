@@ -3,17 +3,20 @@
   "enisaUuid": "75b48614-fdba-33b8-bb2f-1e7a519d1479",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/vmalloc: do not trigger BUG() on BH disabled context\n\n__get_vm_area_node() currently triggers a BUG() if in_interrupt() returns\ntrue.  However, in_interrupt() also reports true when BH are disabled.\n\nThe bridge code can call rhashtable_lookup_insert_fast() with bottom\nhalves disabled:\n\n__vlan_add()\n -> br_fdb_add_local()\n  spin_lock_bh(&br->hash_lock); <-- Disable BH\n   -> fdb_add_local()\n    -> fdb_create()\n     -> rhashtable_lookup_insert_fast()\n      -> kvmalloc()\n       -> vmalloc()\n        -> __get_vm_area_node()\n         -> BUG_ON(in_interrupt())\n  spin_unlock_bh(&br->hash_lock)\n\nthis triggers the BUG() despite the caller not being in NMI or\nhard IRQ context.\n\nReplace the in_interrupt() check with in_nmi() || in_hardirq().",
   "datePublished": "Jul 19, 2026, 2:55:46 PM",
-  "dateUpdated": "Jul 19, 2026, 2:55:46 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:37:39 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ad7eff07b625f53c3fb513b30d7a8c5a79fbc7ce",
     "https://git.kernel.org/stable/c/04aa71da5f35aacdc9ae9cb5150947daa624f641"
   ],
   "aliases": [
+    "GHSA-jvrv-jph4-c9c9",
     "CVE-2026-63955"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.49,
   "enisaIdProduct": [
     {
       "id": "3467e0e3-84bc-3dc8-80f0-a13b2f12344c",

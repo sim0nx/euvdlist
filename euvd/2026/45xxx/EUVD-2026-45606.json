@@ -3,8 +3,10 @@
   "enisaUuid": "6d1681e7-37b5-338c-824d-d15f5da80956",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/rtrs: Fix use-after-free in path file creation cleanup\n\nIn the error path of rtrs_srv_create_path_files(), the sysfs root folders\nmay already have been created and srv_path->kobj may already have been\ninitialized. If a later step fails, the cleanup currently calls\nkobject_put(&srv_path->kobj) before\nrtrs_srv_destroy_once_sysfs_root_folders(srv_path).\n\nkobject_put() may drop the last reference to srv_path->kobj and invoke the\nrelease callback, rtrs_srv_release(), which frees srv_path. The following\ncall to rtrs_srv_destroy_once_sysfs_root_folders(srv_path) then\ndereferences srv_path internally to access srv_path->srv, resulting in a\nuse-after-free.\n\nThis failure path is reached before rtrs_srv_create_path_files() returns\nsuccess, so the successful-path lifetime handling is not involved.\n\nFix this by destroying the sysfs root folders before calling\nkobject_put(&srv_path->kobj), so srv_path is still valid while the helper\naccesses it.\n\nThis issue was found by a static analysis tool I am developing.",
   "datePublished": "Jul 19, 2026, 3:39:22 PM",
-  "dateUpdated": "Jul 19, 2026, 3:39:22 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:38:27 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/01e42aabaf7632beb4bf235c7238b96c746d4144",
     "https://git.kernel.org/stable/c/548f3956e53a7f7bde912d8129010b8986d5e602",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/5b74373390113fba798a76b483837029ab010fef"
   ],
   "aliases": [
+    "GHSA-2qpc-f6fh-fxg4",
     "CVE-2026-64033"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.49,
   "enisaIdProduct": [
     {
       "id": "2371633f-bc53-376f-b738-8ab4c60bbe79",

@@ -3,18 +3,21 @@
   "enisaUuid": "5d94b67a-9cc7-3450-aa3e-14b536015cf5",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nstaging: media: ipu7: fix double-free and use-after-free in error paths\n\nIn both ipu7_isys_init() and ipu7_psys_init(), pdata is allocated and\nthen passed to ipu7_bus_initialize_device(), which stores it in\nadev->pdata. The ipu7_bus_release() function frees adev->pdata when the\ndevice's reference count drops to zero.\n\nTwo error paths incorrectly call kfree(pdata) after the device teardown\nhas already freed it:\n\n1. When ipu7_mmu_init() fails: put_device() is called, which drops the\n   reference count to zero and triggers ipu7_bus_release() ->\n   kfree(pdata). The subsequent kfree(pdata) is a double-free.\n\n2. When ipu7_bus_add_device() fails: it calls auxiliary_device_uninit()\n   internally, which calls put_device() -> ipu7_bus_release() ->\n   kfree(pdata). The subsequent kfree(pdata) is again a double-free.\n\nNote that the kfree(pdata) when ipu7_bus_initialize_device() itself\nfails is correct, because in that case auxiliary_device_init() failed\nand the release function was never set up, so pdata must be freed\nmanually.\n\nAdditionally, the error code was not saved before calling put_device(),\ncausing ERR_CAST() to dereference the already-freed adev pointer when\nconstructing the return value. Fix this by saving the error from\ndev_err_probe() before put_device() and returning ERR_PTR() instead.\n\nRemove the redundant kfree(pdata) calls and fix the use-after-free in\nthe return values of the two affected error paths.",
   "datePublished": "Jul 25, 2026, 8:51:18 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:18 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:55:50 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/b5ddc7257bee71f5b8cf9083e2b0ac0427e9fbb3",
     "https://git.kernel.org/stable/c/837c1f9655421055f751ed34745e820a54a27642",
     "https://git.kernel.org/stable/c/d3a9a8cf2d7fd61a2f63df61f6cbc0a9bb007cc0"
   ],
   "aliases": [
-    "CVE-2026-64447"
+    "CVE-2026-64447",
+    "GHSA-q956-6h2r-2rpx"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "116f0d84-b03d-3913-9007-657070fcc697",
@@ -25,16 +28,6 @@
         }
       },
       "product_version": "b7fe4c0019b12d60ece3e99eeb0ccfd5a1d103e5 <837c1f9655421055f751ed34745e820a54a27642"
-    },
-    {
-      "id": "29fd68b0-dde3-3c28-b0a8-8f8a507dc782",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "3268ee49-24ba-3aa3-8b39-725af1f358de",
@@ -85,6 +78,16 @@
         }
       },
       "product_version": "b7fe4c0019b12d60ece3e99eeb0ccfd5a1d103e5 <b5ddc7257bee71f5b8cf9083e2b0ac0427e9fbb3"
+    },
+    {
+      "id": "c7f4d1a0-7eb0-3c67-b620-234f798f1751",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "fba8434a-fbd6-337a-b640-4c4b100f3242",

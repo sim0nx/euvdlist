@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2021-34464",
+  "enisaUuid": "421ff991-5658-39a9-b1e1-8c7c06ac65c8",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncan: j1939: j1939_netdev_start(): fix UAF for rx_kref of j1939_priv\n\nIt will trigger UAF for rx_kref of j1939_priv as following.\n\n        cpu0                                    cpu1\nj1939_sk_bind(socket0, ndev0, ...)\nj1939_netdev_start\n                                        j1939_sk_bind(socket1, ndev0, ...)\n                                        j1939_netdev_start\nj1939_priv_set\n                                        j1939_priv_get_by_ndev_locked\nj1939_jsk_add\n.....\nj1939_netdev_stop\nkref_put_lock(&priv->rx_kref, ...)\n                                        kref_get(&priv->rx_kref, ...)\n                                        REFCOUNT_WARN(\"addition on 0;...\")\n\n====================================================\nrefcount_t: addition on 0; use-after-free.\nWARNING: CPU: 1 PID: 20874 at lib/refcount.c:25 refcount_warn_saturate+0x169/0x1e0\nRIP: 0010:refcount_warn_saturate+0x169/0x1e0\nCall Trace:\n j1939_netdev_start+0x68b/0x920\n j1939_sk_bind+0x426/0xeb0\n ? security_socket_bind+0x83/0xb0\n\nThe rx_kref's kref_get() and kref_put() should use j1939_netdev_lock to\nprotect.",
+  "datePublished": "May 22, 2024, 6:23:21 AM",
+  "dateUpdated": "Aug 5, 2026, 8:47:56 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/a0e47d2833b4f65e6c799f28c6b636d36b8b936d",
+    "https://git.kernel.org/stable/c/864e77771a24c877aaf53aee019f78619cbcd668",
+    "https://git.kernel.org/stable/c/6e8811707e2df0c6ba920f0cad3a3bca7b42132f",
+    "https://git.kernel.org/stable/c/d9d52a3ebd284882f5562c88e55991add5d01586"
+  ],
+  "aliases": [
+    "GHSA-7xq6-r35j-j33m",
+    "CVE-2021-47459"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "0a3b6288-d5af-3aad-ae27-eb1303224083",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.76"
+    },
+    {
+      "id": "2b9acc2b-ea2f-33ce-aacd-1292f1d07261",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9d71dd0c70099914fcd063135da3c580865e924c <864e77771a24c877aaf53aee019f78619cbcd668"
+    },
+    {
+      "id": "34256d35-23b9-3474-af88-991d34aa0113",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9d71dd0c70099914fcd063135da3c580865e924c <6e8811707e2df0c6ba920f0cad3a3bca7b42132f"
+    },
+    {
+      "id": "4a905011-de83-33f3-a880-dc5722ee17ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.4"
+    },
+    {
+      "id": "4c587573-2a1a-38a2-86e6-4589e05c1be9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9d71dd0c70099914fcd063135da3c580865e924c <a0e47d2833b4f65e6c799f28c6b636d36b8b936d"
+    },
+    {
+      "id": "57201535-a098-36d8-8f63-9731f73563b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9d71dd0c70099914fcd063135da3c580865e924c <d9d52a3ebd284882f5562c88e55991add5d01586"
+    },
+    {
+      "id": "a57d6ae5-f1be-3df0-bbd9-74f86e93f4c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.14.15"
+    },
+    {
+      "id": "b9a7539e-bcf7-39e1-8f87-75d20ed5fe8c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.156"
+    },
+    {
+      "id": "c7901e9a-f87e-38ec-9639-abd86d80e77e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15"
+    },
+    {
+      "id": "f89de482-a3c4-302a-8322-e1fb889b3c82",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a123081b-d3f7-3f7a-abf3-688cee84a374",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

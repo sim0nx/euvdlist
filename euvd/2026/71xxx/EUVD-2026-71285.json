@@ -3,7 +3,7 @@
   "enisaUuid": "c6363236-2ee4-3bd4-bf1e-86b9b5dc8c06",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncrypto: qcom-rng - Remove crypto_rng interface\n\nqcom-rng.c exposes the same hardware through two completely separate\ninterfaces, crypto_rng and hwrng.  However, the implementation of this\nis buggy because it permits generation operations from these interfaces\nto run concurrently with each other, accessing the same registers.  That\nis, qcom_rng_generate() synchronizes with itself but not with\nqcom_hwrng_read().  This results in potential repetition of output from\nthe RNG, output of non-random values, etc.\n\nFortunately, there's actually no point in hardware RNG drivers\nimplementing the crypto_rng interface.  It's not actually used by\nanything besides the \"rng\" algorithm type of AF_ALG, which in turn is\nnot actually used in practice.  Other crypto_rng hardware drivers are\nlikewise being phased out, leaving just the hwrng support.\n\nThus, remove it to simplify the code and avoid conflict (and confusion)\nwith the hwrng interface which is the one that actually matters.",
   "datePublished": "Sep 4, 2026, 3:54:44 PM",
-  "dateUpdated": "Sep 4, 2026, 3:54:44 PM",
+  "dateUpdated": "Oct 19, 2026, 8:44:27 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/bb474dcd9d0224264a27a60891f00872b879835f",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/2ecdf5c9910e20f73639bc322f0518a3439d17c0"
   ],
   "aliases": [
+    "GHSA-p9vr-23cc-fh67",
     "CVE-2026-80835"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "075efa62-6443-390b-9528-9f21b5fdf4ec",
@@ -47,16 +48,6 @@
         }
       },
       "product_version": "patch: 7.2.3"
-    },
-    {
-      "id": "25fc76ff-da05-31b7-a35a-b39f19cc5ef5",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "3f802ada-36e7-35fe-b6fb-464077566c52",
@@ -127,6 +118,16 @@
         }
       },
       "product_version": "f29cd5bb64c258f29b4c49452532481f50eb43ca <843e2bdaf8deb8bc341203094dfe582e38ea4af2"
+    },
+    {
+      "id": "eef5a025-f7a5-3a23-adb8-c870018d2329",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "f70c5250-c55a-3702-bad1-38998dea4f4c",

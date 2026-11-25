@@ -3,18 +3,21 @@
   "enisaUuid": "cf4aa675-e315-3513-bd83-b5d27b630c67",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/list_lru: drain before clearing xarray entry on reparent\n\nmemcg_reparent_list_lrus() clears the dying memcg's xarray entry with\nxas_store(&xas, NULL) before reparenting its per-node lists into the\nparent.  This opens a window where a concurrent list_lru_del() arriving\nfor the dying memcg sees xa_load() == NULL, walks to the parent in\nlock_list_lru_of_memcg(), takes the parent's per-node lock, and calls\nlist_del_init() on an item still physically linked on the dying memcg's\nlist.\n\nIf another in-flight thread holds the dying memcg's per-node lock at the\nsame moment (another list_lru_del, or a list_lru_walk_one running an\nisolate callback), both threads modify ->next/->prev pointers on the same\nphysical list under different locks.  Adjacent items can corrupt each\nother's links.\n\nFix it by reversing the order: reparent each per-node list and mark the\nchild's list lru dead and then clear the xarray entry.  Any concurrent\nlist_lru op that finds the still-set xarray entry either takes the dying\nmemcg's per-node lock (synchronizing with the drain) or sees LONG_MIN and\nwalks to the parent, where the items now live.",
   "datePublished": "Jun 25, 2026, 8:38:37 AM",
-  "dateUpdated": "Jun 25, 2026, 8:38:37 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Sep 2, 2026, 12:04:29 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/c19ff4351214f059349788e13e70e74325831ff6",
     "https://git.kernel.org/stable/c/2b66496d794e98f7aeec7688573051f22ec40bac",
     "https://git.kernel.org/stable/c/98733f3f0becb1ae0701d021c1748e974e5fa55c"
   ],
   "aliases": [
+    "GHSA-x5g3-hx3c-gfxx",
     "CVE-2026-53153"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.1,
   "enisaIdProduct": [
     {
       "id": "21957bb4-df3b-3dd5-a894-53896448e76d",

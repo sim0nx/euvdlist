@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2023-59488",
+  "enisaUuid": "51314dd6-2bd0-3a83-a1b3-53f5d46a5b6f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncxl/port: Fix delete_endpoint() vs parent unregistration race\n\nThe CXL subsystem, at cxl_mem ->probe() time, establishes a lineage of\nports (struct cxl_port objects) between an endpoint and the root of a\nCXL topology. Each port including the endpoint port is attached to the\ncxl_port driver.\n\nGiven that setup, it follows that when either any port in that lineage\ngoes through a cxl_port ->remove() event, or the memdev goes through a\ncxl_mem ->remove() event. The hierarchy below the removed port, or the\nentire hierarchy if the memdev is removed needs to come down.\n\nThe delete_endpoint() callback is careful to check whether it is being\ncalled to tear down the hierarchy, or if it is only being called to\nteardown the memdev because an ancestor port is going through\n->remove().\n\nThat care needs to take the device_lock() of the endpoint's parent.\nWhich requires 2 bugs to be fixed:\n\n1/ A reference on the parent is needed to prevent use-after-free\n   scenarios like this signature:\n\n    BUG: spinlock bad magic on CPU#0, kworker/u56:0/11\n    Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS edk2-20230524-3.fc38 05/24/2023\n    Workqueue: cxl_port detach_memdev [cxl_core]\n    RIP: 0010:spin_bug+0x65/0xa0\n    Call Trace:\n      do_raw_spin_lock+0x69/0xa0\n     __mutex_lock+0x695/0xb80\n     delete_endpoint+0xad/0x150 [cxl_core]\n     devres_release_all+0xb8/0x110\n     device_unbind_cleanup+0xe/0x70\n     device_release_driver_internal+0x1d2/0x210\n     detach_memdev+0x15/0x20 [cxl_core]\n     process_one_work+0x1e3/0x4c0\n     worker_thread+0x1dd/0x3d0\n\n2/ In the case of RCH topologies, the parent device that needs to be\n   locked is not always @port->dev as returned by cxl_mem_find_port(), use\n   endpoint->dev.parent instead.",
+  "datePublished": "May 21, 2024, 3:30:53 PM",
+  "dateUpdated": "Oct 30, 2026, 12:17:24 PM",
+  "baseScore": 4.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:H/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/de0c4ff2fcaec149254b32f18b3ec806b312be74",
+    "https://git.kernel.org/stable/c/37179fcc916bce8c3cc7b36d67ef814cce55142b",
+    "https://git.kernel.org/stable/c/6b2e428e673b3f55965674a426c40922e91388aa",
+    "https://git.kernel.org/stable/c/8d2ad999ca3c64cb08cf6a58d227b9d9e746d708"
+  ],
+  "aliases": [
+    "CVE-2023-52771",
+    "GHSA-pqqv-8xrg-2jg9"
+  ],
+  "assigner": "Linux",
+  "epss": 0.18,
+  "enisaIdProduct": [
+    {
+      "id": "1c85828e-5e47-3c40-a5ba-c383b4a74b83",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.3"
+    },
+    {
+      "id": "2066e614-06ce-3737-b182-7f4235e3d96d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8dd2bc0f8e02d39bd80851ca787bcbdb7d495e69 <8d2ad999ca3c64cb08cf6a58d227b9d9e746d708"
+    },
+    {
+      "id": "208c2c15-91ae-315d-9b8f-0b398ba70c1f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.18"
+    },
+    {
+      "id": "2b86b60b-5ba0-309c-bea6-3e70c1008143",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6109eace-68a5-389d-b2ff-ccd12cdb1706",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "7da720ee-f2ca-3938-9d66-21de5ad3bd0d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7"
+    },
+    {
+      "id": "900af9c1-fe56-3980-a4fc-c46e171dfe87",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8dd2bc0f8e02d39bd80851ca787bcbdb7d495e69 <6b2e428e673b3f55965674a426c40922e91388aa"
+    },
+    {
+      "id": "bf4dff57-e716-3520-a80f-1a614b0e3d71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8dd2bc0f8e02d39bd80851ca787bcbdb7d495e69 <de0c4ff2fcaec149254b32f18b3ec806b312be74"
+    },
+    {
+      "id": "cdc3472e-077f-33b2-8598-ed3e5a9d71b5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.5.13"
+    },
+    {
+      "id": "f3582f71-e62d-3b82-a794-25c78547f3fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8dd2bc0f8e02d39bd80851ca787bcbdb7d495e69 <37179fcc916bce8c3cc7b36d67ef814cce55142b"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "312577cc-1618-3900-ba06-39c363cffcca",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

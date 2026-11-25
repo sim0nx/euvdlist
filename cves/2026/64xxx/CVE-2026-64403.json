@@ -3,8 +3,10 @@
   "enisaUuid": "a93e89eb-5ea3-3b80-87c1-f64acbe8e3fc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: L2CAP: validate option length before reading conf opt value\n\nl2cap_get_conf_opt() derives the option length from the\nattacker-controlled opt->len field and immediately dereferences\nopt->val (as u8, get_unaligned_le16() or get_unaligned_le32(), or a\nraw pointer for the default case) before any caller has confirmed\nthat opt->len bytes are present in the buffer. The callers\n(l2cap_parse_conf_req(), l2cap_parse_conf_rsp() and\nl2cap_conf_rfc_get()) only detect a malformed option afterwards, once\nthe running length has gone negative, by which point the\nout-of-bounds read has already executed.\n\nAn existing post-hoc length check keeps the garbage value from being\nconsumed, so this is not a data leak in the current control flow. It\nis still a validate-after-use ordering bug: up to 4 bytes are read\npast the end of the buffer before it is known to contain them, and it\nis fragile to future changes in the callers.\n\nFix it at the source. Pass the end of the buffer into\nl2cap_get_conf_opt() and refuse to touch opt->val unless the full\noption (header + value) fits. Each caller computes an end pointer\nonce before the loop and checks the return value directly instead of\ninferring the error from a negative length.",
   "datePublished": "Jul 25, 2026, 8:50:45 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:45 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:38:27 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/cca81b4bc672604a84f6d224a55cc77ec7dee619",
     "https://git.kernel.org/stable/c/f70d4aa88068096f35d73e3a05eff33c0a16b9cd",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/687617555cedfb74c9e3cb85d759b908dcb17856"
   ],
   "aliases": [
-    "CVE-2026-64403"
+    "CVE-2026-64403",
+    "GHSA-wqwg-v9cc-cpq7"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.27,
   "enisaIdProduct": [
     {
       "id": "06ee7aa5-1b45-310e-9c24-37ff7d75a75e",
@@ -40,6 +43,16 @@
         }
       },
       "product_version": "ade4560e4fea198866e033fe1c02f063d6d7db2e"
+    },
+    {
+      "id": "0e3c3d8a-7b98-3d5b-869f-212057f546c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "1a0d328a-c4da-34fa-b72a-6cbc5f71d505",
@@ -150,16 +163,6 @@
         }
       },
       "product_version": "patch: 7.1.4"
-    },
-    {
-      "id": "7de092c6-8011-3484-befd-1455f88a619f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     },
     {
       "id": "7e654d52-3ab6-3892-8b40-b600f92bc8a9",

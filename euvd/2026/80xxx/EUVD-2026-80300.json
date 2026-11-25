@@ -2,9 +2,11 @@
   "id": "EUVD-2026-80300",
   "enisaUuid": "aba35b99-2eb3-3496-bf73-54b54e4e88c0",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs/ntfs3: validate ef->size covers the record's name and value\n\nWhen an EA record has a non-zero ef->size, ntfs_read_ea() only checks\nthat the record fits in the remaining buffer (ea_size > bytes), not that\nef->size is large enough to hold the record's own name_len + 1 + elength.\n\nA crafted image can pass validation with, e.g., ef->size = 24 but\nelength = 0xffff. ntfs_get_ea() then trusts elength and copies it out of\nthe undersized record, reading past the kmalloc(info->size) allocation\nand leaking heap memory to userspace via getxattr():\n\n BUG: KASAN: slab-out-of-bounds in ntfs_get_ea (fs/ntfs3/xattr.c:302)\n Read of size 65535 at addr ffff888100794550 by task exploit\n  __asan_memcpy (mm/kasan/shadow.c:105)\n  ntfs_get_ea (fs/ntfs3/xattr.c:302)\n  ntfs_getxattr (fs/ntfs3/xattr.c:848)\n  __vfs_getxattr (fs/xattr.c:441)\n  vfs_getxattr (fs/xattr.c:474)\n  do_getxattr (fs/xattr.c:800)\n  path_getxattrat (fs/xattr.c:868)\n  do_syscall_64 (arch/x86/entry/syscall_64.c:94)\n\n The buggy address is located 80 bytes inside of\n  allocated 84-byte region in cache kmalloc-96\n\nCompute the size the record needs and require ef->size to cover it.",
-  "datePublished": "Sep 16, 2026, 9:30:30 AM",
-  "dateUpdated": "Sep 16, 2026, 9:30:30 AM",
-  "baseScore": 0.0,
+  "datePublished": "Sep 16, 2026, 8:48:19 AM",
+  "dateUpdated": "Oct 19, 2026, 8:52:31 AM",
+  "baseScore": 9.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/b27e68ad818a4ca2cef8f35f97e75d756714c818",
     "https://git.kernel.org/stable/c/28a924c7e67e6d71abeb04860b61166fecb027fc",
@@ -12,15 +14,14 @@
     "https://git.kernel.org/stable/c/077df8464cf24f8ffc82fb6efec2ae600686e699",
     "https://git.kernel.org/stable/c/aab1880058ac767d3ea9388a9a7221c776c22c44",
     "https://git.kernel.org/stable/c/c8a109c9e23a2c7fd548473dde728b2cb8188146",
-    "https://git.kernel.org/stable/c/c22f91d82cb9a29d22bdffdce6c803467984ad0c",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-89779"
+    "https://git.kernel.org/stable/c/c22f91d82cb9a29d22bdffdce6c803467984ad0c"
   ],
   "aliases": [
     "GHSA-gg5m-j9gf-rmhm",
     "CVE-2026-89779"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.7,
   "enisaIdProduct": [
     {
       "id": "0f528c06-1222-36f4-843b-b73185ee4370",
@@ -93,6 +94,16 @@
       "product_version": "patch: 7.2.6"
     },
     {
+      "id": "7c9d5737-38de-3712-8248-996acc7b9f59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "979ab6c3-50ce-3620-9204-f634abb44c06",
       "product": {
         "name": "Linux",
@@ -161,16 +172,6 @@
         }
       },
       "product_version": "333feb7ba84f69f9b423422417aaac54fd9e7c84 <b27e68ad818a4ca2cef8f35f97e75d756714c818"
-    },
-    {
-      "id": "c319959f-ae37-3657-85d5-5ceef08c27c6",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "c4a7b0f2-6fcb-305e-baf4-8d09acf105a0",

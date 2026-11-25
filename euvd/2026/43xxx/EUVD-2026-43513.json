@@ -3,18 +3,22 @@
   "enisaUuid": "12aea6e3-ff15-3b3f-9a0e-b998e6d8cda2",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvsock/virtio: fix zerocopy completion for multi-skb sends\n\nWhen a large message is fragmented into multiple skbs, the zerocopy\nuarg is only allocated and attached to the last skb in the loop.\nNon-final skbs carry pinned user pages with no completion tracking,\nso the kernel has no way to notify userspace when those pages are safe\nto reuse. If the loop breaks early the uarg is never allocated at all,\nleaking pinned pages with no completion notification.\n\nFix this by following the approach used by TCP: allocate the zerocopy\nuarg (if not provided by the caller) before the send loop and attach\nit to every skb via skb_zcopy_set(), which takes a reference per skb.\nEach skb's completion properly decrements the refcount, and the\nnotification only fires after the last skb is freed.\nOn failure, if no data was sent, the uarg is cleanly aborted via\nnet_zcopy_put_abort().\n\nThis issue was initially discovered by sashiko while reviewing commit\n1cb36e252211 (\"vsock/virtio: fix MSG_ZEROCOPY pinned-pages accounting\")\nbut was pre-existing.",
   "datePublished": "Jul 13, 2026, 5:33:52 PM",
-  "dateUpdated": "Jul 13, 2026, 5:33:52 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 18, 2026, 1:29:37 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/293fe8f2d1b5ac464ca16a8eba09571bbbb34ba9",
     "https://git.kernel.org/stable/c/76b995bc57bd90cb6e954e1966fbd8786da47f0d",
     "https://git.kernel.org/stable/c/b3155f2b78db21e99256bcf7eb902f24ff6d5338",
     "https://git.kernel.org/stable/c/ae38d9179190a956e2a87a69ef1dd6f451b51c4d"
   ],
   "aliases": [
+    "GHSA-9p63-4jq7-2c9w",
     "CVE-2026-53365"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "28fc5fc4-7d53-3a13-96a5-8f4d3267ce6e",
@@ -57,6 +61,16 @@
       "product_version": "581512a6dc939ef122e49336626ae159f3b8a345 <ae38d9179190a956e2a87a69ef1dd6f451b51c4d"
     },
     {
+      "id": "64690514-871a-3e4e-9346-6ada611660a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.97"
+    },
+    {
       "id": "92026475-f6a5-3224-a1ab-e1f67870241f",
       "product": {
         "name": "Linux",
@@ -75,6 +89,16 @@
         }
       },
       "product_version": "6.7"
+    },
+    {
+      "id": "af3babe0-1b98-3cfc-b9ff-cf7b0ea3c0a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "581512a6dc939ef122e49336626ae159f3b8a345 <293fe8f2d1b5ac464ca16a8eba09571bbbb34ba9"
     },
     {
       "id": "ecd84da2-af83-3a44-9057-2aec8affd8d1",

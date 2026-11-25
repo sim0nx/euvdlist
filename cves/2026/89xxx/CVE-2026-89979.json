@@ -3,8 +3,10 @@
   "enisaUuid": "51eb0715-2880-360a-8dd3-d5eeab3b07ba",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: pcm: Fix race between non-atomic ops and trigger-start\n\nWe protect the races of the concurrent state transitions between\natomic PCM ops, but the checks between the non-atomic ops (hw_params,\nhw_free and prepare) and the atomic ops aren't perfect; there is a\ncheck of the conflicting PCM state at the beginning of hw_params & co,\nbut the atomic PCM ops can be still issued during the non-atomic PCM\noperations.  An example such scenario is that a thread A re-issues the\nPREPARE or HW_PARAMS for the already prepared stream, while another\nthread B triggers the PCM start in the middle of the prepare\noperation.  Although this usually doesn't lead to much serious issues,\nit can give some inconsistency as reported by syzkaller (such as\nODEBUG warning).\n\nThere are various atomic PCM ops, and basically the only problem is\nthe PCM start as it operates from the PREPARED state.  Other trigger\ncommands (stop, etc) are for the running or the other special state,\nhence they are filtered as pre-condition.\n\nThis patch is for preventing the PCM trigger-start during the non-\natomic operations in order to address the problems above.\nFortunately, the hw_params, hw_free and prepare operations call\nsnd_pcm_buffer_access_lock(), and this can be used for checking the\nconcurrent operations at the PCM trigger -- which sets the\nruntime->buffer_accessing to a negative (if possible), so the PCM\ntrigger just needs to check the runtime->buffer_accessing value; if\nit's negative, it means the concurrent non-atomic PCM ops is running.",
   "datePublished": "Sep 16, 2026, 10:32:56 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:56 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:55:53 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/b1d12144557fceed5de6e22e2c2e30a40ed37702",
     "https://git.kernel.org/stable/c/b2edc017f94c08bdd0b046a586e43ac771a2f942",
@@ -16,11 +18,22 @@
     "https://git.kernel.org/stable/c/acac7b5e07349a9d10d78873afb4b93cd1dc721f"
   ],
   "aliases": [
-    "CVE-2026-89979"
+    "CVE-2026-89979",
+    "GHSA-r2rw-736q-8cv3"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "0a5db719-ba6c-3987-9e3f-8e37f17d8335",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
     {
       "id": "0b273de1-969c-34d3-a880-007af0095619",
       "product": {
@@ -30,16 +43,6 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b599e7f16441386754ec083fa62a549bccb02fca"
-    },
-    {
-      "id": "19835d73-3c23-3b42-82af-839b075d6d0a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <5.15.221"
     },
     {
       "id": "1d6f13e8-c4f4-3566-8f67-65c53242bc3a",
@@ -62,16 +65,6 @@
       "product_version": "patch: 5.15.221"
     },
     {
-      "id": "28745fc5-2b78-3266-8fb3-f870144adcb0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.12.110"
-    },
-    {
       "id": "2c7b3463-9ac4-3ffe-a002-927a9d3b1f48",
       "product": {
         "name": "Linux",
@@ -80,16 +73,6 @@
         }
       },
       "product_version": "patch: 6.18.51"
-    },
-    {
-      "id": "356b8987-dd82-3ee4-b800-b87fb6661493",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.1.188"
     },
     {
       "id": "41431916-e78d-3759-bd82-0b372be78d14",
@@ -112,16 +95,6 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b1d12144557fceed5de6e22e2c2e30a40ed37702"
     },
     {
-      "id": "53662eb6-9b33-3625-8914-11e8f49c85fc",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.18.51"
-    },
-    {
       "id": "6ff5d773-23a7-39c1-a423-fb2e23ef7482",
       "product": {
         "name": "Linux",
@@ -142,44 +115,24 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <50afadf1ea66597116eb14e73c24da7ae99b759f"
     },
     {
-      "id": "838009d3-0554-3edb-a828-d9644114e5ca",
+      "id": "a520c060-0cc7-386a-8a28-4867b79656be",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.2.5"
+      "product_version": "2.6.12"
     },
     {
-      "id": "8736ec4c-ca36-3331-8ee3-a4c1edead9f3",
+      "id": "b6e430d5-bf03-35f4-baef-e096d9cd8f88",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc2"
-    },
-    {
-      "id": "90f82da2-9bb7-3983-bdfe-de8928d14eb9",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.6.157"
-    },
-    {
-      "id": "b2b94d1d-c580-3f40-b466-44c423b65ca3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <5.10.270"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "bc602e0f-7aa4-3373-b323-56b04d340fed",

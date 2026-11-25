@@ -3,7 +3,7 @@
   "enisaUuid": "c1c9c9f7-78f6-3f07-a343-f2116079688b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: wwan: t7xx: validate the netif index in t7xx_ccmni_recv_skb()\n\nThe netif index carried in the DPMAIF PIT header is five bits wide,\nbut ccmni_inst[] only has room for NIC_DEV_MAX (21) entries.\nt7xx_ccmni_recv_skb() indexes the array without a bounds check, so\nindexes 21 to 31 read past it.  The out-of-bounds value lands in the\ncallback table that follows the array, which is never NULL, so the\nexisting !ccmni check does not catch it and the driver dereferences\nwhatever sits there as a struct t7xx_ccmni.\n\nDrop the skb when the index is out of range.\n\n\nVerified in a QEMU guest with a fault injector setting the netif\nindex to 25: the unpatched driver reads a value past ccmni_inst[],\nwhich lands in the callback table, and dereferences it far enough to\nqueue the skb.  With this check the packet is dropped.  Well-formed\ntraffic on index 0 is unaffected.\n\nChanges in v2: none.",
   "datePublished": "Oct 6, 2026, 8:45:09 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:09 AM",
+  "dateUpdated": "Oct 19, 2026, 9:16:09 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/7c2fe308bda5a7e6222d7f0c3c311991372baab4",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/c7ead9704249d57d4693a04697e3bbd285138fa9"
   ],
   "aliases": [
+    "GHSA-wwj9-jxr5-39jp",
     "CVE-2026-98238"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "233c9d5f-05f5-3a0f-b3c6-76901f428a95",
@@ -78,16 +79,6 @@
         }
       },
       "product_version": "05d19bf500f8281f574713479b04679fa226d0a3 <e1b0609b1a40da03e385be290853a604eb4c3fb9"
-    },
-    {
-      "id": "8b305b6d-59a8-3e28-b3b9-021ae86d50b4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "90e5d1c0-37fc-32ca-a483-b12984280c9c",
@@ -158,6 +149,16 @@
         }
       },
       "product_version": "05d19bf500f8281f574713479b04679fa226d0a3 <c7ead9704249d57d4693a04697e3bbd285138fa9"
+    },
+    {
+      "id": "fee12b3c-e5a1-373c-b4ed-42cd63314e21",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

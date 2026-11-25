@@ -3,8 +3,10 @@
   "enisaUuid": "b2c885e4-6dc4-3b92-9b3d-267e3d3e63f1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nudf: validate VAT header length against the VAT inode size\n\nudf_load_vat() takes the virtual partition's start offset straight from\nthe on-disk VAT 2.0 header without checking it against the VAT inode\nsize:\n\n\tmap->s_type_specific.s_virtual.s_start_offset =\n\t\tle16_to_cpu(vat20->lengthHeader);\n\tmap->s_type_specific.s_virtual.s_num_entries =\n\t\t(sbi->s_vat_inode->i_size -\n\t\t\tmap->s_type_specific.s_virtual.s_start_offset) >> 2;\n\nlengthHeader is a fully attacker-controlled 16-bit value.  If it exceeds\nthe VAT inode size, the s_num_entries subtraction underflows to a huge\ncount, which defeats the \"block > s_num_entries\" bound in\nudf_get_pblock_virt15(); and on the ICB-inline path that function reads\n\n\t((__le32 *)(iinfo->i_data + s_start_offset))[block]\n\nso a large s_start_offset indexes past the inode's in-ICB data.  Mounting\na crafted UDF image with a virtual (VAT) partition then triggers an\nout-of-bounds read.\n\nReject a VAT whose header length does not leave room for at least one\nentry within the VAT inode.",
   "datePublished": "Jul 25, 2026, 8:49:51 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:51 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:38:24 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/0ad2d09a8d66fa8dc6f9b70d660b5fb4478ea934",
     "https://git.kernel.org/stable/c/883962731420ec271ed8c1cd76524f4b17faa982",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/d8202786b3d75125c84ebc4de6d946f92fde0ee8"
   ],
   "aliases": [
-    "CVE-2026-64323"
+    "CVE-2026-64323",
+    "GHSA-rjqr-92w7-gfg4"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "00da69e9-1978-3369-93df-8a6c5be4e7e2",
@@ -40,16 +43,6 @@
         }
       },
       "product_version": "fa5e08156335d0687c85b4e724db9448fb166601 <0ad2d09a8d66fa8dc6f9b70d660b5fb4478ea934"
-    },
-    {
-      "id": "15207ea1-e13f-3193-97d2-f4e795936d57",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "59a6c20d-5ba9-3e1e-8616-f89f01918638",
@@ -200,6 +193,16 @@
         }
       },
       "product_version": "fa5e08156335d0687c85b4e724db9448fb166601 <bb0d384c1f42a5b7ace0bd88fee80b9bb1d49acb"
+    },
+    {
+      "id": "e56e9bae-d1b9-3ba8-818c-593d665a95d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

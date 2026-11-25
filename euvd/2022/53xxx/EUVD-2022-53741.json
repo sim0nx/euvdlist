@@ -1,0 +1,109 @@
+{
+  "id": "EUVD-2022-53741",
+  "enisaUuid": "6e376961-955d-3e94-9c5f-59475387589b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvhost: fix hung thread due to erroneous iotlb entries\n\nIn vhost_iotlb_add_range_ctx(), range size can overflow to 0 when\nstart is 0 and last is ULONG_MAX. One instance where it can happen\nis when userspace sends an IOTLB message with iova=size=uaddr=0\n(vhost_process_iotlb_msg). So, an entry with size = 0, start = 0,\nlast = ULONG_MAX ends up in the iotlb. Next time a packet is sent,\niotlb_access_ok() loops indefinitely due to that erroneous entry.\n\n\tCall Trace:\n\t <TASK>\n\t iotlb_access_ok+0x21b/0x3e0 drivers/vhost/vhost.c:1340\n\t vq_meta_prefetch+0xbc/0x280 drivers/vhost/vhost.c:1366\n\t vhost_transport_do_send_pkt+0xe0/0xfd0 drivers/vhost/vsock.c:104\n\t vhost_worker+0x23d/0x3d0 drivers/vhost/vhost.c:372\n\t kthread+0x2e9/0x3a0 kernel/kthread.c:377\n\t ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:295\n\t </TASK>\n\nReported by syzbot at:\n\thttps://syzkaller.appspot.com/bug?extid=0abd373e2e50d704db87\n\nTo fix this, do two things:\n\n1. Return -EINVAL in vhost_chr_write_iter() when userspace asks to map\n   a range with size 0.\n2. Fix vhost_iotlb_add_range_ctx() to handle the range [0, ULONG_MAX]\n   by splitting it into two entries.",
+  "datePublished": "Jul 16, 2024, 12:25:25 PM",
+  "dateUpdated": "May 11, 2026, 6:48:35 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/f8d88e86e90ea1002226d7ac2430152bfea003d1",
+    "https://git.kernel.org/stable/c/d9a747e6b6561280bf1791bb24c5e9e082193dad",
+    "https://git.kernel.org/stable/c/e2ae38cf3d91837a493cb2093c87700ff3cbe667"
+  ],
+  "aliases": [
+    "GHSA-cqc3-8mfm-84p4",
+    "CVE-2022-48862"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "06178dee-7809-37cf-be67-1f3ff9785fce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0bbe30668d89ec8a309f28ced6d092c90fb23e8c <e2ae38cf3d91837a493cb2093c87700ff3cbe667"
+    },
+    {
+      "id": "0c721cb4-19d4-382d-b682-f5f489a094b0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "173e22d5-4e52-3742-b876-d277aad8e92b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16.15"
+    },
+    {
+      "id": "1a036d5e-6e0b-3778-a634-e60a19c446eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.17"
+    },
+    {
+      "id": "83aaf08b-eb22-3689-a8d6-3e3e531f5081",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0bbe30668d89ec8a309f28ced6d092c90fb23e8c <d9a747e6b6561280bf1791bb24c5e9e082193dad"
+    },
+    {
+      "id": "aa0231be-abac-3a91-80fc-0421993b7db1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.29"
+    },
+    {
+      "id": "ba488f8f-7dab-3f66-bfc4-6f242cd1429b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.7"
+    },
+    {
+      "id": "f732f12f-59a6-3182-beb2-67aa45d17309",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0bbe30668d89ec8a309f28ced6d092c90fb23e8c <f8d88e86e90ea1002226d7ac2430152bfea003d1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "52220d38-3087-32d3-8f84-a0a91e2b0499",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

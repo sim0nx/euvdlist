@@ -3,8 +3,10 @@
   "enisaUuid": "e52d4d8c-5378-30a3-9010-1653766e231a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: use hlist_del_init_rcu for state_cache and state_cache_input\n\nCommit 14acf9652e56 (\"xfrm: defensively unhash xfrm_state lists in\n__xfrm_state_delete\") converted bydst/bysrc/byseq/byspi from\nhlist_del_rcu() to hlist_del_init_rcu() so that a second\n__xfrm_state_delete() on the same object becomes a no-op rather than a\nwrite through LIST_POISON pprev. It missed state_cache and\nstate_cache_input, which kept hlist_del_rcu():\n\n- hlist_del_rcu() leaves pprev = LIST_POISON2 (non-NULL), so\n  hlist_unhashed() returns false.\n- hlist_del_init_rcu() leaves pprev = NULL, so hlist_unhashed()\n  returns true.\n\nA second __xfrm_state_delete() therefore enters __hlist_del() on the\nalready-deleted state_cache/state_cache_input nodes and does\nWRITE_ONCE(*pprev, next) through LIST_POISON2 \u2014 a write use-after-free\nonce the slab is reused. The corruption can in turn cause a subsequent\nhlist_for_each_entry_rcu traversal to follow a dangling next pointer,\nproducing the read use-after-free reported in xfrm_input_state_lookup().\n\nSwitch state_cache and state_cache_input to hlist_del_init_rcu() to\nmatch the other four lists, closing the write use-after-free and, with\nit, the read use-after-free it spawns.",
   "datePublished": "Oct 6, 2026, 8:45:04 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:04 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:16:02 AM",
+  "baseScore": 7.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/fb38fb7420d5f7192f9e2b6ac835ede149cd7ac5",
     "https://git.kernel.org/stable/c/4748c27e2e6a1969e02f1df46e62f79d2799b80b",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/2afb8dc1f4390f164db8352f8e685e126e9db566"
   ],
   "aliases": [
+    "GHSA-3cj7-gr4r-g9gh",
     "CVE-2026-98230"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "0ab71be8-1d39-3625-9d01-cb1efc297521",
@@ -98,16 +101,6 @@
       "product_version": "6.12.13 <6.12.112"
     },
     {
-      "id": "96ab9c72-bed3-38e0-96ab-2c54aad89d38",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
-    {
       "id": "aad9c201-745d-319a-bde0-83b5d611a4fc",
       "product": {
         "name": "Linux",
@@ -126,6 +119,16 @@
         }
       },
       "product_version": "6.13"
+    },
+    {
+      "id": "dcbce849-752e-3741-bbf7-02b280e32db5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "e73fea99-bf10-3820-a00c-c68118fb7172",

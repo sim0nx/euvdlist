@@ -3,20 +3,43 @@
   "enisaUuid": "9b399a60-2520-3929-abff-9794afd3d609",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnull_blk: free zones array on device power-off\n\nnull_init_zoned_dev() allocates dev->zones when a zoned device is powered\non, but null_del_dev() never frees it on power-off; dev->zones is only\nfreed later in null_free_dev(), when the configfs directory is removed. If\nthe device is powered off and then on again, null_init_zoned_dev()\nallocates a new array and overwrites the dev->zones pointer, leaking the\nprevious allocation each power cycle.\n\nFree dev->zones in null_del_dev() via null_free_zoned_dev() to solve it.\nAnd calling null_free_zoned_dev() in null_free_dev() is no longer necessary\nbecause every caller already invokes null_del_dev() first: via\nnullb_group_drop_item() before nullb_device_release(), in the\nnull_add_dev() error path of null_create_dev(), and in null_destroy_dev().\nRemove the redundant call.\n\nAnd take &lock around zone_cond_store() in the two store wrappers to\nserialize dev->zones check-and-deref against its alloc/free, which already\nrun under &lock. The reason there was no problem before is that only\nnullb_device_release() or null_exit() frees the dev->zones, which\nguarantees that subsequent users won't access the configfs interface.",
   "datePublished": "Sep 17, 2026, 4:07:09 PM",
-  "dateUpdated": "Sep 17, 2026, 4:07:09 PM",
+  "dateUpdated": "Oct 30, 2026, 12:34:40 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/26d21585caa61c30d0f3044a1e6d172456148c9f",
+    "https://git.kernel.org/stable/c/08a31a2cc3d1cea67ccd292d01511cd0a72d4656",
     "https://git.kernel.org/stable/c/056be41932c95aabdb3c2967d1ef4978f17a0225",
     "https://git.kernel.org/stable/c/b2437d37fcc31fce8a5da1cc1739e284814d2491",
     "https://git.kernel.org/stable/c/0a3afab87124171022fb3579502fa38ef5b311c9",
     "https://git.kernel.org/stable/c/2a6357a9b935a34f5508618fee8a7fffbf7722a8"
   ],
   "aliases": [
+    "GHSA-45hh-qmfr-m7pj",
     "CVE-2026-90187"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "067cc50b-9c6b-3b1c-b154-4dbd4c0a3725",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca4b2a011948fae4e4d31490107db4926385a983 <26d21585caa61c30d0f3044a1e6d172456148c9f"
+    },
+    {
+      "id": "0c204455-8c55-366c-a99d-2d97ae6e65a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "1150a12d-6f14-3282-ab5b-b31d34ab1873",
       "product": {
@@ -26,6 +49,16 @@
         }
       },
       "product_version": "ca4b2a011948fae4e4d31490107db4926385a983 <b2437d37fcc31fce8a5da1cc1739e284814d2491"
+    },
+    {
+      "id": "248ae18e-7267-389b-b7bb-c967ed45eabc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca4b2a011948fae4e4d31490107db4926385a983 <08a31a2cc3d1cea67ccd292d01511cd0a72d4656"
     },
     {
       "id": "2572fc4f-4e31-3f6f-8a23-686178cc080f",
@@ -56,6 +89,26 @@
         }
       },
       "product_version": "ca4b2a011948fae4e4d31490107db4926385a983 <056be41932c95aabdb3c2967d1ef4978f17a0225"
+    },
+    {
+      "id": "49cdffbf-8820-31e0-b9a3-87cccba03d36",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "9634e694-46d5-3023-ade4-4389be8e9bac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     },
     {
       "id": "97b77d67-a307-321f-8483-18b788b838c2",
@@ -106,16 +159,6 @@
         }
       },
       "product_version": "ca4b2a011948fae4e4d31490107db4926385a983 <0a3afab87124171022fb3579502fa38ef5b311c9"
-    },
-    {
-      "id": "fa684fcb-3dd4-3d47-b7fa-fc97176c944c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     }
   ],
   "enisaIdVendor": [

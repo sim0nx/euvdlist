@@ -3,7 +3,7 @@
   "enisaUuid": "e22bb569-5530-3788-8499-9050ccaeaf5e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrtc: pcf8563: fix clock provider leak on unbind\n\npcf8563_clkout_register_clk() registers the CLKOUT clock provider with\nof_clk_add_provider(), but nothing ever unwinds it: there is no\nof_clk_del_provider() call and the driver has no remove callback. Each\nof_clk_add_provider() allocates a struct of_clk_provider, takes a\nreference on the OF node and adds an entry to the global of_clk_providers\nlist, none of which is released when the device is unbound. Every\nbind/unbind (or module reload) therefore leaks a provider structure and\nan of_node reference.\n\nThe clock itself is already device-managed (devm_clk_register()); only\nthe provider registration was not. Use devm_of_clk_add_hw_provider() so\nthe provider is removed automatically on unbind. Tie it to the parent\ni2c device, whose OF node carries the #clock-cells and clock-output-names\nproperties (the RTC class device has no OF node of its own).",
   "datePublished": "Sep 17, 2026, 4:06:28 PM",
-  "dateUpdated": "Sep 17, 2026, 4:06:28 PM",
+  "dateUpdated": "Oct 19, 2026, 8:58:24 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2b5622cf4ee218b6f98d31dbf3fbd44b9b6bd675",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/9c48a53685040bb0de45a640b34055cbbfc69d4f"
   ],
   "aliases": [
-    "CVE-2026-90126"
+    "CVE-2026-90126",
+    "GHSA-7jrh-4gfg-rh69"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "11bfb37b-d2f2-3283-8a6b-d9829e6665d2",
@@ -60,16 +61,6 @@
         }
       },
       "product_version": "a39a6405d5f949bc651694028a55d74c514ef1f9 <7afb8db47c4f107bce89cfe5115fb31ba7c94665"
-    },
-    {
-      "id": "390b25fb-da8c-3e30-84e9-34e148f85206",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "500941dc-4e5b-370f-9e8b-fdbf80e6e3d3",
@@ -150,6 +141,16 @@
         }
       },
       "product_version": "patch: 5.15.221"
+    },
+    {
+      "id": "957a4584-7526-3c48-b526-2516ac920e52",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "a0242ae0-75f9-3af0-b964-00ae6f2df252",

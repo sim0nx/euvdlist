@@ -3,8 +3,10 @@
   "enisaUuid": "23d6b35b-b4d6-3921-bfbc-21fdc6bf94ac",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: lan743x: fix RX checksum use-after-free\n\nlan743x_rx_process_buffer() adds each non-first receive buffer to the\nhead skb's frag_list.  On the last descriptor, lan743x_rx_trim_skb()\nlinearizes the head and frees the fragment skb metadata.\n\nThe checksum-success path then writes ip_summed through the local skb\npointer, which still points to the final fragment.  This causes a\nuse-after-free write when a packet spans more than one receive buffer.\n\nSet ip_summed on the surviving head skb instead.  Multi-buffer receive\ncan occur after a live MTU increase because existing ring entries keep\ntheir old buffer size until they are replenished.\n\nA KUnit test invoking lan743x_rx_process_buffer() with a two-buffer\npacket produced a one-byte KASAN use-after-free write before this change.\nThe same test passed after the change.  The driver object also builds\nwith W=1.  This was not tested on physical LAN743x hardware.",
   "datePublished": "Oct 6, 2026, 8:45:10 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:10 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:16:10 AM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/0e52886c4324c9897c2c62f92be3dc8316cee67e",
     "https://git.kernel.org/stable/c/a58024835c704419bb46d2a34e5223f65605f958",
@@ -14,10 +16,11 @@
     "https://git.kernel.org/stable/c/a9ce4053dc945c5372dedba5017ee675b30dc0c5"
   ],
   "aliases": [
-    "CVE-2026-98239"
+    "CVE-2026-98239",
+    "GHSA-qcgj-xcvr-2727"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.44,
   "enisaIdProduct": [
     {
       "id": "07ed19e2-6c84-3120-a760-5b48807c6572",
@@ -150,14 +153,14 @@
       "product_version": "cd6910501cfd9a3bdff2f5fc33c9f3cf165ca54a <a9ce4053dc945c5372dedba5017ee675b30dc0c5"
     },
     {
-      "id": "f0bf7717-f011-3517-b7a6-9c401ac2fd4c",
+      "id": "f9c367c7-f87b-3640-9db4-6062cb751bf9",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc4"
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

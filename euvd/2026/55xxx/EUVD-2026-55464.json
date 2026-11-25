@@ -3,9 +3,12 @@
   "enisaUuid": "42c82578-e7d7-3261-9325-9691b8400a0e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: ath9k: hif_usb: don't dereference hif_dev after re-arming firmware request\n\nath9k_hif_request_firmware() re-arms an asynchronous firmware load via\nrequest_firmware_nowait(), passing hif_dev as the completion context, and\nthen still dereferences hif_dev:\n\n\tdev_info(&hif_dev->udev->dev, \"ath9k_htc: Firmware %s requested\\n\",\n\t\t hif_dev->fw_name);\n\nThe re-armed callback ath9k_hif_usb_firmware_cb() runs on the \"events\"\nworkqueue and, when the firmware is missing, walks the retry chain into\nath9k_hif_usb_firmware_fail() -> complete_all(&hif_dev->fw_done). That\nreleases the wait_for_completion(&hif_dev->fw_done) in a concurrent\nath9k_hif_usb_disconnect(), which then kfree()s hif_dev. The trailing\ndev_info() in the frame that re-armed the request can therefore read freed\nmemory (hif_dev->udev, the first field of struct hif_device_usb):\n\n  BUG: KASAN: slab-use-after-free in ath9k_hif_request_firmware\n  Read of size 8 ... by task kworker/...\n   ath9k_hif_request_firmware\n   ath9k_hif_usb_firmware_cb           drivers/net/wireless/ath/ath9k/hif_usb.c:1247\n   request_firmware_work_func\n  Allocated by ...:\n   ath9k_hif_usb_probe                 drivers/net/wireless/ath/ath9k/hif_usb.c\n  Freed by ...:\n   ath9k_hif_usb_disconnect -> kfree   drivers/net/wireless/ath/ath9k/hif_usb.c\n\nThe fw_done barrier only makes disconnect wait for the firmware chain to\n*terminate*; it does not protect the outer ath9k_hif_request_firmware()\nframe that re-armed the request and keeps touching hif_dev afterwards.\n\nDrop the post-request dev_info(): it is the only use of hif_dev after the\nasync request is armed, and it is purely informational (the dev_err() on the\nfailure path runs only when request_firmware_nowait() did not arm a callback,\nso hif_dev is still alive there).\n\nThis was first reported by syzbot as a single, non-reproduced crash that was\nlater auto-obsoleted, and was independently rediscovered by the reFuzz fuzzer,\nwhich produced a C reproducer (USB-gadget connect/disconnect of an ath9k_htc\ndevice whose firmware download fails). The vulnerable code is unchanged and\nstill present in v7.1-rc6, where the slab-use-after-free reproduces under KASAN\nonce the (sub-microsecond) race window is widened.",
   "datePublished": "Aug 10, 2026, 12:03:40 PM",
-  "dateUpdated": "Aug 10, 2026, 12:03:40 PM",
+  "dateUpdated": "Nov 6, 2026, 4:55:14 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/47ed81aaa7f94d9808f4719e78a760c2ec1e6c86",
+    "https://git.kernel.org/stable/c/48de0c6952192b0771fca468df4364d11ec74ad9",
+    "https://git.kernel.org/stable/c/063497cc9f320ab71a7a937c3bc0a23e630aefe2",
     "https://git.kernel.org/stable/c/7f184ca38a90889f3f6665ff96748b95da39dbee",
     "https://git.kernel.org/stable/c/10b0ce629123a3737b4eda50188f73bb7be7b68b",
     "https://git.kernel.org/stable/c/48a69cedde7388294e4ea6fd804156cd62bc04fc",
@@ -13,11 +16,22 @@
     "https://git.kernel.org/stable/c/dad9f96945d77ecd4708f730c06ef54dcd8cc057"
   ],
   "aliases": [
-    "CVE-2026-68363"
+    "CVE-2026-68363",
+    "GHSA-x3fw-jwr8-ppm9"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
+    {
+      "id": "03505c04-a8b4-324d-b56c-bdf8cffeb8c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e904cf6fe23022cde4e0ea9d41601411a315a3dc <063497cc9f320ab71a7a937c3bc0a23e630aefe2"
+    },
     {
       "id": "03daa970-4d32-344a-a400-8d84cf46315b",
       "product": {
@@ -29,14 +43,14 @@
       "product_version": "4.4"
     },
     {
-      "id": "2baae886-6201-34ff-8cad-49bc94dfa04a",
+      "id": "0938583a-75e0-3ff5-9000-8d473ceb8c24",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc5"
+      "product_version": "e904cf6fe23022cde4e0ea9d41601411a315a3dc <47ed81aaa7f94d9808f4719e78a760c2ec1e6c86"
     },
     {
       "id": "31b45638-ad37-3cd2-8e67-9f331212f4ba",
@@ -57,6 +71,16 @@
         }
       },
       "product_version": "e904cf6fe23022cde4e0ea9d41601411a315a3dc <dad9f96945d77ecd4708f730c06ef54dcd8cc057"
+    },
+    {
+      "id": "3fc67f32-7cb0-3ab9-bb2d-c0602384bc9a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
     },
     {
       "id": "5aa5adb9-0978-3515-988a-d555f861c708",
@@ -89,6 +113,16 @@
       "product_version": "e904cf6fe23022cde4e0ea9d41601411a315a3dc <48a69cedde7388294e4ea6fd804156cd62bc04fc"
     },
     {
+      "id": "6d4af3b5-ec19-34c5-b64f-e4991e172e7a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "88fb0023-64e7-3da7-93dd-e73697c83b3c",
       "product": {
         "name": "Linux",
@@ -97,6 +131,16 @@
         }
       },
       "product_version": "e904cf6fe23022cde4e0ea9d41601411a315a3dc <10b0ce629123a3737b4eda50188f73bb7be7b68b"
+    },
+    {
+      "id": "9c86ba62-4d08-3b0d-beef-11c0d043384d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
     },
     {
       "id": "a5af5056-b928-37fc-8db7-870f2267dbf9",
@@ -129,6 +173,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "bf5291f4-150c-393b-9705-fb34f520015a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
       "id": "c8f95a6e-3dcc-398b-863f-9f8dddcd02f1",
       "product": {
         "name": "Linux",
@@ -137,6 +191,16 @@
         }
       },
       "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "fcc96a51-cd05-34a2-b867-b947674d1c5a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e904cf6fe23022cde4e0ea9d41601411a315a3dc <48de0c6952192b0771fca468df4364d11ec74ad9"
     }
   ],
   "enisaIdVendor": [

@@ -3,7 +3,7 @@
   "enisaUuid": "7a3fb95e-59e9-3b97-b785-517ceff845bd",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrpmsg: glink: fix deadlock in endpoint destroy during driver detach\n\nDuring driver detach, the device core holds the device mutex throughout\nthe driver's remove callback chain.  When the rpmsg endpoint is\ndestroyed as part of that teardown, the GLINK endpoint destroy\nimplementation attempts to unregister the underlying rpmsg device.\nThat unregistration calls device_del(), which tries to re-acquire the\nsame device mutex already held higher up the stack, causing rmmod to\nhang indefinitely.\n\nThe deadlock manifests with the following call chain:\n\n[<0>] device_del+0x44/0x414\u2003\u2003<- tries to acquire same mutex\n[<0>] device_unregister+0x18/0x34\n[<0>] rpmsg_unregister_device+0x28/0x4c\n[<0>] qcom_glink_remove_rpmsg_device+0x70/0xc0\n[<0>] qcom_glink_destroy_ept+0x58/0xbc\n[<0>] rpmsg_dev_remove+0x50/0x60\n[<0>] device_remove+0x4c/0x80\n[<0>] device_release_driver_internal+0x1cc/0x228  <- acquires device mutex\n[<0>] driver_detach+0x4c/0x98\n[<0>] bus_remove_driver+0x6c/0xbc\n[<0>] driver_unregister+0x30/0x60\n[<0>] unregister_rpmsg_driver+0x10/0x1c\n[<0>] fastrpc_exit+0x28/0x38 [fastrpc]\n[<0>] __arm64_sys_delete_module+0x1b8/0x294\n[<0>] invoke_syscall+0x48/0x10c\n[<0>] el0_svc_common.constprop.0+0xc0/0xe0\n[<0>] do_el0_svc+0x1c/0x28\n[<0>] el0_svc+0x34/0x108\n[<0>] el0t_64_sync_handler+0xa0/0xe4\n[<0>] el0t_64_sync+0x198/0x19c\n\nThe rpmsg device unregistration inside endpoint destroy is redundant.\nIn both contexts where endpoint destruction is triggered:\n\n- Driver detach path: the driver core already tears down the rpmsg\n  device.\n\n- Channel close path: the rpmsg device is already unregistered before\n  endpoint destruction is reached.\n\nRemove the redundant unregistration to fix the deadlock.",
   "datePublished": "Sep 17, 2026, 4:11:11 PM",
-  "dateUpdated": "Sep 17, 2026, 4:11:11 PM",
+  "dateUpdated": "Oct 19, 2026, 9:05:31 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/73092c2292aa65515671e54abbcda2166d3827ed",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/5a5a48e788e02fd8a8eb7188ce440572d6c12418"
   ],
   "aliases": [
+    "GHSA-rmpv-cfqv-cmjx",
     "CVE-2026-93098"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "01fd293a-4ff0-3352-8525-ce474aa55d36",
@@ -100,16 +101,6 @@
         }
       },
       "product_version": "6.18.3 <6.18.52"
-    },
-    {
-      "id": "346ea2e6-3115-3352-bfdf-6225bcd5709c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "4e587515-6174-38c2-aac4-e189bb3d52ba",
@@ -210,6 +201,16 @@
         }
       },
       "product_version": "6.1.160 <6.1.188"
+    },
+    {
+      "id": "a3816b49-1be3-31b0-9e18-6845c1d3852b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "a566f109-3cad-3bf1-b779-f27bce185400",

@@ -2,21 +2,22 @@
   "id": "EUVD-2026-59031",
   "enisaUuid": "89aac808-c42d-395b-b2f8-b116b1233b12",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmmc: vub300: fix use-after-free on probe failure\n\nThe vub300 driver lifetime-manages its controller state using\nvub300->kref, with vub300_delete() freeing the mmc host when the last\nreference is dropped. The probe error path after the inactivity timer has\nbeen armed still bypasses that lifetime rule, however, and falls through\nto mmc_free_host() directly if mmc_add_host() fails.\n\nThe race window is between arming the inactivity timer and reaching the\nprobe error unwind after mmc_add_host() fails:\n\n        probe thread                     timer/workqueue\n        ------------                     ---------------\n        kref_init(&vub300->kref)         ref = 1\n        kref_get(&vub300->kref)          ref = 2, timer ref\n        add_timer(inactivity_timer)      fires after one second\n        |\n        |   race window\n        |<---------------------------------------------------->\n        |\n        mmc_add_host(mmc)\n                                         inactivity timer fires\n                                         vub300_queue_dead_work()\n                                           kref_get()          ref = 3\n                                           queue_work(deadwork)\n        mmc_add_host() fails\n        timer_delete_sync()\n        mmc_free_host(mmc)\n          frees vub300\n                                         deadwork runs\n                                           use-after-free\n\nThe inactivity timeout is one second, so this would require\nmmc_add_host() to both fail and take more than one second to do so. This\nis unlikely to happen in practice, but the error path is still wrong.\n\ntimer_delete_sync() only waits for the timer callback itself. It does\nnot flush deadwork that the callback may already have queued. As a\nresult, queued deadwork can still hold a kref while the probe error path\ndirectly frees the backing mmc host, including the vub300 storage.\n\nFix this by using the same lifetime mechanism as disconnect. Clear\nvub300->interface so that the timer callback and any queued deadwork\nreturn early and drop their references, then drop the initial probe\nreference and return without falling through to err_free_host.",
-  "datePublished": "Aug 15, 2026, 6:32:11 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:11 AM",
+  "datePublished": "Aug 15, 2026, 5:52:24 AM",
+  "dateUpdated": "Nov 6, 2026, 4:55:19 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/face65f80c6946c631ca3490b4ebd2c016a4fd2c",
+    "https://git.kernel.org/stable/c/6c66653dac9b25272d5fd4ed42a34aa5249e16df",
     "https://git.kernel.org/stable/c/5b82af744e06cd741938c3da54fdbe564a7e52d9",
     "https://git.kernel.org/stable/c/618cf6b139503ec18ef93ffd663396aaf99b763a",
-    "https://git.kernel.org/stable/c/a3b5f242997a3be7404112fd48784881560aea57",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72073"
+    "https://git.kernel.org/stable/c/a3b5f242997a3be7404112fd48784881560aea57"
   ],
   "aliases": [
     "GHSA-2w4f-22fv-v9w4",
     "CVE-2026-72073"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.23,
   "enisaIdProduct": [
     {
       "id": "07934620-f2fa-31c2-974d-3afb7fb0bde2",
@@ -69,16 +70,6 @@
       "product_version": "5.10.163 <5.11"
     },
     {
-      "id": "2bcf3a87-5fe7-39e1-94f1-ebbb54717395",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
-    },
-    {
       "id": "304756b0-4ce4-3aab-9076-1cd7ada39cbf",
       "product": {
         "name": "Linux",
@@ -97,6 +88,16 @@
         }
       },
       "product_version": "3049a3b927a40d89d4582ff1033cd7953be773c7"
+    },
+    {
+      "id": "3241e87f-04e9-3fe2-8d8d-f9330ec64438",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.114"
     },
     {
       "id": "32a9460a-9386-33d8-947e-b8c97fee750a",
@@ -149,6 +150,26 @@
       "product_version": "afc898019e7bf18c5eb7a0ac19852fcb1b341b3c"
     },
     {
+      "id": "6858af44-3a40-3ed4-8e5f-e57db162ce9f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0613ad2401f88bdeae5594c30afe318e93b14676 <6c66653dac9b25272d5fd4ed42a34aa5249e16df"
+    },
+    {
+      "id": "722165c5-436d-328e-92d4-1a77437297d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "8b748a25-edcf-3ef5-8405-8ffb3e9eeb24",
       "product": {
         "name": "Linux",
@@ -189,6 +210,16 @@
       "product_version": "3b29f8769d32016b2d89183db4d80c7a71b7e35e"
     },
     {
+      "id": "a7074648-02ad-3007-90f6-5c8960a35ed4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0613ad2401f88bdeae5594c30afe318e93b14676 <face65f80c6946c631ca3490b4ebd2c016a4fd2c"
+    },
+    {
       "id": "b6d87e2b-1390-33e1-b131-3e03f5505551",
       "product": {
         "name": "Linux",
@@ -227,6 +258,16 @@
         }
       },
       "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "e903832e-e7e2-387a-8f55-bb1186aee41a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     },
     {
       "id": "f4c6c69c-7204-344d-922e-e85712f9cc39",

@@ -3,20 +3,34 @@
   "enisaUuid": "2da6ada8-a712-33e1-8f26-f8f8d86d02eb",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrds: tcp: unregister sysctl before tearing down listen socket\n\nrds_tcp_exit_net() frees the per-netns RDS TCP listen socket via\nrds_tcp_kill_sock() before unregistering the per-netns sysctl table.  Since\nrds_tcp_skbuf_handler() derives the netns from\nrtn->rds_tcp_listen_sock->sk, a concurrent sysctl write can race with\nnetns teardown and dereference the freed socket/sk.\n\nKASAN reports the race as:\n\n  BUG: KASAN: slab-use-after-free in rds_tcp_skbuf_handler+0x2aa/0x2e0\n  rds_tcp_skbuf_handler              net/rds/tcp.c:721\n  proc_sys_call_handler              fs/proc/proc_sysctl.c\n  vfs_write                          fs/read_write.c\n  __x64_sys_pwrite64                 fs/read_write.c\n\nFix this by unregistering the RDS TCP sysctl table before calling\nrds_tcp_kill_sock().  unregister_net_sysctl_table() prevents new sysctl\nhandlers from starting and waits for in-flight handlers to finish, so\nthe listen socket can then be released safely. The fix was tested\nagainst the linked reproducer.",
   "datePublished": "Aug 10, 2026, 12:02:23 PM",
-  "dateUpdated": "Aug 10, 2026, 12:02:23 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:28:19 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/66fd678eef1bc2862bde5e7a0f6106256de74f30",
     "https://git.kernel.org/stable/c/80fffed08dc1c10e971066941d2daa56253f1552",
     "https://git.kernel.org/stable/c/16df2d154ec82e2f7e7585b4fa154751ba37729a",
     "https://git.kernel.org/stable/c/3aa13fe0c1bb7bc5312f878e61523e5d8cf3f85d",
     "https://git.kernel.org/stable/c/167e54c703ccd4fa028feb568b0d1002020cff86"
   ],
   "aliases": [
+    "GHSA-j86x-f498-4jqp",
     "CVE-2026-68290"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
+    {
+      "id": "0128a327-e4df-33dd-a06e-45b81ff55e21",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "0d9e2738-a018-34e4-863d-ac3810dc038e",
       "product": {
@@ -88,6 +102,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "a690f611-1f67-3f2e-aad4-2c4e4f3510c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.160 <6.7"
+    },
+    {
       "id": "b77a282e-86bc-3f9e-ace2-cb9c9e4e1946",
       "product": {
         "name": "Linux",
@@ -98,6 +122,26 @@
       "product_version": "6.12.10 <6.12.101"
     },
     {
+      "id": "c4e6d438-ac34-3c53-a6da-22b13384a541",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "33b3e09a489a31b30342b77cc55290f025d95c7e"
+    },
+    {
+      "id": "d1592bec-5d42-3f5f-8de6-35ff5254d03a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6f353c2230c199f343406c08482940ec5d8ba89c <66fd678eef1bc2862bde5e7a0f6106256de74f30"
+    },
+    {
       "id": "d83e48dd-d832-347a-b5ae-c052f9cc05ee",
       "product": {
         "name": "Linux",
@@ -106,16 +150,6 @@
         }
       },
       "product_version": "de8d6de0ee27be4b2b1e5b06f04aeacbabbba492 <80fffed08dc1c10e971066941d2daa56253f1552"
-    },
-    {
-      "id": "eb806033-838c-3574-a4b7-d4d436028caa",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
     },
     {
       "id": "f47cd27f-7757-3b2f-9e03-8488049e952a",

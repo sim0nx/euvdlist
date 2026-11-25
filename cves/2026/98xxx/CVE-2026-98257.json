@@ -3,8 +3,10 @@
   "enisaUuid": "b2b12067-f75d-3283-b004-dc04b0daf26b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrds: ib: use rds_conn_drop() on protocol version mismatch\n\nrds_ib_cm_connect_complete() runs from the RDMA-CM event handler with\nconn->c_cm_lock held.  When the peer negotiates a protocol version\nolder than RDS_PROTOCOL_COMPAT_VERSION, the handler calls\nrds_conn_destroy(), which is only safe in the rmmod path: it\nsynchronously tears the connection down and flush_work()es the\nshutdown work cp_down_w.\n\nThat shutdown work (rds_conn_shutdown()) needs cp_cm_lock, which is\nthe very lock the event handler still holds, so the flush never\ncompletes: the two workers wait on each other and the RDS connection\nworkqueues stall for good.\n\nAll other RDMA-CM failure paths (REJECTED, CONNECT_ERROR,\nDISCONNECTED) use rds_conn_drop(), which marks the connection\nRDS_CONN_ERROR and schedules the shutdown work asynchronously.  Use\nit here as well.",
   "datePublished": "Oct 6, 2026, 8:45:22 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:22 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:16:28 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/424019be3f637da76b74f44a40034669acbb166f",
     "https://git.kernel.org/stable/c/14fb90067d13f4494cff0f03243fae3cf2911cbc",
@@ -16,11 +18,22 @@
     "https://git.kernel.org/stable/c/f97d8c7bab7843631206a114986c9059da03efeb"
   ],
   "aliases": [
+    "GHSA-36mq-8633-f579",
     "CVE-2026-98257"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.5,
   "enisaIdProduct": [
+    {
+      "id": "057b0d33-5838-3b15-99b8-556c678bb070",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "1deecf86-657b-37d5-b9b0-8b7dfc0545ed",
       "product": {
@@ -190,16 +203,6 @@
         }
       },
       "product_version": "f147dd9ecabf23fd63d2562ffe64252a0453ecde <d392b16acd0908f077289aad8bba066ff16de336"
-    },
-    {
-      "id": "f8bad6dc-6263-322a-9a43-7cdef0625f53",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     }
   ],
   "enisaIdVendor": [

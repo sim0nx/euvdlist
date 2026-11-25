@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2024-36244",
+  "enisaUuid": "044fcf18-2aeb-3299-a621-1457cdeeb168",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/slub: avoid zeroing outside-object freepointer for single free\n\nCommit 284f17ac13fe (\"mm/slub: handle bulk and single object freeing\nseparately\") splits single and bulk object freeing in two functions\nslab_free() and slab_free_bulk() which leads slab_free() to call\nslab_free_hook() directly instead of slab_free_freelist_hook().\n\nIf `init_on_free` is set, slab_free_hook() zeroes the object.\nAfterward, if `slub_debug=F` and `CONFIG_SLAB_FREELIST_HARDENED` are\nset, the do_slab_free() slowpath executes freelist consistency\nchecks and try to decode a zeroed freepointer which leads to a\n\"Freepointer corrupt\" detection in check_object().\n\nDuring bulk free, slab_free_freelist_hook() isn't affected as it always\nsets it objects freepointer using set_freepointer() to maintain its\nreconstructed freelist after `init_on_free`.\n\nFor single free, object's freepointer thus needs to be avoided when\nstored outside the object if `init_on_free` is set. The freepointer left\nas is, check_object() may later detect an invalid pointer value due to\nobjects overflow.\n\nTo reproduce, set `slub_debug=FU init_on_free=1 log_level=7` on the\ncommand line of a kernel build with `CONFIG_SLAB_FREELIST_HARDENED=y`.\n\ndmesg sample log:\n[   10.708715] =============================================================================\n[   10.710323] BUG kmalloc-rnd-05-32 (Tainted: G    B           T ): Freepointer corrupt\n[   10.712695] -----------------------------------------------------------------------------\n[   10.712695]\n[   10.712695] Slab 0xffffd8bdc400d580 objects=32 used=4 fp=0xffff9d9a80356f80 flags=0x200000000000a00(workingset|slab|node=0|zone=2)\n[   10.716698] Object 0xffff9d9a80356600 @offset=1536 fp=0x7ee4f480ce0ecd7c\n[   10.716698]\n[   10.716698] Bytes b4 ffff9d9a803565f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................\n[   10.720703] Object   ffff9d9a80356600: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................\n[   10.720703] Object   ffff9d9a80356610: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................\n[   10.724696] Padding  ffff9d9a8035666c: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................\n[   10.724696] Padding  ffff9d9a8035667c: 00 00 00 00                                      ....\n[   10.724696] FIX kmalloc-rnd-05-32: Object at 0xffff9d9a80356600 not freed",
+  "datePublished": "May 30, 2024, 3:28:58 PM",
+  "dateUpdated": "May 11, 2026, 8:16:30 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/56900355485f6e82114b18c812edd57fd7970dcb",
+    "https://git.kernel.org/stable/c/8f828aa48812ced28aa39cb3cfe55ef2444d03dd"
+  ],
+  "aliases": [
+    "CVE-2024-36892"
+  ],
+  "assigner": "Linux",
+  "epss": 0.2,
+  "enisaIdProduct": [
+    {
+      "id": "10abff2e-8af1-3485-aae1-ead370887440",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.8"
+    },
+    {
+      "id": "294fcfca-06db-3694-a95c-ea624a916023",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "284f17ac13fe34ae9eecbe57bb91553374d9b855 <8f828aa48812ced28aa39cb3cfe55ef2444d03dd"
+    },
+    {
+      "id": "6de4f41a-7ec0-36d9-adca-659de5ac9cc1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "933e6c21-c20e-3d04-8f26-43d033c3028f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "beec2029-bb84-3293-8d07-30b6a5a171f5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "284f17ac13fe34ae9eecbe57bb91553374d9b855 <56900355485f6e82114b18c812edd57fd7970dcb"
+    },
+    {
+      "id": "cc94a39c-7c3e-3f8a-a5c5-a78ef5362152",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.10"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9addd067-8e77-3884-8877-1b806ff1092f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

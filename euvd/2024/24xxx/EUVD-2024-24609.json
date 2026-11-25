@@ -1,0 +1,216 @@
+{
+  "id": "EUVD-2024-24609",
+  "enisaUuid": "10123e17-ce64-3309-93a2-78eb1762604e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: ncm: Avoid dropping datagrams of properly parsed NTBs\n\nIt is observed sometimes when tethering is used over NCM with Windows 11\nas host, at some instances, the gadget_giveback has one byte appended at\nthe end of a proper NTB. When the NTB is parsed, unwrap call looks for\nany leftover bytes in SKB provided by u_ether and if there are any pending\nbytes, it treats them as a separate NTB and parses it. But in case the\nsecond NTB (as per unwrap call) is faulty/corrupt, all the datagrams that\nwere parsed properly in the first NTB and saved in rx_list are dropped.\n\nAdding a few custom traces showed the following:\n[002] d..1  7828.532866: dwc3_gadget_giveback: ep1out:\nreq 000000003868811a length 1025/16384 zsI ==> 0\n[002] d..1  7828.532867: ncm_unwrap_ntb: K: ncm_unwrap_ntb toprocess: 1025\n[002] d..1  7828.532867: ncm_unwrap_ntb: K: ncm_unwrap_ntb nth: 1751999342\n[002] d..1  7828.532868: ncm_unwrap_ntb: K: ncm_unwrap_ntb seq: 0xce67\n[002] d..1  7828.532868: ncm_unwrap_ntb: K: ncm_unwrap_ntb blk_len: 0x400\n[002] d..1  7828.532868: ncm_unwrap_ntb: K: ncm_unwrap_ntb ndp_len: 0x10\n[002] d..1  7828.532869: ncm_unwrap_ntb: K: Parsed NTB with 1 frames\n\nIn this case, the giveback is of 1025 bytes and block length is 1024.\nThe rest 1 byte (which is 0x00) won't be parsed resulting in drop of\nall datagrams in rx_list.\n\nSame is case with packets of size 2048:\n[002] d..1  7828.557948: dwc3_gadget_giveback: ep1out:\nreq 0000000011dfd96e length 2049/16384 zsI ==> 0\n[002] d..1  7828.557949: ncm_unwrap_ntb: K: ncm_unwrap_ntb nth: 1751999342\n[002] d..1  7828.557950: ncm_unwrap_ntb: K: ncm_unwrap_ntb blk_len: 0x800\n\nLecroy shows one byte coming in extra confirming that the byte is coming\nin from PC:\n\n Transfer 2959 - Bytes Transferred(1025)  Timestamp((18.524 843 590)\n - Transaction 8391 - Data(1025 bytes) Timestamp(18.524 843 590)\n --- Packet 4063861\n       Data(1024 bytes)\n       Duration(2.117us) Idle(14.700ns) Timestamp(18.524 843 590)\n --- Packet 4063863\n       Data(1 byte)\n       Duration(66.160ns) Time(282.000ns) Timestamp(18.524 845 722)\n\nAccording to Windows driver, no ZLP is needed if wBlockLength is non-zero,\nbecause the non-zero wBlockLength has already told the function side the\nsize of transfer to be expected. However, there are in-market NCM devices\nthat rely on ZLP as long as the wBlockLength is multiple of wMaxPacketSize.\nTo deal with such devices, it pads an extra 0 at end so the transfer is no\nlonger multiple of wMaxPacketSize.",
+  "datePublished": "May 17, 2024, 11:40:25 AM",
+  "dateUpdated": "May 11, 2026, 8:10:23 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/059285e04ebb273d32323fbad5431c5b94f77e48",
+    "https://git.kernel.org/stable/c/a31cf46d108dabce3df80b3e5c07661e24912151",
+    "https://git.kernel.org/stable/c/57ca0e16f393bb21d69734e536e383a3a4c665fd",
+    "https://git.kernel.org/stable/c/2cb66b62a5d64ccf09b0591ab86fb085fa491fc5",
+    "https://git.kernel.org/stable/c/35b604a37ec70d68b19dafd10bbacf1db505c9ca",
+    "https://git.kernel.org/stable/c/2b7ec68869d50ea998908af43b643bca7e54577e",
+    "https://git.kernel.org/stable/c/c7f43900bc723203d7554d299a2ce844054fab8e",
+    "https://git.kernel.org/stable/c/76c51146820c5dac629f21deafab0a7039bc3ccd"
+  ],
+  "aliases": [
+    "GHSA-hh96-p296-x7m4",
+    "CVE-2024-27405"
+  ],
+  "assigner": "Linux",
+  "epss": 1.3,
+  "enisaIdProduct": [
+    {
+      "id": "1e7123cf-2dbd-342e-af3b-2ebe03c4ffe2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.80"
+    },
+    {
+      "id": "22ce9daf-2a6b-38ec-995d-e09e12cd2c36",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "4308603a-fc38-3a21-bffa-49f59931c968",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.270"
+    },
+    {
+      "id": "4845e35d-3a39-36ab-b838-3d80647129f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.150"
+    },
+    {
+      "id": "4c1d1db9-4486-3498-9bc0-6bed138cf771",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9f6ce4240a2bf456402c15c06768059e5973f28c <c7f43900bc723203d7554d299a2ce844054fab8e"
+    },
+    {
+      "id": "53f03dd7-7abe-3b66-a290-1a89d631a961",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9f6ce4240a2bf456402c15c06768059e5973f28c <059285e04ebb273d32323fbad5431c5b94f77e48"
+    },
+    {
+      "id": "54ee5daf-5ad0-347c-bbe9-565a1cdc974c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9f6ce4240a2bf456402c15c06768059e5973f28c <57ca0e16f393bb21d69734e536e383a3a4c665fd"
+    },
+    {
+      "id": "79dfb619-75a5-3e3d-a498-129c5fa21b81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.7"
+    },
+    {
+      "id": "7d9f4b65-31e6-3435-8efc-cc833b872f63",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9f6ce4240a2bf456402c15c06768059e5973f28c <35b604a37ec70d68b19dafd10bbacf1db505c9ca"
+    },
+    {
+      "id": "8d63d252-dddb-36e9-8f21-e552803a6249",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "ac76d616-5522-3aa3-8417-1aea1acd2e23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9f6ce4240a2bf456402c15c06768059e5973f28c <a31cf46d108dabce3df80b3e5c07661e24912151"
+    },
+    {
+      "id": "b59d3fac-166e-34ab-b083-491c7b07154c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.308"
+    },
+    {
+      "id": "ba6844de-c800-3f68-a3fe-8c907cb426ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.19"
+    },
+    {
+      "id": "d5656387-3ca7-33e5-ab3e-87fb7b13ac2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9f6ce4240a2bf456402c15c06768059e5973f28c <76c51146820c5dac629f21deafab0a7039bc3ccd"
+    },
+    {
+      "id": "eb1a73c3-4451-3a11-b6af-8fbaf41101dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.211"
+    },
+    {
+      "id": "efeadaa3-4f9d-30bf-a2bf-f8fa4c28cdb2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.38"
+    },
+    {
+      "id": "fa041e7d-34bf-3646-a094-6db991417fb3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9f6ce4240a2bf456402c15c06768059e5973f28c <2cb66b62a5d64ccf09b0591ab86fb085fa491fc5"
+    },
+    {
+      "id": "fc03a892-d7ba-318f-8a15-0043fa71cc31",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9f6ce4240a2bf456402c15c06768059e5973f28c <2b7ec68869d50ea998908af43b643bca7e54577e"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "48b9d902-3794-3d5a-80b5-2f12e0a011eb",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

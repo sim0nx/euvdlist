@@ -3,30 +3,24 @@
   "enisaUuid": "25ee53fa-4890-3e64-b288-a901b59c691c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: avoid leaking refcount when cifs_sb_tlink() fails\n\ncifs_oplock_break() takes over the reference that\ncifs_queue_oplock_break() acquired when it queued the work, and drops it\nwith _cifsFileInfo_put() once the break has been processed.\n\nOnly in setups with \"-o multiuser\", cifs_sb_tlink() may fail, at which\npoint cifs_oplock_break() returns without putting the file reference,\nmirroring the reference leak we already fixed in the companion patch to\ncifs_queue_oplock_break().\n\nThis would trigger a crash due to busy inodes on the next unmount:\n\n  BUG: Dentry ... still in use (1) [unmount of cifs cifs]\n  VFS: Busy inodes after unmount of cifs (cifs)\n\nDrop the reference on that path as well. Doing so before the out label\nmirrors the normal path, which also puts the reference before\ncifs_done_oplock_break().\n\nFound by Sashiko code review. The failure path was not exercised at\nruntime.",
   "datePublished": "Sep 25, 2026, 10:21:47 AM",
-  "dateUpdated": "Sep 25, 2026, 10:21:47 AM",
+  "dateUpdated": "Oct 30, 2026, 12:37:21 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/f1fd8a84181b3af03c508e0b02b4877945dd070a",
+    "https://git.kernel.org/stable/c/55c5f095d4df14271b238f826e1392fda7b6e60e",
+    "https://git.kernel.org/stable/c/e9c5bcc88b8337157e480c85a6d2f326bc265012",
     "https://git.kernel.org/stable/c/9ec991e148368e3207e98134c509a625097f7693",
     "https://git.kernel.org/stable/c/dd03fd658ea59821505e0e643b6b7cbdf51c4e1d",
     "https://git.kernel.org/stable/c/1d1b0f1d812a4011a57bc6c70492c34a2e46c6dd",
     "https://git.kernel.org/stable/c/23b26f4408ac3f35a482d2e5cf6fc865d4201b71"
   ],
   "aliases": [
+    "GHSA-v7vw-58j3-xcmw",
     "CVE-2026-97556"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
-    {
-      "id": "03c48788-65d7-39f6-bf6c-ea9e79894365",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5ee28bcfbaacf289eb25c662a2862542ea6ce6a7"
-    },
     {
       "id": "06916a74-0f2e-3b2f-b130-4219f53279bf",
       "product": {
@@ -68,14 +62,24 @@
       "product_version": "patch: 7.2.7"
     },
     {
-      "id": "21666490-1e43-3215-a31d-edc2738b093c",
+      "id": "34dfe364-af50-319a-9432-da274ad84234",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc3"
+      "product_version": "b99f490ea87ebcca3a429fd8837067feb56a4c7c <f1fd8a84181b3af03c508e0b02b4877945dd070a"
+    },
+    {
+      "id": "585340b3-91e4-39d1-8d89-3cb14ede335a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.158"
     },
     {
       "id": "5bb9a2c4-a72e-3843-8c36-14408331481b",
@@ -86,6 +90,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "62628030-9006-3641-b988-4ca826ceddb3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "68bfbbea-025c-3979-aaa0-274c48c15b44",
@@ -128,14 +142,34 @@
       "product_version": "patch: 6.12.111"
     },
     {
-      "id": "939e954c-c043-35bf-8040-bc68f891ae13",
+      "id": "837abdc1-6d69-3f33-9383-ec5876fcb656",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "5.15.128 <5.16"
+      "product_version": "5.15.128 <5.15.224"
+    },
+    {
+      "id": "95591b71-5c33-3a82-9e8e-16f6c2b0d213",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "a1938364-03b0-3010-902e-dcecfb8d362d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e8f5f849ffce24490eb9449e98312b66c0dba76f <e9c5bcc88b8337157e480c85a6d2f326bc265012"
     },
     {
       "id": "c4ed542b-97f8-3e05-b285-ab95e8009d42",
@@ -148,24 +182,14 @@
       "product_version": "e8f5f849ffce24490eb9449e98312b66c0dba76f <1d1b0f1d812a4011a57bc6c70492c34a2e46c6dd"
     },
     {
-      "id": "c70b7f53-cd8c-3d59-b5ee-703b6e6cb8e8",
+      "id": "d65806a9-2250-3def-991e-35e57808fb46",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "b99f490ea87ebcca3a429fd8837067feb56a4c7c"
-    },
-    {
-      "id": "d0dcfe66-fcc1-362d-8b6c-115a1da2f0d7",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "6.1.47 <6.2"
+      "product_version": "6.1.47 <6.1.189"
     },
     {
       "id": "d7bcf592-1f72-3338-b14a-3360c0daa695",
@@ -176,6 +200,26 @@
         }
       },
       "product_version": "6b67a6d2e50634fe127e656147c81915955e9f5e"
+    },
+    {
+      "id": "d81acf78-a0c1-3725-9850-1b6ab2cbfab6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.189"
+    },
+    {
+      "id": "dca64e3b-9501-324b-83bb-0ce3ddfa5a08",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ee28bcfbaacf289eb25c662a2862542ea6ce6a7 <55c5f095d4df14271b238f826e1392fda7b6e60e"
     }
   ],
   "enisaIdVendor": [

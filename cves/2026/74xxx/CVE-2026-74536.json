@@ -3,7 +3,7 @@
   "enisaUuid": "d8d6867b-bf25-3f30-aacb-bbb87e45fa46",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: ISO: fix leaking sk after socket release\n\niso_sock_kill() tests !sock_flag(sk, SOCK_ZAPPED) || sk->sk_socket ||\nsock_flag(sk, SOCK_DEAD) for early return, but this is always true since\nsock_orphan(sk) sets SOCK_DEAD, so the sk reference released by socket\nalways leaks, iso_sock_destruct is never called.\n\nThe socket reference also leaks when __iso_sock_close() does not set\nSOCK_ZAPPED, since iso_conn_del() does not call iso_sock_kill() after\nzapping.\n\nFix by replacing SOCK_DEAD by BT_SK_KILLED flag that is not used for\nsomething else, and lock_sock to ensure iso_sock_kill() puts sk only\nafter socket release only once. Release and iso_conn_del may run\nconcurrently. Call iso_sock_kill() from iso_conn_del() to clean sk up\nafter zapping.\n\nRemove call to iso_sock_kill() from iso_sock_close(), as it's generally\nno-op there.",
   "datePublished": "Aug 15, 2026, 12:27:49 PM",
-  "dateUpdated": "Aug 15, 2026, 12:27:49 PM",
+  "dateUpdated": "Aug 17, 2026, 5:21:20 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/96ed3c772c08e7a91c399567f412618e43231023",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/ce57442a379212fe3fda59c9437ee8217eceb5b1"
   ],
   "aliases": [
+    "GHSA-8vqw-g268-q22j",
     "CVE-2026-74536"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "4faedb01-6399-344a-bd7b-351bcbaa143a",
@@ -68,14 +69,14 @@
       "product_version": "ccf74f2390d60a2f9a75ef496d2564abb478f46a <e30e5ca63c8fbe3cd505fbb419bb547760cda633"
     },
     {
-      "id": "87476fd0-52e0-3f4f-ae53-626660dd5aeb",
+      "id": "af67e36e-c6a3-384f-b431-de4e46acbe38",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc6"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "dae33206-a438-3664-9c36-4cc2a3c6cf76",

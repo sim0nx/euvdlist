@@ -3,9 +3,12 @@
   "enisaUuid": "ef883f9e-9924-3d7d-8d58-b4d45eaaae8f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsunrpc: xprtsock: annotate shared socket callbacks with READ_ONCE/WRITE_ONCE\n\nxprtsock replaces and restores sk->sk_data_ready and\nsk->sk_write_space on live sockets with plain stores, and\nxs_udp_do_set_buffer_size() invokes sk->sk_write_space via a plain\nload. These callback pointers are shared with generic socket and\nprotocol paths that may read or invoke them concurrently, so xprtsock\nneeds the same READ_ONCE()/WRITE_ONCE() callback visibility contract\nthat the validated 4022 family applied elsewhere.\n\nWhen SUNRPC takes over an AF_LOCAL, UDP, or TCP socket and later\nrestores the lower-socket callbacks during teardown, another CPU may\nstill hold an earlier callback snapshot. The plain replace/restore\npattern leaves the same visibility hole as the validated 4022 family,\nso a stale snapshot can still invoke xs_data_ready() or\nxs_udp_write_space() after the live callback fields have already been\nrestored to the lower-socket handlers.\n\nUse WRITE_ONCE() for the shared sk_data_ready and sk_write_space\nstores in xs_local_finish_connecting(), xs_udp_finish_connecting(),\nxs_tcp_finish_connecting(), and xs_restore_old_callbacks(). Use\nREAD_ONCE() for the direct sk_write_space invocation in\nxs_udp_do_set_buffer_size(). This matches the required callback\nvisibility contract while leaving adjacent sk_state_change and\nsk_error_report handling unchanged.",
   "datePublished": "Sep 17, 2026, 4:07:41 PM",
-  "dateUpdated": "Sep 17, 2026, 4:07:41 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:34:53 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/6b79b5a0f1c566f0aa6e08c7981826015a0acc4d",
     "https://git.kernel.org/stable/c/ed80d009b154aa204f541d390884851b3d4f15ae",
     "https://git.kernel.org/stable/c/589f761236e05ff9de1bdfd6a5258f113e6457fe",
     "https://git.kernel.org/stable/c/da652cb17f9faeea1fa44b7215e8869a0b10b664",
@@ -13,11 +16,22 @@
     "https://git.kernel.org/stable/c/33930840b5f0a79f826e7c69dc6cd78f72a67481"
   ],
   "aliases": [
-    "CVE-2026-90235"
+    "CVE-2026-90235",
+    "GHSA-872w-99m8-9923"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.66,
   "enisaIdProduct": [
+    {
+      "id": "09ab5581-e7f2-3a6a-b9b6-4f21ba4baeb0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
     {
       "id": "1a72726c-16ca-3141-ab3d-04fa2a77ea42",
       "product": {
@@ -79,16 +93,6 @@
       "product_version": "2.6.15"
     },
     {
-      "id": "9e9f50de-e633-3adb-8617-8f2ae6cf6349",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "a94baf9f-e1e8-3a89-baa8-ceabe1edc611",
       "product": {
         "name": "Linux",
@@ -129,6 +133,16 @@
       "product_version": "patch: 6.18.52"
     },
     {
+      "id": "bbff845f-58c4-3e36-b0ac-183baec312b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "f8ce503a-4719-3b98-a07c-6eee87e9b64b",
       "product": {
         "name": "Linux",
@@ -137,6 +151,16 @@
         }
       },
       "product_version": "a246b0105bbd9a70a698f69baae2042996f2a0e9 <da652cb17f9faeea1fa44b7215e8869a0b10b664"
+    },
+    {
+      "id": "ff18bf3a-20b8-3218-8d2d-9f77613b5cf7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a246b0105bbd9a70a698f69baae2042996f2a0e9 <6b79b5a0f1c566f0aa6e08c7981826015a0acc4d"
     }
   ],
   "enisaIdVendor": [

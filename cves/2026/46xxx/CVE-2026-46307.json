@@ -3,8 +3,10 @@
   "enisaUuid": "fbfad45b-27a9-3090-95f7-5fc745e23894",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: ath5k: do not access array OOB\n\nVincent reports:\n> The ath5k driver seems to do an array-index-out-of-bounds access as\n> shown by the UBSAN kernel message:\n> UBSAN: array-index-out-of-bounds in drivers/net/wireless/ath/ath5k/base.c:1741:20\n> index 4 is out of range for type 'ieee80211_tx_rate [4]'\n> ...\n> Call Trace:\n>  <TASK>\n>  dump_stack_lvl+0x5d/0x80\n>  ubsan_epilogue+0x5/0x2b\n>  __ubsan_handle_out_of_bounds.cold+0x46/0x4b\n>  ath5k_tasklet_tx+0x4e0/0x560 [ath5k]\n>  tasklet_action_common+0xb5/0x1c0\n\nIt is real. 'ts->ts_final_idx' can be 3 on 5212, so:\n   info->status.rates[ts->ts_final_idx + 1].idx = -1;\nwith the array defined as:\n   struct ieee80211_tx_rate rates[IEEE80211_TX_MAX_RATES];\nwhile the size is:\n   #define IEEE80211_TX_MAX_RATES  4\nis indeed bogus.\n\nSet this 'idx = -1' sentinel only if the array index is less than the\narray size. As mac80211 will not look at rates beyond the size\n(IEEE80211_TX_MAX_RATES).\n\nNote: The effect of the OOB write is negligible. It just overwrites the\nnext member of info->status, i.e. ack_signal.",
   "datePublished": "Jun 8, 2026, 3:46:35 PM",
-  "dateUpdated": "Jun 8, 2026, 3:46:35 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 15, 2026, 1:21:33 AM",
+  "baseScore": 8.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:L",
   "references": [
     "https://git.kernel.org/stable/c/ecb1c163166759dec004c1fdb9709b8a5992fc8e",
     "https://git.kernel.org/stable/c/9dd6aae4bc7bfa11088d928670a3315eae542769",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/d748603f12baff112caa3ab7d39f50100f010dbd"
   ],
   "aliases": [
+    "GHSA-qrx4-q7hg-2xx2",
     "CVE-2026-46307"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.24,
   "enisaIdProduct": [
     {
       "id": "0359475e-0c09-3b8a-b9fc-4fab835b4f44",
@@ -60,16 +63,6 @@
         }
       },
       "product_version": "patch: 6.18.30"
-    },
-    {
-      "id": "2c5b029e-068b-3904-bbe4-73848014b5ff",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc3"
     },
     {
       "id": "32078ea6-781a-352d-8ad7-e8f76e27486e",
@@ -190,6 +183,16 @@
         }
       },
       "product_version": "patch: 5.10.258"
+    },
+    {
+      "id": "d63735c9-25fe-32be-b901-06c13eef9c62",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "f72aeb1a-0934-3e46-9853-a8e571f48de9",

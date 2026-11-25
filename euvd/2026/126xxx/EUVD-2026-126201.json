@@ -3,19 +3,23 @@
   "enisaUuid": "c7bfe956-0430-33bc-ad35-9d855a7bbe8e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: stop processing a read response after a receive error\n\ncifs_read_iter_from_socket() may call cifs_reconnect() before returning an\nerror.  The reconnect path aborts pending mids and invokes their callbacks.\nThe callback can then release the cifs_io_subrequest containing rdata.\n\ncifs_readv_receive() nevertheless continues after a negative return and may\ndereference rdata in cifs_readv_discard().  KASAN reports the resulting\nUAF:\n\n  BUG: KASAN: slab-use-after-free in cifs_readv_receive\n  Read of size 4 by task cifsd\n  cifs_readv_receive (fs/smb/client/transport.c:1284)\n  cifs_demultiplex_thread (fs/smb/client/connect.c:1355)\n  kthread (kernel/kthread.c:436)\n  ret_from_fork (arch/x86/kernel/process.c:158)\n\n  Freed by task 148:\n  netfs_put_subrequest (fs/netfs/objects.c:267)\n  netfs_read_collection (fs/netfs/read_collect.c:460)\n  netfs_wait_for_in_progress (fs/netfs/misc.c:462)\n\nReturn the socket error immediately, as this path did before the iterator\nconversion.  This also avoids adding a negative length to total_read.",
   "datePublished": "Nov 16, 2026, 9:59:22 AM",
-  "dateUpdated": "Nov 16, 2026, 9:59:22 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:01:00 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/d3d007b7f63310fb6f9bb4ed24d74c14ee34b0b6",
     "https://git.kernel.org/stable/c/af78baeacd731a98531eaa3103bfe03f147cffb7",
     "https://git.kernel.org/stable/c/ecc327edd96a65ac177379664cc0972d8a23dfa4",
     "https://git.kernel.org/stable/c/558cb79cb242ce7ca8b32c4b39412d125879e8f2",
     "https://git.kernel.org/stable/c/51efca72345acdbedc4af76782d464bd15ba50ff"
   ],
   "aliases": [
+    "GHSA-8gcq-47fg-v5mc",
     "CVE-2026-99295"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.47,
   "enisaIdProduct": [
     {
       "id": "1c0d8068-ae6e-39d5-9a01-75b5edd55b3d",
@@ -66,6 +70,26 @@
         }
       },
       "product_version": "d08089f649a0cfb2099c8551ac47eef0cc23fdf2 <51efca72345acdbedc4af76782d464bd15ba50ff"
+    },
+    {
+      "id": "8fb0a69d-a2fe-36c7-b9de-01871363cf57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d08089f649a0cfb2099c8551ac47eef0cc23fdf2 <d3d007b7f63310fb6f9bb4ed24d74c14ee34b0b6"
+    },
+    {
+      "id": "9709470e-7899-3f97-b453-a8252fc5b857",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "a26a7ea1-a648-3203-aa3e-b9742b1e8b77",

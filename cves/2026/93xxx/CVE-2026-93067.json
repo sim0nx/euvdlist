@@ -3,7 +3,7 @@
   "enisaUuid": "f4f9b312-6514-3945-b067-a5ad281d6d9f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/bridge: tc358767: clamp the reported AUX read size to the request\n\ntc_aux_transfer() clamps an AUX read to the payload limit:\n\n\tsize_t size = min_t(size_t, DP_AUX_MAX_PAYLOAD_BYTES - 1, msg->size);\n\nAfter the transfer it replaces size with the byte count the controller\nreports in AUX_BYTES:\n\n\tif (size)\n\t\tsize = FIELD_GET(AUX_BYTES, auxstatus);\n\nAUX_BYTES is GENMASK(15, 8), so it can be up to 255. Nothing clamps it\nback to the request. tc_aux_read_data() reads that many bytes into the\n16-byte auxrdata stack buffer, then copies them into the caller buffer. A\nreported count of 255 makes the read run to 256 bytes and overruns both.\n\nThe controller should never report more than it was asked to transfer, so\nthis is defense in depth rather than a live hole. The reported count is\nonly lightly trusted, and the check is cheap. Clamp it back to the request,\nthe same way ti-sn65dsi86 does in commit aca58eac52b8 (\"drm/bridge:\nti-sn65dsi86: Never store more than msg->size bytes in AUX xfer\").",
   "datePublished": "Sep 17, 2026, 4:10:52 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:52 PM",
+  "dateUpdated": "Oct 19, 2026, 9:05:03 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/ebf00c51c9ac9188e2806a2b842418805ee879be",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/ec6444a00c49e6c2b5e9a507272a28126677f9ee"
   ],
   "aliases": [
+    "GHSA-wpcc-v879-hj4w",
     "CVE-2026-93067"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "02bd37e5-bb6c-38dd-94c3-992fc7447d73",
@@ -52,16 +53,6 @@
       "product_version": "12dfe7c4d9c53442efcb4113cff505f60d654906 <9ff718df547372d70ca20ad8e66a3fb1300936b2"
     },
     {
-      "id": "55b10602-900b-34bf-897a-0c44af998acb",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "7166722a-87be-35ba-854c-f3f81baaa9f8",
       "product": {
         "name": "Linux",
@@ -90,6 +81,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "acfd6613-89d6-3b9e-ba86-cf30b83b4c87",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "aea771a0-3d11-359a-a115-906a2d77c183",

@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2023-59647",
+  "enisaUuid": "ae6de2a0-5a88-3020-94d5-8061bc610b44",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: support non-r10 register spill/fill to/from stack in precision tracking\n\nUse instruction (jump) history to record instructions that performed\nregister spill/fill to/from stack, regardless if this was done through\nread-only r10 register, or any other register after copying r10 into it\n*and* potentially adjusting offset.\n\nTo make this work reliably, we push extra per-instruction flags into\ninstruction history, encoding stack slot index (spi) and stack frame\nnumber in extra 10 bit flags we take away from prev_idx in instruction\nhistory. We don't touch idx field for maximum performance, as it's\nchecked most frequently during backtracking.\n\nThis change removes basically the last remaining practical limitation of\nprecision backtracking logic in BPF verifier. It fixes known\ndeficiencies, but also opens up new opportunities to reduce number of\nverified states, explored in the subsequent patches.\n\nThere are only three differences in selftests' BPF object files\naccording to veristat, all in the positive direction (less states).\n\nFile                                    Program        Insns (A)  Insns (B)  Insns  (DIFF)  States (A)  States (B)  States (DIFF)\n--------------------------------------  -------------  ---------  ---------  -------------  ----------  ----------  -------------\ntest_cls_redirect_dynptr.bpf.linked3.o  cls_redirect        2987       2864  -123 (-4.12%)         240         231    -9 (-3.75%)\nxdp_synproxy_kern.bpf.linked3.o         syncookie_tc       82848      82661  -187 (-0.23%)        5107        5073   -34 (-0.67%)\nxdp_synproxy_kern.bpf.linked3.o         syncookie_xdp      85116      84964  -152 (-0.18%)        5162        5130   -32 (-0.62%)\n\nNote, I avoided renaming jmp_history to more generic insn_hist to\nminimize number of lines changed and potential merge conflicts between\nbpf and bpf-next trees.\n\nNotice also cur_hist_entry pointer reset to NULL at the beginning of\ninstruction verification loop. This pointer avoids the problem of\nrelying on last jump history entry's insn_idx to determine whether we\nalready have entry for current instruction or not. It can happen that we\nadded jump history entry because current instruction is_jmp_point(), but\nalso we need to add instruction flags for stack access. In this case, we\ndon't want to entries, so we need to reuse last added entry, if it is\npresent.\n\nRelying on insn_idx comparison has the same ambiguity problem as the one\nthat was fixed recently in [0], so we avoid that.\n\n  [0] https://patchwork.kernel.org/project/netdevbpf/patch/20231110002638.4168352-3-andrii@kernel.org/",
+  "datePublished": "Nov 5, 2024, 10:09:30 AM",
+  "dateUpdated": "Oct 15, 2026, 9:41:24 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/ecc2aeeaa08a355d84d3ca9c3d2512399a194f29",
+    "https://git.kernel.org/stable/c/199f0452873741fa4b8d4d88958e929030b2f92b",
+    "https://git.kernel.org/stable/c/e4da60feca4d35e1a9b03dc0affa3354f9ff45e4",
+    "https://git.kernel.org/stable/c/41f6f64e6999a837048b1bd13a2f8742964eca6b"
+  ],
+  "aliases": [
+    "CVE-2023-52920",
+    "GHSA-79p2-24v8-gp9v"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "01a03a18-9639-3c8f-bfbd-db516d3aaaad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b5dc0163d8fd78e64a7e21f309cf932fda34353e <199f0452873741fa4b8d4d88958e929030b2f92b"
+    },
+    {
+      "id": "07265111-d51c-3306-8db2-7563d0f1a7b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "46bf5e8e-7703-37bd-a8a9-def35906df53",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b5dc0163d8fd78e64a7e21f309cf932fda34353e <41f6f64e6999a837048b1bd13a2f8742964eca6b"
+    },
+    {
+      "id": "819e968d-1443-3a48-91e1-e0f944e6918f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b5dc0163d8fd78e64a7e21f309cf932fda34353e <e4da60feca4d35e1a9b03dc0affa3354f9ff45e4"
+    },
+    {
+      "id": "8c968d9f-eca1-38b7-8230-9a0a127399e1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b5dc0163d8fd78e64a7e21f309cf932fda34353e <ecc2aeeaa08a355d84d3ca9c3d2512399a194f29"
+    },
+    {
+      "id": "956fea46-f5db-3537-8a1e-38890dfb8df0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.3"
+    },
+    {
+      "id": "9a96e6e6-8062-36d6-9610-91cdbaa97eda",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.70"
+    },
+    {
+      "id": "a43993e3-fc4d-3f83-9f1b-02e21bbcfa24",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.140"
+    },
+    {
+      "id": "b1ab616a-9f15-308c-879f-5ad79a9427a3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "c9017453-e178-3514-8152-2bbe46d41694",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.64"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "19c746a4-eb1d-3cdf-9204-8bcb8a8f8477",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

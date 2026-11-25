@@ -3,9 +3,12 @@
   "enisaUuid": "1b755e07-8ea4-3d36-a08a-497f57bc32f0",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: rtl2832: fix use-after-free in rtl2832_remove()\n\ncancel_delayed_work_sync() is called before i2c_mux_del_adapters()\nin rtl2832_remove(). While the cancel waits for any running instance\nof i2c_gate_work to finish, it does not prevent the timer from being\nrescheduled by a concurrent thread.\n\nDuring probe, the r820t_attach() call attempts I2C transfers through\nthe mux adapter. These transfers go through i2c_mux_master_xfer(),\nwhich calls rtl2832_deselect() after the transfer completes,\nrescheduling i2c_gate_work via schedule_delayed_work(). If this\ntransfer is still in flight when rtl2832_remove() runs,\nrtl2832_deselect() can reschedule i2c_gate_work after it has been\ncancelled, causing a use-after-free when kfree(dev) is called.\n\nFix this by calling i2c_mux_del_adapters() before\ncancel_delayed_work_sync(). Once the mux adapter is unregistered, no\nnew I2C transfers can go through it, so rtl2832_deselect() can no\nlonger reschedule i2c_gate_work. The subsequent\ncancel_delayed_work_sync() is then guaranteed to be final.",
   "datePublished": "Aug 10, 2026, 12:00:33 PM",
-  "dateUpdated": "Aug 10, 2026, 12:00:33 PM",
+  "dateUpdated": "Nov 6, 2026, 4:55:09 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/1e8a6bc19403661661fed5ae82f6eca6c9cdfad2",
+    "https://git.kernel.org/stable/c/68a9c0290897c1436ddceb8cea604c93377a0299",
+    "https://git.kernel.org/stable/c/13c06056699e66ff7109ba68658cc6ea4a23f516",
     "https://git.kernel.org/stable/c/9acd5bbbe1df8e487e49488692c224496d4c9e16",
     "https://git.kernel.org/stable/c/24bef237eef8dd1ebcffb129ba21891ddad0d309",
     "https://git.kernel.org/stable/c/2c71bda6edc630a1f8c3c45d8df5fc22d234e042",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/680daf40a82d483949f87f0d8f98639dc47e610c"
   ],
   "aliases": [
-    "CVE-2026-68214"
+    "CVE-2026-68214",
+    "GHSA-9rcq-4828-985w"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "05df1e5c-0d64-3a9c-bcd4-884303d1dd60",
@@ -49,6 +53,26 @@
       "product_version": "patch: 6.6.148"
     },
     {
+      "id": "4e100d3c-acc6-3c48-960c-bfca48f19af5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cddcc40b1b1553010acb89add84c64b5d123ec94 <1e8a6bc19403661661fed5ae82f6eca6c9cdfad2"
+    },
+    {
+      "id": "65554acc-ebe2-3cce-a011-fddd2f524c74",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
       "id": "6a0fcb78-1d23-3a26-a771-a79cf43fca14",
       "product": {
         "name": "Linux",
@@ -69,14 +93,34 @@
       "product_version": "4.7"
     },
     {
-      "id": "7d5154e8-b480-3b5d-8c03-e1db53efb891",
+      "id": "727da24a-bab3-3029-925b-492f894f068c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "8ba3d4bb-cc35-3560-9c1c-b5255f7bf9a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
+    {
+      "id": "8fb22a90-66d0-3962-b6d4-15e8315ed864",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cddcc40b1b1553010acb89add84c64b5d123ec94 <13c06056699e66ff7109ba68658cc6ea4a23f516"
     },
     {
       "id": "99eee719-565e-3d9c-86e2-7363bb054d8d",
@@ -119,6 +163,16 @@
       "product_version": "patch: 6.18.42"
     },
     {
+      "id": "cbfbf0c2-0843-3e4d-904f-57188766ecec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "ea4dd442-a5e2-3b24-bace-0aeefc76d8c6",
       "product": {
         "name": "Linux",
@@ -137,6 +191,16 @@
         }
       },
       "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "f0e5330e-47b4-3306-b76f-35d5b29dcc14",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cddcc40b1b1553010acb89add84c64b5d123ec94 <68a9c0290897c1436ddceb8cea604c93377a0299"
     }
   ],
   "enisaIdVendor": [

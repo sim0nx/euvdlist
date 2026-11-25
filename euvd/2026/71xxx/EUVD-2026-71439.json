@@ -3,7 +3,7 @@
   "enisaUuid": "058dd5dc-56b8-3dd1-a39c-666bfe727fb3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfc: nci: add data_len bound checks to activation parameter extractors\n\nnci_extract_activation_params_iso_dep() and\nnci_extract_activation_params_nfc_dep() read an inner length byte from\nthe NCI RF_INTF_ACTIVATED_NTF payload and use it to memcpy() into fixed\nkernel buffers, but neither function receives the caller-validated\nactivation_params_len.  A crafted NCI notification with\nactivation_params_len=1 and an inner length byte of up to 20 (NFC-A) or\n50 (NFC-B) causes memcpy() to read that many bytes past the one valid\nbyte in the activation params region -- a slab out-of-bounds read of\nkernel memory adjacent to the NCI skb.\n\nThe sibling nci_extract_rf_params_*() family was given equivalent\nprotection by commit 571dcbeb8e63 (\"net: nfc: nci: Fix parameter\nvalidation for packet data\"), but the two activation parameter\nextractors were not updated at that time.\n\nAdd a data_len parameter to both functions, guard against an empty\nregion before consuming the inner length byte, decrement the remaining\ncount after consuming it, and clamp the copy length to what is actually\navailable.  Update both call sites to pass ntf.activation_params_len,\nwhich is already validated against the skb at ntf.c:801.",
   "datePublished": "Sep 4, 2026, 3:13:09 PM",
-  "dateUpdated": "Sep 4, 2026, 3:13:09 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:49 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1168484fe2b3828bf24a46f3c42a8719fade679b",
@@ -17,10 +17,11 @@
     "https://git.kernel.org/stable/c/0428fa2c22e2ba0cff766d3b80d461e149102045"
   ],
   "aliases": [
-    "CVE-2026-80796"
+    "CVE-2026-80796",
+    "GHSA-x2c2-6crc-q5ch"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "0ffd16ab-2ed5-3ce4-ad82-fabaf1d14f99",
@@ -61,6 +62,16 @@
         }
       },
       "product_version": "patch: 7.1.11"
+    },
+    {
+      "id": "4a510d95-18de-36ad-a3d3-50e18d59f99b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "64e13fa6-b874-3e76-b19e-2683c76f2c31",
@@ -171,16 +182,6 @@
         }
       },
       "product_version": "patch: 7.2.1"
-    },
-    {
-      "id": "e201db05-39fc-34c9-abec-9e96d48a4e9c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "e97e3977-0e02-31eb-aa0f-0b06e121323e",

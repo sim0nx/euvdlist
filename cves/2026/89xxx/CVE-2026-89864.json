@@ -3,7 +3,7 @@
   "enisaUuid": "36d778c7-5eae-398f-b0c0-b50990388ef9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Bound i2c->length in I2C bsg handlers\n\nstruct qla_i2c_access carries a 16-bit length field alongside a fixed\n64-byte buffer:\n\n\tstruct qla_i2c_access {\n\t\tuint16_t device, offset, option, length;\n\t\tuint8_t  buffer[0x40];\n\t} __packed;\n\nqla2x00_write_i2c() and qla2x00_read_i2c() use the user-supplied\ni2c->length without any bounds check. i2c is overlaid on a 256-byte\non-stack buffer and sfp is a 256-byte DMA-pool buffer, so a length up to\n65535 overruns both:\n\n  - write: memcpy(sfp, i2c->buffer, i2c->length) over-reads the stack and\n    over-writes the sfp heap buffer, and qla2x00_write_sfp() then DMAs\n    i2c->length bytes out of the 256-byte buffer.\n  - read: qla2x00_read_sfp() DMAs i2c->length bytes into the 256-byte sfp,\n    then memcpy(i2c->buffer, sfp, i2c->length) overflows the 64-byte\n    buffer inside the on-stack array.\n\nA caller holding CAP_SYS_RAWIO can use this to corrupt the heap and the\nkernel stack. Reject requests whose length exceeds the buffer before any\ncopy or DMA transfer in both handlers.",
   "datePublished": "Sep 16, 2026, 10:31:35 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:35 AM",
+  "dateUpdated": "Oct 19, 2026, 8:53:57 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/8f01f886cc5e7bbc16cbf1a9928fdebbc911e973",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/0918ee2c0eeb4d7f45b82b3dc11e65c2d9b7ad59"
   ],
   "aliases": [
+    "GHSA-vhpc-fmr8-vgcc",
     "CVE-2026-89864"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "03479a42-c9df-3b08-ba92-a94172d3faf1",
@@ -42,16 +43,6 @@
       "product_version": "9ebb5d9c69f1f5721f9f6f49e501c674c1e184ae <2be39946abcde5a6416fb074ef728429e246a996"
     },
     {
-      "id": "07a68476-f481-3e86-afd9-e12010e47efd",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "56f20e21-785d-3ee0-9c2c-be12a000b176",
       "product": {
         "name": "Linux",
@@ -70,6 +61,16 @@
         }
       },
       "product_version": "9ebb5d9c69f1f5721f9f6f49e501c674c1e184ae <47049fdadc0eaa115e813735b827e1379c0d2cf8"
+    },
+    {
+      "id": "762b8704-af4b-3365-b15a-dffbd357e9ea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "7b04d2c5-dbad-3d5e-8a9a-7a6f1ddd51f9",

@@ -1,0 +1,195 @@
+{
+  "id": "EUVD-2024-44719",
+  "enisaUuid": "197a5d00-c08e-36d2-ac0c-440734ade9b4",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nblk-rq-qos: fix crash on rq_qos_wait vs. rq_qos_wake_function race\n\nWe're seeing crashes from rq_qos_wake_function that look like this:\n\n  BUG: unable to handle page fault for address: ffffafe180a40084\n  #PF: supervisor write access in kernel mode\n  #PF: error_code(0x0002) - not-present page\n  PGD 100000067 P4D 100000067 PUD 10027c067 PMD 10115d067 PTE 0\n  Oops: Oops: 0002 [#1] PREEMPT SMP PTI\n  CPU: 17 UID: 0 PID: 0 Comm: swapper/17 Not tainted 6.12.0-rc3-00013-geca631b8fe80 #11\n  Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.16.0-0-gd239552ce722-prebuilt.qemu.org 04/01/2014\n  RIP: 0010:_raw_spin_lock_irqsave+0x1d/0x40\n  Code: 90 90 90 90 90 90 90 90 90 90 90 90 90 f3 0f 1e fa 0f 1f 44 00 00 41 54 9c 41 5c fa 65 ff 05 62 97 30 4c 31 c0 ba 01 00 00 00 <f0> 0f b1 17 75 0a 4c 89 e0 41 5c c3 cc cc cc cc 89 c6 e8 2c 0b 00\n  RSP: 0018:ffffafe180580ca0 EFLAGS: 00010046\n  RAX: 0000000000000000 RBX: ffffafe180a3f7a8 RCX: 0000000000000011\n  RDX: 0000000000000001 RSI: 0000000000000003 RDI: ffffafe180a40084\n  RBP: 0000000000000000 R08: 00000000001e7240 R09: 0000000000000011\n  R10: 0000000000000028 R11: 0000000000000888 R12: 0000000000000002\n  R13: ffffafe180a40084 R14: 0000000000000000 R15: 0000000000000003\n  FS:  0000000000000000(0000) GS:ffff9aaf1f280000(0000) knlGS:0000000000000000\n  CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033\n  CR2: ffffafe180a40084 CR3: 000000010e428002 CR4: 0000000000770ef0\n  DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000\n  DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400\n  PKRU: 55555554\n  Call Trace:\n   <IRQ>\n   try_to_wake_up+0x5a/0x6a0\n   rq_qos_wake_function+0x71/0x80\n   __wake_up_common+0x75/0xa0\n   __wake_up+0x36/0x60\n   scale_up.part.0+0x50/0x110\n   wb_timer_fn+0x227/0x450\n   ...\n\nSo rq_qos_wake_function() calls wake_up_process(data->task), which calls\ntry_to_wake_up(), which faults in raw_spin_lock_irqsave(&p->pi_lock).\n\np comes from data->task, and data comes from the waitqueue entry, which\nis stored on the waiter's stack in rq_qos_wait(). Analyzing the core\ndump with drgn, I found that the waiter had already woken up and moved\non to a completely unrelated code path, clobbering what was previously\ndata->task. Meanwhile, the waker was passing the clobbered garbage in\ndata->task to wake_up_process(), leading to the crash.\n\nWhat's happening is that in between rq_qos_wake_function() deleting the\nwaitqueue entry and calling wake_up_process(), rq_qos_wait() is finding\nthat it already got a token and returning. The race looks like this:\n\nrq_qos_wait()                           rq_qos_wake_function()\n==============================================================\nprepare_to_wait_exclusive()\n                                        data->got_token = true;\n                                        list_del_init(&curr->entry);\nif (data.got_token)\n        break;\nfinish_wait(&rqw->wait, &data.wq);\n  ^- returns immediately because\n     list_empty_careful(&wq_entry->entry)\n     is true\n... return, go do something else ...\n                                        wake_up_process(data->task)\n                                          (NO LONGER VALID!)-^\n\nNormally, finish_wait() is supposed to synchronize against the waker.\nBut, as noted above, it is returning immediately because the waitqueue\nentry has already been removed from the waitqueue.\n\nThe bug is that rq_qos_wake_function() is accessing the waitqueue entry\nAFTER deleting it. Note that autoremove_wake_function() wakes the waiter\nand THEN deletes the waitqueue entry, which is the proper order.\n\nFix it by swapping the order. We also need to use\nlist_del_init_careful() to match the list_empty_careful() in\nfinish_wait().",
+  "datePublished": "Oct 29, 2024, 12:50:24 AM",
+  "dateUpdated": "Oct 15, 2026, 9:41:45 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/d04b72c9ef2b0689bfc1057d21c4aeed087c329f",
+    "https://git.kernel.org/stable/c/3bc6d0f8b70a9101456cf02ab99acb75254e1852",
+    "https://git.kernel.org/stable/c/455a469758e57a6fe070e3e342db12e4a629e0eb",
+    "https://git.kernel.org/stable/c/b5e900a3612b69423a0e1b0ab67841a1fb4af80f",
+    "https://git.kernel.org/stable/c/4c5b123ab289767afe940389dbb963c5c05e594e",
+    "https://git.kernel.org/stable/c/04f283fc16c8d5db641b6bffd2d8310aa7eccebc",
+    "https://git.kernel.org/stable/c/e972b08b91ef48488bae9789f03cfedb148667fb"
+  ],
+  "aliases": [
+    "GHSA-58q9-jhx4-mj9p",
+    "CVE-2024-50082"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "03d8eb1e-2725-3efc-a5b9-a4ab470201d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "38cfb5a45ee013bfab5d1ae4c4738815e744b440 <d04b72c9ef2b0689bfc1057d21c4aeed087c329f"
+    },
+    {
+      "id": "0c8aca28-14ea-38e9-9328-022624a0553e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.114"
+    },
+    {
+      "id": "0dd618f1-b6ba-362d-9b83-e0a8af3e2e3b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "38cfb5a45ee013bfab5d1ae4c4738815e744b440 <04f283fc16c8d5db641b6bffd2d8310aa7eccebc"
+    },
+    {
+      "id": "24c4cc36-6965-38e6-bb27-81096c3fcd67",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.285"
+    },
+    {
+      "id": "32c93513-43d1-38b4-adac-7b87c078e8d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "38cfb5a45ee013bfab5d1ae4c4738815e744b440 <b5e900a3612b69423a0e1b0ab67841a1fb4af80f"
+    },
+    {
+      "id": "3544f90b-4408-34fc-9e23-36dfe0aa4de5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.169"
+    },
+    {
+      "id": "39ad0cee-76c3-3359-92d2-c7c04ba63b79",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "47d98bd7-c14c-3a4d-b3c6-8f03d075e2c3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.58"
+    },
+    {
+      "id": "7feac900-eb52-3985-a04d-8970dd3dcb51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "38cfb5a45ee013bfab5d1ae4c4738815e744b440 <455a469758e57a6fe070e3e342db12e4a629e0eb"
+    },
+    {
+      "id": "9ef6bee8-3bca-3e5f-94ed-2f0d5e580a4b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "38cfb5a45ee013bfab5d1ae4c4738815e744b440 <e972b08b91ef48488bae9789f03cfedb148667fb"
+    },
+    {
+      "id": "b5adbd15-7bf4-34db-9815-9b32b6048e5e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "38cfb5a45ee013bfab5d1ae4c4738815e744b440 <4c5b123ab289767afe940389dbb963c5c05e594e"
+    },
+    {
+      "id": "b7f8ef2a-91d0-305c-be18-0fc3a7b0d033",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "38cfb5a45ee013bfab5d1ae4c4738815e744b440 <3bc6d0f8b70a9101456cf02ab99acb75254e1852"
+    },
+    {
+      "id": "bf7cb5ae-9bcb-3e32-b900-e751350cbe89",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.5"
+    },
+    {
+      "id": "c8d27d89-518a-31d1-bdbb-d5fd77bfe2c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.228"
+    },
+    {
+      "id": "d76019d5-81de-3141-a657-b0b977555b71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.19"
+    },
+    {
+      "id": "fdd42302-7aa5-30ab-9b4d-dfa6a6ed99df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f41e4930-aa41-353d-ba32-c4d8b108dab2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

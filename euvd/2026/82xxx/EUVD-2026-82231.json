@@ -3,7 +3,7 @@
   "enisaUuid": "6b27fc8f-afd4-3148-8387-27038287c61d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nserial: qcom-geni: do not advance stale DMA completions\n\nThe qcom GENI serial DMA TX completion path advances the transmit fifo by\nthe number of bytes recorded in port->tx_remaining.\n\nIf uart_flush_buffer() runs after the hardware has completed a DMA\ntransfer but before the DMA completion interrupt has been handled, the\nserial core resets the transmit fifo while port->tx_remaining still\ndescribes the old DMA transfer.\n\nA previous fix avoided advancing an empty fifo by checking that the fifo\nlength is at least tx_remaining. That still does not distinguish the old\nDMA payload from new bytes written after the flush. If userspace writes\nnew data before the stale DMA completion interrupt is handled, the fifo\ncan again contain at least tx_remaining bytes and the stale completion\ncan advance and discard those new bytes.\n\nMark an in-flight DMA transfer stale when the transmit fifo is flushed.\nThe later completion still unprepares the original DMA mapping using the\nsaved length, but it no longer advances the transmit fifo.",
   "datePublished": "Sep 17, 2026, 4:11:28 PM",
-  "dateUpdated": "Sep 17, 2026, 4:11:28 PM",
+  "dateUpdated": "Oct 19, 2026, 9:05:56 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/231c84fe7ec40e4a06c398c0591d5b8e823d68e1",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/7ea38c49e7178960926657863299face6dc0e1b0"
   ],
   "aliases": [
+    "GHSA-68q2-cr9g-x9r8",
     "CVE-2026-93123"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "0af8cae4-6b83-3670-ba8a-5252d69dae11",
@@ -58,14 +59,14 @@
       "product_version": "2aaa43c7077833301c237684cd7bc9ae5e3dec95 <59faa59c25a0a098fbc86275408d7c8405015702"
     },
     {
-      "id": "19159a15-1b38-345d-83ce-c9b3897de33f",
+      "id": "3021f704-be36-3cdc-943f-690648be473c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "6b0b10b7-d388-3024-b55c-143894ee19bc",

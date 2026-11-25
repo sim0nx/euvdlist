@@ -3,8 +3,10 @@
   "enisaUuid": "1031362c-e29c-35b8-b349-e67dcf5e1d99",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs/omfs: reject s_sys_blocksize smaller than OMFS_DIR_START\n\nomfs_fill_super() rejects oversized s_sys_blocksize values (> PAGE_SIZE),\nbut it does not reject values smaller than OMFS_DIR_START (0x1b8 = 440).\n\nLater, omfs_make_empty() uses\n\n    sbi->s_sys_blocksize - OMFS_DIR_START\n\nas the length argument to memset().  Since s_sys_blocksize is u32,\na crafted filesystem image with s_sys_blocksize < OMFS_DIR_START causes\nan unsigned underflow there, wrapping to a value near 2^32.  That drives\na ~4 GiB memset() from bh->b_data + OMFS_DIR_START and overwrites kernel\nmemory far beyond the backing block buffer.\n\nAdd the corresponding lower-bound check alongside the existing upper-bound\ncheck in omfs_fill_super(), so that malformed images are rejected during\nsuperblock validation before any filesystem data is processed.",
   "datePublished": "Jun 24, 2026, 4:30:57 PM",
-  "dateUpdated": "Jun 24, 2026, 4:30:57 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:33:24 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/fbc72f5c645155dc2ed3573243ed20f9913e3a54",
     "https://git.kernel.org/stable/c/5822a05a841a10794ad818620dd2af490b0705d3",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/0621c385fda1376e967f37ccd534c26c3e511d14"
   ],
   "aliases": [
+    "GHSA-2j9j-p8f4-hwp3",
     "CVE-2026-53130"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
     {
       "id": "127589c8-2c6c-38d0-81f6-37034b09dccc",

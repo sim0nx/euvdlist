@@ -1,0 +1,111 @@
+{
+  "id": "EUVD-2022-53680",
+  "enisaUuid": "e3ffa0d6-e5da-3804-b690-0f4fec46444e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niio: buffer: Fix file related error handling in IIO_BUFFER_GET_FD_IOCTL\n\nIf we fail to copy the just created file descriptor to userland, we\ntry to clean up by putting back 'fd' and freeing 'ib'. The code uses\nput_unused_fd() for the former which is wrong, as the file descriptor\nwas already published by fd_install() which gets called internally by\nanon_inode_getfd().\n\nThis makes the error handling code leaving a half cleaned up file\ndescriptor table around and a partially destructed 'file' object,\nallowing userland to play use-after-free tricks on us, by abusing\nthe still usable fd and making the code operate on a dangling\n'file->private_data' pointer.\n\nInstead of leaving the kernel in a partially corrupted state, don't\nattempt to explicitly clean up and leave this to the process exit\npath that'll release any still valid fds, including the one created\nby the previous call to anon_inode_getfd(). Simply return -EFAULT to\nindicate the error.",
+  "datePublished": "Jul 16, 2024, 11:43:54 AM",
+  "dateUpdated": "Aug 5, 2026, 8:52:26 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/b7f54894aa7517d2b6c797a499b9f491e9db9083",
+    "https://git.kernel.org/stable/c/202071d2518537866d291aa7cf26af54e674f4d4",
+    "https://git.kernel.org/stable/c/c72ea20503610a4a7ba26c769357d31602769c01"
+  ],
+  "aliases": [
+    "CVE-2022-48801",
+    "GHSA-wwf4-95qp-r9vg"
+  ],
+  "assigner": "Linux",
+  "epss": 0.29,
+  "enisaIdProduct": [
+    {
+      "id": "1af79f42-78a8-31da-9972-6574a10d940e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f73f7f4da581875f9b1f2fb8ebd1ab15ed634488 <b7f54894aa7517d2b6c797a499b9f491e9db9083"
+    },
+    {
+      "id": "2315f6b5-fe76-3f1d-a5db-e85197b3defb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "542b29ea-9552-357c-9b7f-61f13c534262",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16.10"
+    },
+    {
+      "id": "7ab33682-17c7-3bcf-933f-4d64238d5049",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.24"
+    },
+    {
+      "id": "88cdb43d-d579-31a5-a256-cf09988081b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f73f7f4da581875f9b1f2fb8ebd1ab15ed634488 <202071d2518537866d291aa7cf26af54e674f4d4"
+    },
+    {
+      "id": "a39a7162-70f2-3f88-955f-196c4e42d9b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.13"
+    },
+    {
+      "id": "a65750aa-922a-3db2-9f41-66e1eb783ddd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.17"
+    },
+    {
+      "id": "fe2db7e0-6fb4-3d42-9c9e-64239fa62694",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f73f7f4da581875f9b1f2fb8ebd1ab15ed634488 <c72ea20503610a4a7ba26c769357d31602769c01"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "54bc0c9c-c601-3544-865d-71fc259dda1d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

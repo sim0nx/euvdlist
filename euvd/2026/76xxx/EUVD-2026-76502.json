@@ -3,7 +3,7 @@
   "enisaUuid": "4837bfd5-cf42-3f3a-8636-3186af616568",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\naccel/rocket: Fix error path handling in rocket_job_run()\n\nIn rocket_job_run(), after taking an extra fence reference for\njob->done_fence via dma_fence_get(), the error paths have three bugs:\n\n- The dma_fence reference held by job->done_fence is never released,\n  causing a reference leak.\n- pm_runtime_get_sync() increments the usage counter even on failure,\n  but the error path does not decrement it, leaking the runtime PM\n  reference and preventing the NPU from suspending.\n- A valid but unsignaled fence is returned to the DRM scheduler,\n  which triggers WARN(\"Fence ... released with pending signals!\")\n  when the scheduler drops its reference.\n\nFix by replacing pm_runtime_get_sync() with pm_runtime_resume_and_get()\nwhich auto-balances the usage counter on failure, releasing both fence\nreferences on error, and returning ERR_PTR(ret) instead of the\nunsignaled fence.\n\n[tomeu: Refactored error paths to use consolidated goto labels]",
   "datePublished": "Sep 11, 2026, 7:44:54 PM",
-  "dateUpdated": "Sep 11, 2026, 7:44:54 PM",
+  "dateUpdated": "Oct 19, 2026, 8:49:22 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/9ad8821573a36bcd18c84dbca3027802b0ea062f",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/9b2dedadf6a91ac3fc9fae268bb556a041222711"
   ],
   "aliases": [
-    "CVE-2026-89590"
+    "CVE-2026-89590",
+    "GHSA-8m8f-887v-xxcc"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "015a239a-43d6-3a53-8e15-ea9ca4158b33",
@@ -35,6 +36,16 @@
         }
       },
       "product_version": "0810d5ad88a18f1e6d549853a388ad0316f74e36 <7d6fa298c23495b805004f5f446497b661998fa5"
+    },
+    {
+      "id": "4756f0a1-8288-3382-a669-e21dfff23263",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "6700ba29-66d2-3558-ae4d-ce5a9675aec5",
@@ -65,16 +76,6 @@
         }
       },
       "product_version": "6.18"
-    },
-    {
-      "id": "a57a505f-05fe-335a-bf8e-aa7aeaa8acdc",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "eb7c59f5-1aee-30d1-bc66-fc9f60de36ca",

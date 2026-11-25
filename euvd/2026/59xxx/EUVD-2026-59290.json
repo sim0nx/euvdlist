@@ -2,8 +2,8 @@
   "id": "EUVD-2026-59290",
   "enisaUuid": "b4a4fd42-2d4b-353b-88b6-bcd6a672f927",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: phy: sfp: free mii_bus in sfp_i2c_mdiobus_destroy\n\nsfp_i2c_mdiobus_create() allocates the I2C MDIO bus with mdio_i2c_alloc(),\na plain (non-devm) allocation, and registers it. sfp_i2c_mdiobus_destroy()\nonly unregisters the bus and clears sfp->i2c_mii without calling\nmdiobus_free(). As the only reference to the bus is then cleared, the\nstruct mii_bus is leaked.\n\nThis is hit whenever a copper/RollBall SFP module that instantiated an MDIO\nbus is removed: sfp_sm_main() takes the global teardown path and calls\nsfp_i2c_mdiobus_destroy(). sfp_cleanup(), on driver unbind, frees\nsfp->i2c_mii directly, which is why the leak only triggered on module\nhot-removal and not on unbind.\n\nFree the bus in sfp_i2c_mdiobus_destroy() to match the allocation done in\nsfp_i2c_mdiobus_create().",
-  "datePublished": "Aug 15, 2026, 6:32:22 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:22 AM",
+  "datePublished": "Aug 15, 2026, 5:56:19 AM",
+  "dateUpdated": "Aug 17, 2026, 5:13:45 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/92dd9a522f01ef57f633a8c1953cf6d48ef2bcd5",
@@ -11,15 +11,14 @@
     "https://git.kernel.org/stable/c/3183b6f5510c876a1c4b4a6bdc3d0ad8940fe742",
     "https://git.kernel.org/stable/c/86d379fcf1b79bdf4bc2ac891297f30f63d041d8",
     "https://git.kernel.org/stable/c/2381bf3f484e8e4fd89a225445872ec14e036ab5",
-    "https://git.kernel.org/stable/c/8f31efff9206f9f0adb853cad6916086aac4d5ef",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72391"
+    "https://git.kernel.org/stable/c/8f31efff9206f9f0adb853cad6916086aac4d5ef"
   ],
   "aliases": [
     "CVE-2026-72391",
     "GHSA-j3vv-g378-r9j2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "143a6c28-7de1-35e1-a037-9ee6060e6854",
@@ -60,16 +59,6 @@
         }
       },
       "product_version": "patch: 7.1.5"
-    },
-    {
-      "id": "51b97037-7205-3676-957f-eb1b704e7320",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc2"
     },
     {
       "id": "5475e68c-3ad1-3aae-807c-54f663ee426d",
@@ -160,6 +149,16 @@
         }
       },
       "product_version": "e85b1347ace677c3822c12d9332dfaaffe594da6 <2381bf3f484e8e4fd89a225445872ec14e036ab5"
+    },
+    {
+      "id": "f8144353-dca6-3d2f-a50c-5efebb685052",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

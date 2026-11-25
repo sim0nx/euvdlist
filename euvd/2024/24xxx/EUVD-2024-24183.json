@@ -1,0 +1,195 @@
+{
+  "id": "EUVD-2024-24183",
+  "enisaUuid": "14841768-d050-304e-804b-93d9877239e7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ninet: inet_defrag: prevent sk release while still in use\n\nip_local_out() and other functions can pass skb->sk as function argument.\n\nIf the skb is a fragment and reassembly happens before such function call\nreturns, the sk must not be released.\n\nThis affects skb fragments reassembled via netfilter or similar\nmodules, e.g. openvswitch or ct_act.c, when run as part of tx pipeline.\n\nEric Dumazet made an initial analysis of this bug.  Quoting Eric:\n  Calling ip_defrag() in output path is also implying skb_orphan(),\n  which is buggy because output path relies on sk not disappearing.\n\n  A relevant old patch about the issue was :\n  8282f27449bf (\"inet: frag: Always orphan skbs inside ip_defrag()\")\n\n  [..]\n\n  net/ipv4/ip_output.c depends on skb->sk being set, and probably to an\n  inet socket, not an arbitrary one.\n\n  If we orphan the packet in ipvlan, then downstream things like FQ\n  packet scheduler will not work properly.\n\n  We need to change ip_defrag() to only use skb_orphan() when really\n  needed, ie whenever frag_list is going to be used.\n\nEric suggested to stash sk in fragment queue and made an initial patch.\nHowever there is a problem with this:\n\nIf skb is refragmented again right after, ip_do_fragment() will copy\nhead->sk to the new fragments, and sets up destructor to sock_wfree.\nIOW, we have no choice but to fix up sk_wmem accouting to reflect the\nfully reassembled skb, else wmem will underflow.\n\nThis change moves the orphan down into the core, to last possible moment.\nAs ip_defrag_offset is aliased with sk_buff->sk member, we must move the\noffset into the FRAG_CB, else skb->sk gets clobbered.\n\nThis allows to delay the orphaning long enough to learn if the skb has\nto be queued or if the skb is completing the reasm queue.\n\nIn the former case, things work as before, skb is orphaned.  This is\nsafe because skb gets queued/stolen and won't continue past reasm engine.\n\nIn the latter case, we will steal the skb->sk reference, reattach it to\nthe head skb, and fix up wmem accouting when inet_frag inflates truesize.",
+  "datePublished": "Apr 18, 2024, 9:47:58 AM",
+  "dateUpdated": "Aug 5, 2026, 11:28:19 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/1b6de5e6575b56502665c65cf93b0ae6aa0f51ab",
+    "https://git.kernel.org/stable/c/9705f447bf9a6cd088300ad2c407b5e1c6591091",
+    "https://git.kernel.org/stable/c/4318608dc28ef184158b4045896740716bea23f0",
+    "https://git.kernel.org/stable/c/7d0567842b78390dd9b60f00f1d8f838d540e325",
+    "https://git.kernel.org/stable/c/f4877225313d474659ee53150ccc3d553a978727",
+    "https://git.kernel.org/stable/c/e09cbe017311508c21e0739e97198a8388b98981",
+    "https://git.kernel.org/stable/c/18685451fc4e546fc0e718580d32df3c0e5c8272"
+  ],
+  "aliases": [
+    "CVE-2024-26921",
+    "GHSA-4vg2-58j7-gmw7"
+  ],
+  "assigner": "Linux",
+  "epss": 0.4,
+  "enisaIdProduct": [
+    {
+      "id": "0ca4d0a3-bd0c-3e73-8159-8158d45fc48a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7026b1ddb6b8d4e6ee33dc2bd06c0ca8746fa7ab <18685451fc4e546fc0e718580d32df3c0e5c8272"
+    },
+    {
+      "id": "2d923b03-fb78-36ac-ad32-72d8b7e7d393",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "3025f42e-7597-3127-b3e9-cda7dc9f3539",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "426de70e-3d5d-31ca-9266-f71f17eadb20",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.227"
+    },
+    {
+      "id": "5641384d-85ab-3ff3-80f2-7fe76f0b6e4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7026b1ddb6b8d4e6ee33dc2bd06c0ca8746fa7ab <f4877225313d474659ee53150ccc3d553a978727"
+    },
+    {
+      "id": "6630b528-69f6-3ab9-a1a6-b6f46ee23213",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.26"
+    },
+    {
+      "id": "69cebce2-7578-3250-a245-5d6e5990f258",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7026b1ddb6b8d4e6ee33dc2bd06c0ca8746fa7ab <e09cbe017311508c21e0739e97198a8388b98981"
+    },
+    {
+      "id": "6d73dcaa-e3f3-3a43-91fb-4273d5cc9fdc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7026b1ddb6b8d4e6ee33dc2bd06c0ca8746fa7ab <7d0567842b78390dd9b60f00f1d8f838d540e325"
+    },
+    {
+      "id": "76b38dc7-f63b-3085-9f80-dda251d95847",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7026b1ddb6b8d4e6ee33dc2bd06c0ca8746fa7ab <1b6de5e6575b56502665c65cf93b0ae6aa0f51ab"
+    },
+    {
+      "id": "852aabe0-5164-33bf-b622-f856d107faf1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.168"
+    },
+    {
+      "id": "b5ebc530-d58b-367b-a44f-089d413e3360",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.285"
+    },
+    {
+      "id": "cdfd850e-4204-34f7-b514-448e54cac84f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.85"
+    },
+    {
+      "id": "dd7b66eb-26d5-330f-b9a7-c30548873dd7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7026b1ddb6b8d4e6ee33dc2bd06c0ca8746fa7ab <9705f447bf9a6cd088300ad2c407b5e1c6591091"
+    },
+    {
+      "id": "df7f66a1-4321-3358-8bf1-30dac3070366",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.1"
+    },
+    {
+      "id": "e8051bec-24dc-3d38-9e8a-d2e18978ca78",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7026b1ddb6b8d4e6ee33dc2bd06c0ca8746fa7ab <4318608dc28ef184158b4045896740716bea23f0"
+    },
+    {
+      "id": "f28eed5d-0606-35f5-afcd-df773940653d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "519901e5-de1b-345d-b665-0fe28b12208b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

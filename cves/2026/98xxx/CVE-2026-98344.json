@@ -3,7 +3,7 @@
   "enisaUuid": "4fdb47e6-e380-315e-8dfa-3e04099543d9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndmaengine: Fix device kref underflow in dma_chan_put()\n\ndma_chan_get() takes chan->device->ref only on the slow path:\n\n\t/* no kref on fast path */\n\tif (chan->client_count) {\n\t\t__module_get(owner);\n\t\tchan->client_count++;\n\t\treturn 0;\n\t}\n\tif (!try_module_get(owner))\n\t\treturn -ENODEV;\n\tif (!dma_device_get(chan->device)) { // calls kref_get_unless_zero()\n\ndma_chan_put() drops the ref unconditionally, so every fast-path\nget/put pair drops one extra device reference.\n\nThe bug fires when two conditions hold together: a non-private\nprovider has a persistent client holding chan->client_count > 0\nand another client cycles dmaengine_get()/dmaengine_put().\nWhen the kref hits zero, the subsequent dma_find_channel() returns\nNULL even though the provider module is still loaded.\n\nFix this by dropping device->ref only on the last put, matching the\nsingle slow-path get.",
   "datePublished": "Oct 6, 2026, 8:46:33 AM",
-  "dateUpdated": "Oct 6, 2026, 8:46:33 AM",
+  "dateUpdated": "Oct 19, 2026, 9:17:55 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/036b527f92570206da4b8c40b38f8d689e29d0f3",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/44dab659064eb5c10adb0306510eebe848ed592d"
   ],
   "aliases": [
-    "CVE-2026-98344"
+    "CVE-2026-98344",
+    "GHSA-g4c2-fm3r-x4gh"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "098e89fa-2439-399f-a393-1431bfd5819b",
@@ -30,6 +31,16 @@
         }
       },
       "product_version": "8ad342a863590b24ce77681b7e081363fb3333f7 <036b527f92570206da4b8c40b38f8d689e29d0f3"
+    },
+    {
+      "id": "1d62cd09-8408-3c69-904e-d353e43e58b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "1d7bc2f1-04f0-3c41-aa00-971810e05232",
@@ -100,16 +111,6 @@
         }
       },
       "product_version": "8ad342a863590b24ce77681b7e081363fb3333f7 <7c3f4ce651d43705f9ec7f778f642a90d5ff4fba"
-    },
-    {
-      "id": "88885e5b-fa87-33a3-a760-fa47ebaf7d20",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "b179c72f-f910-3659-9f42-d4437d326178",

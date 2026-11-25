@@ -3,7 +3,7 @@
   "enisaUuid": "f1f8fb11-af9d-3aec-a4d1-bc49edf93f68",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: rsi: fix heap OOB write on key removal\n\nWhen a key is removed (data == NULL), rsi_hal_load_key() runs:\n\n\tmemset(&set_key[FRAME_DESC_SZ], 0, frame_len - FRAME_DESC_SZ);\n\nset_key is a struct rsi_set_key *, so the subscript is scaled by\nsizeof(struct rsi_set_key) (160 bytes): &set_key[FRAME_DESC_SZ] is\nskb->data + 2560, and the memset writes 144 zero bytes starting\n2.4KB past the end of the 160-byte skb data buffer, corrupting\nunrelated heap objects. The intended byte offset would have been\n(u8 *)set_key + FRAME_DESC_SZ.\n\nThe write fires on every DISABLE_KEY callback, so plain disconnects,\nroams and interface teardowns trigger it on real networks.\n\nThe memset is redundant: the whole buffer is zeroed right after\nallocation, so the frame sent to the device is byte-identical\nwithout it. Drop the else branch; normal operation is unaffected.\n\nDiscovered by Atuin - Automated Vulnerability Discovery Engine.",
   "datePublished": "Oct 14, 2026, 1:27:41 PM",
-  "dateUpdated": "Oct 14, 2026, 1:27:41 PM",
+  "dateUpdated": "Oct 19, 2026, 9:19:00 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b79e2f6585c014c42384f4caa7a37b3e5d26179c",
@@ -16,21 +16,12 @@
     "https://git.kernel.org/stable/c/e6c5ed7a98d7bc8b0f7918246f1c90ddb3f79dfa"
   ],
   "aliases": [
+    "GHSA-5p9q-rqwh-2www",
     "CVE-2026-98407"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
-    {
-      "id": "0008061e-56b7-3b18-a195-089fdf97e3a7",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
     {
       "id": "16f636cf-0657-3cac-b83e-757b0778926c",
       "product": {
@@ -70,6 +61,16 @@
         }
       },
       "product_version": "patch: 6.12.112"
+    },
+    {
+      "id": "4dfbed53-74ac-36ed-bde2-8fdc239a51d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "53e3ac8b-ad84-3083-a0b5-452f7e753460",

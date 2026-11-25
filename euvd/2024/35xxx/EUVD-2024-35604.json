@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2024-35604",
+  "enisaUuid": "ae43d692-5163-356b-845d-fd6891e43475",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipv6: Fix infinite recursion in fib6_dump_done().\n\nsyzkaller reported infinite recursive calls of fib6_dump_done() during\nnetlink socket destruction.  [1]\n\nFrom the log, syzkaller sent an AF_UNSPEC RTM_GETROUTE message, and then\nthe response was generated.  The following recvmmsg() resumed the dump\nfor IPv6, but the first call of inet6_dump_fib() failed at kzalloc() due\nto the fault injection.  [0]\n\n  12:01:34 executing program 3:\n  r0 = socket$nl_route(0x10, 0x3, 0x0)\n  sendmsg$nl_route(r0, ... snip ...)\n  recvmmsg(r0, ... snip ...) (fail_nth: 8)\n\nHere, fib6_dump_done() was set to nlk_sk(sk)->cb.done, and the next call\nof inet6_dump_fib() set it to nlk_sk(sk)->cb.args[3].  syzkaller stopped\nreceiving the response halfway through, and finally netlink_sock_destruct()\ncalled nlk_sk(sk)->cb.done().\n\nfib6_dump_done() calls fib6_dump_end() and nlk_sk(sk)->cb.done() if it\nis still not NULL.  fib6_dump_end() rewrites nlk_sk(sk)->cb.done() by\nnlk_sk(sk)->cb.args[3], but it has the same function, not NULL, calling\nitself recursively and hitting the stack guard page.\n\nTo avoid the issue, let's set the destructor after kzalloc().\n\n[0]:\nFAULT_INJECTION: forcing a failure.\nname failslab, interval 1, probability 0, space 0, times 0\nCPU: 1 PID: 432110 Comm: syz-executor.3 Not tainted 6.8.0-12821-g537c2e91d354-dirty #11\nHardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.16.0-0-gd239552ce722-prebuilt.qemu.org 04/01/2014\nCall Trace:\n <TASK>\n dump_stack_lvl (lib/dump_stack.c:117)\n should_fail_ex (lib/fault-inject.c:52 lib/fault-inject.c:153)\n should_failslab (mm/slub.c:3733)\n kmalloc_trace (mm/slub.c:3748 mm/slub.c:3827 mm/slub.c:3992)\n inet6_dump_fib (./include/linux/slab.h:628 ./include/linux/slab.h:749 net/ipv6/ip6_fib.c:662)\n rtnl_dump_all (net/core/rtnetlink.c:4029)\n netlink_dump (net/netlink/af_netlink.c:2269)\n netlink_recvmsg (net/netlink/af_netlink.c:1988)\n ____sys_recvmsg (net/socket.c:1046 net/socket.c:2801)\n ___sys_recvmsg (net/socket.c:2846)\n do_recvmmsg (net/socket.c:2943)\n __x64_sys_recvmmsg (net/socket.c:3041 net/socket.c:3034 net/socket.c:3034)\n\n[1]:\nBUG: TASK stack guard page was hit at 00000000f2fa9af1 (stack is 00000000b7912430..000000009a436beb)\nstack guard page: 0000 [#1] PREEMPT SMP KASAN\nCPU: 1 PID: 223719 Comm: kworker/1:3 Not tainted 6.8.0-12821-g537c2e91d354-dirty #11\nHardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.16.0-0-gd239552ce722-prebuilt.qemu.org 04/01/2014\nWorkqueue: events netlink_sock_destruct_work\nRIP: 0010:fib6_dump_done (net/ipv6/ip6_fib.c:570)\nCode: 3c 24 e8 f3 e9 51 fd e9 28 fd ff ff 66 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 00 f3 0f 1e fa 41 57 41 56 41 55 41 54 55 48 89 fd <53> 48 8d 5d 60 e8 b6 4d 07 fd 48 89 da 48 b8 00 00 00 00 00 fc ff\nRSP: 0018:ffffc9000d980000 EFLAGS: 00010293\nRAX: 0000000000000000 RBX: ffffffff84405990 RCX: ffffffff844059d3\nRDX: ffff8881028e0000 RSI: ffffffff84405ac2 RDI: ffff88810c02f358\nRBP: ffff88810c02f358 R08: 0000000000000007 R09: 0000000000000000\nR10: 0000000000000000 R11: 0000000000000224 R12: 0000000000000000\nR13: ffff888007c82c78 R14: ffff888007c82c68 R15: ffff888007c82c68\nFS:  0000000000000000(0000) GS:ffff88811b100000(0000) knlGS:0000000000000000\nCS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033\nCR2: ffffc9000d97fff8 CR3: 0000000102309002 CR4: 0000000000770ef0\nPKRU: 55555554\nCall Trace:\n <#DF>\n </#DF>\n <TASK>\n fib6_dump_done (net/ipv6/ip6_fib.c:572 (discriminator 1))\n fib6_dump_done (net/ipv6/ip6_fib.c:572 (discriminator 1))\n ...\n fib6_dump_done (net/ipv6/ip6_fib.c:572 (discriminator 1))\n fib6_dump_done (net/ipv6/ip6_fib.c:572 (discriminator 1))\n netlink_sock_destruct (net/netlink/af_netlink.c:401)\n __sk_destruct (net/core/sock.c:2177 (discriminator 2))\n sk_destruct (net/core/sock.c:2224)\n __sk_free (net/core/sock.c:2235)\n sk_free (net/core/sock.c:2246)\n process_one_work (kernel/workqueue.c:3259)\n worker_thread (kernel/workqueue.c:3329 kernel/workqueue.\n---truncated---",
+  "datePublished": "May 19, 2024, 8:34:42 AM",
+  "dateUpdated": "Oct 15, 2026, 12:41:08 AM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/9472d07cd095cbd3294ac54c42f304a38fbe9bfe",
+    "https://git.kernel.org/stable/c/9c5258196182c25b55c33167cd72fdd9bbf08985",
+    "https://git.kernel.org/stable/c/fd307f2d91d40fa7bc55df3e2cd1253fabf8a2d6",
+    "https://git.kernel.org/stable/c/40a344b2ddc06c1a2caa7208a43911f39c662778",
+    "https://git.kernel.org/stable/c/167d4b47a9bdcb01541dfa29e9f3cbb8edd3dfd2",
+    "https://git.kernel.org/stable/c/f2dd75e57285f49e34af1a5b6cd8945c08243776",
+    "https://git.kernel.org/stable/c/4a7c465a5dcd657d59d25bf4815e19ac05c13061",
+    "https://git.kernel.org/stable/c/d21d40605bca7bd5fc23ef03d4c1ca1f48bc2cae"
+  ],
+  "aliases": [
+    "CVE-2024-35886",
+    "GHSA-hg34-75qr-c9g6"
+  ],
+  "assigner": "Linux",
+  "epss": 0.28,
+  "enisaIdProduct": [
+    {
+      "id": "2642d217-f38c-33f6-86b8-76cffd74535a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.274"
+    },
+    {
+      "id": "2c7d641f-c501-34b0-a474-5d0c8c465c1b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "338f6123-388f-3101-ab19-ae8cb704e116",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4a7c465a5dcd657d59d25bf4815e19ac05c13061"
+    },
+    {
+      "id": "3a193da8-ac9d-37e4-8241-ed8a74e212b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.26"
+    },
+    {
+      "id": "47a51534-b9d9-3b77-96be-541608b3d32f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <167d4b47a9bdcb01541dfa29e9f3cbb8edd3dfd2"
+    },
+    {
+      "id": "4a669ed3-73d8-3167-aa61-9db8faf254e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <40a344b2ddc06c1a2caa7208a43911f39c662778"
+    },
+    {
+      "id": "6aae8d97-1e6d-35b6-8957-0e939ab8d086",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "6b88c688-f6f5-39e6-83cb-681bb0dba45b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.5"
+    },
+    {
+      "id": "7702cf67-5a43-3dae-82a6-4754ab31eee6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.215"
+    },
+    {
+      "id": "8c1858d2-63c9-3b17-ba1b-4a218124ff26",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <fd307f2d91d40fa7bc55df3e2cd1253fabf8a2d6"
+    },
+    {
+      "id": "b31dd57b-b09a-3c67-840a-2b4965c2bb7f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.85"
+    },
+    {
+      "id": "b37893fd-62c7-3e87-a1fb-278ef7f768d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <9472d07cd095cbd3294ac54c42f304a38fbe9bfe"
+    },
+    {
+      "id": "b75b7966-5d3f-31d2-82fb-8678b8f65adc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d21d40605bca7bd5fc23ef03d4c1ca1f48bc2cae"
+    },
+    {
+      "id": "c8749945-4254-3d29-84f8-cf14e66b7775",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f2dd75e57285f49e34af1a5b6cd8945c08243776"
+    },
+    {
+      "id": "ee07bc6a-9195-34d0-a149-98d5bf1b78d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "f8944cac-5c92-368f-8efa-f4ee211c803c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.154"
+    },
+    {
+      "id": "fbbabc28-7b00-30ab-bcd3-66737be58ad5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <9c5258196182c25b55c33167cd72fdd9bbf08985"
+    },
+    {
+      "id": "ffaf18b2-b12c-3bb3-bb83-cff2621bb9ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.312"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "442d1481-c93c-3863-b58c-fc4fc0f4fb52",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

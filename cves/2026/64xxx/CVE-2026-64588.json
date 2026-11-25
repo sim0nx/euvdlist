@@ -3,18 +3,21 @@
   "enisaUuid": "534e2567-ca4f-3cd8-827c-c64cacfa1939",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfuse-uring: fix data races on ring->ready\n\nOn weakly-ordered architectures, the store to fiq->ops can be\nreordered past the store to ring->ready, allowing a CPU that sees\nring->ready == true via fuse_uring_ready() to dispatch requests\nthrough a stale fiq->ops pointer. Upgrade the store to\nsmp_store_release() and the load in fuse_uring_ready() to\nsmp_load_acquire() so that the preceding WRITE_ONCE(fiq->ops, ...)\nis visible to any CPU that observes ring->ready == true.\n\nAdditionally, fuse_uring_do_register() publishes ring->ready with\nWRITE_ONCE() but the fast-path check reads it with a plain load.\nThis is a marked-vs-unmarked access that KCSAN will flag. Wrap it in\nREAD_ONCE() to mark it without adding unnecessary ordering.\n\nAlso wrap the fc->ring load in fuse_uring_ready() in READ_ONCE() to\nprevent the compiler from reloading it between the NULL check and the\ndereference.",
   "datePublished": "Aug 6, 2026, 7:13:46 AM",
-  "dateUpdated": "Aug 6, 2026, 7:13:46 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:58:09 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/b156bb9966972122b148acab8bdf415cdb8176a3",
     "https://git.kernel.org/stable/c/d01a09b442cb786cd44ccc7c84d57e2856d6737c",
     "https://git.kernel.org/stable/c/46725a0056c884cf58a6897f222892807327d82d"
   ],
   "aliases": [
-    "CVE-2026-64588"
+    "CVE-2026-64588",
+    "GHSA-ww4g-j47r-8q39"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "20422b03-02de-3441-a19f-66b66dd73b79",
@@ -77,14 +80,14 @@
       "product_version": "patch: 6.18.39"
     },
     {
-      "id": "db18a8dd-82ad-3e8c-90b2-30c7cce86e8c",
+      "id": "e6bae993-a7c8-3be5-9573-4956400d6aec",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "f3f3e61a-6600-3a81-9c6c-befc26f4cf96",

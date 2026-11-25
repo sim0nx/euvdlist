@@ -3,7 +3,7 @@
   "enisaUuid": "49114114-78e0-3630-88a1-a813de961f51",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Avoid soft lockup in __htab_map_lookup_and_delete_batch()\n\n__htab_map_lookup_and_delete_batch() has no rescheduling point. The\nbatch count bounds how many entries are copied out, not how many\nbuckets are visited, so one BPF_MAP_LOOKUP_BATCH call can walk the\nmap end to end. The empty-bucket fast path is worse: it stays inside\na single rcu_read_lock() / bpf_disable_instrumentation() section for\nany run of consecutive empty buckets.\n\nThat holds up on small maps, but it falls apart at scale. On a\n144-CPU arm64 host running a CONFIG_PREEMPT_NONE kernel, periodic\nBPF_MAP_LOOKUP_BATCH calls against an LRU hash map with 16,777,216\nbuckets held a CPU inside the batch op for 77+ seconds and triggered\nthe soft lockup watchdog.\n\nCommit 75134f16e7dd (\"bpf: Add schedule points in batch ops\") fixed this\nsame problem in the generic batch ops, but not in this htab-native path,\nwhich every htab-based hash map variant uses for its lookup[_and_delete]\nbatch ops.\n\nComplete that fix here. Leave the critical section after 64 consecutive\nempty buckets, call cond_resched_tasks_rcu_qs(), and resume at the saved\nbucket cursor. No locks are held at that point, and resuming from the\ncursor is already the function's behavior for non-empty buckets. Add the\nsame call to the per-bucket loop after copy_to_user(), where every lock\nhas been dropped. cond_resched_rcu() is not enough here: sleeping with\nbpf_prog_active elevated makes tracing programs on that CPU silently\nskip their invocations.\n\nPlain cond_resched() is not enough either. It is a no-op under PREEMPT\nand PREEMPT_LAZY, the only models arm64 and x86 have offered since\ncommit 7dadeaa6e851 (\"sched: Further restrict the preemption modes\").\nIt is also never a Tasks RCU quiescent state, in any model: the\nreschedule counts as a preemption. The walking task stays a holdout and\nstalls every synchronize_rcu_tasks() caller, ftrace and BPF trampoline\nteardown included, until the syscall returns [1].\ncond_resched_tasks_rcu_qs() is the usual tool for that [2]. It reports\nthe quiescent state at each yield and still reschedules as\ncond_resched() does on PREEMPT_NONE and PREEMPT_VOLUNTARY kernels.",
   "datePublished": "Oct 18, 2026, 3:20:15 PM",
-  "dateUpdated": "Oct 18, 2026, 3:20:15 PM",
+  "dateUpdated": "Oct 19, 2026, 9:23:13 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/5c8b1869cb99a32a962388848cd19604fb41263e",
@@ -15,10 +15,11 @@
     "https://git.kernel.org/stable/c/85136bf22404474a815fc0ed26ec0d1cbc1bc3f9"
   ],
   "aliases": [
+    "GHSA-p6rx-8wrq-4gc7",
     "CVE-2026-98644"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "08d82bff-f09a-3f11-87ff-7750d2c12e7f",
@@ -121,16 +122,6 @@
       "product_version": "patch: 7.2.9"
     },
     {
-      "id": "a36dc551-cd91-3189-909e-4ed9eca57538",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
-    },
-    {
       "id": "af36ec1e-8585-3837-8818-8fc6423a7d31",
       "product": {
         "name": "Linux",
@@ -169,6 +160,16 @@
         }
       },
       "product_version": "patch: 6.12.112"
+    },
+    {
+      "id": "f6c94af5-3d4b-3c2f-9ad9-6bef2e87b72a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "fc65f5ab-de55-3d98-981e-cde61a41e560",

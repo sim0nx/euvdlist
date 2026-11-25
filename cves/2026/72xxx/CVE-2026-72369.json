@@ -2,23 +2,24 @@
   "id": "EUVD-2026-59268",
   "enisaUuid": "ccb991a5-6467-3df5-a9e3-91adb6aad67a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nminix: avoid overflow in bitmap block count calculation\n\nminix_check_superblock() uses minix_blocks_needed() to verify that the\non-disk imap and zmap block counts are large enough for the advertised\ninode and zone counts.\n\nThe helper currently performs DIV_ROUND_UP() in unsigned int arithmetic.\nA Minix v3 image can set s_ninodes or s_zones near UINT_MAX so the\naddition inside DIV_ROUND_UP() wraps to zero. That makes a zero imap/zmap\nblock count look valid, after which minix_fill_super() can dereference\ns_imap[0] or s_zmap[0] even though no bitmap buffers were allocated.\n\nImpact: mounting a crafted Minix v3 image whose s_ninodes or s_zones is\nnear UINT_MAX makes minix_check_superblock() accept a zero bitmap-block\ncount and minix_fill_super() dereference s_imap[0]/s_zmap[0], panicking\nthe kernel.\n\nThe divisor is the bitmap capacity in bits, blocksize * 8, which is\nalways a power of two: minix_fill_super() obtains the block size through\nsb_set_blocksize(), and blk_validate_block_size() rejects any size that\nis not a power of two. Use DIV_ROUND_UP_POW2(), which divides before\nadding the round-up term and so cannot overflow for a power-of-two\ndivisor.",
-  "datePublished": "Aug 15, 2026, 6:32:21 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:22 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:56:05 AM",
+  "dateUpdated": "Aug 17, 2026, 5:43:23 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/a11ebaab50d27d6c4c78506f84ff36452e0b901d",
     "https://git.kernel.org/stable/c/959c95340a9e19cd333b4c18935fdeecbb2f319d",
     "https://git.kernel.org/stable/c/abe3536a4bedcc43de80b6d4d7e3d57e9ba382a5",
     "https://git.kernel.org/stable/c/8a29e60e2176b02e04f8737c8b32b696230eb0c5",
-    "https://git.kernel.org/stable/c/fb3e566cafc38fe3ba35e6843a2d529a3748870c",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72369"
+    "https://git.kernel.org/stable/c/fb3e566cafc38fe3ba35e6843a2d529a3748870c"
   ],
   "aliases": [
     "GHSA-37g9-2p78-fr5w",
     "CVE-2026-72369"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "08dd832b-dd97-350c-bcf4-fea2d62c87fc",
@@ -69,16 +70,6 @@
         }
       },
       "product_version": "7.0"
-    },
-    {
-      "id": "58a13944-2a30-357c-8a56-16ec23a818c2",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc2"
     },
     {
       "id": "64e0fc67-e628-3fe1-866b-4d728d060af8",
@@ -139,6 +130,16 @@
         }
       },
       "product_version": "8c97a6ddc95690a938ded44b4e3202f03f15078c <fb3e566cafc38fe3ba35e6843a2d529a3748870c"
+    },
+    {
+      "id": "931678b7-fba5-35d6-a173-3a7466b3bd9b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "9a54f3a0-9de6-3f7f-bb6a-4818bfbe9adc",

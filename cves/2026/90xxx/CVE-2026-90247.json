@@ -3,19 +3,53 @@
   "enisaUuid": "7aa569e5-a49a-3900-b895-1856d8b9b3c6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix mmap_lock leak in irq_work path\n\nstack_map_get_build_id_offset() introduced a per-CPU irq_work to defer\nmmap_read_unlock() from NMI context, and bpf_find_vma() later reused the\nsame mmap_unlock_work. Both callers only check whether the work is busy\nbefore taking mmap_lock, so a nested caller can reuse the slot before the\nfirst caller queues it. Two read locks may then be acquired while only one\ndeferred unlock runs, leaking a read lock and blocking exit_mmap().\n\nReserve the per-CPU slot before mmap_read_trylock(). Use the same wrapper\nin stackmap and bpf_find_vma() so both callers release the reservation on\ntrylock failure. Keep rejecting the slot while the irq_work remains busy.\nRelease it after the irq_work callback unlocks the mm.",
   "datePublished": "Sep 17, 2026, 4:07:49 PM",
-  "dateUpdated": "Sep 17, 2026, 4:07:49 PM",
+  "dateUpdated": "Oct 30, 2026, 12:34:55 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/d6d091873e12d1de36d7228c4f452e6cace3a23e",
+    "https://git.kernel.org/stable/c/b6c9daf6097f9b39162b8e736a6ac7caf5ef6fc8",
+    "https://git.kernel.org/stable/c/931f62311c058d79f29548f20943969bb441ce87",
     "https://git.kernel.org/stable/c/a052ad5edccf5319f50ed955de4368f8318a9f20",
     "https://git.kernel.org/stable/c/051f2da26ce377f683b938a3382e0f16d02f3139",
     "https://git.kernel.org/stable/c/fa9dcacdcdf487f0ffef64bf67622f1caed509f1"
   ],
   "aliases": [
-    "CVE-2026-90247"
+    "CVE-2026-90247",
+    "GHSA-m447-wf7w-9qp4"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
+    {
+      "id": "02be785c-5216-3d46-a656-741ab9417205",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "0c15bfb5-e88a-3253-8806-6286de6e20f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eac9153f2b584c702cea02c1f1a57d85aa9aea42 <b6c9daf6097f9b39162b8e736a6ac7caf5ef6fc8"
+    },
+    {
+      "id": "13556e5a-c264-35e5-b11b-c0bf3d51d736",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eac9153f2b584c702cea02c1f1a57d85aa9aea42 <931f62311c058d79f29548f20943969bb441ce87"
+    },
     {
       "id": "1879e6a0-5a39-3975-9a63-b9e71982beef",
       "product": {
@@ -35,6 +69,26 @@
         }
       },
       "product_version": "f1838da73cccb238b8be4ef464fce0168dc7ba84"
+    },
+    {
+      "id": "30c92342-3e6e-3f54-92ac-7f0553ebb05b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "eac9153f2b584c702cea02c1f1a57d85aa9aea42 <d6d091873e12d1de36d7228c4f452e6cace3a23e"
+    },
+    {
+      "id": "38b6328c-acb6-3d8d-9dad-f225743c22d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "41e82243-310a-3ed4-a428-ce31c77f48d8",
@@ -57,6 +111,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "68091fb1-3525-3a43-8c0a-e09be9cbf88c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
       "id": "6cc49ea6-08b1-3d16-baf7-d0c8fe3ad560",
       "product": {
         "name": "Linux",
@@ -65,16 +129,6 @@
         }
       },
       "product_version": "patch: 6.18.52"
-    },
-    {
-      "id": "77e758bd-3f20-331a-abd5-cf59571e19b7",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "808f1fad-303c-3f65-beb4-4b069266b1d0",
@@ -135,6 +189,16 @@
         }
       },
       "product_version": "eac9153f2b584c702cea02c1f1a57d85aa9aea42 <051f2da26ce377f683b938a3382e0f16d02f3139"
+    },
+    {
+      "id": "fa99a108-5fc3-3ea7-afe0-c2627569ef0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.114"
     }
   ],
   "enisaIdVendor": [

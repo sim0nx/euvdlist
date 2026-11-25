@@ -2,9 +2,11 @@
   "id": "EUVD-2026-58994",
   "enisaUuid": "63cac0ca-315e-322c-8b65-eb15c7f5b2f6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: sch_multiq: Replace direct dequeue call with peek and qdisc_dequeue_peeked\n\nmultiq_dequeue() takes a packet from a band's child with a direct\n->dequeue() call after multiq_peek() peeked it. When the child is\nnon-work-conserving the peek stashes the skb in the child's gso_skb, so\nthe direct dequeue returns a different skb and orphans the stash,\ndesyncing the child's qlen/backlog. With a qfq child reached through a\npeeking parent (e.g. tbf) this re-enters the child on an emptied list and\ndereferences NULL, panicking the kernel from softirq on ordinary egress.\n\nTake the packet through qdisc_dequeue_peeked(), as sch_prio already does\nand as sch_red and sch_sfb were just fixed to do. The helper is a no-op\nwhen the child has no stash, so a work-conserving child is unaffected.",
-  "datePublished": "Aug 15, 2026, 6:32:09 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:10 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:51:57 AM",
+  "dateUpdated": "Oct 19, 2026, 9:19:24 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/3e5fd9d14f2d228e7260251f2e4a1d41ba8f705a",
     "https://git.kernel.org/stable/c/eb1a9637f0bd84b5db8803af65dfb1f44785406f",
@@ -13,15 +15,14 @@
     "https://git.kernel.org/stable/c/1b9cc255e8089606b92b2adf504e334573682821",
     "https://git.kernel.org/stable/c/5889064919a1e5c0a9469c54895000414fc46944",
     "https://git.kernel.org/stable/c/fffeb2ab5eeb823d4c2330571a098f63237c9049",
-    "https://git.kernel.org/stable/c/54f6b0c843e228d499eb4b6bbb89df68cad9ad5d",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72036"
+    "https://git.kernel.org/stable/c/54f6b0c843e228d499eb4b6bbb89df68cad9ad5d"
   ],
   "aliases": [
     "GHSA-6mv6-43g2-7qmw",
     "CVE-2026-72036"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "09221987-7a14-373f-be38-f3ac400e76ec",
@@ -52,6 +53,16 @@
         }
       },
       "product_version": "patch: 6.1.178"
+    },
+    {
+      "id": "0c0d01c8-2da7-3796-90c3-82a02c681331",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "2d31db0c-52ba-3bbd-bb94-dae5a7e61d65",
@@ -112,16 +123,6 @@
         }
       },
       "product_version": "patch: 6.18.40"
-    },
-    {
-      "id": "8e69e272-ccc0-3872-856b-0a178c9c8011",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc2"
     },
     {
       "id": "930359ba-f65c-3c8a-9586-13707a01d41c",

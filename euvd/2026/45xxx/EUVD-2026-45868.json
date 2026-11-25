@@ -3,7 +3,7 @@
   "enisaUuid": "d0f94d2a-7b2c-3a4a-a081-416da56d337c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nefi: Allocate runtime workqueue before ACPI init\n\nSince commit\n\n  5894cf571e14 (\"acpi/prmt: Use EFI runtime sandbox to invoke PRM handlers\")\n\nACPI PRM calls are delegated to a workqueue which runs in a kernel\nthread, making it easier to detect and mitigate faulting memory accesses\nperformed by the firmware.\n\nRafael reports that such PRM accesses may occur before efisubsys_init()\nexecutes, which is where the workqueue is allocated, leading to NULL\npointer dereferences. Since acpi_init() [which triggers the early PRM\naccesses] executes as a subsys_initcall() as well, and has its own\ndependencies that may be sensitive to initcall ordering, deferring\nacpi_init() is not an option.\n\nSo instead, split off the workqueue allocation into its own postcore\ninitcall, as this is the only missing piece to allow EFI runtime calls\nto be made. This ensures that EFI runtime call (including PRM calls) are\naccessible to all code running at subsys_initcall() level.",
   "datePublished": "Jul 19, 2026, 3:41:05 PM",
-  "dateUpdated": "Jul 19, 2026, 3:41:05 PM",
+  "dateUpdated": "Nov 6, 2026, 4:34:28 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/29cd94e678fcb3c4fd0f359deeac6d61334323fc",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/13c6da02e767152c9ac4330962247a5e47011035"
   ],
   "aliases": [
-    "CVE-2026-64183"
+    "CVE-2026-64183",
+    "GHSA-wmr2-4wg6-fwrh"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "0ca2ba90-932d-3b5b-ab3f-dd90c2295b3f",

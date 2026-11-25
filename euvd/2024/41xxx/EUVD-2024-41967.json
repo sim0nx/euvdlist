@@ -1,0 +1,109 @@
+{
+  "id": "EUVD-2024-41967",
+  "enisaUuid": "75085a52-5f47-3174-94ff-8044ad816be8",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntty: serial: fsl_lpuart: mark last busy before uart_add_one_port\n\nWith \"earlycon initcall_debug=1 loglevel=8\" in bootargs, kernel\nsometimes boot hang. It is because normal console still is not ready,\nbut runtime suspend is called, so early console putchar will hang\nin waiting TRDE set in UARTSTAT.\n\nThe lpuart driver has auto suspend delay set to 3000ms, but during\nuart_add_one_port, a child device serial ctrl will added and probed with\nits pm runtime enabled(see serial_ctrl.c).\nThe runtime suspend call path is:\ndevice_add\n     |-> bus_probe_device\n           |->device_initial_probe\n\t           |->__device_attach\n                         |-> pm_runtime_get_sync(dev->parent);\n\t\t\t |-> pm_request_idle(dev);\n\t\t\t |-> pm_runtime_put(dev->parent);\n\nSo in the end, before normal console ready, the lpuart get runtime\nsuspended. And earlycon putchar will hang.\n\nTo address the issue, mark last busy just after pm_runtime_enable,\nthree seconds is long enough to switch from bootconsole to normal\nconsole.",
+  "datePublished": "Sep 13, 2024, 6:27:33 AM",
+  "dateUpdated": "May 11, 2026, 8:34:48 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/8eb92cfca6c2c5a15ab1773f3d18ab8d8f7dbb68",
+    "https://git.kernel.org/stable/c/3ecf625d4acb71d726bc0b49403cf68388b3d58d",
+    "https://git.kernel.org/stable/c/dc98d76a15bc29a9a4e76f2f65f39f3e590fb15c"
+  ],
+  "aliases": [
+    "CVE-2024-46706",
+    "GHSA-gggx-8wfw-w6jx"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "6e0b0c4a-7635-3429-a1f0-ab0254ecda79",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "43543e6f539b3e646348c253059f75e27d63c94d <dc98d76a15bc29a9a4e76f2f65f39f3e590fb15c"
+    },
+    {
+      "id": "7579a76a-ec15-3fa7-a73b-f95ef86f26da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "78c5a5d4-4403-3167-a3df-1216c31c957c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.7"
+    },
+    {
+      "id": "879fe307-a7af-3826-a3e2-ba584e2cb35c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "8a2e2b54-a8ee-3364-845c-b494a4f8cf9d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.48"
+    },
+    {
+      "id": "a4947ad3-7e72-39e0-b21c-3d57aae8fbf3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.2"
+    },
+    {
+      "id": "d4f18ad3-bdcc-33f3-bd48-ed3bc872eb70",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "43543e6f539b3e646348c253059f75e27d63c94d <8eb92cfca6c2c5a15ab1773f3d18ab8d8f7dbb68"
+    },
+    {
+      "id": "ff73e5d6-21a9-3e82-a94c-39db986a7d90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "43543e6f539b3e646348c253059f75e27d63c94d <3ecf625d4acb71d726bc0b49403cf68388b3d58d"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "90cf474a-67da-35bd-90c1-8e06d1d9ff14",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

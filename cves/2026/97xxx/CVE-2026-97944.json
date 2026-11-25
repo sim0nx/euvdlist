@@ -3,7 +3,7 @@
   "enisaUuid": "6189bc19-dad1-39ad-81cd-89e8a78c6ced",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nx86/cfi: Fix FineIBT hash offset in cfi_get_func_hash()\n\nThe switch of the FineIBT preamble from \"subl $hash, %r10d\" to the\nshorter \"subl $hash, %eax\" moved the hash immediate from offset 7 to\noffset 5 of the preamble. fineibt_preamble_hash was updated to match,\nbut the open-coded offset in cfi_get_func_hash() was missed and it\nstill reads the hash at offset 7.\n\ncfi_get_func_hash() is used by the BPF JIT to give a struct_ops\ntrampoline the CFI hash of the stub function it stands in for. With\nFineIBT the trampoline now gets the upper half of the real hash\nfollowed by the first two bytes of the next instruction, so the first\nindirect call from the kernel into a struct_ops program,\ntcp_init_congestion_control() calling ->init() of a BPF congestion\ncontrol for example, fails the FineIBT check and the kernel dies with\na CFI failure.\n\nMove the FineIBT preamble template and its offset defines above\ncfi_get_func_hash() and use fineibt_preamble_hash there, so every\nreader of the preamble shares one definition of its layout. The\nCFI_FINEIBT arm is only built with CONFIG_FINEIBT, the only\nconfiguration in which cfi_mode can take that value.\ncfi_get_func_arity() does not need the same treatment: the __bhi_args\ncall whose displacement it reads still ends at the function address.",
   "datePublished": "Sep 25, 2026, 10:22:55 AM",
-  "dateUpdated": "Sep 25, 2026, 10:22:55 AM",
+  "dateUpdated": "Oct 19, 2026, 9:11:10 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/cd9b4595d6283f9b8a35d7ae607508de45a351ce",
@@ -11,20 +11,21 @@
     "https://git.kernel.org/stable/c/5a5d26f2cfe13467166219f6bf58099326912ddb"
   ],
   "aliases": [
-    "CVE-2026-97944"
+    "CVE-2026-97944",
+    "GHSA-7jp9-pjx7-g496"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
-      "id": "64b3ac01-cd60-39e7-9ac4-b0dda5b69e32",
+      "id": "976a1a10-05b0-327a-86a2-1d55481cc396",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc4"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "97c29d33-bbae-3051-9e18-783af5d07150",

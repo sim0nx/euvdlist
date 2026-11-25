@@ -3,8 +3,10 @@
   "enisaUuid": "9cb9d021-ebaa-3b98-9f23-96fc745271ed",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: mtk-jpeg: fix use-after-free in release path due to uncancelled work\n\nThe mtk_jpeg_release() function frees the context structure (ctx) without\nfirst cancelling any pending or running work in ctx->jpeg_work. This\ncreates a race window where the workqueue callback may still be accessing\nthe context memory after it has been freed.\n\nRace condition:\n\n    CPU 0 (release)                    CPU 1 (workqueue)\n    ----------------                   ------------------\n    close()\n      mtk_jpeg_release()\n                                       mtk_jpegenc_worker()\n                                         ctx = work->data\n                                         // accessing ctx\n\n        kfree(ctx)  // freed!\n                                         access ctx  // UAF!\n\nThe work is queued via queue_work() during JPEG encode/decode operations\n(via mtk_jpeg_device_run). If the device is closed while work is pending\nor running, the work handler will access freed memory.\n\nFix this by calling cancel_work_sync() BEFORE acquiring the mutex. This\nordering is critical: if cancel_work_sync() is called after mutex_lock(),\nand the work handler also tries to acquire the same mutex, it would cause\na deadlock.\n\nNote: The open error path does NOT need cancel_work_sync() because\nINIT_WORK() only initializes the work structure - it does not schedule\nit. Work is only scheduled later during ioctl operations.",
   "datePublished": "May 27, 2026, 12:56:13 PM",
-  "dateUpdated": "May 27, 2026, 12:56:13 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:29:08 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/2209fdae5c2f615930c9af1379c1cfca199ec5d8",
     "https://git.kernel.org/stable/c/0498b27a1542021d90269d58347501d4c3ccd84e",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/34c519feef3e4fcff1078dc8bdb25fbbbd10303f"
   ],
   "aliases": [
+    "GHSA-cfrw-47v4-wfc7",
     "CVE-2026-46011"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "19acd9e4-2027-3b4a-ab6e-a5e0324366a7",
@@ -27,16 +30,6 @@
         }
       },
       "product_version": "patch: 6.6.140"
-    },
-    {
-      "id": "3ccc3783-6a38-30ad-a9dd-7c0b993387ff",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc1"
     },
     {
       "id": "3d7ed581-8dce-3cac-8487-46b060ee4a1a",
@@ -77,6 +70,16 @@
         }
       },
       "product_version": "5fb1c2361e5630491d2a2f9359654eb022601bc0 <34c519feef3e4fcff1078dc8bdb25fbbbd10303f"
+    },
+    {
+      "id": "7ebe705a-e1ac-3c2f-ae9e-841527f14f2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "864f65d8-a9e3-3697-bf77-c8aa793778ce",

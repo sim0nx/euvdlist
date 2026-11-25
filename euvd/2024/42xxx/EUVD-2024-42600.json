@@ -1,0 +1,237 @@
+{
+  "id": "EUVD-2024-42600",
+  "enisaUuid": "84dbddd1-c430-3260-ad51-183cea574a25",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvfs: fix race between evice_inodes() and find_inode()&iput()\n\nHi, all\n\nRecently I noticed a bug[1] in btrfs, after digged it into\nand I believe it'a race in vfs.\n\nLet's assume there's a inode (ie ino 261) with i_count 1 is\ncalled by iput(), and there's a concurrent thread calling\ngeneric_shutdown_super().\n\ncpu0:                              cpu1:\niput() // i_count is 1\n  ->spin_lock(inode)\n  ->dec i_count to 0\n  ->iput_final()                    generic_shutdown_super()\n    ->__inode_add_lru()               ->evict_inodes()\n      // cause some reason[2]           ->if (atomic_read(inode->i_count)) continue;\n      // return before                  // inode 261 passed the above check\n      // list_lru_add_obj()             // and then schedule out\n   ->spin_unlock()\n// note here: the inode 261\n// was still at sb list and hash list,\n// and I_FREEING|I_WILL_FREE was not been set\n\nbtrfs_iget()\n  // after some function calls\n  ->find_inode()\n    // found the above inode 261\n    ->spin_lock(inode)\n   // check I_FREEING|I_WILL_FREE\n   // and passed\n      ->__iget()\n    ->spin_unlock(inode)                // schedule back\n                                        ->spin_lock(inode)\n                                        // check (I_NEW|I_FREEING|I_WILL_FREE) flags,\n                                        // passed and set I_FREEING\niput()                                  ->spin_unlock(inode)\n  ->spin_lock(inode)\t\t\t  ->evict()\n  // dec i_count to 0\n  ->iput_final()\n    ->spin_unlock()\n    ->evict()\n\nNow, we have two threads simultaneously evicting\nthe same inode, which may trigger the BUG(inode->i_state & I_CLEAR)\nstatement both within clear_inode() and iput().\n\nTo fix the bug, recheck the inode->i_count after holding i_lock.\nBecause in the most scenarios, the first check is valid, and\nthe overhead of spin_lock() can be reduced.\n\nIf there is any misunderstanding, please let me know, thanks.\n\n[1]: https://lore.kernel.org/linux-btrfs/000000000000eabe1d0619c48986@google.com/\n[2]: The reason might be 1. SB_ACTIVE was removed or 2. mapping_shrinkable()\nreturn false when I reproduced the bug.",
+  "datePublished": "Oct 21, 2024, 11:53:22 AM",
+  "dateUpdated": "Aug 5, 2026, 11:39:25 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/6cc13a80a26e6b48f78c725c01b91987d61563ef",
+    "https://git.kernel.org/stable/c/489faddb1ae75b0e1a741fe5ca2542a2b5e794a5",
+    "https://git.kernel.org/stable/c/47a68c75052a660e4c37de41e321582ec9496195",
+    "https://git.kernel.org/stable/c/3721a69403291e2514d13a7c3af50a006ea1153b",
+    "https://git.kernel.org/stable/c/540fb13120c9eab3ef203f90c00c8e69f37449d1",
+    "https://git.kernel.org/stable/c/0eed942bc65de1f93eca7bda51344290f9c573bb",
+    "https://git.kernel.org/stable/c/0f8a5b6d0dafa4f533ac82e98f8b812073a7c9d1",
+    "https://git.kernel.org/stable/c/6c857fb12b9137fee574443385d53914356bbe11",
+    "https://git.kernel.org/stable/c/88b1afbf0f6b221f6c5bb66cc80cd3b38d696687"
+  ],
+  "aliases": [
+    "GHSA-9p2r-69c4-v82v",
+    "CVE-2024-47679"
+  ],
+  "assigner": "Linux",
+  "epss": 0.2,
+  "enisaIdProduct": [
+    {
+      "id": "04536101-8e62-3082-9ebc-05ecf2e8acf4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.2"
+    },
+    {
+      "id": "0e777d07-1278-331e-a7b5-ff5520e56332",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63997e98a3be68d7cec806d22bf9b02b2e1daabb <6c857fb12b9137fee574443385d53914356bbe11"
+    },
+    {
+      "id": "25ab00b5-a6e3-381b-9bdd-da76f21d3b70",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.37"
+    },
+    {
+      "id": "402b8d3a-4512-3111-910e-52539f0a81e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.113"
+    },
+    {
+      "id": "42ac89b6-b368-3552-9f13-182d390bd39f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.13"
+    },
+    {
+      "id": "5df70323-9111-3864-82fe-ec94f9fdd020",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63997e98a3be68d7cec806d22bf9b02b2e1daabb <47a68c75052a660e4c37de41e321582ec9496195"
+    },
+    {
+      "id": "646bd0a6-fc21-3813-84c3-5acb57262e0a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63997e98a3be68d7cec806d22bf9b02b2e1daabb <489faddb1ae75b0e1a741fe5ca2542a2b5e794a5"
+    },
+    {
+      "id": "6a8e8e8c-4323-3ab6-98f0-83ef59a861bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63997e98a3be68d7cec806d22bf9b02b2e1daabb <6cc13a80a26e6b48f78c725c01b91987d61563ef"
+    },
+    {
+      "id": "72c8b208-d25c-3e12-9149-2b8f366ca443",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63997e98a3be68d7cec806d22bf9b02b2e1daabb <88b1afbf0f6b221f6c5bb66cc80cd3b38d696687"
+    },
+    {
+      "id": "7e2059f8-79a1-3127-9223-841557433bd7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63997e98a3be68d7cec806d22bf9b02b2e1daabb <540fb13120c9eab3ef203f90c00c8e69f37449d1"
+    },
+    {
+      "id": "860fd414-d5e4-337b-82a4-95f3ebd38b0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63997e98a3be68d7cec806d22bf9b02b2e1daabb <0f8a5b6d0dafa4f533ac82e98f8b812073a7c9d1"
+    },
+    {
+      "id": "8785202f-60fc-3ae0-860d-631d7d682b91",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.54"
+    },
+    {
+      "id": "8e0df6e8-c060-314c-b354-4784a695e3f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "998d4de8-e02c-3d25-ad89-855fe0b9d4e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.323"
+    },
+    {
+      "id": "a1640364-de2d-390d-bf04-bd5e3612c2be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63997e98a3be68d7cec806d22bf9b02b2e1daabb <0eed942bc65de1f93eca7bda51344290f9c573bb"
+    },
+    {
+      "id": "a53b6f76-c04a-3db3-9c21-099742ab343f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a6d20721-dc13-3916-ab80-2476c2ab665d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.285"
+    },
+    {
+      "id": "c9b0d64e-a17d-304b-90d7-99377cbcba8b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.227"
+    },
+    {
+      "id": "dc4575b4-75d4-3208-9cdf-7611fc028f11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.168"
+    },
+    {
+      "id": "ea2040c3-93f2-3ca6-9d28-70ec507960ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63997e98a3be68d7cec806d22bf9b02b2e1daabb <3721a69403291e2514d13a7c3af50a006ea1153b"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7fd0e185-097f-33dd-8b22-ec95b9c0bdb6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

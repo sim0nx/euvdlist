@@ -3,8 +3,10 @@
   "enisaUuid": "a810e593-0841-3e57-9215-0071e5d47a30",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbatman-adv: bla: avoid double decrement of bla.num_requests\n\nThe bla.num_requests is increased when no request_sent was in progress. And\nit is decremented in various places (announcement was received, backbone is\npurged, periodic work). But the check if the request_sent is actually set\nto a specific state and the atomic_dec/_inc are not safe because they are\nnot atomic (TOCTOU) and multiple such code portions can run concurrently.\n\nAt the same time, it is necessary to modify request_sent (state) and\nbla.num_requests atomically. Otherwise batadv_bla_send_request() might set\nrequest_sent to 1 and is interrupted.  batadv_handle_announce() can then\nset request_sent back to 0 and decrement num_requests before\nbatadv_bla_send_request() incremented it.\n\nThe two operations must therefore be locked. And since state (request_sent)\nand wait_periods are only accessed inside this lock, they can be converted\nto simpler datatypes. And to avoid that the bla.num_requests is touched by\na parallel running context with a valid backbone_gw reference after\nbatadv_bla_purge_backbone_gw() ran, a third state \"stopped\" is required to\ncorrectly signal that a backbone_gw is in the state of being cleaned up.",
   "datePublished": "Jul 19, 2026, 3:40:02 PM",
-  "dateUpdated": "Jul 19, 2026, 3:40:02 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:39:09 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:H",
   "references": [
     "https://git.kernel.org/stable/c/1f013bc94154f2e78e97d0296175664224c796e0",
     "https://git.kernel.org/stable/c/5328b95960774f2e189f22485616bc7b8eb2f7e3",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/83ab69bd12b80f6ea169c8bea6977701b53a043d"
   ],
   "aliases": [
-    "CVE-2026-64095"
+    "CVE-2026-64095",
+    "GHSA-q65p-8m3g-4fpv"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.27,
   "enisaIdProduct": [
     {
       "id": "1946ea63-5bf6-37d5-a36f-09f4a98af4c4",

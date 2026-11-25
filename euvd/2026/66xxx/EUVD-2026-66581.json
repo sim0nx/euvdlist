@@ -3,17 +3,20 @@
   "enisaUuid": "0a1b7e42-7df1-32c6-a745-caee7e71b11f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: lib: Fix ZBB strnlen reading past count boundary\n\nThe ZBB-optimized strnlen loop loads one word ahead before checking the\naligned boundary:\n\n    REG_L   t1, SZREG(t0)       // load next word\n    addi    t0, t0, SZREG       // advance\n    orc.b   t1, t1\n    bgeu    t0, t4, 4f          // boundary check AFTER load\n\nwhere t4 = (s + count) & -SZREG.  When s is aligned and count is a\nmultiple of SZREG, t4 equals s + count and the loop loads a full word\nstarting at exactly s + count.  If s + count falls on a page boundary\nwith the next page unmapped, this faults.\n\nFix by computing the aligned boundary from the last valid byte\n(s + count - 1) instead of s + count.  This makes the loop stop at the\nword containing the last valid byte rather than potentially loading the\nword after it.  The count == 0 case is already handled by the beqz\nearly exit.\n\nAlso add a pre-loop guard (bgeu t0, t4) for the case where all valid\nbytes fit within the first word.  With the adjusted boundary, t4 can\nequal t0, and entering the loop with stale register state from the\nfirst-word processing would produce incorrect results.\n\nThe final minu clamp ensures the result is still correct when the last\nloaded word extends past s + count - 1 within the same aligned word.",
   "datePublished": "Aug 26, 2026, 2:36:58 PM",
-  "dateUpdated": "Aug 26, 2026, 2:36:58 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 27, 2026, 5:01:11 AM",
+  "baseScore": 9.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:H",
   "references": [
     "https://git.kernel.org/stable/c/e697e30f3dd2da3a1df7dc0980546d5b53aea4b6",
     "https://git.kernel.org/stable/c/5d588c684833e678a0008eb69c33190f01a65f4b"
   ],
   "aliases": [
-    "CVE-2026-74751"
+    "CVE-2026-74751",
+    "GHSA-ghc8-jmvh-q86v"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.34,
   "enisaIdProduct": [
     {
       "id": "4b6a8f78-b494-3772-96ff-3bde1f27a040",

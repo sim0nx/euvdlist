@@ -3,7 +3,7 @@
   "enisaUuid": "a612cb13-e4cc-363c-b4a3-13a1d1ee7a7b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmd/md-llbitmap: prevent create failure bitmap UAF\n\nllbitmap_create() publishes mddev->bitmap before reading the bitmap\nsuperblock. This is needed because llbitmap_read_sb() can initialize a\nnew bitmap and flush it through helpers that use mddev->bitmap.\n\nIf llbitmap_read_sb() fails, the old cleanup dropped bitmap_info.mutex\nand freed llbitmap before clearing mddev->bitmap. Readers such as\n/proc/mdstat rely on bitmap_info.mutex to keep the bitmap pointer stable\nwhile collecting bitmap stats, so they could observe the stale pointer\nafter the failed create path released the mutex.\n\nClear mddev->bitmap while still holding bitmap_info.mutex, then free the\nfailed llbitmap after dropping the mutex. This makes mutex-protected\nreaders see either a live bitmap or no bitmap.",
   "datePublished": "Sep 17, 2026, 4:08:09 PM",
-  "dateUpdated": "Sep 17, 2026, 4:08:09 PM",
+  "dateUpdated": "Oct 19, 2026, 9:00:54 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/930cc4f1af5a1afcd545a6ba00e38921ff8401e0",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/2116c2f0a0e547615886900e2ed8c529c016499b"
   ],
   "aliases": [
-    "CVE-2026-90277"
+    "CVE-2026-90277",
+    "GHSA-x88w-2pq9-75r8"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "33097446-b9d2-3c96-b4e3-048ddd3aeb3d",
@@ -25,6 +26,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "3828750a-02d7-3527-bb76-103a83978fc4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "4227a051-43bc-355b-b80a-64a17fac3ccd",
@@ -45,16 +56,6 @@
         }
       },
       "product_version": "5ab829f1971dc99f2aac10846c378e67fc875abc <2116c2f0a0e547615886900e2ed8c529c016499b"
-    },
-    {
-      "id": "9b48d983-3f78-3598-927c-8b531c93dd85",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "b8f5a052-247f-3afa-8e0e-211654a8b5f9",

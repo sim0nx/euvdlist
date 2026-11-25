@@ -3,18 +3,21 @@
   "enisaUuid": "bc11dd4e-f3e6-3e47-afdd-c0fff51463eb",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/rxe: Fix UAF in ODP init error-handling path\n\nrxe_odp_mr_init_user() stores &umem_odp->umem in mr->umem before\ncalling rxe_odp_init_pages(). If rxe_odp_init_pages() fails,\nrxe_odp_mr_init_user() releases umem_odp and returns an error.\n\nrxe_reg_user_mr() then unwinds the error through rxe_cleanup(),\nrxe_mr_cleanup(), ib_umem_release(mr->umem). There is an\nIS_ERR_OR_NULL(umem) check at the start of ib_umem_release().\nBut since mr->umem is NOT reset to NULL in the error handling\npath of rxe_odp_mr_init_user(), the check passes and it reads\nalready-freed fields like umem->is_dmabuf, causing UAF.\n\nFix the UAF by clearing mr->umem after releasing the failed\nODP umem so the MR cleanup path does not release it again.",
   "datePublished": "Sep 17, 2026, 4:09:46 PM",
-  "dateUpdated": "Sep 17, 2026, 4:09:46 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:03:27 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/5f1933163327c9f1c8f2a341c6cb551aaf231ff9",
     "https://git.kernel.org/stable/c/4cfb448705da3171d44d9cbe7be53ff03284d532",
     "https://git.kernel.org/stable/c/51f2c8d2c99fc1f452f7113c08a35edcc4bf8732"
   ],
   "aliases": [
+    "GHSA-vg4x-c29w-66xm",
     "CVE-2026-90423"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "16ce2955-e065-3d14-bdba-82293f2549d5",
@@ -37,6 +40,16 @@
       "product_version": "d03fb5c6599e31b90c6b5f65d43d6ccc6b49eb91 <51f2c8d2c99fc1f452f7113c08a35edcc4bf8732"
     },
     {
+      "id": "2dd0e375-acea-3152-a70f-a589fc1b0a52",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "87594b8a-544e-36f1-ad2e-8c8415c0144f",
       "product": {
         "name": "Linux",
@@ -45,16 +58,6 @@
         }
       },
       "product_version": "d03fb5c6599e31b90c6b5f65d43d6ccc6b49eb91 <4cfb448705da3171d44d9cbe7be53ff03284d532"
-    },
-    {
-      "id": "96ac38a9-8495-3c94-bd6d-7448ed7a0834",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "acc7fc22-9f33-3ba6-9f45-a3306495dc94",

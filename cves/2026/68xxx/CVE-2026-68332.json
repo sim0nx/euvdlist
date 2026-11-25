@@ -3,7 +3,7 @@
   "enisaUuid": "c4914a25-8834-3760-b790-57d4116232e3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: airoha: Fix potential use-after-free in airoha_ppe_deinit()\n\nairoha_ppe_deinit() replaces the NPU pointer with NULL via\nrcu_replace_pointer() but does not wait for existing RCU readers\nto exit before calling ppe_deinit() and airoha_npu_put(). This can\ncause a use-after-free if a reader in an RCU read-side critical\nsection still holds a reference to the NPU when it is freed.\n\nThe init path (airoha_ppe_init) already calls synchronize_rcu()\nafter rcu_assign_pointer(), but the deinit path introduced in\ncommit 6abcf751bc08 (\"net: airoha: Fix schedule while atomic in\nairoha_ppe_deinit()\") omitted the matching barrier when switching\nfrom rcu_read_lock()/rcu_dereference() to rcu_replace_pointer().\n\nAdd synchronize_rcu() before ppe_deinit() to ensure all existing\nRCU readers have completed before the NPU resources are released.",
   "datePublished": "Aug 10, 2026, 12:03:08 PM",
-  "dateUpdated": "Aug 10, 2026, 12:03:08 PM",
+  "dateUpdated": "Aug 17, 2026, 5:03:30 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/46e3bed4b071095ecc9384a7b349e1908728531f",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/2484568a335cd7bda951c75b3a7d95ea36161ae7"
   ],
   "aliases": [
+    "GHSA-8c4q-qfph-ff23",
     "CVE-2026-68332"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "21918b78-da91-395d-9e83-b7cfe57de4e3",
@@ -77,14 +78,14 @@
       "product_version": "6.19"
     },
     {
-      "id": "5002a9e5-8cc3-3ace-a7cd-4ccda50278fa",
+      "id": "82dbfe62-633c-31ad-b379-83d80ebc4657",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc5"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "8833d237-d838-391d-9847-e0028406998d",

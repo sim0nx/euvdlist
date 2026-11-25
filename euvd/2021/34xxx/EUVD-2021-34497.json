@@ -1,0 +1,111 @@
+{
+  "id": "EUVD-2021-34497",
+  "enisaUuid": "2723e7c4-2d59-356c-82cb-298f8890cb24",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: fix race between searching chunks and release journal_head from buffer_head\n\nEncountered a race between ocfs2_test_bg_bit_allocatable() and\njbd2_journal_put_journal_head() resulting in the below vmcore.\n\n  PID: 106879  TASK: ffff880244ba9c00  CPU: 2   COMMAND: \"loop3\"\n  Call trace:\n    panic\n    oops_end\n    no_context\n    __bad_area_nosemaphore\n    bad_area_nosemaphore\n    __do_page_fault\n    do_page_fault\n    page_fault\n      [exception RIP: ocfs2_block_group_find_clear_bits+316]\n    ocfs2_block_group_find_clear_bits [ocfs2]\n    ocfs2_cluster_group_search [ocfs2]\n    ocfs2_search_chain [ocfs2]\n    ocfs2_claim_suballoc_bits [ocfs2]\n    __ocfs2_claim_clusters [ocfs2]\n    ocfs2_claim_clusters [ocfs2]\n    ocfs2_local_alloc_slide_window [ocfs2]\n    ocfs2_reserve_local_alloc_bits [ocfs2]\n    ocfs2_reserve_clusters_with_limit [ocfs2]\n    ocfs2_reserve_clusters [ocfs2]\n    ocfs2_lock_refcount_allocators [ocfs2]\n    ocfs2_make_clusters_writable [ocfs2]\n    ocfs2_replace_cow [ocfs2]\n    ocfs2_refcount_cow [ocfs2]\n    ocfs2_file_write_iter [ocfs2]\n    lo_rw_aio\n    loop_queue_work\n    kthread_worker_fn\n    kthread\n    ret_from_fork\n\nWhen ocfs2_test_bg_bit_allocatable() called bh2jh(bg_bh), the\nbg_bh->b_private NULL as jbd2_journal_put_journal_head() raced and\nreleased the jounal head from the buffer head.  Needed to take bit lock\nfor the bit 'BH_JournalHead' to fix this race.",
+  "datePublished": "May 22, 2024, 8:19:41 AM",
+  "dateUpdated": "Aug 5, 2026, 8:48:03 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/5043fbd294f5909a080ade0f04b70a4da9e122b7",
+    "https://git.kernel.org/stable/c/2e382600e8856ea654677b5134ee66e03ea72bc2",
+    "https://git.kernel.org/stable/c/6f1b228529ae49b0f85ab89bcdb6c365df401558"
+  ],
+  "aliases": [
+    "CVE-2021-47493",
+    "GHSA-gr8j-3pfp-wwr2"
+  ],
+  "assigner": "Linux",
+  "epss": 0.17,
+  "enisaIdProduct": [
+    {
+      "id": "00b64eae-6e7b-382b-8358-555306413958",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15"
+    },
+    {
+      "id": "62595aa6-e0c9-3e95-abcf-6481911c1c78",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.77"
+    },
+    {
+      "id": "865b0c3e-c180-348a-9487-82ecbc7b5a96",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "936a97c7-1e10-3b15-91e7-09fba250569d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ccd979bdbce9fba8412beb3f1de68a9d0171b12c <2e382600e8856ea654677b5134ee66e03ea72bc2"
+    },
+    {
+      "id": "d3b8a9ec-230f-3691-b94e-131d462bca1f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.14.16"
+    },
+    {
+      "id": "e0824140-84a5-35e3-b3e8-891a7bd1916f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.16"
+    },
+    {
+      "id": "f0819e37-c5d6-310d-a842-56e22dc01450",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ccd979bdbce9fba8412beb3f1de68a9d0171b12c <5043fbd294f5909a080ade0f04b70a4da9e122b7"
+    },
+    {
+      "id": "f5145b92-5be4-3a66-af7d-eac16c65750d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ccd979bdbce9fba8412beb3f1de68a9d0171b12c <6f1b228529ae49b0f85ab89bcdb6c365df401558"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b87fc7bf-7cf1-38cb-ab41-97dbfe330d2c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

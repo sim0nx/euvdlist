@@ -3,9 +3,14 @@
   "enisaUuid": "1f4d7c33-1158-34e8-b687-ea6d8bfd8522",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: cfg80211: bound element ID read when checking non-inheritance\n\ncfg80211_is_element_inherited() reads the first data octet of the\ncandidate element (id = elem->data[0]) to look it up in an extension\nnon-inheritance list. It does so after testing elem->id, but without\nverifying that the element actually has a data octet. A zero-length\nextension element (WLAN_EID_EXTENSION with length 0) therefore makes it\nread one octet past the end of the element.\n\n_ieee802_11_parse_elems_full() runs this check for every element of a\nframe once a non-inheritance context exists -- e.g. while parsing a\nper-STA profile of a Multi-Link element in a (re)association response,\nor a non-transmitted BSS profile -- so a crafted frame from an AP can\ntrigger a one-octet slab-out-of-bounds read during element parsing:\n\n  BUG: KASAN: slab-out-of-bounds in cfg80211_is_element_inherited\n  Read of size 1 ... in net/wireless/scan.c\n\nReturn early (treat the element as inherited) when an extension element\ncarries no data, mirroring the existing handling of empty ID lists.\n\nThe bug was found by fuzzing ieee802_11_parse_elems_full() under KASAN.",
   "datePublished": "Aug 10, 2026, 12:04:22 PM",
-  "dateUpdated": "Aug 10, 2026, 12:04:22 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:09:08 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/521dd5fe6d12b0d3c275f919738dc3a07117f4a5",
+    "https://git.kernel.org/stable/c/24154c172246ae3f0e69bb17c9111095685ceedc",
+    "https://git.kernel.org/stable/c/2d31ebb26a14f103c9cdc5287fb20cb2d4bde901",
     "https://git.kernel.org/stable/c/20c308d9a57722801961f816395bf825f7bde6bc",
     "https://git.kernel.org/stable/c/84bd907361c56fbd5523eceb2682cb39da059bd5",
     "https://git.kernel.org/stable/c/11ac7a5e75f5132f1778e0c60981d30dc29fb869",
@@ -13,10 +18,11 @@
     "https://git.kernel.org/stable/c/cb8afea4655ff004fa7feee825d5c79783525383"
   ],
   "aliases": [
-    "CVE-2026-68402"
+    "CVE-2026-68402",
+    "GHSA-755j-4fg9-vf62"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.27,
   "enisaIdProduct": [
     {
       "id": "079fe7a9-bf67-3432-b3e0-e07a3b85a96f",
@@ -29,16 +35,6 @@
       "product_version": "f7dacfb11475ba777e1e84ccec2e14b0ba5a17a3 <11ac7a5e75f5132f1778e0c60981d30dc29fb869"
     },
     {
-      "id": "09d77f98-d7c9-37e4-aa7d-ed927f9dd871",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
-    },
-    {
       "id": "31f2a078-85b0-3f5c-a35c-0f3d04974dee",
       "product": {
         "name": "Linux",
@@ -49,6 +45,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "4768be86-3494-326b-a759-04053ed373a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f7dacfb11475ba777e1e84ccec2e14b0ba5a17a3 <2d31ebb26a14f103c9cdc5287fb20cb2d4bde901"
+    },
+    {
+      "id": "5a81bdea-717f-3e06-907d-93047226f20c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "5ad8d8b9-e265-3959-87fc-74c0f745a348",
       "product": {
         "name": "Linux",
@@ -57,6 +73,36 @@
         }
       },
       "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "5cfcab8e-e6fa-3689-a54c-0efd30ab9c34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
+    {
+      "id": "7218228a-da09-394c-a29c-734e041daa8c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f7dacfb11475ba777e1e84ccec2e14b0ba5a17a3 <521dd5fe6d12b0d3c275f919738dc3a07117f4a5"
+    },
+    {
+      "id": "72d10a16-95a5-3d81-b0a6-17b7a9351c29",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f7dacfb11475ba777e1e84ccec2e14b0ba5a17a3 <24154c172246ae3f0e69bb17c9111095685ceedc"
     },
     {
       "id": "786045a0-d113-32bc-b6e0-13fa01fa0e15",
@@ -89,6 +135,16 @@
       "product_version": "5.2"
     },
     {
+      "id": "8dd323c3-8867-3ab9-9c6b-c07c3238d963",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
       "id": "d4944653-c9c5-3b52-a1b3-feddb798752b",
       "product": {
         "name": "Linux",
@@ -107,6 +163,16 @@
         }
       },
       "product_version": "f7dacfb11475ba777e1e84ccec2e14b0ba5a17a3 <cb8afea4655ff004fa7feee825d5c79783525383"
+    },
+    {
+      "id": "da8a3411-2ded-3b43-b696-111bbe1e45d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "dfbe9ceb-13f4-3d7a-8800-e459bde0c5f5",

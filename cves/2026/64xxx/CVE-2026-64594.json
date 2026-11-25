@@ -3,7 +3,7 @@
   "enisaUuid": "8aea2afd-b462-3148-a3f0-f89d6ceebf6c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: f_fs: initialize reset_work at allocation time\n\nffs_fs_kill_sb() unconditionally calls cancel_work_sync() on\nffs->reset_work when a functionfs instance is unmounted:\n\n\tffs_data_reset(ffs);\n\tcancel_work_sync(&ffs->reset_work);\n\nHowever ffs->reset_work is only ever initialized via INIT_WORK() in\nffs_func_set_alt() and ffs_func_disable(), and only on the\nFFS_DEACTIVATED path. That state is reached solely by ffs_data_closed()\nwhen the instance is mounted with the \"no_disconnect\" option, so for the\ncommon case (no \"no_disconnect\", or mounted and unmounted without ever\nbeing deactivated) reset_work is never initialized.\n\nffs_data_new() allocates the ffs_data with kzalloc_obj() and does not\ninitialize reset_work, and ffs_data_reset()/ffs_data_clear() do not touch\nit either, so reset_work.func is left NULL. cancel_work_sync() on such a\nwork then trips the WARN_ON(!work->func) guard in __flush_work():\n\n  WARNING: kernel/workqueue.c:4301 at __flush_work+0x330/0x360, CPU#3: umount\n  Call trace:\n   __flush_work\n   cancel_work_sync\n   ffs_fs_kill_sb [usb_f_fs]\n   deactivate_locked_super\n   deactivate_super\n   cleanup_mnt\n   __cleanup_mnt\n   task_work_run\n   exit_to_user_mode_loop\n   el0_svc\n\nOn older kernels cancel_work_sync() on a zero-initialized work struct was\na silent no-op, which hid the missing initialization.\n\nInitialize reset_work once in ffs_data_new() so it is always valid for\nthe lifetime of the ffs_data, and drop the now-redundant INIT_WORK()\ncalls from the two deactivation paths.",
   "datePublished": "Aug 6, 2026, 7:13:50 AM",
-  "dateUpdated": "Aug 6, 2026, 7:13:50 AM",
+  "dateUpdated": "Aug 17, 2026, 4:58:16 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/7fe895e0a9651518c4fc082487da770ff9c14c7f",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/3137b243c93982fe3460335e12f9247739766e10"
   ],
   "aliases": [
-    "CVE-2026-64594"
+    "CVE-2026-64594",
+    "GHSA-28fc-4vwx-pr32"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0382d3e2-56e2-380f-844a-42f1b6d78468",
@@ -92,16 +93,6 @@
       "product_version": "patch: 5.15.212"
     },
     {
-      "id": "74e71647-e556-30dd-b105-3fdc45d3de6a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
-    },
-    {
       "id": "8992ab67-ea46-34b3-a99e-ab232f05ae0d",
       "product": {
         "name": "Linux",
@@ -170,6 +161,16 @@
         }
       },
       "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "c2aa03f6-6975-3a88-9917-4240730b87be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "d270d062-dbea-30b3-bb64-64874a3d3b6c",

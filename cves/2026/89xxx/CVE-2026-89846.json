@@ -3,8 +3,10 @@
   "enisaUuid": "4eaac7ac-ef73-3c14-b26d-5e0ea0a163a1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Bound rsp_info_len to avoid OOB sense-data read\n\nIn qla2x00_status_entry(), the FWI2 status path advances sense_data and\nshrinks par_sense_len by rsp_info_len:\n\n\tif (IS_FWI2_CAPABLE(ha)) {\n\t\tsense_data += rsp_info_len;\n\t\tpar_sense_len -= rsp_info_len;\n\t}\n\nrsp_info_len is a 32-bit value taken directly from the target's FCP\nresponse (sf.rsp_data_len), while par_sense_len is the IOCB data area\nsize (28 bytes for 24xx, 60 bytes for 29xx). A hostile or buggy target\nreporting an rsp_info_len larger than par_sense_len makes the unsigned\nsubtraction underflow to a huge value and advances sense_data out of\nbounds.\n\nThe underflowed par_sense_len then defeats the cap in\nqla2x00_handle_sense():\n\n\tif (sense_len > par_sense_len)\n\t\tsense_len = par_sense_len;\n\tmemcpy(cp->sense_buffer, sense_data, sense_len);\n\nso the memcpy reads up to SCSI_SENSE_BUFFERSIZE bytes from the\nout-of-bounds sense_data pointer, leaking adjacent response-ring/heap\nmemory into the command's sense buffer.\n\nClamp rsp_info_len to par_sense_len before the subtraction so\npar_sense_len can never underflow and sense_data stays within the IOCB\ndata area. The fix sits before the comp_status switch, covering both\nqla2x00_handle_sense() call sites.",
   "datePublished": "Sep 16, 2026, 10:31:20 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:20 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:53:39 AM",
+  "baseScore": 9.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/125b12861c726e58448bb95d55b04851fb131d1f",
     "https://git.kernel.org/stable/c/e57ace988bda5693f7b3645f652ea4b4220870ee",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/ca6d880d6c70cb7946e7b3e05d7285f271b6d99e"
   ],
   "aliases": [
-    "CVE-2026-89846"
+    "CVE-2026-89846",
+    "GHSA-w8mp-89wx-m5rw"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.71,
   "enisaIdProduct": [
     {
       "id": "00f8cedd-5d99-393c-947d-43c29485f7f5",
@@ -152,16 +155,6 @@
       "product_version": "2.6.36"
     },
     {
-      "id": "b04255ca-f258-34a1-a8d3-100deb5394c8",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "b2dd86d6-3138-3ddd-95f4-6d5dbb4f1ba7",
       "product": {
         "name": "Linux",
@@ -200,6 +193,16 @@
         }
       },
       "product_version": "5544213be7b4fb693730106a6d70a8cc1aa7cdf6 <be75ab791c9b3baca66c70ce03443afebc83acda"
+    },
+    {
+      "id": "f8076444-9f64-3b70-aa83-8cecbce429a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

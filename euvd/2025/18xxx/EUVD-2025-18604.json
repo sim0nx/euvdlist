@@ -3,7 +3,7 @@
   "enisaUuid": "475f4e82-a9dc-33d1-8f37-5d6533407bf9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvirtio_ring: Fix data race by tagging event_triggered as racy for KCSAN\n\nsyzbot reports a data-race when accessing the event_triggered, here is the\nsimplified stack when the issue occurred:\n\n==================================================================\nBUG: KCSAN: data-race in virtqueue_disable_cb / virtqueue_enable_cb_delayed\n\nwrite to 0xffff8881025bc452 of 1 bytes by task 3288 on cpu 0:\n virtqueue_enable_cb_delayed+0x42/0x3c0 drivers/virtio/virtio_ring.c:2653\n start_xmit+0x230/0x1310 drivers/net/virtio_net.c:3264\n __netdev_start_xmit include/linux/netdevice.h:5151 [inline]\n netdev_start_xmit include/linux/netdevice.h:5160 [inline]\n xmit_one net/core/dev.c:3800 [inline]\n\nread to 0xffff8881025bc452 of 1 bytes by interrupt on cpu 1:\n virtqueue_disable_cb_split drivers/virtio/virtio_ring.c:880 [inline]\n virtqueue_disable_cb+0x92/0x180 drivers/virtio/virtio_ring.c:2566\n skb_xmit_done+0x5f/0x140 drivers/net/virtio_net.c:777\n vring_interrupt+0x161/0x190 drivers/virtio/virtio_ring.c:2715\n __handle_irq_event_percpu+0x95/0x490 kernel/irq/handle.c:158\n handle_irq_event_percpu kernel/irq/handle.c:193 [inline]\n\nvalue changed: 0x01 -> 0x00\n==================================================================\n\nWhen the data race occurs, the function virtqueue_enable_cb_delayed() sets\nevent_triggered to false, and virtqueue_disable_cb_split/packed() reads it\nas false due to the race condition. Since event_triggered is an unreliable\nhint used for optimization, this should only cause the driver temporarily\nsuggest that the device not send an interrupt notification when the event\nindex is used.\n\nFix this KCSAN reported data-race issue by explicitly tagging the access as\ndata_racy.",
   "datePublished": "Jun 18, 2025, 9:33:31 AM",
-  "dateUpdated": "Jun 18, 2025, 9:33:31 AM",
+  "dateUpdated": "May 11, 2026, 9:20:15 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/02d2d6caee3abc9335cfca35f8eb4492173ae6f2",
@@ -14,92 +14,149 @@
     "https://git.kernel.org/stable/c/2e2f925fe737576df2373931c95e1a2b66efdfef"
   ],
   "aliases": [
+    "GHSA-3mg3-84hp-h85m",
     "CVE-2025-38048"
   ],
   "assigner": "Linux",
-  "epss": 0.07,
+  "epss": 0.15,
   "enisaIdProduct": [
     {
       "id": "0a4476f7-d9aa-3a9c-a307-7db17752a62d",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.15"
     },
     {
-      "id": "21d58200-23ba-3701-9bcc-9119cfc93a95",
+      "id": "530db019-58d6-3167-a91b-504c5b57cff9",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b6d6419548286b2b9d2b90df824d3cab797f6ae8"
+      "product_version": "8d622d21d24803408b256d96463eac4574dcf067 <b49b5132e4c7307599492aee1cdc6d89f7f2a7da"
     },
     {
-      "id": "42ba37ac-c15a-329c-bc54-456ba2499e05",
+      "id": "5f364961-0713-36f3-8843-58d70ff1f88a",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2e2f925fe737576df2373931c95e1a2b66efdfef"
+      "product_version": "8d622d21d24803408b256d96463eac4574dcf067 <4ed8f0e808b3fcc71c5b8be7902d8738ed595b17"
     },
     {
-      "id": "510a99c4-8c6e-31f3-8e46-bbcee5e7d6e9",
+      "id": "735a0fdf-488b-3b8c-8644-538e04068bbf",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b49b5132e4c7307599492aee1cdc6d89f7f2a7da"
-    },
-    {
-      "id": "5c2ada43-e934-380e-a3aa-8ea462c63dfb",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <02d2d6caee3abc9335cfca35f8eb4492173ae6f2"
-    },
-    {
-      "id": "5fab14f4-f153-36e5-b834-9608dd8a322d",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4ed8f0e808b3fcc71c5b8be7902d8738ed595b17"
+      "product_version": "8d622d21d24803408b256d96463eac4574dcf067 <02d2d6caee3abc9335cfca35f8eb4492173ae6f2"
     },
     {
       "id": "83f28bae-e198-3bb3-bb91-dd8948aa1696",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.1.141"
     },
     {
-      "id": "85b12326-09a8-364f-876e-6b2983bb8fcc",
+      "id": "88e29506-d39b-3892-a762-6381b85e6fbb",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b730cb109633c455ce8a7cd6934986c6a16d88d8"
+      "product_version": "8d622d21d24803408b256d96463eac4574dcf067 <b730cb109633c455ce8a7cd6934986c6a16d88d8"
     },
     {
       "id": "8bb6bebc-943b-3776-99ec-34567bfb8d81",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.14.9"
     },
     {
+      "id": "9acefb63-07a9-32d2-aa87-e358c3b026f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
       "id": "9c3ed42a-1ef0-3f51-a154-53ec9f889595",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.15.185"
     },
     {
       "id": "a989f8de-b1c9-378d-a6df-de9ff6d6a75b",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.6.93"
     },
     {
+      "id": "c34158d3-c49a-36b0-825e-122a9e505847",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8d622d21d24803408b256d96463eac4574dcf067 <2e2f925fe737576df2373931c95e1a2b66efdfef"
+    },
+    {
+      "id": "f31f4e92-45f2-3f31-abe0-85c4d12e0414",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8d622d21d24803408b256d96463eac4574dcf067 <b6d6419548286b2b9d2b90df824d3cab797f6ae8"
+    },
+    {
+      "id": "fa28d38d-ecbd-3a56-ae3f-67d7f74e907a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.14"
+    },
+    {
       "id": "fc6317e7-560e-3e01-b9ba-ef30949bbdf7",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.12.31"
     }

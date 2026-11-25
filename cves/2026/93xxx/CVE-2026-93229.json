@@ -3,8 +3,10 @@
   "enisaUuid": "4f1ace04-df25-3b37-9ad8-ab97fde4fba3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfsd: add missing read barrier to rpc_status_get dumpit seqcount retry\n\nThe hand-rolled seqcount-like protocol in nfsd_nl_rpc_status_get_dumpit()\nis missing a read memory barrier (smp_rmb) before its second counter\ncheck.  The standard kernel read_seqcount_retry() includes smp_rmb()\nto ensure that all data reads complete before the counter is re-checked.\n\nWithout this barrier, on weakly-ordered architectures (ARM, POWER),\nthe CPU may reorder field reads past the second counter check, making\nthe retry logic ineffective: it could observe a consistent counter pair\nwhile reading fields that have been concurrently modified by the writer.\n\nAdd smp_rmb() before the second counter check to order the field reads\nahead of it, matching the barrier semantics of the standard seqcount\nread-side.  The begin-side smp_load_acquire() already pairs with the\nsmp_store_release() in nfsd_dispatch(); with the smp_rmb() now ordering\nthe field reads, the retry check no longer needs acquire semantics and\nreads the counter with a plain READ_ONCE(), as read_seqcount_retry()\ndoes.\n\n[ cel: Use READ_ONCE instead of smp_load_acquire() ]",
   "datePublished": "Sep 24, 2026, 3:29:14 PM",
-  "dateUpdated": "Sep 24, 2026, 3:29:14 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:07:41 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/f501f2f4ec1d2dfe39e21c98630314074a9b30b0",
     "https://git.kernel.org/stable/c/1aea0482b98ecd7d0249204665f2ad4ad517f66b",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/a71f161a857117e8e0264deb7d14fff5c98adcf5"
   ],
   "aliases": [
-    "CVE-2026-93229"
+    "CVE-2026-93229",
+    "GHSA-fg62-2q3c-3w5h"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "04d9f8a2-3bc6-3b52-a9ef-49134e3633d8",
@@ -68,16 +71,6 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "8bf7b69e-078b-32eb-b9bb-c730254d2e5f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "8c675960-7cdc-3456-83ed-baa6f0ee6c44",
       "product": {
         "name": "Linux",
@@ -86,6 +79,16 @@
         }
       },
       "product_version": "6.7"
+    },
+    {
+      "id": "b9904b62-bf2e-33f3-ac56-dada17617ee5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "c0c263ac-c79e-3a1f-9632-21b62fd1f964",

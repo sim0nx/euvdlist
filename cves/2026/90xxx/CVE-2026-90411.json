@@ -3,7 +3,7 @@
   "enisaUuid": "c3efca1a-2675-3bb9-b90e-0ffd0d7eabfc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnvme-fc: unmap cmd_iu DMA on rsp_iu mapping failure in init_request\n\n__nvme_fc_init_request() maps cmd_iu and then rsp_iu for DMA. If the\nrsp_iu mapping fails, the original code only recorded the error and fell\nthrough: it left the already-mapped cmd_iu unmapped and still marked the\nop as FCPOP_STATE_IDLE before returning. Since blk-mq does not call\n.exit_request() when .init_request() fails, the cmd_iu mapping is leaked\nfor every op whose rsp_iu mapping fails.\n\nJump to an error path on rsp_iu mapping failure that unmaps cmd_iu and\nreturns the error without marking the op idle, so it stays in the\nFCPOP_STATE_UNINIT state set by the initial memset().",
   "datePublished": "Sep 17, 2026, 4:09:38 PM",
-  "dateUpdated": "Sep 17, 2026, 4:09:38 PM",
+  "dateUpdated": "Oct 19, 2026, 9:03:15 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/c0892cfb60a75e2c86ba8e2127b133f6549c12b3",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/f49d0c3a8d56a7cda1628ae17341a4a42063563c"
   ],
   "aliases": [
+    "GHSA-cp4g-4cx8-r2fq",
     "CVE-2026-90411"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0d22a9c3-d2ef-3136-b74a-e10276791346",
@@ -50,16 +51,6 @@
         }
       },
       "product_version": "patch: 6.12.110"
-    },
-    {
-      "id": "34b85ca4-e6a0-37ed-8ab0-8d72842b9520",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "35b8bf17-4fe4-3ab4-b396-5d128cc06f94",
@@ -190,6 +181,16 @@
         }
       },
       "product_version": "patch: 6.18.52"
+    },
+    {
+      "id": "f3a37be2-2ca9-3784-96f3-86aeab891e2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "f5709802-8315-3a20-9144-7a9f21daf930",

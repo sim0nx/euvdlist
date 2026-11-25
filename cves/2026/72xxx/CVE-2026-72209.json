@@ -2,21 +2,32 @@
   "id": "EUVD-2026-58967",
   "enisaUuid": "2de3006b-adc2-3a2c-84e6-a6aa0801bb7a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nntfs: validate attribute values on lookup\n\nntfs_attr_find() and ntfs_external_attr_find() check that generic\nresident attribute values fit in their attribute records and that\nfixed-size resident values are large enough. For variable-length resident\nformats, however, the fixed part is not enough: embedded length fields\ncan still point callers past the resident value.\n\nA crafted image can set a small resident $FILE_NAME value_length while\nleaving file_name_length large. Callers then trust file_name_length and\nread past the resident value when converting or comparing the name. This\nwas reproduced with a crafted image under KASAN as a slab-out-of-bounds\nread from the kmalloc-1k MFT record copy. The stack included\nntfs_lookup(), ntfs_iget(), ntfs_read_locked_inode(), ntfs_attr_name_get(),\nntfs_ucstonls(), and utf16s_to_utf8s().\n\nAdd a shared attribute value validator and use it before a lookup path\ncan return an attribute, including the AT_UNUSED enumeration case where\ncallers inspect returned attributes directly. The helper validates\nresident value bounds, minimum resident value sizes, variable-length\n$FILE_NAME fields, and non-resident mapping-pairs metadata that was\npreviously checked separately in both lookup paths.\n\nThis also preserves the intended resident @val matching semantics in the\nexternal attribute lookup path. The old duplicated validation block\noverwrote the actual resident value length with the type-specific minimum\nlength before comparing @val, so variable-length resident values could\nfail to match even when the bytes were identical. Keep the comparison on\nthe actual value length, and make ntfs_attrlist_entry_add() compare\nresident attributes with lowest_vcn zero instead of reading the\nnon-resident union member after a successful resident match.\n\nReject non-resident $FILE_NAME records too: the format requires\n$FILE_NAME to be resident and callers treat returned records as resident.",
-  "datePublished": "Aug 15, 2026, 6:32:16 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:16 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:54:04 AM",
+  "dateUpdated": "Aug 17, 2026, 5:41:36 AM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/e4c36dfac57a7261e9aeb0f3a7f30944a8aefb56",
-    "https://git.kernel.org/stable/c/d5803e3345dae9c6470bb61869885236276b9a35",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72209"
+    "https://git.kernel.org/stable/c/d5803e3345dae9c6470bb61869885236276b9a35"
   ],
   "aliases": [
     "CVE-2026-72209",
     "GHSA-mc37-vg5j-fcfg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.55,
   "enisaIdProduct": [
+    {
+      "id": "5afea29e-6720-3be1-a92a-caf57c54afe8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "6777afc0-dc7e-3984-8697-08d7c444afa3",
       "product": {
@@ -56,16 +67,6 @@
         }
       },
       "product_version": "6ceb4cc81ef3409ff79dcb959771f9110787397a <e4c36dfac57a7261e9aeb0f3a7f30944a8aefb56"
-    },
-    {
-      "id": "dbd38a32-86f2-3a80-a21a-b723d3022974",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "f64f21d5-add0-3946-9559-cdcc9c88c8ef",

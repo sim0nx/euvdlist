@@ -1,0 +1,153 @@
+{
+  "id": "EUVD-2024-23999",
+  "enisaUuid": "175d4dc9-b823-318b-b799-086b408c9fea",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix racing between bpf_timer_cancel_and_free and bpf_timer_cancel\n\nThe following race is possible between bpf_timer_cancel_and_free\nand bpf_timer_cancel. It will lead a UAF on the timer->timer.\n\nbpf_timer_cancel();\n\tspin_lock();\n\tt = timer->time;\n\tspin_unlock();\n\n\t\t\t\t\tbpf_timer_cancel_and_free();\n\t\t\t\t\t\tspin_lock();\n\t\t\t\t\t\tt = timer->timer;\n\t\t\t\t\t\ttimer->timer = NULL;\n\t\t\t\t\t\tspin_unlock();\n\t\t\t\t\t\thrtimer_cancel(&t->timer);\n\t\t\t\t\t\tkfree(t);\n\n\t/* UAF on t */\n\thrtimer_cancel(&t->timer);\n\nIn bpf_timer_cancel_and_free, this patch frees the timer->timer\nafter a rcu grace period. This requires a rcu_head addition\nto the \"struct bpf_hrtimer\". Another kfree(t) happens in bpf_timer_init,\nthis does not need a kfree_rcu because it is still under the\nspin_lock and timer->timer has not been visible by others yet.\n\nIn bpf_timer_cancel, rcu_read_lock() is added because this helper\ncan be used in a non rcu critical section context (e.g. from\na sleepable bpf prog). Other timer->timer usages in helpers.c\nhave been audited, bpf_timer_cancel() is the only place where\ntimer->timer is used outside of the spin_lock.\n\nAnother solution considered is to mark a t->flag in bpf_timer_cancel\nand clear it after hrtimer_cancel() is done.  In bpf_timer_cancel_and_free,\nit busy waits for the flag to be cleared before kfree(t). This patch\ngoes with a straight forward solution and frees timer->timer after\na rcu grace period.",
+  "datePublished": "Apr 3, 2024, 5:00:23 PM",
+  "dateUpdated": "Aug 5, 2026, 11:26:56 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/5268bb02107b9eedfdcd51db75b407d10043368c",
+    "https://git.kernel.org/stable/c/addf5e297e6cbf5341f9c07720693ca9ba0057b5",
+    "https://git.kernel.org/stable/c/8327ed12e8ebc5436bfaa1786c49988894f9c8a6",
+    "https://git.kernel.org/stable/c/7d80a9e745fa5b47da3bca001f186c02485c7c33",
+    "https://git.kernel.org/stable/c/0281b919e175bb9c3128bd3872ac2903e9436e3f"
+  ],
+  "aliases": [
+    "GHSA-8x8h-8p2w-8g4f",
+    "CVE-2024-26737"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "0c800b9c-9fba-3aca-9d76-cd02ff8d029a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b00628b1c7d595ae5b544e059c27b1f5828314b4 <7d80a9e745fa5b47da3bca001f186c02485c7c33"
+    },
+    {
+      "id": "2c32c719-f718-3540-bba3-85e41ec210bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.150"
+    },
+    {
+      "id": "44beb837-4207-34e6-879d-0e704f98892b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "64616e42-e9de-313b-a811-9694b53f7583",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.19"
+    },
+    {
+      "id": "6ed3c8c2-41fa-3eb8-b6f8-e39dee504391",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b00628b1c7d595ae5b544e059c27b1f5828314b4 <addf5e297e6cbf5341f9c07720693ca9ba0057b5"
+    },
+    {
+      "id": "70b29eae-45d4-32ec-b084-95129fa570a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.80"
+    },
+    {
+      "id": "71d84612-9ddb-398c-a355-ce762d0eb4a8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b00628b1c7d595ae5b544e059c27b1f5828314b4 <8327ed12e8ebc5436bfaa1786c49988894f9c8a6"
+    },
+    {
+      "id": "8a399bae-e2a0-31e9-ac58-bd25ff97e47d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15"
+    },
+    {
+      "id": "a3849379-fc1b-3da3-b484-55b27d35d12d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.7"
+    },
+    {
+      "id": "bd5254e6-88bf-3e10-bbaf-59d5811ae6a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "d3950b77-17f2-3932-a302-7c6eee7fd7f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b00628b1c7d595ae5b544e059c27b1f5828314b4 <0281b919e175bb9c3128bd3872ac2903e9436e3f"
+    },
+    {
+      "id": "de50bbaa-b45d-3f2b-8b14-f0e6eeeeaf13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b00628b1c7d595ae5b544e059c27b1f5828314b4 <5268bb02107b9eedfdcd51db75b407d10043368c"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "60650dbb-95ee-36e4-9e82-b9bae67d6733",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

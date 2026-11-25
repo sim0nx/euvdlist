@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2022-53788",
+  "enisaUuid": "66613138-8b89-393c-8b56-d8a6062d0b20",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/smc: fix connection leak\n\nThere's a potential leak issue under following execution sequence :\n\nsmc_release  \t\t\t\tsmc_connect_work\nif (sk->sk_state == SMC_INIT)\n\t\t\t\t\tsend_clc_confirim\n\ttcp_abort();\n\t\t\t\t\t...\n\t\t\t\t\tsk.sk_state = SMC_ACTIVE\nsmc_close_active\nswitch(sk->sk_state) {\n...\ncase SMC_ACTIVE:\n\tsmc_close_final()\n\t// then wait peer closed\n\nUnfortunately, tcp_abort() may discard CLC CONFIRM messages that are\nstill in the tcp send buffer, in which case our connection token cannot\nbe delivered to the server side, which means that we cannot get a\npassive close message at all. Therefore, it is impossible for the to be\ndisconnected at all.\n\nThis patch tries a very simple way to avoid this issue, once the state\nhas changed to SMC_ACTIVE after tcp_abort(), we can actively abort the\nsmc connection, considering that the state is SMC_INIT before\ntcp_abort(), abandoning the complete disconnection process should not\ncause too much problem.\n\nIn fact, this problem may exist as long as the CLC CONFIRM message is\nnot received by the server. Whether a timer should be added after\nsmc_close_final() needs to be discussed in the future. But even so, this\npatch provides a faster release for connection in above case, it should\nalso be valuable.",
+  "datePublished": "Aug 22, 2024, 1:30:51 AM",
+  "dateUpdated": "May 11, 2026, 6:49:30 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/2e8d465b83db307f04ad265848f8ab3f78f6918f",
+    "https://git.kernel.org/stable/c/80895b6f9154fb22d36fab311ccbb75503a2c87b",
+    "https://git.kernel.org/stable/c/e98d46ccfa84b35a9e4b1ccdd83961b41a5d7ce5",
+    "https://git.kernel.org/stable/c/9f1c50cf39167ff71dc5953a3234f3f6eeb8fcb5"
+  ],
+  "aliases": [
+    "GHSA-q2w7-x8j6-5gxc",
+    "CVE-2022-48909"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "4c8faef3-0e9c-3e39-8ac3-9fe0259ac44f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "4e2ce3fd-08d0-3a8d-94bb-1a439e82d6a3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.104"
+    },
+    {
+      "id": "501d349f-8f56-3814-8f35-82f2d0c64a1e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39f41f367b08650e9aa314e3a13fb6dda1e9eec7 <9f1c50cf39167ff71dc5953a3234f3f6eeb8fcb5"
+    },
+    {
+      "id": "68e35bfb-be9c-3ef6-90f7-f7d46adddd65",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.17"
+    },
+    {
+      "id": "692b74b9-9c2a-309f-bba4-5590c111750a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39f41f367b08650e9aa314e3a13fb6dda1e9eec7 <e98d46ccfa84b35a9e4b1ccdd83961b41a5d7ce5"
+    },
+    {
+      "id": "6ed59ac2-db77-349d-9cdb-d8bdf7ec6e25",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16.13"
+    },
+    {
+      "id": "8e64f71f-9aa9-3f1c-9d0f-75e165b579e1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39f41f367b08650e9aa314e3a13fb6dda1e9eec7 <80895b6f9154fb22d36fab311ccbb75503a2c87b"
+    },
+    {
+      "id": "a13847a5-315c-3ff2-b7f5-93527d5a593a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.27"
+    },
+    {
+      "id": "b8c4da20-a2ce-3c83-a82d-fc4c0c5216aa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "39f41f367b08650e9aa314e3a13fb6dda1e9eec7 <2e8d465b83db307f04ad265848f8ab3f78f6918f"
+    },
+    {
+      "id": "d61a6ba7-e3dc-387f-b59f-7551f0cfc9fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "765c2805-f3a6-3d7a-838e-55d2777e6336",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

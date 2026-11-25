@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2024-44714",
+  "enisaUuid": "d422a5c4-022e-3236-97e0-664166f78552",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nlib: alloc_tag_module_unload must wait for pending kfree_rcu calls\n\nBen Greear reports following splat:\n ------------[ cut here ]------------\n net/netfilter/nf_nat_core.c:1114 module nf_nat func:nf_nat_register_fn has 256 allocated at module unload\n WARNING: CPU: 1 PID: 10421 at lib/alloc_tag.c:168 alloc_tag_module_unload+0x22b/0x3f0\n Modules linked in: nf_nat(-) btrfs ufs qnx4 hfsplus hfs minix vfat msdos fat\n...\n Hardware name: Default string Default string/SKYBAY, BIOS 5.12 08/04/2020\n RIP: 0010:alloc_tag_module_unload+0x22b/0x3f0\n  codetag_unload_module+0x19b/0x2a0\n  ? codetag_load_module+0x80/0x80\n\nnf_nat module exit calls kfree_rcu on those addresses, but the free\noperation is likely still pending by the time alloc_tag checks for leaks.\n\nWait for outstanding kfree_rcu operations to complete before checking\nresolves this warning.\n\nReproducer:\nunshare -n iptables-nft -t nat -A PREROUTING -p tcp\ngrep nf_nat /proc/allocinfo # will list 4 allocations\nrmmod nft_chain_nat\nrmmod nf_nat                # will WARN.\n\n[akpm@linux-foundation.org: add comment]",
+  "datePublished": "Nov 9, 2024, 10:14:24 AM",
+  "dateUpdated": "May 11, 2026, 8:47:35 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/24211fb49c9ac1b576470b7e393a5a0b50af2707",
+    "https://git.kernel.org/stable/c/dc783ba4b9df3fb3e76e968b2cbeb9960069263c"
+  ],
+  "aliases": [
+    "CVE-2024-50212",
+    "GHSA-ggv4-4qfx-2gh6"
+  ],
+  "assigner": "Linux",
+  "epss": 0.2,
+  "enisaIdProduct": [
+    {
+      "id": "2fd26080-b112-3aff-b6eb-ee5ce77070fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "64ecabd6-93d1-30ac-a6e4-88368823fcb7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a473573964e51dcb6efc182f773cd3924be4a184 <24211fb49c9ac1b576470b7e393a5a0b50af2707"
+    },
+    {
+      "id": "6b11dfc1-4914-3883-9dde-bbbb3a455453",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.7"
+    },
+    {
+      "id": "8f65c924-7ed4-338e-9f4a-85dd0790fb58",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a473573964e51dcb6efc182f773cd3924be4a184 <dc783ba4b9df3fb3e76e968b2cbeb9960069263c"
+    },
+    {
+      "id": "b7cc79ad-13c7-3977-8883-f5af342ea1e1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d7271ebc-7e69-35db-98fa-e022433bb53a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.10"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ec29375e-6891-3925-a93f-c1e352f47ff7",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

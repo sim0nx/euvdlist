@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2023-59561",
+  "enisaUuid": "a07d6d98-cd59-3393-a22b-b011056fc00d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nf2fs: fix to drop meta_inode's page cache in f2fs_put_super()\n\nsyzbot reports a kernel bug as below:\n\nF2FS-fs (loop1): detect filesystem reference count leak during umount, type: 10, count: 1\nkernel BUG at fs/f2fs/super.c:1639!\nCPU: 0 PID: 15451 Comm: syz-executor.1 Not tainted 6.5.0-syzkaller-09338-ge0152e7481c6 #0\nRIP: 0010:f2fs_put_super+0xce1/0xed0 fs/f2fs/super.c:1639\nCall Trace:\n generic_shutdown_super+0x161/0x3c0 fs/super.c:693\n kill_block_super+0x3b/0x70 fs/super.c:1646\n kill_f2fs_super+0x2b7/0x3d0 fs/f2fs/super.c:4879\n deactivate_locked_super+0x9a/0x170 fs/super.c:481\n deactivate_super+0xde/0x100 fs/super.c:514\n cleanup_mnt+0x222/0x3d0 fs/namespace.c:1254\n task_work_run+0x14d/0x240 kernel/task_work.c:179\n resume_user_mode_work include/linux/resume_user_mode.h:49 [inline]\n exit_to_user_mode_loop kernel/entry/common.c:171 [inline]\n exit_to_user_mode_prepare+0x210/0x240 kernel/entry/common.c:204\n __syscall_exit_to_user_mode_work kernel/entry/common.c:285 [inline]\n syscall_exit_to_user_mode+0x1d/0x60 kernel/entry/common.c:296\n do_syscall_64+0x44/0xb0 arch/x86/entry/common.c:86\n entry_SYSCALL_64_after_hwframe+0x63/0xcd\n\nIn f2fs_put_super(), it tries to do sanity check on dirty and IO\nreference count of f2fs, once there is any reference count leak,\nit will trigger panic.\n\nThe root case is, during f2fs_put_super(), if there is any IO error\nin f2fs_wait_on_all_pages(), we missed to truncate meta_inode's page\ncache later, result in panic, fix this case.",
+  "datePublished": "May 21, 2024, 3:31:45 PM",
+  "dateUpdated": "May 23, 2026, 3:27:17 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/eb42e1862aa7934c2c21890097ce4993c5e0d192",
+    "https://git.kernel.org/stable/c/10b2a6c0dade67b5a2b2d17fb75c457ea1985fad",
+    "https://git.kernel.org/stable/c/a4639380bbe66172df329f8b54aa7d2e943f0f64"
+  ],
+  "aliases": [
+    "GHSA-c228-4gh7-9r76",
+    "CVE-2023-52848"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "2fa990a1-a164-3072-a35f-fd6f4eea43dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7"
+    },
+    {
+      "id": "659c6fdb-d8d1-3df9-922c-75549089583a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.5.12"
+    },
+    {
+      "id": "82e8d652-6a0b-3d7b-8a78-81b601cfd370",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.5"
+    },
+    {
+      "id": "8e5a457f-84e1-3148-9b47-6a4a5db281cb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0e2577074b459bba7f4016f4d725ede37d48bb22"
+    },
+    {
+      "id": "9afc9ad1-5d1a-3432-b2b6-a981e4195a47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "20872584b8c0b006c007da9588a272c9e28d2e18 <eb42e1862aa7934c2c21890097ce4993c5e0d192"
+    },
+    {
+      "id": "9dc7f08b-3b43-396f-b413-b39986fd6d97",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a97cba88-9ac1-3e3a-9c07-ca442350d997",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.2"
+    },
+    {
+      "id": "ac701ce9-928b-31e1-a6c1-095e7ab1f9df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.4.16 <6.5"
+    },
+    {
+      "id": "c6faefee-0498-393e-9821-6f3bd33160ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "20872584b8c0b006c007da9588a272c9e28d2e18 <10b2a6c0dade67b5a2b2d17fb75c457ea1985fad"
+    },
+    {
+      "id": "ca1d5570-f481-3165-9e77-617fbfa271bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "20872584b8c0b006c007da9588a272c9e28d2e18 <a4639380bbe66172df329f8b54aa7d2e943f0f64"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ab5aceab-7bec-3a64-9515-cb85f54a8b65",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

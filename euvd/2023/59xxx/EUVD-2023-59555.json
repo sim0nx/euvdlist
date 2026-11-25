@@ -1,0 +1,99 @@
+{
+  "id": "EUVD-2023-59555",
+  "enisaUuid": "bef0b590-475e-3f31-b844-afbebd908596",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvirtio/vsock: Fix uninit-value in virtio_transport_recv_pkt()\n\nKMSAN reported the following uninit-value access issue:\n\n=====================================================\nBUG: KMSAN: uninit-value in virtio_transport_recv_pkt+0x1dfb/0x26a0 net/vmw_vsock/virtio_transport_common.c:1421\n virtio_transport_recv_pkt+0x1dfb/0x26a0 net/vmw_vsock/virtio_transport_common.c:1421\n vsock_loopback_work+0x3bb/0x5a0 net/vmw_vsock/vsock_loopback.c:120\n process_one_work kernel/workqueue.c:2630 [inline]\n process_scheduled_works+0xff6/0x1e60 kernel/workqueue.c:2703\n worker_thread+0xeca/0x14d0 kernel/workqueue.c:2784\n kthread+0x3cc/0x520 kernel/kthread.c:388\n ret_from_fork+0x66/0x80 arch/x86/kernel/process.c:147\n ret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:304\n\nUninit was stored to memory at:\n virtio_transport_space_update net/vmw_vsock/virtio_transport_common.c:1274 [inline]\n virtio_transport_recv_pkt+0x1ee8/0x26a0 net/vmw_vsock/virtio_transport_common.c:1415\n vsock_loopback_work+0x3bb/0x5a0 net/vmw_vsock/vsock_loopback.c:120\n process_one_work kernel/workqueue.c:2630 [inline]\n process_scheduled_works+0xff6/0x1e60 kernel/workqueue.c:2703\n worker_thread+0xeca/0x14d0 kernel/workqueue.c:2784\n kthread+0x3cc/0x520 kernel/kthread.c:388\n ret_from_fork+0x66/0x80 arch/x86/kernel/process.c:147\n ret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:304\n\nUninit was created at:\n slab_post_alloc_hook+0x105/0xad0 mm/slab.h:767\n slab_alloc_node mm/slub.c:3478 [inline]\n kmem_cache_alloc_node+0x5a2/0xaf0 mm/slub.c:3523\n kmalloc_reserve+0x13c/0x4a0 net/core/skbuff.c:559\n __alloc_skb+0x2fd/0x770 net/core/skbuff.c:650\n alloc_skb include/linux/skbuff.h:1286 [inline]\n virtio_vsock_alloc_skb include/linux/virtio_vsock.h:66 [inline]\n virtio_transport_alloc_skb+0x90/0x11e0 net/vmw_vsock/virtio_transport_common.c:58\n virtio_transport_reset_no_sock net/vmw_vsock/virtio_transport_common.c:957 [inline]\n virtio_transport_recv_pkt+0x1279/0x26a0 net/vmw_vsock/virtio_transport_common.c:1387\n vsock_loopback_work+0x3bb/0x5a0 net/vmw_vsock/vsock_loopback.c:120\n process_one_work kernel/workqueue.c:2630 [inline]\n process_scheduled_works+0xff6/0x1e60 kernel/workqueue.c:2703\n worker_thread+0xeca/0x14d0 kernel/workqueue.c:2784\n kthread+0x3cc/0x520 kernel/kthread.c:388\n ret_from_fork+0x66/0x80 arch/x86/kernel/process.c:147\n ret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:304\n\nCPU: 1 PID: 10664 Comm: kworker/1:5 Not tainted 6.6.0-rc3-00146-g9f3ebbef746f #3\nHardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.16.2-1.fc38 04/01/2014\nWorkqueue: vsock-loopback vsock_loopback_work\n=====================================================\n\nThe following simple reproducer can cause the issue described above:\n\nint main(void)\n{\n  int sock;\n  struct sockaddr_vm addr = {\n    .svm_family = AF_VSOCK,\n    .svm_cid = VMADDR_CID_ANY,\n    .svm_port = 1234,\n  };\n\n  sock = socket(AF_VSOCK, SOCK_STREAM, 0);\n  connect(sock, (struct sockaddr *)&addr, sizeof(addr));\n  return 0;\n}\n\nThis issue occurs because the `buf_alloc` and `fwd_cnt` fields of the\n`struct virtio_vsock_hdr` are not initialized when a new skb is allocated\nin `virtio_transport_init_hdr()`. This patch resolves the issue by\ninitializing these fields during allocation.",
+  "datePublished": "May 21, 2024, 3:31:41 PM",
+  "dateUpdated": "May 11, 2026, 7:34:04 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/cd12535b97dd7d18cf655ec78ce1cf1f29a576be",
+    "https://git.kernel.org/stable/c/0b8906fb48b99e993d6e8a12539f618f4854dd26",
+    "https://git.kernel.org/stable/c/34c4effacfc329aeca5635a69fd9e0f6c90b4101"
+  ],
+  "aliases": [
+    "CVE-2023-52842",
+    "GHSA-gw29-2hc7-pv7h"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "41d6f77d-e64e-359e-88a4-2dc4f5922a81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.2"
+    },
+    {
+      "id": "55f81fda-3f2f-327d-863d-2632303dfdfb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "71dc9ec9ac7d3eee785cdc986c3daeb821381e20 <0b8906fb48b99e993d6e8a12539f618f4854dd26"
+    },
+    {
+      "id": "6057cb35-acf2-3e41-af7d-de27ffb28c11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "71dc9ec9ac7d3eee785cdc986c3daeb821381e20 <34c4effacfc329aeca5635a69fd9e0f6c90b4101"
+    },
+    {
+      "id": "7e8e5565-f259-339c-82e5-8f23c342aa71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "82121146-d6d5-39e2-b838-e27faf18e896",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7"
+    },
+    {
+      "id": "88e2bcf7-7c19-30ae-a3f6-cd1bb1a5ae38",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "baddcc2c71572968cdaeee1c4ab3dc0ad90fa765 <cd12535b97dd7d18cf655ec78ce1cf1f29a576be"
+    },
+    {
+      "id": "c87e7287-61e3-3051-bf3a-83ddf822146d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "1636e0a9-e74a-3342-869f-c7a8674228df",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

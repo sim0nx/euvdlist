@@ -3,7 +3,7 @@
   "enisaUuid": "ba6e67cc-5811-3ef6-948c-67ea1956f35e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfirmware_loader: fix device reference leak in firmware_upload_register()\n\nfirmware_upload_register()\n  -> fw_create_instance()\n     -> device_initialize()\n\nAfter fw_create_instance() succeeds, the lifetime of the embedded struct\ndevice is expected to be managed through the device core reference\ncounting, since fw_create_instance() has already called\ndevice_initialize().\n\nIn firmware_upload_register(), if alloc_lookup_fw_priv() fails after\nfw_create_instance() succeeds, the code reaches free_fw_sysfs and frees\nfw_sysfs directly instead of releasing the device reference with\nput_device(). This may leave the reference count of the embedded struct\ndevice unbalanced, resulting in a refcount leak.\n\nThe issue was identified by a static analysis tool I developed and\nconfirmed by manual review. Fix this by using put_device(fw_dev) in the\nfailure path and letting fw_dev_release() handle the final cleanup,\ninstead of freeing the instance directly from the error path.",
   "datePublished": "Jul 25, 2026, 8:50:27 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:27 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:50 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/517676ec7dfca064e08f94007a4abd21969de0a0",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/896df22ee57648b0c505bd76ddbc6b2341834696"
   ],
   "aliases": [
+    "GHSA-vfm9-vf3r-mgwg",
     "CVE-2026-64376"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "12a015de-487a-3f1d-8b0f-b94be62af1f8",
@@ -90,16 +91,6 @@
       "product_version": "97730bbb242cde22b7140acd202ffd88823886c9 <46d403da376a8b7c1187193294953816e1a8d7fe"
     },
     {
-      "id": "90349ebe-8e3b-330b-b499-10532a22aec6",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
-    {
       "id": "98f245ab-3ef3-3286-b4fe-9fd95c906f30",
       "product": {
         "name": "Linux",
@@ -148,6 +139,16 @@
         }
       },
       "product_version": "patch: 6.12.96"
+    },
+    {
+      "id": "ec5e1639-e759-3337-a0ee-793d3637d526",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "f25cc49d-f1ed-371b-a3fb-08017868ccd5",

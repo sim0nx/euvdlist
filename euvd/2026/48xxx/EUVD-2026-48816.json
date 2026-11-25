@@ -3,7 +3,7 @@
   "enisaUuid": "195270bc-740d-3784-824f-ffd048074297",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvfio/mlx5: Fix racy bitfields and tighten struct layout\n\nBitfield operations are not atomic, they use a read-modify-write\npattern, therefore we should be careful not to pack bitfields that\ncan be concurrently updated into the same storage unit.\n\nThis split takes a binary approach: flags that are only modified\npre/post open/close remain bitfields, flags modified from user\naction, including actions that reach across to another device (ex.\nreset) use dedicated storage units.\n\nNote mlx5_vhca_page_tracker.status is relocated to fill the alignment\nhole this split exposes.\n\nBitfield justifications:\n\n  migrate_cap: written only in mlx5vf_cmd_set_migratable() at probe\n  chunk_mode: written only in mlx5vf_cmd_set_migratable() at probe\n  mig_state_cap: written only in mlx5vf_cmd_set_migratable() at probe\n\nDedicated storage units:\n\n  mdev_detach: written in the VF attach/detach event notifier\n               mlx5fv_vf_event() at runtime\n  log_active: written in mlx5vf_start_page_tracker()/\n              mlx5vf_stop_page_tracker() during runtime dirty tracking\n  deferred_reset: written in mlx5vf_state_mutex_unlock()/\n                  mlx5vf_pci_aer_reset_done() during runtime reset handling\n  is_err: set by tracker error handling and dirty-log polling at runtime\n  object_changed: set by tracker event handling and cleared by dirty-log\n                  polling at runtime",
   "datePublished": "Jul 25, 2026, 8:51:35 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:35 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:53 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1dd99b8f4e143592e12e5a77e7b538bc698116cb",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/f2365a63b02ddea32e7db78b742c2503ec7b81f1"
   ],
   "aliases": [
+    "GHSA-3wrg-mvh6-9v25",
     "CVE-2026-64472"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "2351025a-ba65-3fb1-9266-143558d5b10f",
@@ -60,6 +61,16 @@
       "product_version": "patch: 6.18.40"
     },
     {
+      "id": "490feaf4-7034-3d50-a804-ae8c477ab94d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "5aae2424-5a2e-3588-8fd7-94708c082514",
       "product": {
         "name": "Linux",
@@ -68,16 +79,6 @@
         }
       },
       "product_version": "patch: 6.12.97"
-    },
-    {
-      "id": "78af8a81-21b1-3fb0-99bc-a2364bbe90c3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc2"
     },
     {
       "id": "84abbfdc-0e98-345a-98aa-f3988e151aaa",

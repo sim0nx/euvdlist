@@ -3,7 +3,7 @@
   "enisaUuid": "d209951f-6fbf-3ac5-b909-598ed9430bc5",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: wwan: mhi_wwan_mbim: check skb_copy_bits() return value\n\nmhi_mbim_rx() ignores the return value of skb_copy_bits() when it\ncopies each datagram out of the NTB.  The datagram offset and length\ncome from the DPE, which is only checked to lie within the NTB\nitself, so a modem can point a datagram outside the received skb.\nThe copy then fails and the freshly allocated skbn is passed to\nnetif_rx() with its uninitialized contents still in place, leaking\nkernel heap memory into the network stack.\n\nFree the skb and account an error when the copy fails.\n\n\nVerified in a QEMU guest with a fault injector pointing a DPE\noutside the received NTB: the copy fails, and the unpatched driver\nhands the uninitialized skbn to the network stack (observed as\n\"unknown protocol\" on bytes that were never written).  With this\ncheck the failed datagram is dropped and counted as an rx error.\n\nChanges in v2: factor the free-and-count sequence out into\nmhi_mbim_rx_drop(), shared with the unknown-protocol path, as\nsuggested by Loic Poulain.",
   "datePublished": "Oct 6, 2026, 8:45:08 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:08 AM",
+  "dateUpdated": "Oct 19, 2026, 9:16:08 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/650af68435eaee783824457d2ef78cc5c03c1e88",
@@ -15,11 +15,22 @@
     "https://git.kernel.org/stable/c/31550d585589fde1ae95bf7f7a8188b2d2fdf1c7"
   ],
   "aliases": [
+    "GHSA-f277-f268-9h2q",
     "CVE-2026-98236"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "0c19a9f4-af93-3c6a-985d-35cc7a443e84",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "0e9a17a2-a9e3-3663-9776-e72f78217dc4",
       "product": {
@@ -29,16 +40,6 @@
         }
       },
       "product_version": "aa730a9905b7b079ef2fffdab7f15dbb842f5c7c <31550d585589fde1ae95bf7f7a8188b2d2fdf1c7"
-    },
-    {
-      "id": "0fc2c989-634d-30e0-ae73-527e59a584c1",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "210830a7-662b-39c3-b57d-c5d7bdddc73d",

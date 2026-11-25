@@ -3,7 +3,7 @@
   "enisaUuid": "d0369d74-931d-3aee-b37d-29d0589f7c27",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Require MEM_PERCPU for percpu kptr stores\n\nmap_kptr_match_type() treats perm_flags as the set of register type flags\nthat a kptr field permits. Adding MEM_PERCPU to that set for\nBPF_KPTR_PERCPU does not require the source register to carry it, however.\nThe subset test consequently accepts both a plain bpf_obj_new() allocation\nand a referenced kernel pointer into a __percpu_kptr map field.\n\nLoads from the field are always marked MEM_PERCPU. Consumers then treat the\nstored value as the cookie returned by bpf_percpu_obj_new(): per-CPU pointer\nhelpers relocate it, and map teardown selects the per-CPU free path. A plain\nallocation can therefore provide an arbitrary kernel read/write, while a\nkernel pointer can be relocated into an invalid address or sent through a\nmissing destructor.\n\nRequire the source MEM_PERCPU flag to match the destination field kind.\nThis preserves valid bpf_percpu_obj_new() stores and rejects both the\nprogram-BTF and kernel-BTF variants.",
   "datePublished": "Sep 25, 2026, 10:23:52 AM",
-  "dateUpdated": "Sep 25, 2026, 10:23:52 AM",
+  "dateUpdated": "Oct 19, 2026, 9:12:44 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/aaa9cf7707d1c5c0d2ca9d40c8b71652ac1c3c3f",
@@ -12,11 +12,22 @@
     "https://git.kernel.org/stable/c/048029ba1c793f8cabc4ad5eea765da01903f8f1"
   ],
   "aliases": [
-    "CVE-2026-98039"
+    "CVE-2026-98039",
+    "GHSA-hqcj-5pcp-63q5"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "072a297d-caea-3069-b91f-7430ac187a49",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "4b02f259-9dcd-3e4f-9402-0570091e04da",
       "product": {
@@ -106,16 +117,6 @@
         }
       },
       "product_version": "patch: 6.18.53"
-    },
-    {
-      "id": "e61127dc-ca9e-3c07-a3a1-a9deedfdb76f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc2"
     }
   ],
   "enisaIdVendor": [

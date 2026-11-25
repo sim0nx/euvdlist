@@ -3,18 +3,24 @@
   "enisaUuid": "0c0934de-1d14-3965-b79b-b99d49af179a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnamespace: never expire a locked mount\n\nLocked mounts are special. They protect the underlying files and\ndirectories from being revealed. do_umount() refuses to unmount locked\nmounts but shrink_submounts() doesn't.\n\nA shrinkable mount can become locked once the owner of a user namespace\nputs it beneath a locked mount with MOVE_MOUNT_BENEATH. The locked\nproperty now moves to the mount at the bottom making it possible to\nunmount the top mount.\n\nSo umount() of an unlocked ancestor now expires the bottom mount first\nand the covered directory is revealed:\n\n  move_mount(c -> x/hidden, MOVE_MOUNT_BENEATH) = 0\n  the cover after the lock moved:  umount2(x/hidden) = 0\n  the holder of the lock:          umount2(x/hidden) = EINVAL\n  the root of the copy, busy:      umount2(x) = EBUSY\n  reads x/hidden/secret: \"covered-by-root\"\n\nSo leave a locked mount alone as it dies together with its parent. A\nplain umount() of an unlocked mount with a locked one below it is EBUSY\nfrom now on. It's the same for any other locked child. A lazy umount\nstill takes the whole tree.\n\nmark_mounts_for_expiry() never sees a locked mount. lock_mnt_tree()\nleaves a mount on an expiry list alone and nothing else puts a locked\none on such a list. Add an assert for this.",
   "datePublished": "Oct 23, 2026, 12:19:51 PM",
-  "dateUpdated": "Oct 23, 2026, 12:19:51 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:00:26 AM",
+  "baseScore": 8.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:N",
   "references": [
+    "https://git.kernel.org/stable/c/435ac7f12209979ae3d080c2a8a74d42ea120a0a",
+    "https://git.kernel.org/stable/c/b3af17785bec47a65c820c9e75c5bd0a81b94c80",
+    "https://git.kernel.org/stable/c/6c8013ea84fcc51cf26aa870b61b5388c7196ed5",
     "https://git.kernel.org/stable/c/6b8dc3713a76346d212abab46cbfc8d7070f534c",
     "https://git.kernel.org/stable/c/d23265a12e4991ce7aedce670c0b6b598cadb644",
     "https://git.kernel.org/stable/c/f78ddcc872248c7aa1d7e904928441a0be4c6d5d"
   ],
   "aliases": [
+    "GHSA-73pw-3qvg-vxhf",
     "CVE-2026-98978"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "32f358ed-57c0-35a1-a378-0951bc122b0e",
@@ -37,6 +43,16 @@
       "product_version": "patch: 7.2.11"
     },
     {
+      "id": "438aadf5-5d90-3702-aaa4-07c1cb74122e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ff9d8a65ce80efb509ce4e8051394e9ed2cd942 <b3af17785bec47a65c820c9e75c5bd0a81b94c80"
+    },
+    {
       "id": "464816ac-660a-3cb8-9173-16351ef5b62b",
       "product": {
         "name": "Linux",
@@ -55,6 +71,56 @@
         }
       },
       "product_version": "5ff9d8a65ce80efb509ce4e8051394e9ed2cd942 <d23265a12e4991ce7aedce670c0b6b598cadb644"
+    },
+    {
+      "id": "7ecf883e-99f2-3840-a1b9-7ff36b495b96",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "92bb953b-974f-38ac-b27d-c5fc531c2b38",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ff9d8a65ce80efb509ce4e8051394e9ed2cd942 <435ac7f12209979ae3d080c2a8a74d42ea120a0a"
+    },
+    {
+      "id": "9c2fe867-4221-3339-b766-9f8565462613",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "ac3d85f0-98bd-3d2f-9035-2f36e03877b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ff9d8a65ce80efb509ce4e8051394e9ed2cd942 <6c8013ea84fcc51cf26aa870b61b5388c7196ed5"
+    },
+    {
+      "id": "c00e5ae3-6e90-3da6-b020-75d569caa203",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     },
     {
       "id": "d6677621-e20c-3543-866a-d2bfe96d2e02",

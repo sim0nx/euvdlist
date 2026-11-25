@@ -3,9 +3,12 @@
   "enisaUuid": "77bf129f-91bf-37e5-a319-d695d21e3e54",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: RFCOMM: free the skb when the DLC has no owner\n\nrfcomm_recv_data() hands the skb to d->data_ready() and returns 0\nwithout freeing it, so the callback owns the skb from that point on.\nThe tty implementation frees it when the DLC has been detached from its\ndevice:\n\n  static void rfcomm_dev_data_ready(struct rfcomm_dlc *dlc,\n                                    struct sk_buff *skb)\n  {\n          struct rfcomm_dev *dev = dlc->owner;\n\n          if (!dev) {\n                  kfree_skb(skb);\n                  return;\n          }\n\nThe socket implementation returns without freeing it, and the skb is\nleaked.\n\nA connected DLC can have no owner: rfcomm_sock_destruct() clears\nd->owner, while the DLC itself stays on the session until it is closed.\nData frames that arrive in that window still find d->state ==\nBT_CONNECTED in rfcomm_recv_data() and are handed to the callback, one\nleaked skb each.\n\nThe leak does not stop on its own either.  The remote runs out of\ncredits only once RFCOMM_RX_THROTTLED is set, and for a socket the only\nplace that sets it is rfcomm_sk_data_ready() itself, below the return.\nrfcomm_process_dlcs() keeps granting credits, so the remote keeps\nsending and the leak keeps growing.\n\nFree the skb, as the tty side does.",
   "datePublished": "Oct 23, 2026, 12:20:35 PM",
-  "dateUpdated": "Oct 23, 2026, 12:20:35 PM",
+  "dateUpdated": "Oct 30, 2026, 12:40:55 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/05145638e0db770267c39615c8ce51ab058e34cf",
+    "https://git.kernel.org/stable/c/91492e9194f3b10bc1eb50683ac440b74a487e39",
+    "https://git.kernel.org/stable/c/a835b7f445427c7bdfc7169a97e0a1bec375e408",
     "https://git.kernel.org/stable/c/a54ce160e3ef7e50ec94e0ac4131c3d0f9f739b9",
     "https://git.kernel.org/stable/c/c3f76b025cbbb0ab47310dbe7de18092d89f2a99",
     "https://git.kernel.org/stable/c/4f46de658ce61968aef5ea7ae809d1c180330544",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/9d1afbf60ed53c5b051cd124153e0ae3078c8b93"
   ],
   "aliases": [
+    "GHSA-7365-w977-m58v",
     "CVE-2026-99010"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "05f3385f-dd5c-3be0-b05e-3d1bbec7cfde",
@@ -29,6 +33,26 @@
       "product_version": "patch: 7.2.11"
     },
     {
+      "id": "06569ed9-a9ca-3faa-ba7d-2267151a0f51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "142c1c10-6adf-390d-84ac-020e29001b0d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
       "id": "2b3c986f-502c-3967-a711-d2e645382d5f",
       "product": {
         "name": "Linux",
@@ -37,6 +61,16 @@
         }
       },
       "product_version": "patch: 7.3"
+    },
+    {
+      "id": "3cd92bb2-bd78-3376-9d6b-4f1fa32bce2d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "53ef4c25-ea7a-3d60-80e0-bf3ad1e9cb12",
@@ -49,6 +83,16 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c3f76b025cbbb0ab47310dbe7de18092d89f2a99"
     },
     {
+      "id": "5539b215-2b34-30fa-bdf6-c485afdd1ff0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <91492e9194f3b10bc1eb50683ac440b74a487e39"
+    },
+    {
       "id": "6109fd71-c8cc-3efb-9c34-cafdb31e0723",
       "product": {
         "name": "Linux",
@@ -59,6 +103,16 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b8814161b14c610b7a09527433301d8ad8180aef"
     },
     {
+      "id": "776879a2-9ec4-35de-8694-b60386e027c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <05145638e0db770267c39615c8ce51ab058e34cf"
+    },
+    {
       "id": "77ace1bc-8d82-3a30-8814-0cec1de60dfe",
       "product": {
         "name": "Linux",
@@ -67,6 +121,16 @@
         }
       },
       "product_version": "patch: 6.18.57"
+    },
+    {
+      "id": "8d0bbaf5-e0a0-3c48-9ac0-e21c01ba403f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a835b7f445427c7bdfc7169a97e0a1bec375e408"
     },
     {
       "id": "973c6ca1-1cf3-335f-8dac-b5af5a9443cb",

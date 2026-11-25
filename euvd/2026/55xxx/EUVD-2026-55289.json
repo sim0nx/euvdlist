@@ -3,9 +3,12 @@
   "enisaUuid": "d0e0a52b-0946-33df-b5df-fe096e74f023",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: RFCOMM: Fix session UAF in set_termios\n\nrfcomm_tty_set_termios() tests dlc->session without rfcomm_mutex and\nlater passes the pointer to rfcomm_send_rpn(). The latter dereferences\nboth session->initiator and session->sock. Meanwhile, krfcommd can\nunlink the DLC and free the session while holding rfcomm_mutex.\n\nThe race can proceed as follows:\n\n  TTY ioctl task                 krfcommd\n  --------------                 --------\n  load dlc->session\n  enter rfcomm_send_rpn()\n                                 lock rfcomm_mutex\n                                 clear dlc->session\n                                 free session\n                                 unlock rfcomm_mutex\n  read session->initiator\n\nKASAN reported:\n\n  BUG: KASAN: slab-use-after-free in rfcomm_send_rpn+0x297/0x2a0\n  Read of size 4 at addr ffff88810012a850 by task poc/92\n\n  Call Trace:\n   rfcomm_send_rpn+0x297/0x2a0\n   rfcomm_tty_set_termios+0x50d/0x850\n   tty_set_termios+0x596/0x950\n   set_termios+0x46a/0x6e0\n   tty_mode_ioctl+0x152/0xbd0\n   tty_ioctl+0x915/0x1240\n   __x64_sys_ioctl+0x134/0x1c0\n\n  Allocated by task 92:\n   rfcomm_session_add+0x9e/0x2e0\n   rfcomm_dlc_open+0x8b1/0xe00\n   rfcomm_dev_activate+0x85/0x1a0\n   rfcomm_tty_open+0x90/0x280\n\n  Freed by task 68:\n   kfree+0x131/0x3c0\n   rfcomm_session_del+0x119/0x180\n   rfcomm_run+0x737/0x4710\n\nAdd rfcomm_dlc_send_rpn(), which holds rfcomm_mutex while it verifies\nthat the DLC is still attached and sends the RPN frame. Have the TTY\npath use the helper and drop its unlocked session check. This keeps the\nsession valid through both the frame construction and socket send.",
   "datePublished": "Aug 10, 2026, 12:00:00 PM",
-  "dateUpdated": "Aug 10, 2026, 12:00:00 PM",
+  "dateUpdated": "Nov 6, 2026, 4:45:01 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/4eac4576a072084b06459de6c054b4ebc764b4ea",
+    "https://git.kernel.org/stable/c/82c383f9031f1ce919ac6c3c06bc5bd492a6b078",
+    "https://git.kernel.org/stable/c/c5c060597247131f90f39ea7c8c978fa0c2e79d0",
     "https://git.kernel.org/stable/c/2894bd8c68e97accd758ca6e5fc375d7e9e8882c",
     "https://git.kernel.org/stable/c/a82a9d3891f5607030b0672c255087a12bb9837b",
     "https://git.kernel.org/stable/c/780b04d09c941262ee2a2b4a09906451b69df8a6",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/c783399efc22d035443f1dfbf2a09bf9562aaa5e"
   ],
   "aliases": [
+    "GHSA-qrj4-v2pf-wj3g",
     "CVE-2026-68188"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "02cd016c-8634-38b2-be46-53a98b882709",
@@ -27,6 +31,16 @@
         }
       },
       "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "167b2932-ca75-3453-b517-0b67cce3550d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
     },
     {
       "id": "18c8351d-a285-3191-9e5d-3f98565cc6b8",
@@ -69,6 +83,26 @@
       "product_version": "patch: 6.18.42"
     },
     {
+      "id": "41f6dbba-87b1-3156-b399-4f51143f5664",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3a5e903c09aed19ca4a1bb26d87b8d6461a93818 <4eac4576a072084b06459de6c054b4ebc764b4ea"
+    },
+    {
+      "id": "7392f457-323e-3cb5-aa4a-3f7e5e96f729",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
       "id": "7492d7a5-cbfc-3a92-bc84-3c56ee7cb809",
       "product": {
         "name": "Linux",
@@ -109,16 +143,6 @@
       "product_version": "3a5e903c09aed19ca4a1bb26d87b8d6461a93818 <98bc68194e37bfa5e8ddc80b5c1eb0be4dc607ea"
     },
     {
-      "id": "8f157a1f-58f1-38fc-bb8b-9931690a8452",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
-    },
-    {
       "id": "9025ccca-40c2-3d52-b239-38a3a78855f6",
       "product": {
         "name": "Linux",
@@ -137,6 +161,46 @@
         }
       },
       "product_version": "3a5e903c09aed19ca4a1bb26d87b8d6461a93818 <2894bd8c68e97accd758ca6e5fc375d7e9e8882c"
+    },
+    {
+      "id": "a6c4690c-7722-3830-814e-17ef1c708fe8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3a5e903c09aed19ca4a1bb26d87b8d6461a93818 <c5c060597247131f90f39ea7c8c978fa0c2e79d0"
+    },
+    {
+      "id": "a7b6cbc0-84df-3de0-8353-16917da5655f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "b242a3c7-7385-3c04-aa90-c47ae6df9a39",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3a5e903c09aed19ca4a1bb26d87b8d6461a93818 <82c383f9031f1ce919ac6c3c06bc5bd492a6b078"
+    },
+    {
+      "id": "fe4e383d-4481-3620-9a00-a6c20f14e6d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
     }
   ],
   "enisaIdVendor": [

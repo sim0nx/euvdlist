@@ -3,7 +3,7 @@
   "enisaUuid": "2262b415-1c8d-363a-a11c-c8b59e1d3745",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nselinux: recheck intermediate backing files on mprotect()\n\nmprotect() can be used to bypass the SELinux checks that mmap() performs\nagainst the intermediate layers of a stacked filesystem.\n\nmmap() checks every backing layer as the request descends through the\nstack.  mprotect() only has the lowest backing file in vma->vm_file, so it\nrechecks the top-level user and the lowest mounter, but skips the mounters\nof every layer in between.  With two nested overlayfs mounts and a policy\ndenying mounter_t -> middle_file_t:file { execute }, a direct\nmmap(PROT_EXEC) is denied:\n\n  avc:  denied  { execute } for  pid=71 comm=\"nested_exec\"\n    path=\"/payload\" dev=\"overlay\" ino=9\n    scontext=user_u:base_r:mounter_t\n    tcontext=user_u:object_r:middle_file_t tclass=file permissive=0\n\nwhile mmap(PROT_NONE) followed by mprotect(PROT_EXEC) succeeds.\n\nPreserve each intermediate path, mounter SID and file-description SID in\nthe backing-file security blob, copying the saved entries when another\nbacking layer is opened.  Allocate the array only for nested backing files,\nand release it and the path references in the backing_file_free hook.\n\nDuring mprotect(), recheck fd { use } and the requested inode permissions\nfor every saved mounter, and include the intermediate layers in the execmod\nchecks.  Policy for nested stacking may then need to grant intermediate\nmounters what a direct mmap() already requires, and execmod on intermediate\nlabels for binaries using text relocations.\n\nTested on arm64 QEMU with a small BusyBox initramfs and a purpose-built\nSELinux policy, on a mainline tree containing\ncommit f2381b546e7e (\"fs: fix user path of nested backing files\").\n\n[PM: subject tweak]",
   "datePublished": "Oct 6, 2026, 8:44:50 AM",
-  "dateUpdated": "Oct 6, 2026, 8:44:50 AM",
+  "dateUpdated": "Oct 19, 2026, 9:15:45 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/4d50ebe5a27724e020747ffd61a051dec67cb8ec",
@@ -13,11 +13,22 @@
     "https://git.kernel.org/stable/c/78fc54b934bfb2c18aad8154c7302067146946f9"
   ],
   "aliases": [
-    "CVE-2026-98214"
+    "CVE-2026-98214",
+    "GHSA-cwv8-mjrx-v4v5"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
+    {
+      "id": "1111a8ef-5ae6-347f-95a3-00ad9de57022",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "15f32eec-a2a5-311b-96dd-1a026df40ec1",
       "product": {
@@ -27,16 +38,6 @@
         }
       },
       "product_version": "7.1"
-    },
-    {
-      "id": "1ffcb77a-e624-3ea7-b834-2df471fd2ebf",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "290d96c2-4111-3b8c-8a80-6929108b0c0a",

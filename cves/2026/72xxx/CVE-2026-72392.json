@@ -2,24 +2,25 @@
   "id": "EUVD-2026-59291",
   "enisaUuid": "9388120f-a76a-3a3c-a292-c43a3ed15c79",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipv6: fib6: fix NULL deref in fib6_walk_continue() on multi-batch dump\n\ninet6_dump_fib() saves its progress in cb->args[1] as a positional\nindex within the current hash chain.  Between batches, a concurrent\nfib6_new_table() can insert a new table at the chain head, shifting\nall existing entries.  The saved index then lands on a different\ntable, causing fib6_dump_table() to set w->root to the wrong table\nwhile w->node still points into the previous one.\nfib6_walk_continue() dereferences w->node->parent (NULL) and panics:\n\n  BUG: kernel NULL pointer dereference, address: 0000000000000008\n  RIP: 0010:fib6_walk_continue+0x6e/0x170\n  Call Trace:\n   <TASK>\n   fib6_dump_table.isra.0+0xc5/0x240\n   inet6_dump_fib+0xf6/0x420\n   rtnl_dumpit+0x30/0xa0\n   netlink_dump+0x15b/0x460\n   netlink_recvmsg+0x1d6/0x2a0\n   ____sys_recvmsg+0x17a/0x190\n\nFix by storing tb->tb6_id in cb->args[1] instead of a positional\nindex.  On resume, skip entries until the id matches; a concurrent\nhead-insert can never match the saved id, so the walker always\nresumes on the correct table.",
-  "datePublished": "Aug 15, 2026, 6:32:22 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:23 AM",
+  "datePublished": "Aug 15, 2026, 5:56:20 AM",
+  "dateUpdated": "Nov 6, 2026, 4:55:26 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/ee73a32dd258d4af66831ff006b771e19812b322",
     "https://git.kernel.org/stable/c/89f9c5fee3c64c5cabc34e65599308fd3c879cf9",
+    "https://git.kernel.org/stable/c/cb90a774a9c6c46961a44949a246fbb61f5f934c",
     "https://git.kernel.org/stable/c/27210d433a8c5fe6bf7278a04bbaeb49a81d0290",
     "https://git.kernel.org/stable/c/059efb48dd746518898faaa9b965511009b59639",
     "https://git.kernel.org/stable/c/d8a01d27873e04bebd357dc87859aa756e0b28b2",
     "https://git.kernel.org/stable/c/110ccbd28c9444866fcc84ba96a2ad64fa6e95ae",
-    "https://git.kernel.org/stable/c/9facb861dc6b9b9ea9793ef5032a9a826f7a4229",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72392"
+    "https://git.kernel.org/stable/c/9facb861dc6b9b9ea9793ef5032a9a826f7a4229"
   ],
   "aliases": [
     "CVE-2026-72392",
     "GHSA-gqrm-563w-26qf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0a6a4607-88e8-3a0f-b6b9-b6a0e2828e31",
@@ -30,6 +31,16 @@
         }
       },
       "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "0c3fd3aa-2a91-3ac5-b529-06c8656fc008",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1b43af5480c351dbcb2eef478bafe179cbeb6e83 <ee73a32dd258d4af66831ff006b771e19812b322"
     },
     {
       "id": "118ac670-ca7d-35a2-913a-ca2553281881",
@@ -50,16 +61,6 @@
         }
       },
       "product_version": "1b43af5480c351dbcb2eef478bafe179cbeb6e83 <110ccbd28c9444866fcc84ba96a2ad64fa6e95ae"
-    },
-    {
-      "id": "33dbdb51-a2f9-37be-8fae-37c9d0c3a142",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc2"
     },
     {
       "id": "463850b3-bf11-35c2-9bfb-31cd5ad6482f",
@@ -92,6 +93,26 @@
       "product_version": "patch: 6.12.97"
     },
     {
+      "id": "a4b9dc3b-37ae-3757-94f4-1648d4b6a8d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "ac3d54d1-2955-3a3e-a9df-4201a6512832",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
       "id": "b86a9992-931b-3621-ac16-7116f6939afb",
       "product": {
         "name": "Linux",
@@ -122,6 +143,16 @@
       "product_version": "2.6.19"
     },
     {
+      "id": "d0948528-77ed-3112-a996-896f121b13ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
       "id": "d762fe48-af9c-3db1-9041-474d13d546c0",
       "product": {
         "name": "Linux",
@@ -130,6 +161,16 @@
         }
       },
       "product_version": "patch: 5.15.212"
+    },
+    {
+      "id": "e4ab04b5-947c-3126-9980-692a625a34b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1b43af5480c351dbcb2eef478bafe179cbeb6e83 <cb90a774a9c6c46961a44949a246fbb61f5f934c"
     },
     {
       "id": "f72fd739-b355-381c-b103-42254afb2c2a",

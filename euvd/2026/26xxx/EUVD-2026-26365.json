@@ -3,7 +3,7 @@
   "enisaUuid": "47931947-4eb7-3b5b-b034-7163e49175bd",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxen/privcmd: fix double free via VMA splitting\n\nprivcmd_vm_ops defines .close (privcmd_close), but neither .may_split\nnor .open. When userspace does a partial munmap() on a privcmd mapping,\nthe kernel splits the VMA via __split_vma(). Since may_split is NULL,\nthe split is allowed. vm_area_dup() copies vm_private_data (a pages\narray allocated in alloc_empty_pages()) into the new VMA without any\nfixup, because there is no .open callback.\n\nBoth VMAs now point to the same pages array. When the unmapped portion\nis closed, privcmd_close() calls:\n    - xen_unmap_domain_gfn_range()\n    - xen_free_unpopulated_pages()\n    - kvfree(pages)\n\nThe surviving VMA still holds the dangling pointer. When it is later\ndestroyed, the same sequence runs again, which leads to a double free.\n\nFix this issue by adding a .may_split callback denying the VMA split.\n\nThis is XSA-487 / CVE-2026-31787",
   "datePublished": "Apr 30, 2026, 10:31:28 AM",
-  "dateUpdated": "Apr 30, 2026, 10:39:37 AM",
+  "dateUpdated": "Nov 6, 2026, 3:32:25 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/dbf862ce9f009128ab86b234d91413a3e450beb4",
@@ -12,111 +12,195 @@
     "https://git.kernel.org/stable/c/402d84ad9e89bd4cbfd07ca8598532b7021daf95",
     "https://git.kernel.org/stable/c/2894a351fe2ea8684919d36df3188b9a35e3926f",
     "https://git.kernel.org/stable/c/446ee446d9ae66f36e95c3c90bbcc4e56b94cde0",
-    "https://git.kernel.org/stable/c/71bf829800758a6e3889096e4754ef47ba7fc850"
+    "https://git.kernel.org/stable/c/71bf829800758a6e3889096e4754ef47ba7fc850",
+    "https://git.kernel.org/stable/c/24daca4fc07f3ff8cd0e3f629cd982187f48436a"
   ],
   "aliases": [
-    "CVE-2026-31787"
+    "CVE-2026-31787",
+    "GHSA-3c28-g28m-gm93"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
-      "id": "197cc311-a37f-3989-80a7-ba86519a3124",
+      "id": "0b1e1a4c-9dae-3b0e-bbee-c7efd695cf56",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2b985d3a024b9e8c24e21671b34e855569763808"
+      "product_version": "3.8"
+    },
+    {
+      "id": "20e627c9-cbba-3451-8db6-c7b7473fb5ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d71f513985c22f1050295d1a7e4327cf9fb060da <1576ff3869cbd3620717195f971c85b7d7fd62b5"
     },
     {
       "id": "23525d89-0288-3d4e-8d91-769cb95dec76",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.15.204"
     },
     {
-      "id": "300dd05a-1f2c-3d51-bfa7-5b232ef68564",
+      "id": "438f53a8-20ac-3ccd-b025-5cb185f1fad5",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2894a351fe2ea8684919d36df3188b9a35e3926f"
-    },
-    {
-      "id": "308f9c8b-490c-3f66-aa8e-5ef1bd4f9df0",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <402d84ad9e89bd4cbfd07ca8598532b7021daf95"
+      "product_version": "d71f513985c22f1050295d1a7e4327cf9fb060da <446ee446d9ae66f36e95c3c90bbcc4e56b94cde0"
     },
     {
       "id": "5e1f4054-e3d8-309a-ab40-7910ba1cdd1e",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 7.0.3"
     },
     {
+      "id": "681f07bf-1acc-3453-9b1f-49b09163b522",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "681f46dc-d428-3254-8b25-11e3c2e6359d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d71f513985c22f1050295d1a7e4327cf9fb060da <71bf829800758a6e3889096e4754ef47ba7fc850"
+    },
+    {
       "id": "7100f9a4-b6c5-30f5-9466-4768c88e571b",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.1.170"
     },
     {
-      "id": "7594f867-38dc-36d4-a16a-136f0f3ce931",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <1576ff3869cbd3620717195f971c85b7d7fd62b5"
-    },
-    {
       "id": "7902f25d-754e-330a-a097-8efeee00150e",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.6.137"
     },
     {
       "id": "8032c820-7082-364d-b6c6-b9598f2123ee",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.10.254"
     },
     {
-      "id": "8d589b19-3ade-3616-9233-49700d99325a",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <446ee446d9ae66f36e95c3c90bbcc4e56b94cde0"
-    },
-    {
       "id": "9a06f683-3aed-32f6-8ccb-319cbfdf6b89",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.12.85"
     },
     {
-      "id": "ce6c65fa-005e-3b24-abb5-267d5dfbfb3b",
+      "id": "c0b7337c-9781-3f77-9355-a12574a48902",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <dbf862ce9f009128ab86b234d91413a3e450beb4"
+      "product_version": "d71f513985c22f1050295d1a7e4327cf9fb060da <2b985d3a024b9e8c24e21671b34e855569763808"
     },
     {
-      "id": "d0e91dd9-56db-31f5-8044-c2e0e7e1b036",
+      "id": "c27b8aa6-ea28-3bcd-b5a2-fe97001aaaf9",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <71bf829800758a6e3889096e4754ef47ba7fc850"
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "daacddc0-4ce5-34d9-a481-525abe55889f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d71f513985c22f1050295d1a7e4327cf9fb060da <24daca4fc07f3ff8cd0e3f629cd982187f48436a"
+    },
+    {
+      "id": "e6e44f4e-cd6e-3bab-b554-025fad7ecb98",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d71f513985c22f1050295d1a7e4327cf9fb060da <2894a351fe2ea8684919d36df3188b9a35e3926f"
     },
     {
       "id": "f2e3ec93-2f53-335e-9100-0371dbaf9202",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.18.26"
+    },
+    {
+      "id": "fa01a187-84dc-3eaf-9555-9d11f563a998",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d71f513985c22f1050295d1a7e4327cf9fb060da <dbf862ce9f009128ab86b234d91413a3e450beb4"
+    },
+    {
+      "id": "fa8cc4fc-58b1-3a78-a569-1731f069a72f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d71f513985c22f1050295d1a7e4327cf9fb060da <402d84ad9e89bd4cbfd07ca8598532b7021daf95"
     }
   ],
   "enisaIdVendor": [

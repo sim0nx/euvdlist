@@ -2,23 +2,23 @@
   "id": "EUVD-2026-58986",
   "enisaUuid": "4986ec6a-9a48-319f-aaaf-cc989aae1ec5",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nriscv: probes: save original sp in rethook trampoline\n\nReading a word from the stack in a kretprobe crashes a risc-v kernel.\n\n$ cd /sys/kernel/tracing/\n$ echo 'r n_tty_write $stack0' > dynamic_events\n$ echo 1 > events/kprobes/enable\nUnable to handle kernel paging request at virtual address 0000000200000128\n...\n[<ffffffff80016d16>] regs_get_kernel_stack_nth+0x26/0x38\n[<ffffffff80177196>] process_fetch_insn+0x3ee/0x760\n[<ffffffff80177836>] kretprobe_trace_func+0x116/0x1f0\n[<ffffffff8017795a>] kretprobe_dispatcher+0x4a/0x58\n[<ffffffff8013572e>] kretprobe_rethook_handler+0x5e/0x90\n[<ffffffff80180838>] rethook_trampoline_handler+0x70/0x108\n[<ffffffff8001ba32>] arch_rethook_trampoline_callback+0x12/0x1c\n[<ffffffff8001ba84>] arch_rethook_trampoline+0x48/0x94\n[<ffffffff8067872a>] tty_write+0x1a/0x30\n\nIn regs_get_kernel_stack_nth, regs->sp contains an arbitrary value.\n\narch_rethook_trampoline saves the registers from the probed function in a\nstruct pt_regs. sp is not saved. Instead, sp is decremented for\narch_rethook_trampoline's local stack.\n\nFix this crash and save the original sp along with the other registers.\nUse a0 as a temporary register, it is overwritten anyway.\n\n[pjw@kernel.org: added Fixes tag; cc'ed stable]",
-  "datePublished": "Aug 15, 2026, 6:32:09 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:09 AM",
+  "datePublished": "Aug 15, 2026, 5:51:51 AM",
+  "dateUpdated": "Oct 30, 2026, 12:28:45 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/d21109fe4a55247094f913773a334772907cd016",
     "https://git.kernel.org/stable/c/5da5cf48a432e30ded8d58087854e5383a36eff1",
     "https://git.kernel.org/stable/c/c386e1c591d72eab58ee2e69105c8cbc70928857",
     "https://git.kernel.org/stable/c/2faf0198168d2017cb528a79f76c560fda3b6e94",
     "https://git.kernel.org/stable/c/91b4d76dd07f1a1f20f73dfebb42ba04ac911a56",
-    "https://git.kernel.org/stable/c/bc7b086a45521a986a49045907f017e3e46c763e",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72028"
+    "https://git.kernel.org/stable/c/bc7b086a45521a986a49045907f017e3e46c763e"
   ],
   "aliases": [
     "GHSA-rj58-8r73-76rg",
     "CVE-2026-72028"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "1ba158a3-2f62-3abe-825c-8a0dabd58f1c",
@@ -71,14 +71,14 @@
       "product_version": "patch: 7.1.5"
     },
     {
-      "id": "6319c816-1ab2-3dc0-8666-da06c0fae472",
+      "id": "8c8028aa-d5b2-3e2d-bb09-930b70765793",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc2"
+      "product_version": "c22b0bcb1dd024cb9caad9230e3a387d8b061df5 <d21109fe4a55247094f913773a334772907cd016"
     },
     {
       "id": "987bb3ee-f57d-3604-85d8-5c119151577e",
@@ -101,6 +101,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "c1f25df6-138a-3013-b6f4-d54d87e63d28",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "c371872e-78b7-39a2-8eeb-e8e2eddee338",
       "product": {
         "name": "Linux",
@@ -109,6 +119,16 @@
         }
       },
       "product_version": "c22b0bcb1dd024cb9caad9230e3a387d8b061df5 <2faf0198168d2017cb528a79f76c560fda3b6e94"
+    },
+    {
+      "id": "cee9d3ac-a143-3f3e-9e5d-ad566964b818",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "e07a52c9-1026-3fa1-acf5-76a32c7a0a95",

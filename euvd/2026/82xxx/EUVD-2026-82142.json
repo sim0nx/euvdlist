@@ -3,7 +3,7 @@
   "enisaUuid": "275fa0b2-bbdb-3165-9044-0180ac30a424",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nACPI: PCI: Clear driver_data on all paths that free the acpi_pci_root\n\nacpi_pci_root_add() assigns the freshly allocated root to\ndevice->driver_data before dmar_device_add() and pci_acpi_scan_root().\nBoth failure paths reach the end: label where root is kfree()'d, but\nonly the pci_acpi_scan_root() path clears driver_data first.\n\nWhen dmar_device_add() fails during a hot-add, root is freed while\ndevice->driver_data still points at it.  The ACPI core does not clear\ndriver_data on attach failure, so a later acpi_pci_find_root() call may\ndereference this dangling pointer.\n\nacpi_pci_root_remove() has the same problem: it frees root without\nclearing device->driver_data, leaving a dangling pointer behind after\nthe root bridge is removed.\n\nMove the NULL assignment to the shared end: label so every error path in\nacpi_pci_root_add() clears driver_data before freeing root, and clear it\nin acpi_pci_root_remove() as well, so the object is never left reachable\nthrough driver_data after being freed.",
   "datePublished": "Sep 17, 2026, 4:10:28 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:28 PM",
+  "dateUpdated": "Oct 19, 2026, 9:04:27 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/321bb0eb1486a0d575f02e24e3f4170e408c2f51",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/8a742141f7ab84975aa758b775567ef4740ef0cf"
   ],
   "aliases": [
-    "CVE-2026-92521"
+    "CVE-2026-92521",
+    "GHSA-5pq6-vgcp-vv3f"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "16a8df42-6e02-3ef6-898e-d58aed2366f0",
@@ -30,16 +31,6 @@
         }
       },
       "product_version": "2.6.28"
-    },
-    {
-      "id": "1ecf02b9-9a4a-347b-93af-c316fe2df07f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "3615606b-f707-339b-8788-4904d3088681",
@@ -190,6 +181,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "e617cdda-516a-3e33-8ac5-1774614eec1c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "ecfbe5be-8c17-3201-a7cd-ae69ccf7ead6",

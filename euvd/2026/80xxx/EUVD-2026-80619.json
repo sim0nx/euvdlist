@@ -3,8 +3,10 @@
   "enisaUuid": "67e6277b-ebeb-34ec-a693-70c911f386ce",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: target: iscsi: Reserve a terminator byte for the login payload\n\niscsi_target_check_login_request() rejects a login PDU whose\nDataSegmentLength exceeds MAX_KEY_VALUE_PAIRS, but the test is '>' and\nlogin->req_buf is allocated with exactly MAX_KEY_VALUE_PAIRS\nbytes. Since iscsit_get_login_rx() receives payload_length + padding\nbytes, where\n\n\tpadding = ((-payload_length) & 3);\n\nany payload_length from 8189 to 8192 fills the whole 8192 byte\nbuffer. The write stays in bounds, but no byte is left for a NUL\nterminator.\n\nThe buffer is subsequently consumed as a C string. In the CHAP path\nchap_check_algorithm() calls kstrdup(a_str), and extract_param() calls\nstrstr(in_buf, pattern) followed by strlen_semi(), none of which take a\nlength. convert_null_to_semi() additionally rewrites every embedded NUL\nto ';', so even a payload made of well formed NUL separated key=value\nrecords is left without a terminator. These walk past the end of the\nobject into adjacent slab memory. It is reachable by an unauthenticated\ninitiator against a portal configured for CHAP; when authentication is\nnot required iscsi_login_zero_tsih_s2() rewrites AuthMethod to None and\nthe CHAP path is never entered.\n\nAllocate one extra byte. kzalloc() zeroes it and nothing ever writes to\nit, as every writer copies to offset 0 for at most MAX_KEY_VALUE_PAIRS\nbytes, so the buffer is always terminated.",
   "datePublished": "Sep 16, 2026, 10:33:18 AM",
-  "dateUpdated": "Sep 16, 2026, 10:33:18 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:56:25 AM",
+  "baseScore": 9.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/5fac79f248c37774d1dd761406f83d25ca6ff8e4",
     "https://git.kernel.org/stable/c/6ddddcad436d8e6e619204d3c848147ff2f5bf1e",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/f4825922d2fb371e2b969697d792077f1b62b62c"
   ],
   "aliases": [
+    "GHSA-m4f8-5753-34xg",
     "CVE-2026-90011"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.84,
   "enisaIdProduct": [
     {
       "id": "073da2fc-4790-31e1-be90-d1045ca6fabe",
@@ -60,6 +63,16 @@
         }
       },
       "product_version": "patch: 6.6.157"
+    },
+    {
+      "id": "1606baae-e42f-3ec6-b893-d8d30c7f47d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "178f38a0-93fc-3ce4-851f-f5d944b5bb50",
@@ -160,16 +173,6 @@
         }
       },
       "product_version": "e48354ce078c079996f89d715dfa44814b4eba01 <3ddf3ea291a0ef2ea93b82e158960ac2cc42302b"
-    },
-    {
-      "id": "dcbefc0f-f3a3-390a-acdd-94fd0db5dfcc",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc2"
     },
     {
       "id": "e2967f70-ccb5-394c-8844-df32a8d45488",

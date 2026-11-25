@@ -3,19 +3,26 @@
   "enisaUuid": "d48ce919-24e2-32f4-b748-52be2f1a000c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npower: supply: rt9455: quiesce delayed work before teardown\n\nThe threaded IRQ handler can queue pwr_rdy_work,\nmax_charging_time_work and batt_presence_work.  pwr_rdy_work and\nbatt_presence_work can also queue max_charging_time_work, while\nbatt_presence_work can requeue itself.\n\nrt9455_remove() cancels max_charging_time_work before\nbatt_presence_work.  The latter can therefore queue\nmax_charging_time_work after it has already been cancelled:\n\n  rt9455_remove()                   workqueue\n    cancel pwr_rdy_work\n    cancel max_charging_time_work\n                                      batt_presence_work queues\n                                        max_charging_time_work\n    cancel batt_presence_work\n    return\n    devres frees rt9455_info\n                                      max_charging_time_work dereferences\n                                        rt9455_info\n\nThe IRQ also remains registered until devres cleanup and can queue more\nwork after any of the cancellation calls.  If rt9455_hw_init() fails\nafter the IRQ has been requested, probe returns without cancelling work\nthat may already have been queued.  A pending callback can then access\nrt9455_info after it has been freed.\n\nRegister rt9455_cancel_all_delayed_works() through\ndevm_add_action_or_reset() right after devm_power_supply_register().\ndevres invokes the action in reverse registration order, after the\nmanaged IRQ has been freed and before rt9455_info is released, so the\ndelayed works are drained in both rt9455_remove() and the probe error\npath.  Cancel pwr_rdy_work and batt_presence_work before\nmax_charging_time_work because both can queue the latter.\n\nThis issue was found by an in-house static analysis tool.",
   "datePublished": "Sep 11, 2026, 7:43:25 PM",
-  "dateUpdated": "Sep 11, 2026, 7:43:25 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:31:47 PM",
+  "baseScore": 8.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/3def4721431f3e374e1e3124f4d32bb07ae8df1c",
+    "https://git.kernel.org/stable/c/c8645073876cbb1cdc8c2b995d093d08facfb187",
+    "https://git.kernel.org/stable/c/c09a2e4f8f101a44bd786a31696c958473469be0",
+    "https://git.kernel.org/stable/c/442c60c08ec23ac45da0a58877cab05e0a58f4ea",
     "https://git.kernel.org/stable/c/df67c7a2fff8414aa766b8cd5ffe11ec1ca27d02",
     "https://git.kernel.org/stable/c/1b9978433c61a9b46e48832a1ebceee1cf5c9eb4",
     "https://git.kernel.org/stable/c/7323e562f6961e4b7bce3225cde4ecbc78260deb",
     "https://git.kernel.org/stable/c/3e7a1ebc32fad5a558254a478efd401c17a24381"
   ],
   "aliases": [
-    "CVE-2026-89465"
+    "CVE-2026-89465",
+    "GHSA-p55c-54p6-956p"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "10b4f917-4079-355e-b0b4-42ede8755851",
@@ -58,6 +65,46 @@
       "product_version": "e86d69dd786e94046b8f5be7df1b9a8226a40b2a <7323e562f6961e4b7bce3225cde4ecbc78260deb"
     },
     {
+      "id": "3add42ed-54fd-3499-9b71-d047086ef0b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e86d69dd786e94046b8f5be7df1b9a8226a40b2a <c09a2e4f8f101a44bd786a31696c958473469be0"
+    },
+    {
+      "id": "3d9630a4-864f-390b-af04-04a6b7ad6b5e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e86d69dd786e94046b8f5be7df1b9a8226a40b2a <3def4721431f3e374e1e3124f4d32bb07ae8df1c"
+    },
+    {
+      "id": "4bd3171a-a40d-3c7d-9943-4e54a9f5fa0f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e86d69dd786e94046b8f5be7df1b9a8226a40b2a <442c60c08ec23ac45da0a58877cab05e0a58f4ea"
+    },
+    {
+      "id": "4d534c63-fff1-3cdd-9a28-6826d3c2fc35",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "506e8d84-ca39-32a3-9e19-83165b8092a6",
       "product": {
         "name": "Linux",
@@ -78,14 +125,44 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "ab7d482f-78ea-36e6-9ac3-613194145404",
+      "id": "71423f09-7c9a-392b-acb3-44c04065f5b5",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 6.6.157"
+    },
+    {
+      "id": "85a9aa44-133d-380d-ad50-ed9c332b579d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "950bc5d5-d8c9-30cf-b2b0-f7746b6cf748",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "a1324d57-a90b-3a6d-a96b-b79119280117",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e86d69dd786e94046b8f5be7df1b9a8226a40b2a <c8645073876cbb1cdc8c2b995d093d08facfb187"
     },
     {
       "id": "b70b2707-ad84-3889-b213-8a25b9185599",
@@ -116,6 +193,16 @@
         }
       },
       "product_version": "e86d69dd786e94046b8f5be7df1b9a8226a40b2a <1b9978433c61a9b46e48832a1ebceee1cf5c9eb4"
+    },
+    {
+      "id": "fecc7884-fedf-37db-b5a2-b60cf60f4848",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
     }
   ],
   "enisaIdVendor": [

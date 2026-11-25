@@ -2,21 +2,36 @@
   "id": "EUVD-2026-59416",
   "enisaUuid": "7dd1def0-5265-3ecf-8c4a-dc6338c5047f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbnxt: fix head underflow on XDP head-grow\n\nThe xdp.py test test_xdp_native_adjst_head_grow_data crashes when run on\na bnxt machine (and also crashes in NIPA).\n\nIt seems that the bug is an underflow in bnxt_rx_multi_page_skb, which\nbuilds the skb head:\n\n  napi_build_skb(data_ptr - bp->rx_offset, rxr->rx_page_size);\n\nThe problem with this expression is that in page mode, rx_offset is:\n\n  bp->rx_offset = NET_IP_ALIGN + XDP_PACKET_HEADROOM;\n\nWhich evaluates (at least on x86_64) to 258.\n\nThe test test_xdp_native_adjst_head_grow_data tests a case where the\nhead is adjusted by -256.\n\nWhen this test runs, data_ptr is shifted to frag_start + 2 (where\nfrag_start = page_address(page) + offset).\n\nThen, bnxt_rx_multi_page_skb is invoked and the napi_build_skb\nexpression subtracts 258, landing at an address before frag_start. This\ncould be either the previous fragment or the previous physical page when\nthe offset is < 256 (e.g. if the fragment started at offset 0).\n\nWhen the skb is freed, the page pool fragment reference is dropped on\neither the wrong page or the wrong frag of the right page. In either\ncase, the corrupted reference count can lead to the page being\nprematurely recycled while still in use. Once (incorrectly) recycled, it\ncan be handed out again and on driver teardown this would result in a\ndouble free.\n\nThe commit under fixes updated this code to handle the case where the\nnative page size is >= 64k, but it unintentionally broke the head grow\ncase.\n\nTo fix this, add an offset field to struct bnxt_sw_rx_bd, mirroring the\nexisting offset field in struct bnxt_sw_rx_agg_bd. Populate it on\nallocation and preserve it on reuse.\n\nIn bnxt_rx_multi_page_skb, use the newly added offset field to compute\nthe fragment start and pass that to napi_build_skb. Adjust the layout\nwith skb_reserve.\n\nThere are two cases, the non-adjustment case and the adjustment case.\n\nIn both cases, the skb is built at page_address(page) + offset to\naccount for the case where the native page size >= 64K and skb_reserve\nis called with data_ptr - (page_address(page) + offset). That\ndifference equals bp->rx_offset when data_ptr was not moved, or\nbp->rx_offset + xdp_adjust when XDP adjusted the head.\n\nRe-running the failing test with this commit applied causes the test to\nrun successfully to completion.\n\nThe other rx_skb_func implementations don't have this issue.",
-  "datePublished": "Aug 15, 2026, 6:32:27 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:27 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:57:43 AM",
+  "dateUpdated": "Oct 30, 2026, 12:29:35 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/59f6211c006cb5936b443fb396eb43864ca21ed5",
+    "https://git.kernel.org/stable/c/3e8f3959a7fd28461b8cd9708c21286b4250b77a",
+    "https://git.kernel.org/stable/c/ff34e5a26a26c92142afea11455e259c4c4c617b",
+    "https://git.kernel.org/stable/c/4c03275bc4435cc8e25f7f3f08aff58c0e783d8d",
     "https://git.kernel.org/stable/c/bb72b1c6755631c74b7e0878ee55bb81c06776c0",
-    "https://git.kernel.org/stable/c/e26657fe3b85c068b01f42bb0c602f242d643ba9",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-74269"
+    "https://git.kernel.org/stable/c/e26657fe3b85c068b01f42bb0c602f242d643ba9"
   ],
   "aliases": [
     "CVE-2026-74269",
     "GHSA-qr85-5764-cw3m"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.49,
   "enisaIdProduct": [
+    {
+      "id": "09f6698a-d44e-3904-8164-fcaae9757b38",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f6974b4c2d8e1062b5a52228ee47293c15b4ee1e <4c03275bc4435cc8e25f7f3f08aff58c0e783d8d"
+    },
     {
       "id": "1156c93b-a447-3f6a-8909-79e132a84532",
       "product": {
@@ -26,6 +41,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "19a329df-5224-351f-879c-4650410cb07b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     },
     {
       "id": "29958d5a-4f46-3faa-a426-e565d47ab9b0",
@@ -58,24 +83,14 @@
       "product_version": "6.5"
     },
     {
-      "id": "5bd65d2a-5c44-3b3f-997d-9f5e3f29c47a",
+      "id": "49cfc89c-de92-305d-bdb6-b892027a649c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "e9f11bfc03fb0d3c86f91b8ae945bb10f7e19c16"
-    },
-    {
-      "id": "7dc2bf78-d78a-37aa-a876-962d40840b79",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "f6974b4c2d8e1062b5a52228ee47293c15b4ee1e <3e8f3959a7fd28461b8cd9708c21286b4250b77a"
     },
     {
       "id": "8920ee42-bf25-39bc-b8bf-d857054a292d",
@@ -98,6 +113,26 @@
       "product_version": "ae0e135dc900827687ecc684c2bbb57aae48d318"
     },
     {
+      "id": "8f189b9a-bd68-3873-b0ac-3604a892a3b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "8fd5129d-c153-3868-bd7f-72d77e85c7cf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.114"
+    },
+    {
       "id": "994b024e-9c31-37b8-a582-a62459de2c6f",
       "product": {
         "name": "Linux",
@@ -108,14 +143,54 @@
       "product_version": "patch: 7.1.5"
     },
     {
-      "id": "f531f69a-e350-375b-bf19-4568479c6fcf",
+      "id": "9c9ef366-f406-36d2-920f-10b149336179",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.1.45 <6.2"
+      "product_version": "f6974b4c2d8e1062b5a52228ee47293c15b4ee1e <ff34e5a26a26c92142afea11455e259c4c4c617b"
+    },
+    {
+      "id": "a5c7c5bf-8dc3-3f9b-9879-62c4eab2e808",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "cda75bf2-540f-3fa1-a7d8-86896cc6fd77",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "e6d11a4c-e051-3a64-89d5-4d284efe3842",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.45 <6.1.191"
+    },
+    {
+      "id": "f1447f54-95c7-3954-9703-dec2957e5921",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e9f11bfc03fb0d3c86f91b8ae945bb10f7e19c16 <59f6211c006cb5936b443fb396eb43864ca21ed5"
     }
   ],
   "enisaIdVendor": [

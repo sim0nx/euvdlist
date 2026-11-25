@@ -3,17 +3,22 @@
   "enisaUuid": "1301feb8-a97a-38d5-a28f-d62de3b93662",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndmaengine: idxd: fix double free of wq, engine, and group structs\n\nThe release callbacks for wq, engine, and group devices\n(idxd_conf_wq_release, idxd_conf_engine_release,\nidxd_conf_group_release) each call kfree() on the enclosing struct.\nThe setup error paths and cleanup functions also call kfree()\nexplicitly after put_device(), producing a double free whenever\nput_device() drops the reference count to zero and fires the release.\n\nIn the setup functions, device_initialize() is called before\ndevice_add(), so the reference count is exactly 1 at the error sites.\nput_device() unconditionally fires the release, which frees the struct;\nthe subsequent explicit kfree() then operates on freed memory.\n\nFor idxd_setup_wqs(), the wq release callback also owns opcap_bmap\nand wqcfg. The error unwind additionally freed those fields explicitly\nbefore calling put_device(), causing further double frees on both.\n\nRemove the redundant explicit kfree() calls from all setup error paths\nand cleanup functions for wq, engine, and group structs, delegating\nsole ownership of those allocations to the release callbacks.",
   "datePublished": "Aug 28, 2026, 6:53:02 AM",
-  "dateUpdated": "Aug 28, 2026, 6:53:02 AM",
+  "dateUpdated": "Oct 30, 2026, 12:30:59 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/899aa2424a75b1812a1f4766e41e82315a521e7e",
+    "https://git.kernel.org/stable/c/84cf00b1376c717e55d704dc259483e822ae1b34",
+    "https://git.kernel.org/stable/c/38208445c41a6164e26748c600f954296991364d",
+    "https://git.kernel.org/stable/c/63844dc03960b09b36746eda636c08f1479407ce",
     "https://git.kernel.org/stable/c/c93a9f652b7373ac8ee5bfcc18a9af76959b6c6c",
     "https://git.kernel.org/stable/c/ec2d428b2e32dd157de8f86a86dd85c5b2c8f45c"
   ],
   "aliases": [
-    "CVE-2026-80698"
+    "CVE-2026-80698",
+    "GHSA-5mr4-5v55-qp75"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0849d3cb-538c-3a5a-a40e-b73b0c63c813",
@@ -36,6 +41,36 @@
       "product_version": "e6f86fe368cdc14764833a6e8bb59f7a85a40e06"
     },
     {
+      "id": "23177690-8bf5-36ab-aa43-1478dadfd555",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "279fe1a9-3386-3bce-8f12-60ce6026a0d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.114"
+    },
+    {
+      "id": "3fa35739-13e6-3e88-8e64-3b9644e9c23d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7c5dd23e57c14cf7177b8a5e0fd08916e0c60005 <899aa2424a75b1812a1f4766e41e82315a521e7e"
+    },
+    {
       "id": "40d8b511-c696-3776-8406-9660a0ad82fc",
       "product": {
         "name": "Linux",
@@ -44,6 +79,26 @@
         }
       },
       "product_version": "7c5dd23e57c14cf7177b8a5e0fd08916e0c60005 <ec2d428b2e32dd157de8f86a86dd85c5b2c8f45c"
+    },
+    {
+      "id": "43eed805-1ef9-3794-ae53-361b4ffd4ebf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7c5dd23e57c14cf7177b8a5e0fd08916e0c60005 <84cf00b1376c717e55d704dc259483e822ae1b34"
+    },
+    {
+      "id": "50b9eec7-be23-3d79-8dad-8830813c313d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7c5dd23e57c14cf7177b8a5e0fd08916e0c60005 <63844dc03960b09b36746eda636c08f1479407ce"
     },
     {
       "id": "597c8204-3708-3a2f-9579-3af82a86369e",
@@ -76,6 +131,16 @@
       "product_version": "26c219e7522c494f7865a928c81ced84cc7db3ae"
     },
     {
+      "id": "700fa2ff-d82a-3221-9ff0-f7ab9e40ce5b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "79c8db57-a757-348f-a487-07dc3b220ac3",
       "product": {
         "name": "Linux",
@@ -84,6 +149,26 @@
         }
       },
       "product_version": "patch: 7.1.8"
+    },
+    {
+      "id": "8815d952-3625-3fd5-aef7-253db5893ccd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.57"
+    },
+    {
+      "id": "926ff859-8643-3586-ae59-aa2d6398d29f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7c5dd23e57c14cf7177b8a5e0fd08916e0c60005 <38208445c41a6164e26748c600f954296991364d"
     },
     {
       "id": "98da4d83-e88b-3cae-b078-ef0dd1178cba",

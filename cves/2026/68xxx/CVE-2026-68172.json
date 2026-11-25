@@ -3,18 +3,21 @@
   "enisaUuid": "62764cd5-d016-3a57-ab47-44085832105c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\narm64: make huge_ptep_get handled unaligned addresses\n\nhuge_ptep_get() can be handed a virtual address pointing to the middle\nof a contpmd/contpte mapped hugetlb folio (examples of callers are\npagemap_hugetlb_range, page_mapped_in_vma).\n\nThe arm64 helper rewalks the pgtables in find_num_contig to answer\nwhether the huge pte we have maps a contpmd or a contpte hugetlb folio,\nand returns CONT_PMDS or CONT_PTES, so that it can collect a/d bits over\nthe contiguous ptes. We can falsely return CONT_PTES instead of\nCONT_PMDS if the addr is not aligned. On systems where CONT_PTES !=\nCONT_PMDS (meaning page size is 16K), we could collect excess A/D bit\nstate, meaning extra work for the kernel. Even worse, we may iterate\nbeyond the PTE table and dereference a garbage ptep pointer to access\nphysical memory we don't own. Since the ptep pointer is a linear map\naddress, we may run off the end of the linear map or into a hole,\ndereference a VA not mapped into the kernel pgtables and cause kernel\npanic.\n\nFix this by aligning the pmdp pointer down to a contpmd base before\nchecking equality with the passed huge pte pointer, to correctly answer\nwhether the huge pte is the base of a contpmd block.",
   "datePublished": "Aug 10, 2026, 11:59:41 AM",
-  "dateUpdated": "Aug 10, 2026, 11:59:41 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 5:00:12 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/9cd4b1a52eff330798d668c1775f8bc450776280",
     "https://git.kernel.org/stable/c/f3530aec26563f4d483ff31402392961362e9bc6",
     "https://git.kernel.org/stable/c/f73a8edc2ccc6ec72c37d5c578e7592d2e1f9922"
   ],
   "aliases": [
-    "CVE-2026-68172"
+    "CVE-2026-68172",
+    "GHSA-mc2f-cm9p-679q"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "1dcdca8d-c217-3fd2-99b1-cb0b772e0a6a",
@@ -47,6 +50,16 @@
       "product_version": "patch: 6.18.42"
     },
     {
+      "id": "7d401f99-9d2c-31ea-8e36-13a2152c86c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "888aa84f-4f1c-3d42-a326-27b94be32641",
       "product": {
         "name": "Linux",
@@ -75,16 +88,6 @@
         }
       },
       "product_version": "patch: 7.1.6"
-    },
-    {
-      "id": "cf01502c-e499-3eb0-836e-78386c5d7cee",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
     },
     {
       "id": "dab67c5c-b916-342a-a02c-4c376144a55d",

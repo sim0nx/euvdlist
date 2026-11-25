@@ -1,0 +1,90 @@
+{
+  "id": "EUVD-2024-35712",
+  "enisaUuid": "81cc9424-879d-3493-95ee-36829f800a73",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfirmware: qcom: uefisecapp: Fix memory related IO errors and crashes\n\nIt turns out that while the QSEECOM APP_SEND command has specific fields\nfor request and response buffers, uefisecapp expects them both to be in\na single memory region. Failure to adhere to this has (so far) resulted\nin either no response being written to the response buffer (causing an\nEIO to be emitted down the line), the SCM call to fail with EINVAL\n(i.e., directly from TZ/firmware), or the device to be hard-reset.\n\nWhile this issue can be triggered deterministically, in the current form\nit seems to happen rather sporadically (which is why it has gone\nunnoticed during earlier testing). This is likely due to the two\nkzalloc() calls (for request and response) being directly after each\nother. Which means that those likely return consecutive regions most of\nthe time, especially when not much else is going on in the system.\n\nFix this by allocating a single memory region for both request and\nresponse buffers, properly aligning both structs inside it. This\nunfortunately also means that the qcom_scm_qseecom_app_send() interface\nneeds to be restructured, as it should no longer map the DMA regions\nseparately. Therefore, move the responsibility of DMA allocation (or\nmapping) to the caller.",
+  "datePublished": "May 20, 2024, 9:47:58 AM",
+  "dateUpdated": "Aug 5, 2026, 11:31:28 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/dd22b34fb53cb04b13b2f5eee5c9200bb091fc88",
+    "https://git.kernel.org/stable/c/ed09f81eeaa8f9265e1787282cb283f10285c259"
+  ],
+  "aliases": [
+    "GHSA-5jj7-rmfx-38vv",
+    "CVE-2024-35994"
+  ],
+  "assigner": "Linux",
+  "epss": 0.19,
+  "enisaIdProduct": [
+    {
+      "id": "665cf476-a410-356c-8932-a367e2b58fe0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.9"
+    },
+    {
+      "id": "6c448677-df1a-3caa-9dc3-386e6601930e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "759e7a2b62eb3ef3c93ffeb5cca788a09627d7d9 <dd22b34fb53cb04b13b2f5eee5c9200bb091fc88"
+    },
+    {
+      "id": "8f602c29-6ac6-3981-9f6e-171c1000f006",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "759e7a2b62eb3ef3c93ffeb5cca788a09627d7d9 <ed09f81eeaa8f9265e1787282cb283f10285c259"
+    },
+    {
+      "id": "ce48854c-a94c-3e50-bae5-29754364febf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.7"
+    },
+    {
+      "id": "ee2faf0a-ef60-3720-a135-d911c79ea706",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "f62dde7a-e090-3866-bd74-4f7bcaf98d30",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "300f5174-4f46-3d65-b868-3427a222f003",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

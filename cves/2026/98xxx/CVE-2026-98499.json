@@ -3,8 +3,10 @@
   "enisaUuid": "3f7682c8-9cb9-301b-ac53-9144a23a7f9f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: wacom: fix OOB read in wacom_wac_pen_serial_enforce()\n\nThe 'wacom_wac_pen_serial_enforce()' function may calculate and pass an\ninvalid offset to hid_field_extract(), resulting in memory reads at\nincorrect addresses -- possibly beyond the end of the report.  If a\nfield in the HID descriptor lists more usages than its Report Count\nactually reserves space for, the function's inner 'j' will walk past\nthe end of the field:\n\n\tfor (i = 0; i < report->maxfield; i++) {\n\t\tfor (j = 0; j < report->field[i]->maxusage; j++) {\n\t\t\t...\n\t\t\tvalue = hid_field_extract(hdev, raw_data + 1,\n\t\t\t\t\t\t  offset + j * size, size);\n\nA descriptor listing 12288 usages against Report Count 1 has the loop\nextract the usage at index 12287 from bit offset 98296 -- about 12 KB\npast a 2-byte received report.  The value is stored in\nwacom_wac->serial[0] and can reach userspace as an MSC_SERIAL event,\nmaking this an information disclosure.\n\nClamp the loop to field->report_count, the number of value slots the\nreport holds.  Value slots past the last declared usage are still\nscanned; they reuse that usage (HID 1.11, 6.2.2.8).\n\nVerified on v6.12.105 with a UHID reproducer: a 2-byte report from\nsuch a descriptor trips KASAN before the patch and not after it.",
   "datePublished": "Oct 18, 2026, 3:16:31 PM",
-  "dateUpdated": "Oct 18, 2026, 3:16:31 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 24, 2026, 2:09:08 PM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/9aa62f967b6a4bb30aa3b778e02c8a5ca6bcde51",
     "https://git.kernel.org/stable/c/26471d954bbfbfb9032994f7f485802ee20e0582",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/9aa237cf66495b2426ddde8532e9b08a0ed83aaa"
   ],
   "aliases": [
+    "GHSA-vgmm-5fmr-gjgq",
     "CVE-2026-98499"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.58,
   "enisaIdProduct": [
     {
       "id": "120e738d-4baa-3ab0-8f2b-5ea6a575e7ff",
@@ -112,16 +115,6 @@
       "product_version": "83417206427bdf0fef9fa69957807194f25923c3 <9aa237cf66495b2426ddde8532e9b08a0ed83aaa"
     },
     {
-      "id": "92240dbf-7774-3552-8872-78982e329545",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
-    },
-    {
       "id": "969fb762-fcc8-3064-bded-b1be29cdfdd1",
       "product": {
         "name": "Linux",
@@ -180,6 +173,16 @@
         }
       },
       "product_version": "patch: 5.15.222"
+    },
+    {
+      "id": "e281f449-141a-3482-89bc-08df4deae11d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "f46290f3-8fc3-385c-b130-b27ab5071301",

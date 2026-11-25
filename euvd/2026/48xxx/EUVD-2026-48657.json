@@ -3,7 +3,7 @@
   "enisaUuid": "826446f1-efad-3071-a1f5-a364aa6fc966",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nMIPS: smp: report dying CPU to RCU in stop_this_cpu()\n\nsmp_send_stop() parks all secondary CPUs in stop_this_cpu(). The function\nmarks the CPU offline for the scheduler via set_cpu_online(false) but\nnever informs RCU, so RCU keeps expecting a quiescent state from CPUs\nthat are now spinning forever with interrupts disabled.\n\nAs long as nothing waits for an RCU grace period after smp_send_stop()\nthis is harmless, which is why it went unnoticed. Since commit\n91840be8f710 (\"irq_work: Fix use-after-free in irq_work_single() on PREEMPT_RT\")\nhowever, irq_work_sync() calls synchronize_rcu() on architectures without\nan irq_work self-IPI, i.e. where arch_irq_work_has_interrupt() returns\nfalse. That is the asm-generic default used by MIPS. Any irq_work_sync()\nissued in the reboot/shutdown path after smp_send_stop() then blocks on\na grace period that can never complete, hanging the reboot:\n\n  WARNING: CPU: 0 PID: 15 at kernel/irq_work.c:144 irq_work_queue_on\n  ...\n  rcu: INFO: rcu_sched detected stalls on CPUs/tasks:\n  rcu: Offline CPU 1 blocking current GP.\n  rcu: Offline CPU 2 blocking current GP.\n  rcu: Offline CPU 3 blocking current GP.\n\nThis issue was noticed on several Realtek MIPS switch SoCs (MIPS\ninterAptiv) and came up during kernel bump downstream in OpenWrt from\n6.18.33 to 6.18.34, after the backport of the patch to the 6.18 stable\nbranch. The patch also has been backported all the way back to 6.1.\n\nCall rcutree_report_cpu_dead() once interrupts are disabled, mirroring the\ngeneric CPU-hotplug offline path, so RCU stops waiting on the parked CPUs\nand grace periods can still complete. MIPS shuts down all CPUs here\nwithout going through the CPU-hotplug mechanism, so this report is not\notherwise issued. Reporting a dying CPU to RCU outside the regular hotplug\noffline path is not unprecedented: arm64 does the same in cpu_die_early().\nThere it is an exception for a CPU that was coming online and is aborting\nbringup, rather than the default shutdown action as on MIPS.",
   "datePublished": "Jul 24, 2026, 3:31:15 PM",
-  "dateUpdated": "Jul 24, 2026, 3:31:15 PM",
+  "dateUpdated": "Aug 17, 2026, 4:51:59 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/f8a1ef884013dc99f712d3eb75624c7cd3fd94f6",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/9f3f3bdc6d9dac1a5a8262ee7ad0f2ff1527a7e7"
   ],
   "aliases": [
+    "GHSA-63rm-9p6r-635w",
     "CVE-2026-64248"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "22daae6d-7aee-33e2-b085-0fa1f00b24aa",
@@ -28,6 +29,16 @@
         }
       },
       "product_version": "6.6.142 <6.6.145"
+    },
+    {
+      "id": "2abcfd1b-3a98-32af-bcbd-3f8232d8515f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "34058b0e-f761-3473-83eb-4680996354f0",
@@ -138,16 +149,6 @@
         }
       },
       "product_version": "7.1"
-    },
-    {
-      "id": "b45b91e2-276d-3615-8ef3-c265a844f2cf",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "b5db63e7-809d-3a6c-bd6b-1d81cfd50553",

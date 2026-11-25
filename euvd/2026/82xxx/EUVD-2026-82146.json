@@ -3,8 +3,10 @@
   "enisaUuid": "96b495c2-5578-32ed-8310-258405bfdd55",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/rxe: Validate num_sge/cur_sge before indexing wqe->dma.sge[]\n\nFor a user QP, qp->sq.queue is a ring the application writes directly,\nso rxe_post_send() takes the is_user branch and only schedules send_task\nwithout validating the WQE. rxe_requester() consumes it in place via\nreq_next_wqe() and calls copy_data(), which indexes\n&wqe->dma.sge[cur_sge] with the attacker-controlled num_sge/cur_sge.\nOnly the kernel path bounds num_sge (validate_send_wr()); the user WQE\nis never checked, so a local unprivileged user can post a WQE with an\nout-of-range cur_sge or oversized num_sge and force an out-of-bounds\nread of the per-WQE sge array in copy_data() (vmalloc OOB read, local\nDoS).\n\nBound num_sge to qp->sq.max_sge in rxe_requester() before use, the way\nget_srq_wqe() already guards SRQ entries, and bound cur_sge only when\nthe WQE carries payload (dma.resid): copy_data() returns early on a\nzero-length copy before touching dma->sge[], so a zero-payload WQE --\nthe only kind a max_sge == 0 QP can post -- stays valid.\n\nReproduced under KASAN; the vmalloc-out-of-bounds in copy_data() is gone.",
   "datePublished": "Sep 17, 2026, 4:10:30 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:30 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:04:31 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/69d3ccf6543f24c452a020c8028ca6f46cb1e8db",
     "https://git.kernel.org/stable/c/750bba6ce9bb0b11d6a166031c9728ae3f21765e",
@@ -14,10 +16,11 @@
     "https://git.kernel.org/stable/c/126c757e4cd46f866ddc283143b58eb4d9bf52cd"
   ],
   "aliases": [
-    "CVE-2026-92525"
+    "CVE-2026-92525",
+    "GHSA-xqgc-mf52-qvg8"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "07cdec3e-68b2-3005-9faa-70e8386673ea",
@@ -120,16 +123,6 @@
       "product_version": "patch: 7.2.6"
     },
     {
-      "id": "d53996ac-1b93-3872-81ea-700253a795e0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "d6f2c1a6-5727-3af3-b85a-e79a8a87ffb3",
       "product": {
         "name": "Linux",
@@ -158,6 +151,16 @@
         }
       },
       "product_version": "8700e3e7c4857d28ebaa824509934556da0b3e76 <13cb7160e5b791f5e3ecf9311cf32849fe7e9b62"
+    },
+    {
+      "id": "f47aff7b-5b2b-3699-ad4f-f6d1fc005b8b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

@@ -3,8 +3,10 @@
   "enisaUuid": "a20e2376-4d9c-379a-89c4-eebd48a828e6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntipc: protect node reset trace dump with node lock\n\nThe tipc_node_reset_links trace event asks tipc_node_dump() to walk the\nnode's link entries. Unlike the other node events that request link data,\nthis event runs without the node lock.\n\nThis permits bearer teardown to free a link while the trace callback is\ndumping it:\n\n  CPU 0                                CPU 1\n  trace_tipc_node_reset_links()\n    tipc_node_dump()\n      l = n->links[0].link\n                                       tipc_node_write_lock()\n                                       kfree(l)\n                                       n->links[0].link = NULL\n                                       tipc_node_write_unlock()\n      tipc_link_dump(l)\n\ntipc_link_dump() then dereferences the stale pointer. KASAN reported:\n\n  BUG: KASAN: slab-use-after-free in tipc_link_dump\n  Read of size 4 by task poc/115\n  Call Trace:\n   tipc_link_dump+0x10cb/0x16b0\n   tipc_node_dump+0x4bb/0x740\n   trace_event_raw_event_tipc_node_class+0x258/0x360\n   tipc_node_reset_links+0x14d/0x1a0\n   tipc_rcv+0x13f5/0x3030\n   tipc_udp_recv+0x4e3/0x670\n  Allocated by task 0:\n   tipc_link_create+0x1e1/0x1020\n   tipc_node_check_dest+0x7d2/0x11a0\n   tipc_disc_rcv+0xdbf/0x1430\n  Freed by task 89:\n   kfree+0x131/0x3c0\n   tipc_node_link_down+0x267/0x4b0\n   tipc_node_delete_links+0xec/0x160\n   bearer_disable+0x107/0x260\n\nTake the node write lock around the trace event. This serializes the\ndump against tipc_node_link_down(delete=true), which frees the link\nunder the same write lock.",
   "datePublished": "Nov 3, 2026, 11:18:25 AM",
-  "dateUpdated": "Nov 3, 2026, 11:18:25 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 3, 2026, 7:14:37 PM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/c8b72ca0918e95f708f67c8b3e69b05290f2b6d2",
     "https://git.kernel.org/stable/c/6e492cb98ca69cc1145175e23e22e3b84da7f26d",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/dddf197f29ba5e47a476dde82bf542ca2e0d5e5e"
   ],
   "aliases": [
+    "GHSA-qwfh-hpch-ph73",
     "CVE-2026-99246"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.44,
   "enisaIdProduct": [
     {
       "id": "035a16d6-0f70-31fd-b977-9f13cff35d51",

@@ -3,7 +3,7 @@
   "enisaUuid": "8045797f-c496-3496-bdf1-76cecaeea363",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntracing: Unregister field variable histograms when the command fails\n\nAn action that names a field on another event needs that field as a\nvariable, so create_field_var_hist() registers a second hist trigger on\nthat event to provide it, and records it in\ntarget_hist_data->field_var_hists[].\n\nIf a later part of the same command fails, create_actions() returns an\nerror and event_hist_trigger_parse() jumps to out_free. The write fails\nwith -EINVAL and sched_switch gets no trigger, but:\n\n  # echo 'hist:keys=pid:ts0=common_timestamp.usecs' >> \\\n      events/sched/sched_waking/trigger\n  # echo 'my_synth u64 lat; int a; int b' >> synthetic_events\n  # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0:\\\n      onmatch(sched.sched_waking).my_synth($wakeup_lat,prio,nosuchfld)'\\\n      >> events/sched/sched_switch/trigger\n  # cat events/sched/sched_waking/trigger\n  hist:keys=pid:vals=hitcount:ts0=common_timestamp.usecs:sort=hitcount:size=2048:clock=global [active]\n  hist:keys=pid:vals=hitcount:synthetic_prio=prio:sort=hitcount:size=2048 [active]\n\nThe second histogram is the one created for 'prio'. It is still active and\nstill counting.\n\nout_free reaches destroy_field_var_hists(), which frees the\nfield_var_hists[] entries, but never unregister_field_var_hists(), which is\nwhat removes the triggers and runs only from event_hist_trigger_free(). The\nentry is freed and the trigger is left with nothing tracking it.\n\nUnregister the field variable histograms in out_free as well, and record\neach one as soon as its trigger is registered rather than after the lookup\nthat follows it, so no exit can leave a registered trigger untracked. The\nentry then belongs to field_var_hists[] and is released by\ndestroy_field_var_hists(), so freeing it on that exit would be a double\nfree.",
   "datePublished": "Nov 2, 2026, 4:06:41 PM",
-  "dateUpdated": "Nov 2, 2026, 4:06:41 PM",
+  "dateUpdated": "Nov 3, 2026, 7:13:02 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/f21351d1c4cdcc6a68f03636a407c2af1a5e1e10",
@@ -13,14 +13,26 @@
     "https://git.kernel.org/stable/c/8482ec5b65f606d5bbcec518e0afc69ad65ca414",
     "https://git.kernel.org/stable/c/431959fc76456cbba539279fe8967aa9391e6f23",
     "https://git.kernel.org/stable/c/5afb9317e2eeb1c7021a82995ce244fda5a4bd4f",
-    "https://git.kernel.org/stable/c/d0090baf02dd08f6e909f36f0ad54a4e80f5e79b"
+    "https://git.kernel.org/stable/c/d0090baf02dd08f6e909f36f0ad54a4e80f5e79b",
+    "https://git.kernel.org/stable/c/91c14d6c13096091c56304120aaa26e479130b8b"
   ],
   "aliases": [
+    "GHSA-593w-c428-4hpw",
     "CVE-2026-99234"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
+    {
+      "id": "0bce2a17-2521-35cd-944f-faa54cfd37e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "02205a6752f223779a1b0e9e8ffacbea6e717851 <91c14d6c13096091c56304120aaa26e479130b8b"
+    },
     {
       "id": "0ee5987d-9901-3747-9165-909d95aa1513",
       "product": {
@@ -160,6 +172,16 @@
         }
       },
       "product_version": "4.17"
+    },
+    {
+      "id": "e0a872fd-771f-3680-966e-956b0db110bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
     },
     {
       "id": "e6d00e12-a7b6-3324-94ab-7dfc0d9f1072",

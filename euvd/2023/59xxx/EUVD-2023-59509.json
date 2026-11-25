@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2023-59509",
+  "enisaUuid": "836cbe4c-c38a-3c53-98aa-95f3764e3804",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncxl/region: Do not try to cleanup after cxl_region_setup_targets() fails\n\nCommit 5e42bcbc3fef (\"cxl/region: decrement ->nr_targets on error in\ncxl_region_attach()\") tried to avoid 'eiw' initialization errors when\n->nr_targets exceeded 16, by just decrementing ->nr_targets when\ncxl_region_setup_targets() failed.\n\nCommit 86987c766276 (\"cxl/region: Cleanup target list on attach error\")\nextended that cleanup to also clear cxled->pos and p->targets[pos]. The\ninitialization error was incidentally fixed separately by:\nCommit 8d4285425714 (\"cxl/region: Fix port setup uninitialized variable\nwarnings\") which was merged a few days after 5e42bcbc3fef.\n\nBut now the original cleanup when cxl_region_setup_targets() fails\nprevents endpoint and switch decoder resources from being reused:\n\n1) the cleanup does not set the decoder's region to NULL, which results\n   in future dpa_size_store() calls returning -EBUSY\n2) the decoder is not properly freed, which results in future commit\n   errors associated with the upstream switch\n\nNow that the initialization errors were fixed separately, the proper\ncleanup for this case is to just return immediately. Then the resources\nassociated with this target get cleanup up as normal when the failed\nregion is deleted.\n\nThe ->nr_targets decrement in the error case also helped prevent\na p->targets[] array overflow, so add a new check to prevent against\nthat overflow.\n\nTested by trying to create an invalid region for a 2 switch * 2 endpoint\ntopology, and then following up with creating a valid region.",
+  "datePublished": "May 21, 2024, 3:31:07 PM",
+  "dateUpdated": "May 11, 2026, 7:33:14 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/90db4c1d5ebaf574d3c3065c055977982c378a83",
+    "https://git.kernel.org/stable/c/9090c5537c93cd0811ab7bfbd925b57addfffb60",
+    "https://git.kernel.org/stable/c/07ffcd8ec79cf7383e1e45815f4842fd357991c2",
+    "https://git.kernel.org/stable/c/0718588c7aaa7a1510b4de972370535b61dddd0d"
+  ],
+  "aliases": [
+    "CVE-2023-52792",
+    "GHSA-8v7x-4vvg-pgr3"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "1176d857-87a4-3d8d-9c12-8cfa2d8dea3a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5e42bcbc3fef6e759dfb4d3f4cfb394c382b4249 <90db4c1d5ebaf574d3c3065c055977982c378a83"
+    },
+    {
+      "id": "13f85544-723b-3177-81db-133ae7f8f199",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5e42bcbc3fef6e759dfb4d3f4cfb394c382b4249 <9090c5537c93cd0811ab7bfbd925b57addfffb60"
+    },
+    {
+      "id": "185ef80c-1751-3004-9764-2538b64ae9d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7"
+    },
+    {
+      "id": "19c1fd93-8505-378e-802a-05eebbaba3ae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "339656d9-9b5d-3e8b-954c-3378b4089e19",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5e42bcbc3fef6e759dfb4d3f4cfb394c382b4249 <0718588c7aaa7a1510b4de972370535b61dddd0d"
+    },
+    {
+      "id": "4193fec7-8797-3e11-acad-e03cdc52cedc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.64"
+    },
+    {
+      "id": "5364c596-4f48-3803-a103-484cdd411dc5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5e42bcbc3fef6e759dfb4d3f4cfb394c382b4249 <07ffcd8ec79cf7383e1e45815f4842fd357991c2"
+    },
+    {
+      "id": "6421e36f-7035-38d9-ab90-8083ba3a6c93",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.5.13"
+    },
+    {
+      "id": "7d15cb58-af27-355b-9fb6-e3cbfbf72857",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.0"
+    },
+    {
+      "id": "d2f97ad7-6ec5-37a6-b9da-2caf22307236",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ce1c296e-1e43-344d-beca-97c1048032fc",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

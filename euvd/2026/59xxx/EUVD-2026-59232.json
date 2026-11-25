@@ -2,23 +2,22 @@
   "id": "EUVD-2026-59232",
   "enisaUuid": "8f454214-b599-33d8-bfaa-006d76861084",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: L2CAP: fix tx ident leak for commands without a response\n\nCommit 6c3ea155e5ee (\"Bluetooth: L2CAP: Fix not tracking outstanding\nTX ident\") changed ident allocation to use an IDA, releasing idents in\nl2cap_put_ident() when the matching response command is received.\n\nBut identifiers allocated for commands that have no response defined\nare never released. In particular L2CAP_LE_CREDITS is sent repeatedly for\nthe lifetime of an LE CoC channel, so a peer streaming data to the\nhost exhausts the 1-255 ident range after 254 credit packets. From\nthen on l2cap_get_ident() fails:\n\n    kernel: Bluetooth: Unable to allocate ident: -28\n\nand every subsequent L2CAP_LE_CREDITS packet is sent with ident 0,\nwhich is invalid (Core Spec, Vol 3, Part A, Section 4: \"Signaling\nidentifier 0x00 is an invalid identifier and shall never be used in\nany command\"). Remote stacks that validate the ident drop these\ncommands, never receive new credits, and the channel stalls\npermanently. With default socket buffers this happens after roughly 0.5 MB\nof received data (the exact amount depends on the socket receive buffer):\n\n  < ACL Data TX: Handle 2048 flags 0x00 dlen 12\n        LE L2CAP: LE Flow Control Credit (0x16) ident 0 len 4\n          Source CID: 64\n          Credits: 1\n\nRelease the ident immediately after sending L2CAP_LE_CREDITS since no\nresponse will ever release it. Use a local variable instead of\nchan->ident so that an ident that an EXT_FLOWCTL channel may be waiting on\n(e.g. a pending reconfigure) is not overwritten by a credit packet.\n\nAlso add the missing L2CAP_LE_CONN_RSP case to l2cap_put_ident() so\nidents allocated for outgoing L2CAP_LE_CONN_REQ commands are released\nwhen the response arrives.",
-  "datePublished": "Aug 15, 2026, 6:32:20 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:20 AM",
+  "datePublished": "Aug 15, 2026, 5:55:42 AM",
+  "dateUpdated": "Aug 17, 2026, 5:12:40 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b8a32a5fc915b024c60f18d51b6cffd2bd64d4a6",
     "https://git.kernel.org/stable/c/bd1e01170341291292fd4c46b5f6949da282ca6c",
     "https://git.kernel.org/stable/c/0c602cb8f148a36bfb39c25ade400bdadc023c4f",
     "https://git.kernel.org/stable/c/d0a2b0c81f112540a337cde1c20251bf05ddf1da",
-    "https://git.kernel.org/stable/c/6e1930ece855a4c256f1c7e6632d634cfb9888b5",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72333"
+    "https://git.kernel.org/stable/c/6e1930ece855a4c256f1c7e6632d634cfb9888b5"
   ],
   "aliases": [
     "CVE-2026-72333",
     "GHSA-7qqh-36vf-8r78"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "02043f7d-6e93-34a8-80e8-a42385cabdb5",
@@ -49,6 +48,16 @@
         }
       },
       "product_version": "6.19.11 <6.20"
+    },
+    {
+      "id": "38f7e199-7551-336f-8f31-d8210af05494",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "3f661bf7-d2a7-3ccc-b829-69bbf75aff0b",
@@ -89,16 +98,6 @@
         }
       },
       "product_version": "6c3ea155e5ee3e56606233acde8309afda66d483 <6e1930ece855a4c256f1c7e6632d634cfb9888b5"
-    },
-    {
-      "id": "a19b95e7-d6f9-3972-b2e9-16ec385dd6df",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     },
     {
       "id": "ad0a4ff7-a3b7-3193-ab0d-46bc7ce93eea",

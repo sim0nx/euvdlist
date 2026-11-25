@@ -3,7 +3,7 @@
   "enisaUuid": "1f5372db-1362-3305-899a-972983c8c1a3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niommufd: Move vevent memory allocation outside spinlock\n\nThe veventq memory allocation happens inside the spinlock. Given its depth\nis decided by the user space, this leaves a vulnerability, where userspace\ncan allocate large queues to exhaust atomic memory reserves.\n\nMove the allocation outside the spinlock and use GFP_NOWAIT, which can fail\nfast under memory pressure without dipping into the GFP_ATOMIC reserves or\ndirect-reclaiming from the threaded IRQ handler. On allocation failure,\nqueue the lost_events_header (so userspace learns of the drop) and return\n-ENOMEM so the caller learns of the kernel-side memory pressure.\n\nThis is intentionally distinct from the queue-overflow path, which also\nqueues the lost_events_header but returns 0: a full queue is an expected\nuserspace-pacing condition rather than a kernel error.\n\nA subsequent change will cap the upper bound of the veventq_depth.",
   "datePublished": "Jul 25, 2026, 8:49:31 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:31 AM",
+  "dateUpdated": "Nov 6, 2026, 4:34:33 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/779480ea79551c31964e74b9aef0e730faa3aa11",
@@ -11,11 +11,22 @@
     "https://git.kernel.org/stable/c/47443565d10c51366c9382dbc8597cd6c460b8a2"
   ],
   "aliases": [
+    "GHSA-gr72-p8g3-6gpc",
     "CVE-2026-64292"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
+    {
+      "id": "4b50faf2-29e1-3411-bc3f-a2df19dc18e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "5090e7f5-38ef-3ab3-a61d-3de312a8ba3e",
       "product": {
@@ -35,16 +46,6 @@
         }
       },
       "product_version": "e36ba5ab808ef6237c3148d469c8238674230e2b <47443565d10c51366c9382dbc8597cd6c460b8a2"
-    },
-    {
-      "id": "70db30a9-e767-39ba-bad0-6139fb8949b3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "7d865064-d03d-324a-b965-00229127d0de",

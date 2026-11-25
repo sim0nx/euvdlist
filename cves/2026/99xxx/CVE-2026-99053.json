@@ -3,9 +3,14 @@
   "enisaUuid": "49307890-6cf6-3fd8-bbef-829202e24d8e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntipc: hold a reference to nodes found by link name\n\ntipc_node_find_by_name() returns a node after dropping its RCU read lock\nwithout taking a reference.  The LINK_SET, LINK_GET and LINK_RESET_STATS\nhandlers then lock and access the node, racing with timer-driven cleanup of\na down peer.  Generic netlink serialization does not exclude the node\ntimer.\n\nThe following interleaving can leave a handler using a freed node:\n\n  CPU 0: find the node under RCU and release the node read lock\n  CPU 1: tipc_node_timeout() clears the links and unlinks the down node\n  CPU 1: drop the list and timer references, queuing tipc_node_free()\n  CPU 0: leave the RCU read-side critical section\n  CPU 1: complete the grace period and free the node\n  CPU 0: acquire the node lock through the stale pointer\n\nLINK_SET also uses the node's media address after releasing the node lock,\nwhen passing queued packets to tipc_bearer_xmit().\n\nKASAN on v7.3-rc5 reported:\n\n  BUG: KASAN: slab-use-after-free in _raw_read_lock_bh\n  Write of size 4 at addr ffff88807e06f008 by task poc/92\n  Call Trace:\n   _raw_read_lock_bh                 kernel/locking/spinlock.c:287\n   tipc_nl_node_set_link             net/tipc/node.c:2475\n   genl_family_rcv_msg_doit          net/netlink/genetlink.c:1114\n   genl_rcv_msg                      net/netlink/genetlink.c:1209\n   netlink_rcv_skb                   net/netlink/af_netlink.c:2575\n\n  Allocated by task 0:\n   tipc_node_create                  net/tipc/node.c:539\n   tipc_node_check_dest              net/tipc/node.c:1196\n   tipc_disc_rcv                     net/tipc/discover.c:252\n\n  Freed by task 92:\n   kfree                             mm/slub.c:6801\n   rcu_core                          kernel/rcu/tree.c:2919\n\n  Last potentially related work creation:\n   __call_rcu_common.constprop.0     kernel/rcu/tree.c:3181\n   tipc_node_timeout                 net/tipc/node.c:814\n\nAcquire a reference to the selected node with kref_get_unless_zero() before\nleaving RCU, returning NULL if the node has already been released.  Release\nthat reference on every caller exit after the last node access, including\ntransmission in LINK_SET.  Keep the existing link lookup order and locking\nso concurrent link removal still takes the existing error paths.",
   "datePublished": "Oct 23, 2026, 12:22:35 PM",
-  "dateUpdated": "Oct 23, 2026, 12:22:35 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:41:20 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/384edc67201f8561b7de952647b923f0524b1f36",
+    "https://git.kernel.org/stable/c/5b7e58e8be90f4e8530e7a60372d003dfa7fd666",
+    "https://git.kernel.org/stable/c/92f3b3368722631e933a4db0cf8bd578ed08cd9c",
     "https://git.kernel.org/stable/c/b60259d4047fbb735476c729dcf9306a038b6110",
     "https://git.kernel.org/stable/c/f17e70206a1e763fcca2578a8db3c4eed0f843a9",
     "https://git.kernel.org/stable/c/1428c5f1d346a2e1ac9156713975a72246957009",
@@ -13,10 +18,11 @@
     "https://git.kernel.org/stable/c/17e73bae400f6a434dc006e3bee92c94cf781954"
   ],
   "aliases": [
+    "GHSA-j7x4-wphj-g9x9",
     "CVE-2026-99053"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "024a167f-3d2d-31c7-953c-fafc5dfe7c9d",
@@ -29,6 +35,16 @@
       "product_version": "6a939f365bdb03a74b4617bdb4402fc08da088b9 <3c3b308ee6e25729a6cf09b69cdd0e093220d40b"
     },
     {
+      "id": "0d65c1f6-c143-329b-b18e-10ac4d2436a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
       "id": "0e905630-f0a4-3566-9aa2-c1dd7dc2a5d6",
       "product": {
         "name": "Linux",
@@ -39,6 +55,16 @@
       "product_version": "6a939f365bdb03a74b4617bdb4402fc08da088b9 <1428c5f1d346a2e1ac9156713975a72246957009"
     },
     {
+      "id": "2406e58f-0ffa-31af-b3c9-7ac700542367",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6a939f365bdb03a74b4617bdb4402fc08da088b9 <384edc67201f8561b7de952647b923f0524b1f36"
+    },
+    {
       "id": "365e17d1-e732-3f00-8152-7823a3632c31",
       "product": {
         "name": "Linux",
@@ -47,6 +73,16 @@
         }
       },
       "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "3b88809e-c894-30c6-b08d-f60d92da9379",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
     },
     {
       "id": "4c93d570-0357-303f-8b5b-9deb28a79d65",
@@ -99,6 +135,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "801dd7ff-bef4-38f3-a937-0e414a5cf33c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6a939f365bdb03a74b4617bdb4402fc08da088b9 <92f3b3368722631e933a4db0cf8bd578ed08cd9c"
+    },
+    {
       "id": "a333682c-640d-36a7-8b0a-9c4c8a674157",
       "product": {
         "name": "Linux",
@@ -107,6 +153,16 @@
         }
       },
       "product_version": "patch: 6.18.57"
+    },
+    {
+      "id": "adbf5a64-5980-3917-b772-4d167ca7f44f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6a939f365bdb03a74b4617bdb4402fc08da088b9 <5b7e58e8be90f4e8530e7a60372d003dfa7fd666"
     },
     {
       "id": "cc23f72e-3483-3dc7-bfb0-cb2b924851f1",
@@ -137,6 +193,16 @@
         }
       },
       "product_version": "patch: 7.3"
+    },
+    {
+      "id": "f80ec5b5-5c02-3bff-8cfa-2375c1b4e2cf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     }
   ],
   "enisaIdVendor": [

@@ -3,7 +3,7 @@
   "enisaUuid": "388b54bb-2ea9-39b9-9d58-3637517044f7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: usbfs: fix use-after-free of usb_device in usbdev_release()\n\nusbdev_release() drops its reference to the struct usb_device before\ndraining the list of completed async URBs, but that drain path reads back\nthrough the same object: free_async() calls dec_usb_memory_use_count()\nfor any URB whose buffer came from the usbfs mmap() region, and its first\nstatement is bus_to_hcd(ps->dev->bus).\n\nAfter a disconnect the usbfs reference can be the last one, in which case\nusb_put_dev() frees the device and the subsequent loop reads offset 80 of\nfreed memory and uses the result as a struct usb_hcd *, which\nhcd_buffer_free_pages() then dereferences.\n\nThis is reachable by an unprivileged process that has read/write access to\na /dev/bus/usb node: mmap() the fd, submit one URB with a buffer inside the\nmapping, wait for the device to be unplugged, then munmap() and close().\nIt reproduces on every attempt rather than being a race, because a live\nMAP_SHARED vma holds a reference on the struct file, so usbdev_release()\ncannot run until the last vma is gone and the freeing branch of\ndec_usb_memory_use_count() is always taken.\n\n  BUG: KASAN: slab-use-after-free in dec_usb_memory_use_count+0x3ae/0x410\n  Read of size 8 at addr ffff8880122ee050 by task poc/769\n  CPU: 1 UID: 1000 PID: 769 Comm: poc Tainted: G    B    6.12.94 #3\n\n  Call Trace:\n   dec_usb_memory_use_count+0x3ae/0x410\n   free_async+0x2aa/0x4f0\n   usbdev_release+0x375/0x460\n   __fput+0x3ea/0xb50\n   __x64_sys_close+0x86/0x100\n\n  Allocated by task 11:\n   usb_alloc_dev+0x55/0xd90\n   hub_event+0x2524/0x43d0\n\n  Freed by task 769:\n   kfree+0x121/0x360\n   device_release+0xd2/0x280\n   usb_put_dev+0x23/0x30\n   usbdev_release+0x2d8/0x460\n\nRelease the device reference after the drain loop instead. Nothing between\nthe two points requires it to have been dropped.",
   "datePublished": "Sep 4, 2026, 3:54:28 PM",
-  "dateUpdated": "Sep 4, 2026, 3:54:28 PM",
+  "dateUpdated": "Oct 19, 2026, 8:44:16 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/0a960b88c5979f853019d4dc4957dfbeeb193440",
@@ -17,10 +17,11 @@
     "https://git.kernel.org/stable/c/0dd68b5d01d022fc9c5e71c82a82b0a94d3d0671"
   ],
   "aliases": [
+    "GHSA-j9hx-p692-x42g",
     "CVE-2026-80824"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "09a67db9-d635-36f6-a92a-6bd12396b480",
@@ -103,14 +104,14 @@
       "product_version": "patch: 7.2.3"
     },
     {
-      "id": "8001412c-6ab2-3b51-bdbe-b9c4ca535779",
+      "id": "83d6fe8c-2bc3-39f6-a6a7-bffba14d99ae",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "89927125-b674-3c0c-9955-8664a50b9866",

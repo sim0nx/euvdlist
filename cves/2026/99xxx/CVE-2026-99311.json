@@ -3,20 +3,32 @@
   "enisaUuid": "73bdd2bc-fcc0-3f29-84c1-b5f1fdd7e3b4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nudf: fix return value for non-recorded-allocated extents in udf_map_block()\n\nWhen someone creates a corrupted UDF filesystem where symlink contains\nother extent type than EXT_RECORDED_ALLOCATED, it can leads to a crash\nlike:\n\n Oops: general protection fault\n KASAN: maybe wild-memory-access\n RIP: 0010:page_get_link (fs/namei.c:6503)\n Call Trace:\n  vfs_readlink (fs/namei.c:6419)\n  do_readlinkat (fs/stat.c:583)\n  __x64_sys_readlink (fs/stat.c:605 fs/stat.c:602 fs/stat.c:602)\n\nThis is because in this case udf_map_block() fails to convert return\nvalue of inode_bmap() from 1 to 0. Returned '1' propagates through\nudf_bread() all the way up to __page_get_link() where it ends up being\ntreated as a folio pointer with obvious results.\n\nMove the reset to 0 line outside the if, so udf_map_block() returns either\n0 or -errno, even if the extent type is not EXT_RECORDED_ALLOCATED.",
   "datePublished": "Nov 16, 2026, 9:59:33 AM",
-  "dateUpdated": "Nov 16, 2026, 9:59:33 AM",
+  "dateUpdated": "Nov 23, 2026, 8:01:16 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/744d27de2819bb3bbada2ddb380c0fa798d322ce",
     "https://git.kernel.org/stable/c/0d7f6c2b3c07fa239ebc169280eba9932cc56f46",
     "https://git.kernel.org/stable/c/df713b82b4b9671c16b52b60f3412c677719e2b8",
     "https://git.kernel.org/stable/c/f022984a4a1c18aa9c506790eb47da000dce95a7",
     "https://git.kernel.org/stable/c/0f242ca0878896df30292f4922700a32e8fdd039"
   ],
   "aliases": [
+    "GHSA-6m96-2phx-3668",
     "CVE-2026-99311"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
+    {
+      "id": "0dde6c55-c976-3ffc-96d5-85a984c816d9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
     {
       "id": "0e29e909-15c7-338e-8bc0-f7dad067c31d",
       "product": {
@@ -46,6 +58,16 @@
         }
       },
       "product_version": "c226964ec786f3797ed389a16392ce4357697d24 <0f242ca0878896df30292f4922700a32e8fdd039"
+    },
+    {
+      "id": "28135176-aaf9-35e4-9927-ac1530638b2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "493447dd8336607fce426f7879e581095f6c606e <744d27de2819bb3bbada2ddb380c0fa798d322ce"
     },
     {
       "id": "2ffff681-12ec-345c-970e-a1e5f2299170",
@@ -108,14 +130,14 @@
       "product_version": "b22d9a5698abf04341f8fbc30141e0673863c3a6"
     },
     {
-      "id": "a00007d8-b297-34c7-ab58-b9fcb27a809c",
+      "id": "80b292f7-08d6-3a89-a994-5f996b41671c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.6.59 <6.7"
+      "product_version": "6.6.59 <6.6.163"
     },
     {
       "id": "a6247db9-0830-3292-9b33-9008b8276eb0",
@@ -146,16 +168,6 @@
         }
       },
       "product_version": "6.12"
-    },
-    {
-      "id": "eaccabf6-f09b-3295-bbb0-76fdb4b52d5b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "493447dd8336607fce426f7879e581095f6c606e"
     }
   ],
   "enisaIdVendor": [

@@ -3,7 +3,7 @@
   "enisaUuid": "3906ee1b-caa7-3926-a3f2-9b914ce2fbb6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncuse: wait for pending RCU callbacks on module exit\n\nSince commit 053fc4f755ad (\"fuse: fix UAF in rcu pathwalks\"),\nfuse_conn_put() frees the fuse_conn through call_rcu() rather than\nsynchronously.  For cuse, fc->release is cuse_fc_release(), which\nlives in the cuse module.  If the module is removed before the RCU\ngrace period ends, the callback jumps into freed module memory:\n\n      userspace / module unload      |        RCU softirq\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n close(/dev/cuse)                    |\n  cuse_channel_release()             |\n   fuse_dev_release()                |\n    fuse_conn_put(fch->conn)         |\n     call_rcu(delayed_release) ------+---> callback queued\n                                     |\n rmmod cuse                          |\n  cuse_exit()                        |\n   cuse_channel_destroy()            |\n   ...                               |\n   return                            |\n                                     |\n <module text freed>                 |\n                                     |  rcu_do_batch()\n                                     |   delayed_release()\n                                     |    fc->release()\n                                     |     -> cuse_fc_release()\n                                     |        ^^^ freed text!\n\nThe freed module text is unmapped by vfree(), so the jump into the\nstale callback triggers a page-fault Oops.  If the virtual address\nis subsequently reused, the callback could execute unrelated code\n(undefined behaviour).\n\nFix this by calling rcu_barrier() in cuse_exit() so that any pending\nfuse_conn release callback completes before the module is removed.",
   "datePublished": "Sep 17, 2026, 4:06:37 PM",
-  "dateUpdated": "Sep 17, 2026, 4:06:37 PM",
+  "dateUpdated": "Oct 19, 2026, 8:58:38 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/7fe415e1cd8fa875be263670c0ab47109818abb6",
@@ -15,10 +15,11 @@
     "https://git.kernel.org/stable/c/4deb3edead0c0e172cc7349e8855d741d3c5e162"
   ],
   "aliases": [
+    "GHSA-h4xp-2gp9-vpwg",
     "CVE-2026-90140"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "06dd75b8-5758-3436-be12-884dae190100",
@@ -49,6 +50,16 @@
         }
       },
       "product_version": "5.15.166 <5.15.221"
+    },
+    {
+      "id": "0f173db2-bc7f-37a4-b6d1-3a5d0160d76e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "0f2bbb11-7c29-3a63-9bca-d067282beba7",
@@ -109,16 +120,6 @@
         }
       },
       "product_version": "535e9bd0e8f8d8cfdc29de7cdb902b5041427fe6 <ac5c499413385cea3e0220d6050408d50842891d"
-    },
-    {
-      "id": "58313f93-11f8-32b9-9b10-7736239a1fb7",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "5a6c02c7-8ee2-37c9-8d5b-2c5c9f91175e",

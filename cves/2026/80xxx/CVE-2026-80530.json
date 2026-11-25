@@ -3,8 +3,10 @@
   "enisaUuid": "65e10c2c-e954-3fe6-b725-b7e16efa9986",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfs: fix exchange-range reflink flag clearing issue with INO1_WRITTEN\n\nWhen exchanging two full-file ranges, xmi_can_exchange_reflink_flags()\ncan move the reflink inode flag from the file that currently has it to\nthe other file, as long as exactly one side is marked.  This assumes\nthat the file contents, and therefore all shared extents, are exchanged.\n\nThat assumption is not true when XFS_EXCHMAPS_INO1_WRITTEN is set.\nxfs_exchmaps_can_skip_mapping() can skip hole and unwritten mappings\nfrom file1, so an exchange can complete without moving every mapping\nthat the earlier flag-swap decision accounted for.  In that case the\npost-operation cleanup can clear the reflink flag from an inode that\nstill owns shared written extents.  Later writes then take the\nnon-reflink write path and may update blocks that should still have\nbeen protected by CoW, which shows up as data corruption between\nreflink-related files.\n\nFix this by disabling the reflink flag exchange whenever\nXFS_EXCHMAPS_INO1_WRITTEN is requested.  The contents exchange can still\nproceed; the conservative outcome is that both inodes keep the reflink\nflag.  The regular reflink flag cleanup path can drop the extra flag\nlater once the inode no longer has shared extents.",
   "datePublished": "Aug 26, 2026, 2:37:07 PM",
-  "dateUpdated": "Aug 26, 2026, 2:37:07 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:26:24 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
   "references": [
     "https://git.kernel.org/stable/c/2efbd8890b53f4756fdc7b0ef346fa514ffb7d66",
     "https://git.kernel.org/stable/c/0f27b22343b63e10773e6781344640c2c753eec3",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/b2d5a81dae385333f9734910277fbf94c78bd17f"
   ],
   "aliases": [
-    "CVE-2026-80530"
+    "CVE-2026-80530",
+    "GHSA-qxc6-78q3-77vp"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "2280c4fa-2c02-3c90-8cfc-ecc61a40698d",

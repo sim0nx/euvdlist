@@ -1,0 +1,172 @@
+{
+  "id": "EUVD-2024-35652",
+  "enisaUuid": "9017ae95-a832-3b5d-ad89-d19abec954ed",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/smc: reduce rtnl pressure in smc_pnet_create_pnetids_list()\n\nMany syzbot reports show extreme rtnl pressure, and many of them hint\nthat smc acquires rtnl in netns creation for no good reason [1]\n\nThis patch returns early from smc_pnet_net_init()\nif there is no netdevice yet.\n\nI am not even sure why smc_pnet_create_pnetids_list() even exists,\nbecause smc_pnet_netdev_event() is also calling\nsmc_pnet_add_base_pnetid() when handling NETDEV_UP event.\n\n[1] extract of typical syzbot reports\n\n2 locks held by syz-executor.3/12252:\n  #0: ffffffff8f369610 (pernet_ops_rwsem){++++}-{3:3}, at: copy_net_ns+0x4c7/0x7b0 net/core/net_namespace.c:491\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_create_pnetids_list net/smc/smc_pnet.c:809 [inline]\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_net_init+0x10a/0x1e0 net/smc/smc_pnet.c:878\n2 locks held by syz-executor.4/12253:\n  #0: ffffffff8f369610 (pernet_ops_rwsem){++++}-{3:3}, at: copy_net_ns+0x4c7/0x7b0 net/core/net_namespace.c:491\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_create_pnetids_list net/smc/smc_pnet.c:809 [inline]\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_net_init+0x10a/0x1e0 net/smc/smc_pnet.c:878\n2 locks held by syz-executor.1/12257:\n  #0: ffffffff8f369610 (pernet_ops_rwsem){++++}-{3:3}, at: copy_net_ns+0x4c7/0x7b0 net/core/net_namespace.c:491\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_create_pnetids_list net/smc/smc_pnet.c:809 [inline]\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_net_init+0x10a/0x1e0 net/smc/smc_pnet.c:878\n2 locks held by syz-executor.2/12261:\n  #0: ffffffff8f369610 (pernet_ops_rwsem){++++}-{3:3}, at: copy_net_ns+0x4c7/0x7b0 net/core/net_namespace.c:491\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_create_pnetids_list net/smc/smc_pnet.c:809 [inline]\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_net_init+0x10a/0x1e0 net/smc/smc_pnet.c:878\n2 locks held by syz-executor.0/12265:\n  #0: ffffffff8f369610 (pernet_ops_rwsem){++++}-{3:3}, at: copy_net_ns+0x4c7/0x7b0 net/core/net_namespace.c:491\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_create_pnetids_list net/smc/smc_pnet.c:809 [inline]\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_net_init+0x10a/0x1e0 net/smc/smc_pnet.c:878\n2 locks held by syz-executor.3/12268:\n  #0: ffffffff8f369610 (pernet_ops_rwsem){++++}-{3:3}, at: copy_net_ns+0x4c7/0x7b0 net/core/net_namespace.c:491\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_create_pnetids_list net/smc/smc_pnet.c:809 [inline]\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_net_init+0x10a/0x1e0 net/smc/smc_pnet.c:878\n2 locks held by syz-executor.4/12271:\n  #0: ffffffff8f369610 (pernet_ops_rwsem){++++}-{3:3}, at: copy_net_ns+0x4c7/0x7b0 net/core/net_namespace.c:491\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_create_pnetids_list net/smc/smc_pnet.c:809 [inline]\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_net_init+0x10a/0x1e0 net/smc/smc_pnet.c:878\n2 locks held by syz-executor.1/12274:\n  #0: ffffffff8f369610 (pernet_ops_rwsem){++++}-{3:3}, at: copy_net_ns+0x4c7/0x7b0 net/core/net_namespace.c:491\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_create_pnetids_list net/smc/smc_pnet.c:809 [inline]\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_net_init+0x10a/0x1e0 net/smc/smc_pnet.c:878\n2 locks held by syz-executor.2/12280:\n  #0: ffffffff8f369610 (pernet_ops_rwsem){++++}-{3:3}, at: copy_net_ns+0x4c7/0x7b0 net/core/net_namespace.c:491\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_create_pnetids_list net/smc/smc_pnet.c:809 [inline]\n  #1: ffffffff8f375b88 (rtnl_mutex){+.+.}-{3:3}, at: smc_pnet_net_init+0x10a/0x1e0 net/smc/smc_pnet.c:878",
+  "datePublished": "May 19, 2024, 10:10:41 AM",
+  "dateUpdated": "Oct 15, 2026, 12:41:32 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/bc4d1ebca11b4f194e262326bd45938e857c59d2",
+    "https://git.kernel.org/stable/c/b9117dc783c0ab0a3866812f70e07bf2ea071ac4",
+    "https://git.kernel.org/stable/c/d7ee3bf0caf599c14db0bf4af7aacd6206ef8a23",
+    "https://git.kernel.org/stable/c/a2e6bffc0388526ed10406040279a693d62b36ec",
+    "https://git.kernel.org/stable/c/6e920422e7104928f760fc0e12b6d65ab097a2e7",
+    "https://git.kernel.org/stable/c/00af2aa93b76b1bade471ad0d0525d4d29ca5cc0"
+  ],
+  "aliases": [
+    "CVE-2024-35934",
+    "GHSA-xvf2-5mhq-w7h6"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "03b89305-cd71-3f54-afbe-1504737a3748",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e888a2e8337c96dd785d204cf8ff775e79173add <bc4d1ebca11b4f194e262326bd45938e857c59d2"
+    },
+    {
+      "id": "043bce1d-7982-3d90-8096-c236c4089e12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e888a2e8337c96dd785d204cf8ff775e79173add <6e920422e7104928f760fc0e12b6d65ab097a2e7"
+    },
+    {
+      "id": "3493bd47-4aad-3832-8d7f-b8cb280000f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.86"
+    },
+    {
+      "id": "3e124c66-415f-3032-bdeb-de4f9e4c2c9a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "4062d4bc-09c9-3d75-8649-5a4d9e9a2b40",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "40adfde6-ba23-3554-ae3d-ab727a5af6d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e888a2e8337c96dd785d204cf8ff775e79173add <a2e6bffc0388526ed10406040279a693d62b36ec"
+    },
+    {
+      "id": "50dd65fe-5c73-3bea-97a3-d2cc12919d1c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e888a2e8337c96dd785d204cf8ff775e79173add <d7ee3bf0caf599c14db0bf4af7aacd6206ef8a23"
+    },
+    {
+      "id": "7995badf-8d20-32b1-a314-ac2a18d79693",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.215"
+    },
+    {
+      "id": "83023772-2092-3327-b19b-94cbac109630",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.27"
+    },
+    {
+      "id": "88a9baaa-2b51-3b50-9183-2971172eac23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10"
+    },
+    {
+      "id": "92794164-7f58-3639-afcc-98c2f1c1225a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e888a2e8337c96dd785d204cf8ff775e79173add <b9117dc783c0ab0a3866812f70e07bf2ea071ac4"
+    },
+    {
+      "id": "afd4dccd-5a78-35c1-9e0e-429456e55ee9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.155"
+    },
+    {
+      "id": "b6f53896-eb18-3fec-b33e-461fe21d7ef1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.6"
+    },
+    {
+      "id": "fd8aeee9-9488-35a4-b1c1-9a7bfdacbcb5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e888a2e8337c96dd785d204cf8ff775e79173add <00af2aa93b76b1bade471ad0d0525d4d29ca5cc0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "957d74b8-94db-39bc-82dc-18cd4502e362",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

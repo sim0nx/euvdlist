@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2021-33590",
+  "enisaUuid": "08750c18-5a2c-35ca-af52-1adf1dcbc519",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring: fix shared sqpoll cancellation hangs\n\n[  736.982891] INFO: task iou-sqp-4294:4295 blocked for more than 122 seconds.\n[  736.982897] Call Trace:\n[  736.982901]  schedule+0x68/0xe0\n[  736.982903]  io_uring_cancel_sqpoll+0xdb/0x110\n[  736.982908]  io_sqpoll_cancel_cb+0x24/0x30\n[  736.982911]  io_run_task_work_head+0x28/0x50\n[  736.982913]  io_sq_thread+0x4e3/0x720\n\nWe call io_uring_cancel_sqpoll() one by one for each ctx either in\nsq_thread() itself or via task works, and it's intended to cancel all\nrequests of a specified context. However the function uses per-task\ncounters to track the number of inflight requests, so it counts more\nrequests than available via currect io_uring ctx and goes to sleep for\nthem to appear (e.g. from IRQ), that will never happen.\n\nCancel a bit more than before, i.e. all ctxs that share sqpoll\nand continue to use shared counters. Don't forget that we should not\nremove ctx from the list before running that task_work sqpoll-cancel,\notherwise the function wouldn't be able to find the context and will\nhang.",
+  "datePublished": "Feb 27, 2024, 6:40:29 PM",
+  "dateUpdated": "May 11, 2026, 1:44:53 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/cb5e0b3d0f993a6268c1a2c7ede2f9aa0c17ef68",
+    "https://git.kernel.org/stable/c/734551df6f9bedfbefcd113ede665945e9de0b99"
+  ],
+  "aliases": [
+    "CVE-2021-46942",
+    "GHSA-rhmj-w54j-qcf6"
+  ],
+  "assigner": "Linux",
+  "epss": 0.19,
+  "enisaIdProduct": [
+    {
+      "id": "0ce061cc-47a3-3787-952d-5a4e42fa8352",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "0e3d3f64-9ba0-3521-b03f-6ec82a3d986a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.12"
+    },
+    {
+      "id": "0e5ce245-b5a2-363c-a03b-91e6276de165",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.3"
+    },
+    {
+      "id": "b75e4327-c13e-335f-ad09-b4cab400fc72",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "37d1e2e3642e2380750d7f35279180826f29660e <cb5e0b3d0f993a6268c1a2c7ede2f9aa0c17ef68"
+    },
+    {
+      "id": "da0d3931-8645-357a-884f-b533fa4b60ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "37d1e2e3642e2380750d7f35279180826f29660e <734551df6f9bedfbefcd113ede665945e9de0b99"
+    },
+    {
+      "id": "efb6516a-2cd1-3b08-8ebe-3e9bb5ea528c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "13297dde-68a6-3edb-b81a-8911ea9e95d7",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

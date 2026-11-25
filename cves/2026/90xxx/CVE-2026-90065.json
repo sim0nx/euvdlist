@@ -3,7 +3,7 @@
   "enisaUuid": "409c0eba-f28c-34e9-93c3-f0f2742b0a42",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/smc: release the internal TCP sock on IPPROTO_SMC socket creation failure\n\nIPPROTO_SMC sockets create an internal TCP sock (\"clcsock\") from the\nproto->init hook. When socket creation fails after proto->init has\nrun - e.g. a cgroup BPF program attached to BPF_CGROUP_INET_SOCK_CREATE\ndenies the socket - sk_common_release() only invokes sk_prot->destroy\nif it is set, but neither smc_inet_prot nor smc_inet6_prot defines it,\nand smc_destruct() returns early unless sk_state is SMC_CLOSED. As a\nresult, every failing socket(AF_INET, SOCK_STREAM, IPPROTO_SMC) call\nleaks one tcp_sock, so an unprivileged task able to attach a deny-all\nBPF_CGROUP_INET_SOCK_CREATE program to its own cgroup can grow kernel\nmemory unboundedly.\n\nAdd a .destroy hook to both protos that releases the clcsock via\nsmc_clcsock_release(). smc_sk_init() hashes the sock into the smc\nhashinfo before the clcsock is created, and smc_diag dumps walk that\nhash dereferencing smc->clcsock without taking clcsock_release_lock,\nwhile sk_common_release() calls .destroy before .unhash. Unhash the\nsock before releasing the clcsock, as __smc_release() does, so a\nconcurrent dump cannot observe the release; the second unhash in\nsk_common_release() is a no-op.",
   "datePublished": "Sep 17, 2026, 4:05:48 PM",
-  "dateUpdated": "Sep 17, 2026, 4:05:48 PM",
+  "dateUpdated": "Oct 19, 2026, 8:57:22 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2f4ece7fed6d915ec64b7735962c0d84d6261032",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/cec261b0b4c5c0b044165303198d10ffcdf3414c"
   ],
   "aliases": [
+    "GHSA-6c8w-4wvx-63q5",
     "CVE-2026-90065"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "0b92051a-282d-3569-8645-d16de7b76e78",
@@ -26,16 +27,6 @@
         }
       },
       "product_version": "d25a92ccae6bed02327b63d138e12e7806830f78 <2f4ece7fed6d915ec64b7735962c0d84d6261032"
-    },
-    {
-      "id": "3b98c1d1-dc38-3452-ba2f-65639cd9b8b7",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "4d775bc0-8c1a-3bb1-8ef7-717caa0cd06d",
@@ -66,6 +57,16 @@
         }
       },
       "product_version": "patch: 6.12.110"
+    },
+    {
+      "id": "8874707d-bd2e-3deb-a153-29931d7bf2b5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "9bad64d5-0d78-3c42-a4cd-ca4281ab0abe",

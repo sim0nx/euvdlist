@@ -3,8 +3,10 @@
   "enisaUuid": "cda75509-3a5f-3458-a971-1895dbf5a818",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npartitions: aix: bound the pp_count scan to the ppe array\n\naix_partition() reads the physical volume descriptor into a fixed-size\nstruct pvd and then scans its physical-partition-extent array:\n\n\tint numpps = be16_to_cpu(pvd->pp_count);\n\t...\n\tfor (i = 0; i < numpps; i += 1) {\n\t\tstruct ppe *p = pvd->ppe + i;\n\t\t...\n\t\tlp_ix = be16_to_cpu(p->lp_ix);\n\npvd points at a single kmalloc()'d struct pvd whose ppe[] member holds a\nfixed ARRAY_SIZE(pvd->ppe) (1016) entries, but the loop runs up to the\non-disk pp_count.  pp_count is an unvalidated __be16 read straight from\nthe descriptor, so a crafted AIX image with pp_count larger than 1016\ndrives the loop to read pvd->ppe[i] past the end of the allocation (up\nto 65535 entries, ~2 MB out of bounds).\n\nThe partition scan runs without mounting anything, when a block device\nwith a crafted AIX/IBM partition table appears (an attacker-supplied\nimage attached with losetup -P, or a device auto-scanned by udev), via\nmsdos_partition() -> aix_partition().\n\nClamp the scan to the number of entries the ppe[] array can hold.",
   "datePublished": "Jul 25, 2026, 8:49:47 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:47 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:53:18 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/09861651617ba0fec089e8b9477439e68398c110",
     "https://git.kernel.org/stable/c/5eacdb1967378f5e5591cd27a2d8cdee2df1a599",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/2dc0bfd2fe355fb930de63c2f2eb8ced8570c579"
   ],
   "aliases": [
+    "GHSA-499p-p84w-r6w8",
     "CVE-2026-64318"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "0a205bba-7476-3e9d-90c7-d6dd1ad0bc82",
@@ -40,6 +43,16 @@
         }
       },
       "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "18a6acc2-f04e-3902-a3dc-104d5c6db5f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "2e8e6072-0dbd-37df-b5f9-b38190bad837",
@@ -120,16 +133,6 @@
         }
       },
       "product_version": "patch: 5.10.261"
-    },
-    {
-      "id": "8f3d49e0-5266-31ea-8c59-44899923f4c6",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "adfb7d74-0c36-3430-9eb9-4492820acae6",

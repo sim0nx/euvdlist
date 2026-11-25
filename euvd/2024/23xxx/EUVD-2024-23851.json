@@ -1,0 +1,174 @@
+{
+  "id": "EUVD-2024-23851",
+  "enisaUuid": "da4b0544-c189-3104-9e62-14d7f9b26cd1",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Reject variable offset alu on PTR_TO_FLOW_KEYS\n\nFor PTR_TO_FLOW_KEYS, check_flow_keys_access() only uses fixed off\nfor validation. However, variable offset ptr alu is not prohibited\nfor this ptr kind. So the variable offset is not checked.\n\nThe following prog is accepted:\n\n  func#0 @0\n  0: R1=ctx() R10=fp0\n  0: (bf) r6 = r1                       ; R1=ctx() R6_w=ctx()\n  1: (79) r7 = *(u64 *)(r6 +144)        ; R6_w=ctx() R7_w=flow_keys()\n  2: (b7) r8 = 1024                     ; R8_w=1024\n  3: (37) r8 /= 1                       ; R8_w=scalar()\n  4: (57) r8 &= 1024                    ; R8_w=scalar(smin=smin32=0,\n  smax=umax=smax32=umax32=1024,var_off=(0x0; 0x400))\n  5: (0f) r7 += r8\n  mark_precise: frame0: last_idx 5 first_idx 0 subseq_idx -1\n  mark_precise: frame0: regs=r8 stack= before 4: (57) r8 &= 1024\n  mark_precise: frame0: regs=r8 stack= before 3: (37) r8 /= 1\n  mark_precise: frame0: regs=r8 stack= before 2: (b7) r8 = 1024\n  6: R7_w=flow_keys(smin=smin32=0,smax=umax=smax32=umax32=1024,var_off\n  =(0x0; 0x400)) R8_w=scalar(smin=smin32=0,smax=umax=smax32=umax32=1024,\n  var_off=(0x0; 0x400))\n  6: (79) r0 = *(u64 *)(r7 +0)          ; R0_w=scalar()\n  7: (95) exit\n\nThis prog loads flow_keys to r7, and adds the variable offset r8\nto r7, and finally causes out-of-bounds access:\n\n  BUG: unable to handle page fault for address: ffffc90014c80038\n  [...]\n  Call Trace:\n   <TASK>\n   bpf_dispatcher_nop_func include/linux/bpf.h:1231 [inline]\n   __bpf_prog_run include/linux/filter.h:651 [inline]\n   bpf_prog_run include/linux/filter.h:658 [inline]\n   bpf_prog_run_pin_on_cpu include/linux/filter.h:675 [inline]\n   bpf_flow_dissect+0x15f/0x350 net/core/flow_dissector.c:991\n   bpf_prog_test_run_flow_dissector+0x39d/0x620 net/bpf/test_run.c:1359\n   bpf_prog_test_run kernel/bpf/syscall.c:4107 [inline]\n   __sys_bpf+0xf8f/0x4560 kernel/bpf/syscall.c:5475\n   __do_sys_bpf kernel/bpf/syscall.c:5561 [inline]\n   __se_sys_bpf kernel/bpf/syscall.c:5559 [inline]\n   __x64_sys_bpf+0x73/0xb0 kernel/bpf/syscall.c:5559\n   do_syscall_x64 arch/x86/entry/common.c:52 [inline]\n   do_syscall_64+0x3f/0x110 arch/x86/entry/common.c:83\n   entry_SYSCALL_64_after_hwframe+0x63/0x6b\n\nFix this by rejecting ptr alu with variable offset on flow_keys.\nApplying the patch rejects the program with \"R7 pointer arithmetic\non flow_keys prohibited\".",
+  "datePublished": "Feb 22, 2024, 4:13:33 PM",
+  "dateUpdated": "Oct 30, 2026, 12:17:42 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/7856cb9f0d795ce518a44c5d135dd932cfbfc656",
+    "https://git.kernel.org/stable/c/29ffa63f21bcdcef3e36b03cccf9d0cd031f6ab0",
+    "https://git.kernel.org/stable/c/4108b86e324da42f7ed425bd71632fd844300dc8",
+    "https://git.kernel.org/stable/c/e8d3872b617c21100c5ee4f64e513997a68c2e3d",
+    "https://git.kernel.org/stable/c/1b500d5d6cecf98dd6ca88bc9e7ae1783c83e6d3",
+    "https://git.kernel.org/stable/c/22c7fa171a02d310e3a3f6ed46a698ca8a0060ed"
+  ],
+  "aliases": [
+    "GHSA-rw7c-wqqw-8w6c",
+    "CVE-2024-26589"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "0850ed7d-b946-37d5-8634-62aaba850f80",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "09025dde-e1f8-39f3-8f13-020519db8a0d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d58e468b1112dcd1d5193c0a89ff9f98b5a3e8b9 <22c7fa171a02d310e3a3f6ed46a698ca8a0060ed"
+    },
+    {
+      "id": "1ff5fa56-0637-369b-80ad-041e06f59454",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "22dda7b3-c7f5-39c5-91ef-ee418ad992f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "320c8217-854c-38f4-9950-510f5793a3a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d58e468b1112dcd1d5193c0a89ff9f98b5a3e8b9 <7856cb9f0d795ce518a44c5d135dd932cfbfc656"
+    },
+    {
+      "id": "4112047d-afb5-3bfd-9314-95ed05983f99",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d58e468b1112dcd1d5193c0a89ff9f98b5a3e8b9 <e8d3872b617c21100c5ee4f64e513997a68c2e3d"
+    },
+    {
+      "id": "503e5006-b395-35e8-8624-2e91cd0080bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.75"
+    },
+    {
+      "id": "60caa78b-ca15-3d9f-afc9-7be61949ca95",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.148"
+    },
+    {
+      "id": "6cd09952-57b5-3684-9276-7a638ea7d403",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d58e468b1112dcd1d5193c0a89ff9f98b5a3e8b9 <29ffa63f21bcdcef3e36b03cccf9d0cd031f6ab0"
+    },
+    {
+      "id": "703d8d07-e4f3-39c0-a3b9-01af5d96ac2f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.20"
+    },
+    {
+      "id": "885ea466-66d0-388a-8d98-5a89f690f407",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.2"
+    },
+    {
+      "id": "a0d7a21f-bacc-382a-a6e1-e823a166ff92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.14"
+    },
+    {
+      "id": "a57e5fa6-8efd-3cd0-9736-2acda34709ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d58e468b1112dcd1d5193c0a89ff9f98b5a3e8b9 <4108b86e324da42f7ed425bd71632fd844300dc8"
+    },
+    {
+      "id": "f7c80778-6c74-3aa4-9ec1-6e4c0ccd1d03",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d58e468b1112dcd1d5193c0a89ff9f98b5a3e8b9 <1b500d5d6cecf98dd6ca88bc9e7ae1783c83e6d3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "423e3725-c161-3766-ae45-33c791621adc",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@
   "enisaUuid": "2806ceef-4cf5-3df8-b11f-b4bb5f4b47c9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvxlan: keep the last remote linked during FDB flush\n\nA non-nexthop FDB entry is expected to have at least one remote while it\nremains reachable through the FDB hash table. A filtered bulk flush\nviolates this invariant when every remote matches: It unlinks the last\nremote in vxlan_fdb_dst_destroy() and only afterwards tells vxlan_flush()\nto destroy the parent FDB entry.\n\nAn RCU reader can find the parent during this interval.\nfirst_remote_rcu() then applies list_entry_rcu() to the empty list head,\nproducing an invalid remote pointer that the receive learning path can\nread from and write to.\n\nWhen a matching remote is the sole remaining remote, leave it linked and\nask the caller to destroy the entire FDB entry. vxlan_fdb_destroy() keeps\nthe remote attached while sending the deletion notification and removing\nthe parent from the lookup structures.",
   "datePublished": "Sep 4, 2026, 3:54:48 PM",
-  "dateUpdated": "Sep 4, 2026, 3:54:48 PM",
+  "dateUpdated": "Oct 19, 2026, 8:44:30 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2a7c2f00843225d5f037676bca649321f3d024c7",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/d5d4a7b538b52db63927773a8905fcd9f78a42e2"
   ],
   "aliases": [
+    "GHSA-9cfq-2rjh-r5vr",
     "CVE-2026-80838"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0c1c217f-2ce6-375e-ba8c-4147babce688",
@@ -47,16 +48,6 @@
         }
       },
       "product_version": "patch: 7.1.13"
-    },
-    {
-      "id": "580095cc-e6c1-3378-9b41-6be12d20fb97",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "7f1752be-94ae-354a-b107-882396b65aae",
@@ -137,6 +128,16 @@
         }
       },
       "product_version": "c499fccb71cb85902b5c5b9ce9c9ae6683e54a8f <4bbc76ee1b21d3bd045d6d819b2bacd30a6372ab"
+    },
+    {
+      "id": "ee86edc1-f10e-31d2-b333-0184ffd64c48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

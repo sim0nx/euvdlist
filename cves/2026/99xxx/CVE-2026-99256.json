@@ -3,7 +3,7 @@
   "enisaUuid": "b8afc775-9586-3a2c-84f7-1bd5547bd2e8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndm cache: fix issue with background work locking\n\ndm cache used a rw_semaphore for background_work_lock. Write locks on\nrw_semaphores have strict owner semantics, but there was no guarantee\nthat the process that locked background_work_lock was the same process\nthat unlocked it. This can be easily seen using a kernel compiled with\nCONFIG_DEBUG_RWSEMS. Given a dm cache device <cache>, run: 'dmsetup\nsuspend <cache> && dmsetup resume <cache>'. This will trigger a kernel\nwarning:\n\nDEBUG_RWSEMS_WARN_ON((rwsem_owner(sem) != current) && !rwsem_test_oflags(sem, RWSEM_NONSPINNABLE))\n\ntriggered by cache_resume(). To fix this, switch from a rw_semaphore to\na spinlock and a wait queue. dm cache already has a wait queue and\nassociated counter, migration_wait and nr_allocated_migrations, that was\ngetting woken up when background work was getting completed, but wasn't\nactually used by anything. This is replaced by the background_work queue\nand counter.",
   "datePublished": "Nov 3, 2026, 11:25:14 AM",
-  "dateUpdated": "Nov 3, 2026, 11:25:14 AM",
+  "dateUpdated": "Nov 3, 2026, 11:40:45 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/0c7a8cad7c96012a9157a189649e569d0390f384",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/bc9781c0247de107876f32929f1637db93a42b34"
   ],
   "aliases": [
+    "GHSA-pr5p-x5rg-2942",
     "CVE-2026-99256"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "0a7e1219-7689-3efb-a902-4dd9a69b35d1",

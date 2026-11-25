@@ -3,20 +3,33 @@
   "enisaUuid": "ae35863e-2932-3e87-8fe1-a9a5cdb18d8b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/wait: don't spin on a stuck overflow list\n\nAs long as IO_CHECK_CQ_OVERFLOW_BIT is set, io_cqring_wait_schedule()\nreturns right away, before it gets to look at signals or arms the timeout,\nfor io_cqring_wait() to flush the overflow list. If that doesn't empty the\nlist, and the CQ ring doesn't hold the number of events the caller wants,\nthe loop starts over, with the same result. The task spins in the kernel,\nand can't be killed.\n\nThe assumption is that this can't happen: if CQEs can't be flushed, the\nring is full, and min_events is capped to the size of the ring. But:\n\n- With IORING_SETUP_CQE_MIXED a 32b CQE needs two contiguous entries. It\n  is stuck on the list if a single one is free, and then the ring holds\n  less than cq_entries events. A single threaded application that asks\n  for as many events as the ring has entries never gets out of\n  io_uring_enter().\n\n- Whether the ring is full is up to the CQ head, which the application\n  can write to. While one thread waits for events on an empty ring,\n  another one can move the head back so that the ring looks full and\n  have a CQE overflow. The waiter can't be stopped any more, not even by\n  SIGKILL.\n\nOnly the application can make room in the CQ ring. Return to it if the\nlist could not be flushed.",
   "datePublished": "Nov 2, 2026, 4:06:37 PM",
-  "dateUpdated": "Nov 2, 2026, 4:06:37 PM",
+  "dateUpdated": "Nov 6, 2026, 5:15:10 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/bf1d2ed84b3162e3b0e0bb7018ac59147da6e975",
     "https://git.kernel.org/stable/c/a6cfc85c6bf9498aaf1978b503f9663635a1aa22",
     "https://git.kernel.org/stable/c/4a89352edd8b3e20d1e1fb33f0fc297dd137149f",
-    "https://git.kernel.org/stable/c/c347691e5dc5481b2d6943c123619e04847fb0dc"
+    "https://git.kernel.org/stable/c/c347691e5dc5481b2d6943c123619e04847fb0dc",
+    "https://git.kernel.org/stable/c/340944e27b4bb218ed0ee66d0947ac70faefa05a",
+    "https://git.kernel.org/stable/c/34f5a664c34d3cb62f6bec7f4156754594a7d25b"
   ],
   "aliases": [
+    "GHSA-v4v7-2v4c-64vj",
     "CVE-2026-99229"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
+    {
+      "id": "2e6078a4-8701-3c6a-b1e7-40e50ba57c51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3fcf19d592d5cb63eb209400b22055651e3c27d0 <340944e27b4bb218ed0ee66d0947ac70faefa05a"
+    },
     {
       "id": "3643b1e8-ebf7-3200-9a6e-b398767dfabd",
       "product": {
@@ -76,6 +89,36 @@
         }
       },
       "product_version": "3fcf19d592d5cb63eb209400b22055651e3c27d0 <a6cfc85c6bf9498aaf1978b503f9663635a1aa22"
+    },
+    {
+      "id": "7342e57e-7099-3296-9edd-207b65f104e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "78a68242-ef30-3c27-8929-07848899bd22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3fcf19d592d5cb63eb209400b22055651e3c27d0 <34f5a664c34d3cb62f6bec7f4156754594a7d25b"
+    },
+    {
+      "id": "7aa86dc1-6e89-3e13-b109-519ead007483",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3.2"
     },
     {
       "id": "c532a238-f84a-36a2-8f7c-d12620e3009a",

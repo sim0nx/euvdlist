@@ -3,8 +3,10 @@
   "enisaUuid": "25a36082-311e-38bf-9080-5c1e28afb7f9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/rxe: Fix integer overflow in mr_check_range() leading to OOB access\n\nmr_check_range() validates that [iova, iova+length) falls within the\nregistered MR range using wraparound-prone arithmetic:\n\n    if (iova < mr->ibmr.iova ||\n        iova + length > mr->ibmr.iova + mr->ibmr.length)\n\nA remote peer can craft an RDMA-Write/Read RETH so that iova + length\nwraps to 0 (e.g. iova=0xfffffffffffffff8, length=8), bypassing the\ncheck. rxe_mr_iova_to_index() then computes a huge index (int idx, only\nguarded by WARN_ON) and rxe_mr_copy_xarray() dereferences\nmr->page_info[huge], causing an out-of-bounds read/write and a kernel\noops that is triggerable by an unauthenticated remote peer.\n\nRewrite the check in overflow-safe form; the first two clauses guarantee\nthat the subsequent subtractions do not underflow:\n\n    if (iova < mr->ibmr.iova ||\n        length > mr->ibmr.length ||\n        iova - mr->ibmr.iova > mr->ibmr.length - length)\n\nWith the fix, mr_check_range() returns -EINVAL for the crafted iova and\nthe responder reports REMOTE_ACCESS_ERROR instead of triggering the OOB.",
   "datePublished": "Oct 6, 2026, 8:46:50 AM",
-  "dateUpdated": "Oct 6, 2026, 8:46:50 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:18:17 AM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/b7d2118660545a00b21e83010ded1a231c6fb8c5",
     "https://git.kernel.org/stable/c/5d9426a74fc8cb8f375fcdc19b465a030f9b8cab",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/d10e2a08799e858d3e71ea4169bcd018f216d444"
   ],
   "aliases": [
-    "CVE-2026-98365"
+    "CVE-2026-98365",
+    "GHSA-3p8h-wx5x-6qq3"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.38,
   "enisaIdProduct": [
     {
       "id": "1a5ee0f5-1723-340d-95bd-c1356c18a616",
@@ -29,14 +32,14 @@
       "product_version": "8700e3e7c4857d28ebaa824509934556da0b3e76 <d10e2a08799e858d3e71ea4169bcd018f216d444"
     },
     {
-      "id": "1fcfe227-a1e7-3dc0-aeee-20078b5baead",
+      "id": "4aa53db5-667a-3d12-900b-bbeb5ed3d370",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc4"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "4e96b71e-2a78-35ab-9e87-34437e1eee25",

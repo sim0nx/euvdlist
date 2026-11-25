@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2024-38837",
+  "enisaUuid": "ef6cbf41-419a-3926-b56c-af9dd4094c1b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm: huge_memory: fix misused mapping_large_folio_support() for anon folios\n\nWhen I did a large folios split test, a WARNING \"[ 5059.122759][ T166]\nCannot split file folio to non-0 order\" was triggered.  But the test cases\nare only for anonmous folios.  while mapping_large_folio_support() is only\nreasonable for page cache folios.\n\nIn split_huge_page_to_list_to_order(), the folio passed to\nmapping_large_folio_support() maybe anonmous folio.  The folio_test_anon()\ncheck is missing.  So the split of the anonmous THP is failed.  This is\nalso the same for shmem_mapping().  We'd better add a check for both.  But\nthe shmem_mapping() in __split_huge_page() is not involved, as for\nanonmous folios, the end parameter is set to -1, so (head[i].index >= end)\nis always false.  shmem_mapping() is not called.\n\nAlso add a VM_WARN_ON_ONCE() in mapping_large_folio_support() for anon\nmapping, So we can detect the wrong use more easily.\n\nTHP folios maybe exist in the pagecache even the file system doesn't\nsupport large folio, it is because when CONFIG_TRANSPARENT_HUGEPAGE is\nenabled, khugepaged will try to collapse read-only file-backed pages to\nTHP.  But the mapping does not actually support multi order large folios\nproperly.\n\nUsing /sys/kernel/debug/split_huge_pages to verify this, with this patch,\nlarge anon THP is successfully split and the warning is ceased.",
+  "datePublished": "Jul 12, 2024, 12:31:54 PM",
+  "dateUpdated": "May 11, 2026, 8:22:57 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/5df493a99fcf887133cf01d23cd4bebb6d385d3c",
+    "https://git.kernel.org/stable/c/6a50c9b512f7734bc356f4bd47885a6f7c98491a"
+  ],
+  "aliases": [
+    "GHSA-qvp3-ffc6-xf43",
+    "CVE-2024-40950"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "033ed885-0555-353c-9846-e49edfed68c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c010d47f107f609b9f4d6a103b6dfc53889049e9 <6a50c9b512f7734bc356f4bd47885a6f7c98491a"
+    },
+    {
+      "id": "071b1f0b-6883-35e7-bafa-47194f0286bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "481c60f0-9d38-3503-80c3-07b548047297",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.9"
+    },
+    {
+      "id": "4c68da81-eb1c-3021-b0b7-b5f1e7058a3e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "7bfd8458-1307-35ac-8b9a-b71d6f50e5df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c010d47f107f609b9f4d6a103b6dfc53889049e9 <5df493a99fcf887133cf01d23cd4bebb6d385d3c"
+    },
+    {
+      "id": "9a501609-950f-3b1e-bc25-b5b39e7178d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.7"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5f2315e5-f141-3ba1-b67f-cd7172e4394a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

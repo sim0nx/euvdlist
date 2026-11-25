@@ -3,8 +3,10 @@
   "enisaUuid": "180b66f6-435d-3399-9ec9-eba70d9631fc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipvs: stop estimator after disabled calc phase\n\nIPVS estimator kthread 0 starts with zeroed chain and tick limits until\nits initial calculation phase completes. If network namespace teardown\nclears ipvs->enable during that phase, ip_vs_est_calc_phase() can return\nwithout installing positive limits.\n\nThe kthread can then continue into its main loop and drain\nest_temp_list with zero chain_max, tick_max and est_max_count values.\nEach enqueue consumes one available tick row, but est_count never\nreaches the zero est_max_count value. After all rows are consumed, the\nrow lookup returns IPVS_EST_NTICKS and ip_vs_enqueue_estimator() writes\npast the ticks and tick_len arrays.\n\nExit kthread 0 after the calculation phase if the kthread is stopping or\nIPVS has been disabled. That keeps temporary estimators from being\ndrained after the limits failed to initialize.\n\nEstimator kthreads can now self-exit before teardown or reload stops\nkd->task. Keep an extra task reference after creation and release it\nwith kthread_stop_put(), so kd->task remains valid until the stop paths\nconsume that reference.",
   "datePublished": "Aug 22, 2026, 3:32:40 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:40 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 25, 2026, 5:41:25 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/d5122a2b2601145975d387006e517c56896e310e",
     "https://git.kernel.org/stable/c/de98dc5ef94b83bbb444c670c253ea02ca0f5e43",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/558f67f1340f803a346ecd14a69c49653111c5f4"
   ],
   "aliases": [
+    "GHSA-98mw-8627-45gg",
     "CVE-2026-74670"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "23b3285b-9624-3dc9-9e03-435679ab6f10",

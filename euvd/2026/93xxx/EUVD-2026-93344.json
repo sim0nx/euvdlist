@@ -3,8 +3,10 @@
   "enisaUuid": "1eecca60-a541-351b-b719-330ce74ec27b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/core: Reject unregistering netdevs in ib_get_eth_speed\n\nib_device_get_netdev() intentionally returns a referenced net_device even\nwhen it is unregistering, so matching and cleanup callers can still find\nthe association. The reference keeps struct net_device allocated, but does\nnot guarantee that the device remains operational.\n\nib_get_eth_speed() uses the returned device operationally by invoking its\nethtool callback. Although that call is made under RTNL, the function does\nnot verify the registration state first. An asynchronous RDMA port query\ncan therefore call into a netdev after NETDEV_UNREGISTER and ndo_uninit\nhave completed.\n\nCheck for NETREG_REGISTERED while holding RTNL and return -ENODEV for a\ndevice which is being unregistered. Keeping RTNL across the check and the\nethtool operation prevents unregister from starting between them.\n\nKeep the speed fallback and warning under RTNL as well, so the warning can\nsafely read netdev->name. Drop the netdev reference before releasing RTNL\nonce all accesses to the device are complete.",
   "datePublished": "Oct 6, 2026, 8:46:45 AM",
-  "dateUpdated": "Oct 6, 2026, 8:46:45 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:18:09 AM",
+  "baseScore": 7.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/be4b44c8b47c67a04c08b1a0aba18006b749ae6a",
     "https://git.kernel.org/stable/c/45c60ffc79771bad154f224a05753191cf1b37bc",
@@ -14,10 +16,11 @@
     "https://git.kernel.org/stable/c/ef9fbe1b93f3b617b96e86d5cd76b3fa44514cb5"
   ],
   "aliases": [
-    "CVE-2026-98359"
+    "CVE-2026-98359",
+    "GHSA-fhcv-jhv5-h3gg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "12c32a12-6a27-3127-ba23-a208ddd5914a",
@@ -50,6 +53,16 @@
       "product_version": "d41861942fc55c14b6280d9568a0d0112037f065 <45c60ffc79771bad154f224a05753191cf1b37bc"
     },
     {
+      "id": "32709416-b274-3dc5-a078-7880d9946f3d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "37123329-9b30-3ea5-aea7-0bc4650ff4ee",
       "product": {
         "name": "Linux",
@@ -78,16 +91,6 @@
         }
       },
       "product_version": "4.14"
-    },
-    {
-      "id": "62cbdc51-1d7c-3abf-b8ac-10bacf9fd53e",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "774a29b4-b557-38e9-8e30-dcfa6e8a5600",

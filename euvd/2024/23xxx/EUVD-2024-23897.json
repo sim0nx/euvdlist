@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2024-23897",
+  "enisaUuid": "8f732ce9-cb49-3f81-b4cc-97453be770ca",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nllc: Drop support for ETH_P_TR_802_2.\n\nsyzbot reported an uninit-value bug below. [0]\n\nllc supports ETH_P_802_2 (0x0004) and used to support ETH_P_TR_802_2\n(0x0011), and syzbot abused the latter to trigger the bug.\n\n  write$tun(r0, &(0x7f0000000040)={@val={0x0, 0x11}, @val, @mpls={[], @llc={@snap={0xaa, 0x1, ')', \"90e5dd\"}}}}, 0x16)\n\nllc_conn_handler() initialises local variables {saddr,daddr}.mac\nbased on skb in llc_pdu_decode_sa()/llc_pdu_decode_da() and passes\nthem to __llc_lookup().\n\nHowever, the initialisation is done only when skb->protocol is\nhtons(ETH_P_802_2), otherwise, __llc_lookup_established() and\n__llc_lookup_listener() will read garbage.\n\nThe missing initialisation existed prior to commit 211ed865108e\n(\"net: delete all instances of special processing for token ring\").\n\nIt removed the part to kick out the token ring stuff but forgot to\nclose the door allowing ETH_P_TR_802_2 packets to sneak into llc_rcv().\n\nLet's remove llc_tr_packet_type and complete the deprecation.\n\n[0]:\nBUG: KMSAN: uninit-value in __llc_lookup_established+0xe9d/0xf90\n __llc_lookup_established+0xe9d/0xf90\n __llc_lookup net/llc/llc_conn.c:611 [inline]\n llc_conn_handler+0x4bd/0x1360 net/llc/llc_conn.c:791\n llc_rcv+0xfbb/0x14a0 net/llc/llc_input.c:206\n __netif_receive_skb_one_core net/core/dev.c:5527 [inline]\n __netif_receive_skb+0x1a6/0x5a0 net/core/dev.c:5641\n netif_receive_skb_internal net/core/dev.c:5727 [inline]\n netif_receive_skb+0x58/0x660 net/core/dev.c:5786\n tun_rx_batched+0x3ee/0x980 drivers/net/tun.c:1555\n tun_get_user+0x53af/0x66d0 drivers/net/tun.c:2002\n tun_chr_write_iter+0x3af/0x5d0 drivers/net/tun.c:2048\n call_write_iter include/linux/fs.h:2020 [inline]\n new_sync_write fs/read_write.c:491 [inline]\n vfs_write+0x8ef/0x1490 fs/read_write.c:584\n ksys_write+0x20f/0x4c0 fs/read_write.c:637\n __do_sys_write fs/read_write.c:649 [inline]\n __se_sys_write fs/read_write.c:646 [inline]\n __x64_sys_write+0x93/0xd0 fs/read_write.c:646\n do_syscall_x64 arch/x86/entry/common.c:51 [inline]\n do_syscall_64+0x44/0x110 arch/x86/entry/common.c:82\n entry_SYSCALL_64_after_hwframe+0x63/0x6b\n\nLocal variable daddr created at:\n llc_conn_handler+0x53/0x1360 net/llc/llc_conn.c:783\n llc_rcv+0xfbb/0x14a0 net/llc/llc_input.c:206\n\nCPU: 1 PID: 5004 Comm: syz-executor994 Not tainted 6.6.0-syzkaller-14500-g1c41041124bd #0\nHardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/09/2023",
+  "datePublished": "Mar 18, 2024, 10:14:47 AM",
+  "dateUpdated": "May 11, 2026, 8:01:13 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/165ad1e22779685c3ed3dd349c6c4c632309cc62",
+    "https://git.kernel.org/stable/c/b8e8838f82f332ae80c643dbb1ca4418d0628097",
+    "https://git.kernel.org/stable/c/9ccdef19cf9497c2803b005369668feb91cacdfd",
+    "https://git.kernel.org/stable/c/c0fe2fe7a5a291dfcf6dc64301732c8d3dc6a828",
+    "https://git.kernel.org/stable/c/660c3053d992b68fee893a0e9ec9159228cffdc6",
+    "https://git.kernel.org/stable/c/f1f34a515fb1e25e85dee94f781e7869ae351fb8",
+    "https://git.kernel.org/stable/c/df57fc2f2abf548aa889a36ab0bdcc94a75399dc",
+    "https://git.kernel.org/stable/c/e3f9bed9bee261e3347131764e42aeedf1ffea61"
+  ],
+  "aliases": [
+    "GHSA-xhm6-wpwj-qm56",
+    "CVE-2024-26635"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "33bc7a1b-70cd-33e3-a18a-5d97576c60d5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "211ed865108e24697b44bee5daac502ee6bdd4a4 <c0fe2fe7a5a291dfcf6dc64301732c8d3dc6a828"
+    },
+    {
+      "id": "4253baf5-5f4e-339f-bd37-154d977cd1fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.149"
+    },
+    {
+      "id": "5441cc5f-a02f-3710-8416-fb99ab2cb864",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.5"
+    },
+    {
+      "id": "5a6cc391-6c36-37a3-add6-4c1ecbaaa771",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.210"
+    },
+    {
+      "id": "5c4e5e9b-c558-326d-b464-422cbe3961b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "211ed865108e24697b44bee5daac502ee6bdd4a4 <df57fc2f2abf548aa889a36ab0bdcc94a75399dc"
+    },
+    {
+      "id": "7d67bb52-f7f0-3457-81b4-dd473d86f4ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "80ce4f25-66ea-356d-83c7-b9018b090f97",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.15"
+    },
+    {
+      "id": "8bd506a4-7789-33c5-82ef-be925c07135a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.76"
+    },
+    {
+      "id": "8e84a6d7-0373-3516-8f2d-f4dc83113d1a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "211ed865108e24697b44bee5daac502ee6bdd4a4 <9ccdef19cf9497c2803b005369668feb91cacdfd"
+    },
+    {
+      "id": "8ef07cd8-68c5-31b5-af9a-5f82bb54d00e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "211ed865108e24697b44bee5daac502ee6bdd4a4 <e3f9bed9bee261e3347131764e42aeedf1ffea61"
+    },
+    {
+      "id": "ac401e64-ee4d-33b7-b102-f8254eee6da2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.307"
+    },
+    {
+      "id": "b959c03d-f5c5-38ba-9f20-285c96d9c1bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "211ed865108e24697b44bee5daac502ee6bdd4a4 <b8e8838f82f332ae80c643dbb1ca4418d0628097"
+    },
+    {
+      "id": "bc00679f-ade3-3bfc-a63a-a0508399abb0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "211ed865108e24697b44bee5daac502ee6bdd4a4 <165ad1e22779685c3ed3dd349c6c4c632309cc62"
+    },
+    {
+      "id": "dd8af59c-224a-3b2a-bbce-6f9d6689e0d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.3"
+    },
+    {
+      "id": "e0507849-5f88-3218-a5b2-71e732bcc8ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "211ed865108e24697b44bee5daac502ee6bdd4a4 <660c3053d992b68fee893a0e9ec9159228cffdc6"
+    },
+    {
+      "id": "e0bccc95-3f75-33c5-a7e4-d4dae02d4827",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e28d98a1-03a3-3e66-a7f0-11fcc69ee4c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "211ed865108e24697b44bee5daac502ee6bdd4a4 <f1f34a515fb1e25e85dee94f781e7869ae351fb8"
+    },
+    {
+      "id": "f76929a8-ed8a-31c9-aa9a-a7a15d0910da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.269"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "37f8dcce-1b09-361d-8420-a417ae60e104",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

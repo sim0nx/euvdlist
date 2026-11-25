@@ -3,7 +3,7 @@
   "enisaUuid": "58b63ff4-bbd8-336f-874b-67a0ae563cb1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/mana_ib: Disable RX steering on RSS QP destroy\n\nWhen an RSS QP is destroyed (e.g. DPDK exit), mana_ib_destroy_qp_rss()\ndestroys the RX WQ objects but does not disable vPort RX steering in\nfirmware. This leaves stale steering configuration that still points to\nthe destroyed RX objects.\n\nIf traffic continues to arrive (e.g. peer VM is still transmitting) and\nthe VF interface is subsequently brought up (mana_open), the firmware\nmay deliver completions using stale CQ IDs from the old RX objects.\nThese CQ IDs can be reused by the ethernet driver for new TX CQs,\ncausing RX completions to land on TX CQs:\n\n  WARNING: mana_poll_tx_cq+0x1b8/0x220 [mana]  (is_sq == false)\n  WARNING: mana_gd_process_eq_events+0x209/0x290 (cq_table lookup fails)\n\nFix this by disabling vPort RX steering before destroying RX WQ objects.\nNote that mana_fence_rqs() cannot be used here because the fence\ncompletion is delivered on the CQ, which is polled by user-mode (e.g.\nDPDK) and not visible to the kernel driver.\n\nRefactor the disable logic into a shared mana_disable_vport_rx() in\nmana_en, exported for use by mana_ib, replacing the duplicate code.\nThe ethernet driver's mana_dealloc_queues() is also updated to call\nthis common function.",
   "datePublished": "May 27, 2026, 12:58:25 PM",
-  "dateUpdated": "May 27, 2026, 12:58:25 PM",
+  "dateUpdated": "Nov 6, 2026, 4:13:36 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/6a2d6273b6c3581ce7b90ce17b5cbb4efd19438f",
@@ -13,11 +13,22 @@
     "https://git.kernel.org/stable/c/dbeb256e8dd87233d891b170c0b32a6466467036"
   ],
   "aliases": [
+    "GHSA-996r-prhc-hfj8",
     "CVE-2026-46084"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
+    {
+      "id": "00610efe-cea9-31ec-9b3f-831c369b6dcb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
     {
       "id": "1041af6e-b38c-3375-b613-49eeb37a8aa0",
       "product": {
@@ -77,16 +88,6 @@
         }
       },
       "product_version": "0266a177631d4c6b963b5b12dd986a8c5abdbf06 <f1ccc4d500a0b87a5599343fc2f798048836e184"
-    },
-    {
-      "id": "99a13e31-7fd5-3e48-b8a3-2028ef432188",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc1"
     },
     {
       "id": "9c8f07fe-1b4e-3fc0-ba89-e052de18c785",

@@ -1,0 +1,109 @@
+{
+  "id": "EUVD-2023-57235",
+  "enisaUuid": "4339385c-f557-31fe-bb3c-36ecac56a503",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: rtw88: sdio: Honor the host max_req_size in the RX path\n\nLukas reports skb_over_panic errors on his Banana Pi BPI-CM4 which comes\nwith an Amlogic A311D (G12B) SoC and a RTL8822CS SDIO wifi/Bluetooth\ncombo card. The error he observed is identical to what has been fixed\nin commit e967229ead0e (\"wifi: rtw88: sdio: Check the HISR RX_REQUEST\nbit in rtw_sdio_rx_isr()\") but that commit didn't fix Lukas' problem.\n\nLukas found that disabling or limiting RX aggregation works around the\nproblem for some time (but does not fully fix it). In the following\ndiscussion a few key topics have been discussed which have an impact on\nthis problem:\n- The Amlogic A311D (G12B) SoC has a hardware bug in the SDIO controller\n  which prevents DMA transfers. Instead all transfers need to go through\n  the controller SRAM which limits transfers to 1536 bytes\n- rtw88 chips don't split incoming (RX) packets, so if a big packet is\n  received this is forwarded to the host in it's original form\n- rtw88 chips can do RX aggregation, meaning more multiple incoming\n  packets can be pulled by the host from the card with one MMC/SDIO\n  transfer. This Depends on settings in the REG_RXDMA_AGG_PG_TH\n  register (BIT_RXDMA_AGG_PG_TH limits the number of packets that will\n  be aggregated, BIT_DMA_AGG_TO_V1 configures a timeout for aggregation\n  and BIT_EN_PRE_CALC makes the chip honor the limits more effectively)\n\nUse multiple consecutive reads in rtw_sdio_read_port() and limit the\nnumber of bytes which are copied by the host from the card in one\nMMC/SDIO transfer. This allows receiving a buffer that's larger than\nthe hosts max_req_size (number of bytes which can be transferred in\none MMC/SDIO transfer). As a result of this the skb_over_panic error\nis gone as the rtw88 driver is now able to receive more than 1536 bytes\nfrom the card (either because the incoming packet is larger than that\nor because multiple packets have been aggregated).\n\nIn case of an receive errors (-EILSEQ has been observed by Lukas) we\nneed to drain the remaining data from the card's buffer, otherwise the\ncard will return corrupt data for the next rtw_sdio_read_port() call.",
+  "datePublished": "Mar 18, 2024, 10:07:46 AM",
+  "dateUpdated": "May 11, 2026, 7:30:19 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/5b5ddf21b978ec315cab9d9e7e6ac7374791a8c7",
+    "https://git.kernel.org/stable/c/0e9ffff72a0674cd6656314dbd99cdd2123a3030",
+    "https://git.kernel.org/stable/c/00384f565a91c08c4bedae167f749b093d10e3fe"
+  ],
+  "aliases": [
+    "GHSA-rw64-46h7-gmc8",
+    "CVE-2023-52611"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "0012db80-0082-32df-afe1-942e918903bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "65371a3f14e73979958aea0db1e3bb456a296149 <0e9ffff72a0674cd6656314dbd99cdd2123a3030"
+    },
+    {
+      "id": "1d626985-7078-3ae2-96bb-7f34c15a6d71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.4"
+    },
+    {
+      "id": "3b1a94df-8026-36e3-bdc4-dd3947be5a13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.14"
+    },
+    {
+      "id": "440b29da-0211-3434-bfc6-e2a26e8ce59a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6eecebc8-221b-33c5-a319-66a2da7cdc43",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "65371a3f14e73979958aea0db1e3bb456a296149 <5b5ddf21b978ec315cab9d9e7e6ac7374791a8c7"
+    },
+    {
+      "id": "79f1baef-698c-3e61-8f92-01c238ab3b93",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "65371a3f14e73979958aea0db1e3bb456a296149 <00384f565a91c08c4bedae167f749b093d10e3fe"
+    },
+    {
+      "id": "995cfb3d-4c6a-330d-8be6-a73772f98ae2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.2"
+    },
+    {
+      "id": "d88f3add-937a-36ad-bf8b-f31ce1c2fa07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d1ac4f9c-f3f8-35ca-9759-095ee103619d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

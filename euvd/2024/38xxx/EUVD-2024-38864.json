@@ -1,0 +1,172 @@
+{
+  "id": "EUVD-2024-38864",
+  "enisaUuid": "f7bba356-ceaa-3274-ab0b-8b6b47f3741b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nibmvnic: Add tx check to prevent skb leak\n\nBelow is a summary of how the driver stores a reference to an skb during\ntransmit:\n    tx_buff[free_map[consumer_index]]->skb = new_skb;\n    free_map[consumer_index] = IBMVNIC_INVALID_MAP;\n    consumer_index ++;\nWhere variable data looks like this:\n    free_map == [4, IBMVNIC_INVALID_MAP, IBMVNIC_INVALID_MAP, 0, 3]\n                                               \tconsumer_index^\n    tx_buff == [skb=null, skb=<ptr>, skb=<ptr>, skb=null, skb=null]\n\nThe driver has checks to ensure that free_map[consumer_index] pointed to\na valid index but there was no check to ensure that this index pointed\nto an unused/null skb address. So, if, by some chance, our free_map and\ntx_buff lists become out of sync then we were previously risking an\nskb memory leak. This could then cause tcp congestion control to stop\nsending packets, eventually leading to ETIMEDOUT.\n\nTherefore, add a conditional to ensure that the skb address is null. If\nnot then warn the user (because this is still a bug that should be\npatched) and free the old pointer to prevent memleak/tcp problems.",
+  "datePublished": "Jul 29, 2024, 2:57:27 PM",
+  "dateUpdated": "Aug 5, 2026, 11:35:08 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/16ad1557cae582e79bb82dddd612d9bdfaa11d4c",
+    "https://git.kernel.org/stable/c/267c61c4afed0ff9a2e83462abad3f41d8ca1f06",
+    "https://git.kernel.org/stable/c/e7b75def33eae61ddaad6cb616c517dc3882eb2a",
+    "https://git.kernel.org/stable/c/0983d288caf984de0202c66641577b739caad561"
+  ],
+  "aliases": [
+    "CVE-2024-41066",
+    "GHSA-j7w3-jhcq-frvr"
+  ],
+  "assigner": "Linux",
+  "epss": 0.53,
+  "enisaIdProduct": [
+    {
+      "id": "0ca86d75-8822-3bd1-b067-bc43f1c5b7c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.14"
+    },
+    {
+      "id": "0d949a64-2ef8-3a90-84ad-3eb1638cefa3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.101"
+    },
+    {
+      "id": "0ed522b4-eaab-3ea0-9d46-da9fc6852c07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "65d6470d139a6c1655fccb5cbacbeaba8e8ad2f8 <16ad1557cae582e79bb82dddd612d9bdfaa11d4c"
+    },
+    {
+      "id": "2e153968-f000-37ef-865e-a9b34b2fbe47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.13.2 <5.14"
+    },
+    {
+      "id": "33e786bb-200a-327c-880c-9ad8ec30d06e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5142c39253385702a4de8f897027e1d76fc333de"
+    },
+    {
+      "id": "62c9dea4-a3b1-30ad-92c7-012ac562d681",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "68870df0-dcc9-3494-8425-25eb8decb197",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "6e76ed1d-9fc3-33e3-8e6f-a2eb8369ac87",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "65d6470d139a6c1655fccb5cbacbeaba8e8ad2f8 <0983d288caf984de0202c66641577b739caad561"
+    },
+    {
+      "id": "9f8dd3cb-b6f6-3ebd-9406-c203a8cd03c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.12.17 <5.13"
+    },
+    {
+      "id": "a09aea49-6142-37d0-b8e7-fbd49d06a8cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "65d6470d139a6c1655fccb5cbacbeaba8e8ad2f8 <e7b75def33eae61ddaad6cb616c517dc3882eb2a"
+    },
+    {
+      "id": "b8be6753-bb5d-355d-b527-3392945f567e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.42"
+    },
+    {
+      "id": "caf316b0-4e13-34c8-985c-cb03b815c884",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.11"
+    },
+    {
+      "id": "cbfd4072-72fc-3d52-9af1-3131077928a8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "65d6470d139a6c1655fccb5cbacbeaba8e8ad2f8 <267c61c4afed0ff9a2e83462abad3f41d8ca1f06"
+    },
+    {
+      "id": "f273e8e7-54ba-3d4b-aa09-e90b5bc77180",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1a64564eee05128f773930649edfdd50cbe80656"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9377936c-2619-3464-9032-4e7e6a4ce7eb",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

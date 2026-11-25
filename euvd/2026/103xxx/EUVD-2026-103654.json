@@ -3,7 +3,7 @@
   "enisaUuid": "e162c1f8-7d61-36ce-9351-2c66f60856e1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/virtio: fix object leak when drm_gem_handle_create() fails\n\nvirtio_gpu_gem_create() owns the reference taken by\nvirtio_gpu_object_create(). On the drm_gem_handle_create() error path it\ncalls drm_gem_object_release() instead of dropping that reference.\n\ndrm_gem_object_release() is the inverse of drm_gem_object_init() and does\nnot touch the reference count or call obj->funcs->free(), so it is only\ncorrect as the last step of a destructor, as in\nvirtio_gpu_cleanup_object(). Using it here leaves the bo at refcount 1\nwith no remaining reference, so virtio_gpu_free_object() never runs and\nthe shmem pages, sg table and virtio_gpu_object are leaked. Since\nvirtio_gpu_object_create() has already set bo->created,\nVIRTIO_GPU_CMD_RESOURCE_UNREF is not queued either, leaking the host-side\nresource and the resource id.\n\ndrm_gem_handle_create_tail() drops the handle reference on all of its\ninternal error paths, so the caller only has to drop its own. Use\ndrm_gem_object_put(), matching the success path below.",
   "datePublished": "Oct 18, 2026, 3:19:24 PM",
-  "dateUpdated": "Oct 18, 2026, 3:19:24 PM",
+  "dateUpdated": "Oct 19, 2026, 9:22:36 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/13423a058187c2039aa8cb235c916be4477221b7",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/36570ef2244cc4d7563b1f0157bc0f032498638c"
   ],
   "aliases": [
-    "CVE-2026-98609"
+    "CVE-2026-98609",
+    "GHSA-4mj5-5wcx-f4jj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "110e51eb-fff4-3409-b536-8c936442f45d",
@@ -52,6 +53,16 @@
       "product_version": "dc5698e80cf724770283e10414054662bdf6ccfa <372e9c3d45f664a2c000427ccbf6cdc2f99b3170"
     },
     {
+      "id": "2e472207-fc60-3fff-ad91-a0eed5ad6081",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "31b1a9ed-c88d-3c2d-bd46-6afa7d207b73",
       "product": {
         "name": "Linux",
@@ -80,16 +91,6 @@
         }
       },
       "product_version": "4.2"
-    },
-    {
-      "id": "797b5e85-2d7e-3c90-ab66-6e094c9ee18a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "89f55e73-9012-3c94-8ddf-f0f423b59ca2",

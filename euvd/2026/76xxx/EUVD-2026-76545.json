@@ -3,18 +3,26 @@
   "enisaUuid": "d2d0871d-c891-34d4-b9ef-43529dd7b0a4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: fix OOB read/write from unvalidated DataOffset in coalesce_t2()\n\ncoalesce_t2() computes data pointers directly from server-supplied\nDataOffset fields with no validation against buffer bounds:\n\n  data_area_of_tgt = (char *)&pSMBt->hdr.Protocol +\n                     get_unaligned_le16(&pSMBt->t2_rsp.DataOffset);\n  data_area_of_src = (char *)&pSMBs->hdr.Protocol +\n                     get_unaligned_le16(&pSMBs->t2_rsp.DataOffset);\n  data_area_of_tgt += total_in_tgt;\n  ...\n  memcpy(data_area_of_tgt, data_area_of_src, total_in_src);\n\nA small DataOffset can push a pointer below the actual byte area,\noverwriting header fields; a large one can push it past the buffer\nend, causing out-of-bounds heap reads (source) or writes (target).\nThe BCC overflow guard does not prevent this: BCC reflects how much\ndata is present, while DataOffset controls where in the buffer it\nstarts.\n\nThe \"validate target area\" comment present since the function was\nfirst written in 2005 was a placeholder that was never implemented.\n\nAdd lower- and upper-bound checks for both data pointers before the\nmemcpy, and before any target header fields are modified.",
   "datePublished": "Sep 11, 2026, 7:45:28 PM",
-  "dateUpdated": "Sep 11, 2026, 7:45:28 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:32:22 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/f7baf60435129e3a5f3500a38e3cb4c3860deed7",
+    "https://git.kernel.org/stable/c/9f3a7440731a34c89ad04fef6616f185acb28401",
+    "https://git.kernel.org/stable/c/531ac35abd74fb5b4aec5e19543e832613a1789d",
+    "https://git.kernel.org/stable/c/6eb70b78e48b0031bd1a05fe1b58959a48e87739",
+    "https://git.kernel.org/stable/c/36d01415d881d5326a0dd3384f781cd7e69aff2d",
     "https://git.kernel.org/stable/c/672cf86aa6aa0fb4012ce4c3b3498df42ad67a4e",
     "https://git.kernel.org/stable/c/033bc80019f07d158630df4e69b19a49010f54f1",
     "https://git.kernel.org/stable/c/6343c1da561962688f203362d80d6a3bfa39fa1b"
   ],
   "aliases": [
-    "CVE-2026-89633"
+    "CVE-2026-89633",
+    "GHSA-6jcv-m8xc-577h"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 1.6,
   "enisaIdProduct": [
     {
       "id": "0143ff0b-11df-3cf9-b9f8-a2ae267026f3",
@@ -27,14 +35,24 @@
       "product_version": "e4eb295d38b57f4d4b956942a48887eb252d97c6 <033bc80019f07d158630df4e69b19a49010f54f1"
     },
     {
-      "id": "06412781-92fc-3bd8-ba19-1b978d93e48f",
+      "id": "050c0fc8-cbcd-3c31-bb10-2ce0b6dea18e",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "17d142fd-d437-3952-bac3-d3bd1686afa9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e4eb295d38b57f4d4b956942a48887eb252d97c6 <6eb70b78e48b0031bd1a05fe1b58959a48e87739"
     },
     {
       "id": "39d8ed7f-69b2-3fd7-a389-54671e9774c1",
@@ -57,6 +75,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "56abdf06-34a1-3396-a435-a74ef42399f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
       "id": "5805352b-e0fa-3c6b-a009-9e92e4843618",
       "product": {
         "name": "Linux",
@@ -65,6 +93,46 @@
         }
       },
       "product_version": "e4eb295d38b57f4d4b956942a48887eb252d97c6 <6343c1da561962688f203362d80d6a3bfa39fa1b"
+    },
+    {
+      "id": "63751a9b-6057-338c-ba07-8e86e3c3f845",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.113"
+    },
+    {
+      "id": "75b6a751-ebf1-385c-b5d7-0781b9b9a55d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "8177b72c-8108-37ca-896e-27a053f88d81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "823ed710-5951-3123-9f37-48f04021bf4b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     },
     {
       "id": "93cc9261-7111-3ae6-ba71-10eb81119bee",
@@ -77,6 +145,16 @@
       "product_version": "e4eb295d38b57f4d4b956942a48887eb252d97c6 <672cf86aa6aa0fb4012ce4c3b3498df42ad67a4e"
     },
     {
+      "id": "9db462ad-506e-3f35-b9ce-c3cea54ae59c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e4eb295d38b57f4d4b956942a48887eb252d97c6 <531ac35abd74fb5b4aec5e19543e832613a1789d"
+    },
+    {
       "id": "b8174fc6-bae1-3b8f-90a2-4be647d0ae9a",
       "product": {
         "name": "Linux",
@@ -87,6 +165,26 @@
       "product_version": "patch: 7.2.4"
     },
     {
+      "id": "d984ee7a-a49b-323f-9769-cadfcf896347",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e4eb295d38b57f4d4b956942a48887eb252d97c6 <f7baf60435129e3a5f3500a38e3cb4c3860deed7"
+    },
+    {
+      "id": "e07f3acb-fcb6-3a94-a427-7cfa0f034393",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e4eb295d38b57f4d4b956942a48887eb252d97c6 <9f3a7440731a34c89ad04fef6616f185acb28401"
+    },
+    {
       "id": "e67ef48a-0fc8-3009-863a-578e4af77c5f",
       "product": {
         "name": "Linux",
@@ -95,6 +193,16 @@
         }
       },
       "product_version": "patch: 6.18.51"
+    },
+    {
+      "id": "ec759e1e-0bb2-33ed-aef2-bdb1cfdb94c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e4eb295d38b57f4d4b956942a48887eb252d97c6 <36d01415d881d5326a0dd3384f781cd7e69aff2d"
     }
   ],
   "enisaIdVendor": [

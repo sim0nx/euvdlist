@@ -1,0 +1,169 @@
+{
+  "id": "EUVD-2021-34548",
+  "enisaUuid": "72c6dc43-94c4-3d66-abc5-7b8aa6c1eaed",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipv6: fix memory leak in fib6_rule_suppress\n\nThe kernel leaks memory when a `fib` rule is present in IPv6 nftables\nfirewall rules and a suppress_prefix rule is present in the IPv6 routing\nrules (used by certain tools such as wg-quick). In such scenarios, every\nincoming packet will leak an allocation in `ip6_dst_cache` slab cache.\n\nAfter some hours of `bpftrace`-ing and source code reading, I tracked\ndown the issue to ca7a03c41753 (\"ipv6: do not free rt if\nFIB_LOOKUP_NOREF is set on suppress rule\").\n\nThe problem with that change is that the generic `args->flags` always have\n`FIB_LOOKUP_NOREF` set[1][2] but the IPv6-specific flag\n`RT6_LOOKUP_F_DST_NOREF` might not be, leading to `fib6_rule_suppress` not\ndecreasing the refcount when needed.\n\nHow to reproduce:\n - Add the following nftables rule to a prerouting chain:\n     meta nfproto ipv6 fib saddr . mark . iif oif missing drop\n   This can be done with:\n     sudo nft create table inet test\n     sudo nft create chain inet test test_chain '{ type filter hook prerouting priority filter + 10; policy accept; }'\n     sudo nft add rule inet test test_chain meta nfproto ipv6 fib saddr . mark . iif oif missing drop\n - Run:\n     sudo ip -6 rule add table main suppress_prefixlength 0\n - Watch `sudo slabtop -o | grep ip6_dst_cache` to see memory usage increase\n   with every incoming ipv6 packet.\n\nThis patch exposes the protocol-specific flags to the protocol\nspecific `suppress` function, and check the protocol-specific `flags`\nargument for RT6_LOOKUP_F_DST_NOREF instead of the generic\nFIB_LOOKUP_NOREF when decreasing the refcount, like this.\n\n[1]: https://github.com/torvalds/linux/blob/ca7a03c4175366a92cee0ccc4fec0038c3266e26/net/ipv6/fib6_rules.c#L71\n[2]: https://github.com/torvalds/linux/blob/ca7a03c4175366a92cee0ccc4fec0038c3266e26/net/ipv6/fib6_rules.c#L99",
+  "datePublished": "May 24, 2024, 3:09:51 PM",
+  "dateUpdated": "May 23, 2026, 3:20:10 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/ee38eb8cf9a7323884c2b8e0adbbeb2192d31e29",
+    "https://git.kernel.org/stable/c/209d35ee34e25f9668c404350a1c86d914c54ffa",
+    "https://git.kernel.org/stable/c/8ef8a76a340ebdb2c2eea3f6fb0ebbed09a16383",
+    "https://git.kernel.org/stable/c/cdef485217d30382f3bf6448c54b4401648fe3f1"
+  ],
+  "aliases": [
+    "CVE-2021-47546"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "250ad748-d623-343d-8590-906a7d20c749",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16"
+    },
+    {
+      "id": "5e03e086-d4f5-353f-96cc-9b7f0c52032b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.164"
+    },
+    {
+      "id": "a6744ef9-91cf-35dc-9058-10b243fe0bcf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ecc265624956ea784cb2bd2b31a95bd54c4f5f13"
+    },
+    {
+      "id": "af8c929b-0c32-3fab-aa15-cfe9fe41fa02",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca7a03c4175366a92cee0ccc4fec0038c3266e26 <209d35ee34e25f9668c404350a1c86d914c54ffa"
+    },
+    {
+      "id": "b1c02fea-4bc9-3c4e-999d-4c373b185a52",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d37c966752043733eb847dd897d6e3405084c559"
+    },
+    {
+      "id": "bd5ec0f2-efdf-340d-8a92-688d7b69dfae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca7a03c4175366a92cee0ccc4fec0038c3266e26 <ee38eb8cf9a7323884c2b8e0adbbeb2192d31e29"
+    },
+    {
+      "id": "be00c3e3-5e0e-3e3a-ae7e-c3529bed26ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca7a03c4175366a92cee0ccc4fec0038c3266e26 <cdef485217d30382f3bf6448c54b4401648fe3f1"
+    },
+    {
+      "id": "c77134a1-d765-36a5-8ead-dc0e6dc6935e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.3.4 <5.4"
+    },
+    {
+      "id": "d031feef-167e-39d8-ae14-2bb4ccc3bb18",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca7a03c4175366a92cee0ccc4fec0038c3266e26 <8ef8a76a340ebdb2c2eea3f6fb0ebbed09a16383"
+    },
+    {
+      "id": "d056cb57-784a-3f98-a4e1-adaaa63c3b25",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d79ceea5-d3d4-3e26-b3a9-088ddb7f2672",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.84"
+    },
+    {
+      "id": "d7c3e3be-2009-3ef4-bfa5-fa0072f46911",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.7"
+    },
+    {
+      "id": "e25908d3-264e-3090-b5e5-a6b1bd3f1d78",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.4"
+    },
+    {
+      "id": "f0124245-4a26-3c19-a4bc-4c725a328007",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.2.19 <5.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "89374726-f9b2-3a29-8c42-666385ffd903",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

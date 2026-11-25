@@ -1,0 +1,216 @@
+{
+  "id": "EUVD-2024-38831",
+  "enisaUuid": "2ac065e3-d7a5-399d-8bf2-48f6946ec503",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: fix races between hole punching and AIO+DIO\n\nAfter commit \"ocfs2: return real error code in ocfs2_dio_wr_get_block\",\nfstests/generic/300 become from always failed to sometimes failed:\n\n========================================================================\n[  473.293420 ] run fstests generic/300\n\n[  475.296983 ] JBD2: Ignoring recovery information on journal\n[  475.302473 ] ocfs2: Mounting device (253,1) on (node local, slot 0) with ordered data mode.\n[  494.290998 ] OCFS2: ERROR (device dm-1): ocfs2_change_extent_flag: Owner 5668 has an extent at cpos 78723 which can no longer be found\n[  494.291609 ] On-disk corruption discovered. Please run fsck.ocfs2 once the filesystem is unmounted.\n[  494.292018 ] OCFS2: File system is now read-only.\n[  494.292224 ] (kworker/19:11,2628,19):ocfs2_mark_extent_written:5272 ERROR: status = -30\n[  494.292602 ] (kworker/19:11,2628,19):ocfs2_dio_end_io_write:2374 ERROR: status = -3\nfio: io_u error on file /mnt/scratch/racer: Read-only file system: write offset=460849152, buflen=131072\n=========================================================================\n\nIn __blockdev_direct_IO, ocfs2_dio_wr_get_block is called to add unwritten\nextents to a list.  extents are also inserted into extent tree in\nocfs2_write_begin_nolock.  Then another thread call fallocate to puch a\nhole at one of the unwritten extent.  The extent at cpos was removed by\nocfs2_remove_extent().  At end io worker thread, ocfs2_search_extent_list\nfound there is no such extent at the cpos.\n\n    T1                        T2                T3\n                              inode lock\n                                ...\n                                insert extents\n                                ...\n                              inode unlock\nocfs2_fallocate\n __ocfs2_change_file_space\n  inode lock\n  lock ip_alloc_sem\n  ocfs2_remove_inode_range inode\n   ocfs2_remove_btree_range\n    ocfs2_remove_extent\n    ^---remove the extent at cpos 78723\n  ...\n  unlock ip_alloc_sem\n  inode unlock\n                                       ocfs2_dio_end_io\n                                        ocfs2_dio_end_io_write\n                                         lock ip_alloc_sem\n                                         ocfs2_mark_extent_written\n                                          ocfs2_change_extent_flag\n                                           ocfs2_search_extent_list\n                                           ^---failed to find extent\n                                          ...\n                                          unlock ip_alloc_sem\n\nIn most filesystems, fallocate is not compatible with racing with AIO+DIO,\nso fix it by adding to wait for all dio before fallocate/punch_hole like\next4.",
+  "datePublished": "Jul 12, 2024, 12:25:17 PM",
+  "dateUpdated": "Aug 5, 2026, 11:34:09 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/3c26b5d21b1239e9c7fd31ba7d9b2d7bdbaa68d9",
+    "https://git.kernel.org/stable/c/e8e2db1adac47970a6a9225f3858e9aa0e86287f",
+    "https://git.kernel.org/stable/c/050ce8af6838c71e872e982b50d3f1bec21da40e",
+    "https://git.kernel.org/stable/c/38825ff9da91d2854dcf6d9ac320a7e641e10f25",
+    "https://git.kernel.org/stable/c/ea042dc2bea19d72e37c298bf65a9c341ef3fff3",
+    "https://git.kernel.org/stable/c/3c361f313d696df72f9bccf058510e9ec737b9b1",
+    "https://git.kernel.org/stable/c/117b9c009b72a6c2ebfd23484354dfee2d9570d2",
+    "https://git.kernel.org/stable/c/952b023f06a24b2ad6ba67304c4c84d45bea2f18"
+  ],
+  "aliases": [
+    "GHSA-rr6m-3x7m-qjff",
+    "CVE-2024-40943"
+  ],
+  "assigner": "Linux",
+  "epss": 0.2,
+  "enisaIdProduct": [
+    {
+      "id": "03d1ce83-b39c-315e-b09d-1b180a50bae3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "054768ff-d0e0-35d6-af96-5793f5473b12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b25801038da5823bba1b5440a57ca68afc51b6bd <117b9c009b72a6c2ebfd23484354dfee2d9570d2"
+    },
+    {
+      "id": "2746af2b-89ed-32f4-b808-5f5025708013",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b25801038da5823bba1b5440a57ca68afc51b6bd <38825ff9da91d2854dcf6d9ac320a7e641e10f25"
+    },
+    {
+      "id": "3ca33923-9a9a-3a00-8386-6195e53e6445",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "40b66933-a100-35cb-8ffe-393792dbbdbf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.317"
+    },
+    {
+      "id": "711dc194-bf07-3a0a-a19a-afef9c5b8361",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.95"
+    },
+    {
+      "id": "763a8a66-089d-3907-a08a-75365b9c6e55",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b25801038da5823bba1b5440a57ca68afc51b6bd <e8e2db1adac47970a6a9225f3858e9aa0e86287f"
+    },
+    {
+      "id": "87d15143-ea41-338c-ad74-edab73b56f28",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.162"
+    },
+    {
+      "id": "8b718f55-62ca-36f8-bb60-1000ddf730eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b25801038da5823bba1b5440a57ca68afc51b6bd <3c26b5d21b1239e9c7fd31ba7d9b2d7bdbaa68d9"
+    },
+    {
+      "id": "9aa7fb08-f8a7-36c7-895f-865f0a4bb367",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b25801038da5823bba1b5440a57ca68afc51b6bd <3c361f313d696df72f9bccf058510e9ec737b9b1"
+    },
+    {
+      "id": "9ea1be2a-1bcc-374b-8bab-207b1a141802",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b25801038da5823bba1b5440a57ca68afc51b6bd <ea042dc2bea19d72e37c298bf65a9c341ef3fff3"
+    },
+    {
+      "id": "b6e44866-082d-36e3-bbd7-dcba5ebc75ae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.6"
+    },
+    {
+      "id": "c25f4309-ca59-32b7-9874-a3f06ab8e0fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.221"
+    },
+    {
+      "id": "ce059ed2-bd40-3e72-9b74-c042b4ae1d4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b25801038da5823bba1b5440a57ca68afc51b6bd <952b023f06a24b2ad6ba67304c4c84d45bea2f18"
+    },
+    {
+      "id": "e093587a-5b1c-3217-8aca-f8871c849d2e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.23"
+    },
+    {
+      "id": "e8761a67-d088-3106-8f5e-cbb2d5d5ecbd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.35"
+    },
+    {
+      "id": "e87d8d9f-51b1-3e95-a10a-70dccdb689fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.279"
+    },
+    {
+      "id": "ecd0474b-2114-3c82-9c46-dffe4bee7bf1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b25801038da5823bba1b5440a57ca68afc51b6bd <050ce8af6838c71e872e982b50d3f1bec21da40e"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2ed44782-5d07-317b-8729-0845b79f2d4a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

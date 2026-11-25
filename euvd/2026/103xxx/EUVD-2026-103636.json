@@ -3,7 +3,7 @@
   "enisaUuid": "f152d73e-d187-31a0-86fb-7a91235f1ff7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix bounds check for skb-backed dynptrs\n\nThe skb_pointer_if_linear() function checks whether a\nmemory region of length len starting at offset off into\nthe skb is in the linear area, and returns a pointer to\nthe region if so. The check currently subtracts between\nskb_headlen and offset of the check, and since skb_headlen\nis unsigned the subtraction can underflow. This causes the\nbounds check to spuriously pass and generate an arbitrary\npointer of the form *(skb->data + off).\n\nThe only user of this helper is currently skb-backed BPF\ndynptr code. Returning the wrong pointer leads to the\ndynptr erroneously being backed with invalid memory.\n\nEnsure the subtraction cannot underflow, and fail the check if\nit would. Use u64 arithmetic to also prevent overflow when\ncalculating (skb_headlen(skb) - off) since off is unsigned.",
   "datePublished": "Oct 18, 2026, 3:19:03 PM",
-  "dateUpdated": "Oct 18, 2026, 3:19:03 PM",
+  "dateUpdated": "Oct 19, 2026, 9:22:16 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1b923538598be768e9f2f258a77a083d00e0c78b",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/ed6eec97b534979dcf28b40c389cee57bd6561d4"
   ],
   "aliases": [
+    "GHSA-4j29-hvp6-5v88",
     "CVE-2026-98591"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "0e4af754-4c80-3d83-8730-cbe2a6f28f8e",
@@ -49,16 +50,6 @@
       "product_version": "6f5a630d7c57cd79b1f526a95e757311e32d41e5 <39ffceaddb10753eac12785dba6ac0673860b4ac"
     },
     {
-      "id": "4814be70-2313-3c53-802c-e31a6ba5cdfb",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
-    },
-    {
       "id": "546bfa8a-5dc7-3d00-b481-c299be71cd72",
       "product": {
         "name": "Linux",
@@ -67,6 +58,16 @@
         }
       },
       "product_version": "patch: 7.2.9"
+    },
+    {
+      "id": "57e71737-52d3-364e-bf33-7fd8d88c4f98",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "8690cccf-b0eb-3bce-b351-6f82387e9042",

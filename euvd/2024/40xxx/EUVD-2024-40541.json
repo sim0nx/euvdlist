@@ -1,0 +1,121 @@
+{
+  "id": "EUVD-2024-40541",
+  "enisaUuid": "08b2c93f-c376-31ed-8aec-5e8669e14f21",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntracing: Have format file honor EVENT_FILE_FL_FREED\n\nWhen eventfs was introduced, special care had to be done to coordinate the\nfreeing of the file meta data with the files that are exposed to user\nspace. The file meta data would have a ref count that is set when the file\nis created and would be decremented and freed after the last user that\nopened the file closed it. When the file meta data was to be freed, it\nwould set a flag (EVENT_FILE_FL_FREED) to denote that the file is freed,\nand any new references made (like new opens or reads) would fail as it is\nmarked freed. This allowed other meta data to be freed after this flag was\nset (under the event_mutex).\n\nAll the files that were dynamically created in the events directory had a\npointer to the file meta data and would call event_release() when the last\nreference to the user space file was closed. This would be the time that it\nis safe to free the file meta data.\n\nA shortcut was made for the \"format\" file. It's i_private would point to\nthe \"call\" entry directly and not point to the file's meta data. This is\nbecause all format files are the same for the same \"call\", so it was\nthought there was no reason to differentiate them.  The other files\nmaintain state (like the \"enable\", \"trigger\", etc). But this meant if the\nfile were to disappear, the \"format\" file would be unaware of it.\n\nThis caused a race that could be trigger via the user_events test (that\nwould create dynamic events and free them), and running a loop that would\nread the user_events format files:\n\nIn one console run:\n\n # cd tools/testing/selftests/user_events\n # while true; do ./ftrace_test; done\n\nAnd in another console run:\n\n # cd /sys/kernel/tracing/\n # while true; do cat events/user_events/__test_event/format; done 2>/dev/null\n\nWith KASAN memory checking, it would trigger a use-after-free bug report\n(which was a real bug). This was because the format file was not checking\nthe file's meta data flag \"EVENT_FILE_FL_FREED\", so it would access the\nevent that the file meta data pointed to after the event was freed.\n\nAfter inspection, there are other locations that were found to not check\nthe EVENT_FILE_FL_FREED flag when accessing the trace_event_file. Add a\nnew helper function: event_file_file() that will make sure that the\nevent_mutex is held, and will return NULL if the trace_event_file has the\nEVENT_FILE_FL_FREED flag set. Have the first reference of the struct file\npointer use event_file_file() and check for NULL. Later uses can still use\nthe event_file_data() helper function if the event_mutex is still held and\nwas not released since the event_file_file() call.",
+  "datePublished": "Aug 26, 2024, 10:10:44 AM",
+  "dateUpdated": "Aug 5, 2026, 11:37:00 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/4ed03758ddf0b19d69eed69386d65a92d0091e0c",
+    "https://git.kernel.org/stable/c/531dc6780d94245af037c25c2371c8caf652f0f9",
+    "https://git.kernel.org/stable/c/b1560408692cd0ab0370cfbe9deb03ce97ab3f6d"
+  ],
+  "aliases": [
+    "CVE-2024-43891",
+    "GHSA-392h-pcr9-7j4w"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "00164cf0-6029-38d9-b34d-68372283d7c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.33 <6.6.49"
+    },
+    {
+      "id": "10b682e2-ef9a-331d-8775-5da8e5541eae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b63db58e2fa5d6963db9c45df88e60060f0ff35f <531dc6780d94245af037c25c2371c8caf652f0f9"
+    },
+    {
+      "id": "1b5498be-459e-350e-ac3f-27c77874692b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.5"
+    },
+    {
+      "id": "54e4e0a6-1c5f-3c4f-96eb-7701a3dadf58",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.9"
+    },
+    {
+      "id": "6ed478a3-d64f-3762-a7e7-0c4475803ba6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "7676ceb5-d921-3a0e-8c1a-d04c1305c183",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "de857d15-a554-3df9-b7d0-4d3920266406",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.49"
+    },
+    {
+      "id": "ecf072f0-0e3e-30b8-a9de-162ac9254b12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b63db58e2fa5d6963db9c45df88e60060f0ff35f <b1560408692cd0ab0370cfbe9deb03ce97ab3f6d"
+    },
+    {
+      "id": "ff9ffb3d-a287-3fca-8d9f-020e0540b879",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "14aa4f3efc6e784847e8c8543a7ef34ec9bdbb01 <4ed03758ddf0b19d69eed69386d65a92d0091e0c"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "34a92809-615f-3c4c-93d7-b164517343f6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

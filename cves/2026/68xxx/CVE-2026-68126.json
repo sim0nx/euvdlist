@@ -3,7 +3,7 @@
   "enisaUuid": "3ab08d9a-0d5f-3978-8ed5-9a462cdb427b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmac802154: hold an interface reference across the scan worker\n\nmac802154_scan_worker() captures the scanning sub-interface under RCU\nand then keeps dereferencing sdata->dev after rcu_read_unlock() and\noutside the rtnl -- in the failure traces, in\nmac802154_transmit_beacon_req() (skb->dev = sdata->dev), and in the\nend_scan cleanup. Nothing keeps that netdev alive across the worker\niteration.\n\nA concurrent DEL_INTERFACE or PHY removal can unregister the interface\nonce the worker drops the rtnl between its two drv_set_channel()\nsections. unregister_netdevice() frees the netdev asynchronously from\nnetdev_run_todo() with the rtnl already dropped, so neither holding the\nrtnl nor the per-PHY IEEE802154_IS_SCANNING flag prevents a stale worker\niteration from dereferencing the freed netdev -- a KASAN\nslab-use-after-free, reachable by racing TRIGGER_SCAN against\nDEL_INTERFACE (both CAP_NET_ADMIN).\n\nPin the netdev with netdev_hold() while the RCU read lock is still held,\nand release it at every worker exit.",
   "datePublished": "Aug 10, 2026, 11:58:47 AM",
-  "dateUpdated": "Aug 10, 2026, 11:58:47 AM",
+  "dateUpdated": "Aug 17, 2026, 4:59:17 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/bd7110f0caa32426140ff302a209c53294ef2cfd",
@@ -13,20 +13,21 @@
     "https://git.kernel.org/stable/c/234e5e898b713bc0b3a631b6f002897f43d046c8"
   ],
   "aliases": [
-    "CVE-2026-68126"
+    "CVE-2026-68126",
+    "GHSA-qgwv-jp48-q22g"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
-      "id": "1618ca5b-1ec8-3af5-9da3-c6beba062eb8",
+      "id": "0b9c796d-a3ae-33cf-91b6-a1698cd4e570",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc5"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "2181853e-6c55-3091-8a05-a784e3258aca",

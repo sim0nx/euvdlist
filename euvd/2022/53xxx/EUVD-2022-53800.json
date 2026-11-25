@@ -1,0 +1,170 @@
+{
+  "id": "EUVD-2022-53800",
+  "enisaUuid": "f694fdaf-9a24-350d-b6f6-32443cf76290",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsched/fair: Fix fault in reweight_entity\n\nSyzbot found a GPF in reweight_entity. This has been bisected to\ncommit 4ef0c5c6b5ba (\"kernel/sched: Fix sched_fork() access an invalid\nsched_task_group\")\n\nThere\u00a0is a race between sched_post_fork() and setpriority(PRIO_PGRP)\nwithin a thread group that causes a null-ptr-deref\u00a0in\nreweight_entity() in CFS. The scenario is that the main process spawns\nnumber of new threads, which then call setpriority(PRIO_PGRP, 0, -20),\nwait, and exit.  For each of the new threads the copy_process() gets\ninvoked, which adds the new task_struct and calls sched_post_fork()\nfor it.\n\nIn the above scenario there is a possibility that\nsetpriority(PRIO_PGRP) and set_one_prio() will be called for a thread\nin the group that is just being created by copy_process(), and for\nwhich the sched_post_fork() has not been executed yet. This will\ntrigger a null pointer dereference in reweight_entity(),\u00a0as it will\ntry to access the run queue pointer, which hasn't been set.\n\nBefore the mentioned change the cfs_rq pointer for the task  has been\nset in sched_fork(), which is called much earlier in copy_process(),\nbefore the new task is added to the thread_group.  Now it is done in\nthe sched_post_fork(), which is called after that.  To fix the issue\nthe remove the update_load param from the update_load param() function\nand call reweight_task() only if the task flag doesn't have the\nTASK_NEW flag set.",
+  "datePublished": "Aug 22, 2024, 1:32:53 AM",
+  "dateUpdated": "May 23, 2026, 3:21:05 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/8f317cd888059c59e2fa924bf4b0957cfa53f78e",
+    "https://git.kernel.org/stable/c/e0bcd6b5779352aed88f2e538a82a39f1a7715bb",
+    "https://git.kernel.org/stable/c/589a954daab5e18399860b6c8ffaeaf79844eb20",
+    "https://git.kernel.org/stable/c/13765de8148f71fa795e0a6607de37c49ea5915a"
+  ],
+  "aliases": [
+    "GHSA-w39w-j699-c6w4",
+    "CVE-2022-48921"
+  ],
+  "assigner": "Linux",
+  "epss": 0.17,
+  "enisaIdProduct": [
+    {
+      "id": "19ffa98d-5966-37ff-b168-6c704b03832c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.17"
+    },
+    {
+      "id": "544803b9-2e88-3c4b-aa34-11406b26cc72",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6d96b2ad-c3d2-3b2c-b381-98e86592f8bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16.13"
+    },
+    {
+      "id": "8998d790-fc2a-395f-b220-930199203cc2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.16"
+    },
+    {
+      "id": "8d035313-0b19-37ba-baa2-f0b47366c6c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.3 <5.15.27"
+    },
+    {
+      "id": "97d9ebb6-72ae-37bc-8c85-a90a5fe7b893",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.80 <5.10.137"
+    },
+    {
+      "id": "9f54c06f-7798-3415-9c68-a790ff972f07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c85c6fadbef0a3eab41540ea628fa8fe8928c820 <8f317cd888059c59e2fa924bf4b0957cfa53f78e"
+    },
+    {
+      "id": "ab5c4e02-d0e1-30bc-9f88-226739321d57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4ef0c5c6b5ba1f38f0ea1cedad0cad722f00c14a <589a954daab5e18399860b6c8ffaeaf79844eb20"
+    },
+    {
+      "id": "bbc1094e-1954-356a-a51d-e110b0619bab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.137"
+    },
+    {
+      "id": "cc340e4b-2a07-300a-bf45-cd37849d9166",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "25d40b828fb855ee62e1039c65a666c9afd60786"
+    },
+    {
+      "id": "d1e4d956-d24a-3686-a308-69da12ca3c8c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.14.19 <5.15"
+    },
+    {
+      "id": "e622f2d3-8a8b-3808-9d97-35f143414e1a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4ef0c5c6b5ba1f38f0ea1cedad0cad722f00c14a <13765de8148f71fa795e0a6607de37c49ea5915a"
+    },
+    {
+      "id": "efed4fa6-172d-3c33-951d-8ff86828e1d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.27"
+    },
+    {
+      "id": "feb3e127-12ef-361e-9148-fd0abf7108fa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3869eecf050416a1d19bac60926f6b5d64b0aa58 <e0bcd6b5779352aed88f2e538a82a39f1a7715bb"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2ae0d41e-5613-35f8-ba49-c043eae97859",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "id": "EUVD-2024-41954",
+  "enisaUuid": "412ae03d-71c4-348d-b55a-17cedbb916e7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsoc: qcom: pmic_glink: Fix race during initialization\n\nAs pointed out by Stephen Boyd it is possible that during initialization\nof the pmic_glink child drivers, the protection-domain notifiers fires,\nand the associated work is scheduled, before the client registration\nreturns and as a result the local \"client\" pointer has been initialized.\n\nThe outcome of this is a NULL pointer dereference as the \"client\"\npointer is blindly dereferenced.\n\nTimeline provided by Stephen:\n CPU0                               CPU1\n ----                               ----\n ucsi->client = NULL;\n devm_pmic_glink_register_client()\n  client->pdr_notify(client->priv, pg->client_state)\n   pmic_glink_ucsi_pdr_notify()\n    schedule_work(&ucsi->register_work)\n    <schedule away>\n                                    pmic_glink_ucsi_register()\n                                     ucsi_register()\n                                      pmic_glink_ucsi_read_version()\n                                       pmic_glink_ucsi_read()\n                                        pmic_glink_ucsi_read()\n                                         pmic_glink_send(ucsi->client)\n                                         <client is NULL BAD>\n ucsi->client = client // Too late!\n\nThis code is identical across the altmode, battery manager and usci\nchild drivers.\n\nResolve this by splitting the allocation of the \"client\" object and the\nregistration thereof into two operations.\n\nThis only happens if the protection domain registry is populated at the\ntime of registration, which by the introduction of commit '1ebcde047c54\n(\"soc: qcom: add pd-mapper implementation\")' became much more likely.",
+  "datePublished": "Sep 13, 2024, 5:29:22 AM",
+  "dateUpdated": "May 11, 2026, 8:34:34 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/1efdbf5323c9360e05066049b97414405e94e087",
+    "https://git.kernel.org/stable/c/943b0e7cc646a624bb20a68080f8f1a4a55df41c",
+    "https://git.kernel.org/stable/c/3568affcddd68743e25aa3ec1647d9b82797757b"
+  ],
+  "aliases": [
+    "CVE-2024-46693",
+    "GHSA-5qvx-cmvh-v55m"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "0bd2c639-86dd-31af-b45f-5054176ca237",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "3de210d4-4876-313b-9d3b-c7d9e4c4ac8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "58ef4ece1e41ac525db3e79529909683325d85df <943b0e7cc646a624bb20a68080f8f1a4a55df41c"
+    },
+    {
+      "id": "5ea62b57-7421-31f5-93b4-6d45a5abceba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.8"
+    },
+    {
+      "id": "64cd5f6e-63f4-3477-b9f4-f8db0815e70c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.3"
+    },
+    {
+      "id": "7dd582c3-0d70-35d1-88cc-2749a22487d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "58ef4ece1e41ac525db3e79529909683325d85df <1efdbf5323c9360e05066049b97414405e94e087"
+    },
+    {
+      "id": "a568e724-86e2-3a37-b216-06a72764f048",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.49"
+    },
+    {
+      "id": "c6b2695f-9600-35c1-8f44-dc233487ef8f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "58ef4ece1e41ac525db3e79529909683325d85df <3568affcddd68743e25aa3ec1647d9b82797757b"
+    },
+    {
+      "id": "d2470e37-c3af-35d9-843c-1b6d39741c06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e8b3b395-76ee-3a02-bba5-dce87df27df1",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

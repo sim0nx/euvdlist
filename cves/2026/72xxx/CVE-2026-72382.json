@@ -2,24 +2,36 @@
   "id": "EUVD-2026-59281",
   "enisaUuid": "d4b4f25e-58d9-3004-b191-f893640636fc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: reject undersized DACLs before parsing ACEs\n\nparse_dacl() limits the attacker-controlled ACE count by comparing it\nwith the number of minimal ACEs that fit in the DACL size. The DACL size\nfield is 16 bits, but the expression subtracts sizeof(struct smb_acl).\nBecause sizeof() is unsigned, a DACL size smaller than the ACL header\nunderflows to a large size_t.\n\nA malicious client can reach this with:\n\nSMB2_SET_INFO (InfoType=SMB2_O_INFO_SECURITY)\n  -> smb2_set_info_sec()\n  -> set_info_sec()\n  -> parse_sec_desc()\n  -> parse_dacl()\n     -> init_acl_state(..., 0xffff)\n     -> init_acl_state(..., 0xffff)\n     -> kmalloc_objs(..., 0xffff)\n\nThus a malformed security descriptor can make num_aces pass the guard\nand drive large temporary ACL state and pointer-array allocations.\n\nReject DACLs smaller than struct smb_acl before doing the subtraction,\nso the ACE count check cannot be bypassed by the underflow.",
-  "datePublished": "Aug 15, 2026, 6:32:22 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:22 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:56:14 AM",
+  "dateUpdated": "Oct 30, 2026, 12:29:13 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/8dc949061e35427433feac3ebe5ec089f2aa857e",
     "https://git.kernel.org/stable/c/16fb65ec15fe7c90f50a2115854bfd9a032d4023",
     "https://git.kernel.org/stable/c/282847c0cf22f2e961155ac8e42f6eeab7e16049",
     "https://git.kernel.org/stable/c/d020e7f27bf65eecd3805404702f716b2b6d9e73",
     "https://git.kernel.org/stable/c/15a9e9b8f7f5d7f380ae54c6f5bcbc0bdcb0f3cd",
-    "https://git.kernel.org/stable/c/60908f7ebcd9b6cde74ad5711fab0f49c7970949",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72382"
+    "https://git.kernel.org/stable/c/60908f7ebcd9b6cde74ad5711fab0f49c7970949"
   ],
   "aliases": [
     "CVE-2026-72382",
     "GHSA-xrhm-hwvc-w6q3"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.68,
   "enisaIdProduct": [
+    {
+      "id": "0940e9bf-d12c-36d8-a259-cc7a8e20ddb3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <8dc949061e35427433feac3ebe5ec089f2aa857e"
+    },
     {
       "id": "0bd85f30-8f22-3fc2-95ac-add9b93c97a1",
       "product": {
@@ -81,6 +93,16 @@
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <d020e7f27bf65eecd3805404702f716b2b6d9e73"
     },
     {
+      "id": "85228d3a-6149-31f2-a64f-181e2851a548",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "992d9797-c805-3f9d-bbab-417c319da753",
       "product": {
         "name": "Linux",
@@ -131,14 +153,14 @@
       "product_version": "5.15"
     },
     {
-      "id": "fa95ddaa-ad44-3133-bd6a-18b014893813",
+      "id": "c09f4e2d-d14b-31bc-a425-156e5a706fde",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc2"
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

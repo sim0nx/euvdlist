@@ -3,7 +3,7 @@
   "enisaUuid": "45dc49ee-ba8c-378b-9bf2-a6e847c8864c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: L2CAP: refuse __l2cap_chan_add if chan already has conn\n\nl2cap_chan may be linked to l2cap_conn at most once. This is assumed in\nseveral places, eg l2cap_chan_del cleanup.\n\nThere is a TOCTOU race where the invariant is violated:\n\n    [Task 1]                          [Task 2]\n    l2cap_chan_connect                l2cap_sock_bind\n      l2cap_chan_lock                   lock_sock\n      l2cap_state_change                if (sk->sk_state != BT_OPEN)\n        chan->state = BT_CONNECT\n        l2cap_sock_state_change_cb      chan->state = BT_BOUND\n                                        sk->sk_state = BT_BOUND\n          lock_sock <------------------ release_sock\n          sk->sk_state = BT_CONNECT\n\nl2cap_sock_connect() does not check sk->sk_state, so since chan->state\nis now BT_BOUND, subsequent connect() ends up with second\n__l2cap_chan_add.\n\nExplicitly document and check the invariant in __l2cap_chan_add with\nWARN_ON_ONCE. The only callsite where it could be hit is\nl2cap_chan_connect, so add pre-check there to avoid relying on\nchan->state. chan->state read/write is not properly guarded currently so\nthere can be other TOCTOUC problems.\n\nAdd l2cap_lock_chan in l2cap_sock_bind() to guard chan->state write.",
   "datePublished": "Nov 2, 2026, 4:06:43 PM",
-  "dateUpdated": "Nov 2, 2026, 4:06:43 PM",
+  "dateUpdated": "Nov 3, 2026, 7:13:06 PM",
   "baseScore": 7.8,
   "baseScoreVersion": "3.1",
   "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
@@ -15,13 +15,15 @@
     "https://git.kernel.org/stable/c/52fe88e4ef87311eee32b45c65603e7c69e75e7d",
     "https://git.kernel.org/stable/c/10c705dd706aa93164ba41f2566f15206d6c178e",
     "https://git.kernel.org/stable/c/73820561d8cbfd3364a29b8fa77f1707f26029da",
-    "https://git.kernel.org/stable/c/d3afd7803f9bc2a8c4270199497b60158b2fc647"
+    "https://git.kernel.org/stable/c/d3afd7803f9bc2a8c4270199497b60158b2fc647",
+    "https://git.kernel.org/stable/c/86b55991d3cd690e73c5ef8d20b75ae4905b357a"
   ],
   "aliases": [
-    "CVE-2026-99239"
+    "CVE-2026-99239",
+    "GHSA-367g-m7cr-7mf6"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "0028ab54-2cf3-3437-ba37-9287a02b0dc5",
@@ -72,6 +74,16 @@
         }
       },
       "product_version": "5.10.265 <5.10.273"
+    },
+    {
+      "id": "463d8699-beb6-3077-8ace-fa7c410305b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b66774b48dd98f07254951f74ea6f513efe7ff8b <86b55991d3cd690e73c5ef8d20b75ae4905b357a"
     },
     {
       "id": "6eaa9e38-d851-30c5-91cf-fd9c1b543baf",
@@ -272,6 +284,16 @@
         }
       },
       "product_version": "patch: 6.12.115"
+    },
+    {
+      "id": "f2aea8a0-7fd0-3c2f-ba5d-6313d7a47f52",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
     },
     {
       "id": "f6c280ff-47be-3b75-bb82-cbc2a0b49524",

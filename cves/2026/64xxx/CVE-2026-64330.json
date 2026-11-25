@@ -3,7 +3,7 @@
   "enisaUuid": "53217fd1-4a93-3624-8ba0-7d4750c9d19f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: typec: tcpm: Validate SVID index in svdm_consume_modes()\n\nIn svdm_consume_modes(), the SVID value is read from pmdata->svids using\npmdata->svid_index as an array index without bounds validation:\n\n    paltmode->svid = pmdata->svids[pmdata->svid_index];\n\nIf pmdata->svid_index is driven beyond SVID_DISCOVERY_MAX (16), it results\nin an out-of-bounds read of the pmdata->svids array. Because pd_mode_data\nis embedded inside struct tcpm_port, indexing past svids reads into\nadjacent fields. In particular:\n- At index 16, it reads the altmodes count.\n- At index 18 and beyond, it reads into altmode_desc[], which contains\n  partner-supplied SVDM Discovery Modes VDOs.\n\nBy injecting a chosen SVID into altmode_desc[0].vdo and driving svid_index\nto 20, the partner can force paltmode->svid to be loaded with an arbitrary,\npartner- chosen SVID, which is then registered via\ntypec_partner_register_altmode().\n\nFix this by validating that pmdata->svid_index is non-negative and strictly\nless than pmdata->nsvids before accessing the pmdata->svids array inside\nsvdm_consume_modes().",
   "datePublished": "Jul 25, 2026, 8:49:57 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:57 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:45 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/89ff289cbf5d3b659a2babc5ccaae4eaf7e7cf53",
@@ -16,21 +16,12 @@
     "https://git.kernel.org/stable/c/7b681dd5fbf60b24a13c14661e5b7735759fb491"
   ],
   "aliases": [
+    "GHSA-5x5w-f8x6-m8wf",
     "CVE-2026-64330"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
-    {
-      "id": "14953113-3505-3f85-8bba-0e565208eeae",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
-    },
     {
       "id": "24216df5-6d43-3c69-b67d-139bd119ab1e",
       "product": {
@@ -190,6 +181,16 @@
         }
       },
       "product_version": "4ab8c18d4d67321cc7b660559de17511d4fc0237 <3e1b1ac47e8163627f159f30d80d51b914620dd4"
+    },
+    {
+      "id": "dcd9ba93-b64f-3e91-93a6-96feba05bea6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "dea4ee53-6d5a-38b0-9adc-4129a9edc5ac",

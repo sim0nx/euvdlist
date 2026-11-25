@@ -3,7 +3,7 @@
   "enisaUuid": "3fe0d991-2eaa-30ac-98aa-51f0c6dcb582",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfou: reject omitted FOU_ATTR_IPPROTO on FOU_ENCAP_DIRECT\n\nCommit 7a9bc9e3f423 (\"fou: Don't allow 0 for FOU_ATTR_IPPROTO.\") added\nNLA_POLICY_MIN(NLA_U8, 1) to fou_nl_policy[FOU_ATTR_IPPROTO], which\nrejects an explicitly supplied FOU_ATTR_IPPROTO == 0 attribute with\n-ERANGE.\n\nHowever, FOU_ATTR_IPPROTO is an optional netlink attribute. When a user\nsends FOU_CMD_ADD with FOU_ATTR_TYPE set to FOU_ENCAP_DIRECT and omits\nFOU_ATTR_IPPROTO entirely, nla_policy validation succeeds and\nparse_nl_config() leaves cfg->protocol as 0 (from memset(cfg, 0,\nsizeof(*cfg))). fou_create() then creates a FOU_ENCAP_DIRECT socket with\nfou->protocol == 0.\n\nIn fou_udp_recv(), returning -fou->protocol to udp_queue_rcv_one_skb()\ntriggers IP protocol resubmission when fou->protocol > 0, whereas\nreturning 0 tells the UDP tunnel layer that the skb was consumed without\nfreeing it. When fou->protocol == 0, every packet received on the socket\nreturns 0 from fou_udp_recv() and leaks the sk_buff.\n\nReject FOU_ENCAP_DIRECT when !cfg->protocol in fou_create() so that\ncreating a direct encapsulation port without FOU_ATTR_IPPROTO fails with\n-EINVAL while leaving FOU_CMD_DEL and FOU_CMD_GET (which share\nparse_nl_config()) unaffected.\n\nTested in QEMU against Linux 7.3.0-rc3 by sending a FOU_CMD_ADD Generic\nNetlink request with FOU_ATTR_PORT = 5555 and FOU_ATTR_TYPE =\nFOU_ENCAP_DIRECT while omitting FOU_ATTR_IPPROTO. On the unfixed kernel,\nFOU_CMD_ADD succeeds (err = 0), FOU_CMD_GET reports fou->type = 1 and\nfou->protocol = 0, and sending 4000 UDP packets to 127.0.0.1:5555 leaks\nall 4000 sk_buffs (SUnreclaim in /proc/meminfo grows from 41456 kB to\n59008 kB, +17552 kB); with this patch applied, FOU_CMD_ADD is rejected\nwith -EINVAL (-22).",
   "datePublished": "Oct 18, 2026, 3:18:09 PM",
-  "dateUpdated": "Oct 18, 2026, 3:18:09 PM",
+  "dateUpdated": "Oct 19, 2026, 9:21:24 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/fd20220f86947d66d4dba2d76f13a28dbd86ef30",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/d22609f3d13fc5baacd92c222731b03c593401db"
   ],
   "aliases": [
-    "CVE-2026-98541"
+    "CVE-2026-98541",
+    "GHSA-rj48-hq74-h6fv"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "050639b1-772c-3fa4-9aab-7f6848560d35",
@@ -40,6 +41,16 @@
         }
       },
       "product_version": "23461551c00628c3f3fe9cf837bf53cf8f212b63 <d22609f3d13fc5baacd92c222731b03c593401db"
+    },
+    {
+      "id": "1d0f6c75-de6d-366c-bdc0-78c4d2b6799a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "29d03dcd-2b6f-391f-8025-433870443c9c",
@@ -70,16 +81,6 @@
         }
       },
       "product_version": "patch: 5.15.222"
-    },
-    {
-      "id": "57fc32f3-0021-3688-b969-764e165ae8bf",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "74077d98-ebe6-3e5b-a8aa-0e1c8926ff1e",

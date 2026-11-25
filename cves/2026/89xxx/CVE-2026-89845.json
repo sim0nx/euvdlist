@@ -3,7 +3,7 @@
   "enisaUuid": "5b7b7754-c05e-3fee-8013-404a45a09407",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Avoid req_q_map double-read in qla2x00_error_entry()\n\nqla2x00_error_entry() reads ha->req_q_map[que] twice: once for the NULL\ncheck and again when assigning it to req. The map slot is cleared by\nqla25xx_free_req_que() (ha->req_q_map[que_id] = NULL under mq_lock)\nduring queue teardown, while the response-queue interrupt that drives\nqla2x00_error_entry() is still registered (the IRQ is released later in\nqla25xx_free_rsp_que()). If the slot is set to NULL between the two\nreads, req becomes NULL and is dereferenced.\n\nRead the slot once into req and NULL-check the local before use. mq_lock\nis a mutex and cannot be taken from interrupt context, so the single\nread plus local check is the appropriate fix for the reported NULL\ndereference.",
   "datePublished": "Sep 16, 2026, 10:31:19 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:19 AM",
+  "dateUpdated": "Oct 19, 2026, 8:53:38 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/c845f2597787ef70159a32566669e308b2807a56",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/deb8abde83a799d2501f3977f6d6051000253f5e"
   ],
   "aliases": [
-    "CVE-2026-89845"
+    "CVE-2026-89845",
+    "GHSA-rgjv-6vw7-qf84"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "09b8bcd8-2318-33a9-938d-9c4cf3581dc6",
@@ -90,16 +91,6 @@
         }
       },
       "product_version": "a6fe35c052c4fdd1e8e21251f14eea0bd4bbd25b <deb8abde83a799d2501f3977f6d6051000253f5e"
-    },
-    {
-      "id": "6d716d31-43b9-3b3c-aa41-242c4dfc18ee",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "714700c7-57a5-3359-a92a-3e433ad9ef3d",
@@ -200,6 +191,16 @@
         }
       },
       "product_version": "a6fe35c052c4fdd1e8e21251f14eea0bd4bbd25b <35124cfa9898b2088ee72859e573e0876aff66fc"
+    },
+    {
+      "id": "f93e5762-64c7-3ff0-befd-ec4b5605230e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

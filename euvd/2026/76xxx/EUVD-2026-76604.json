@@ -3,19 +3,33 @@
   "enisaUuid": "d103f606-84c8-38ae-9ac3-96b98fe60d7f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfsd: clear CALLBACK_RUNNING on failed delegation recall queue\n\nnfsd_break_one_deleg() sets NFSD4_CALLBACK_RUNNING via test_and_set_bit\nat entry to serialize recall work, then calls nfsd4_run_cb() to queue\nthe recall.  When the queue attempt fails the refcount bump is undone,\nbut the RUNNING bit is left set.  The only site that clears the bit is\nnfsd41_destroy_cb() (fs/nfsd/nfs4callback.c), which runs from the\nworkqueue and is therefore unreachable when nothing was queued.\n\nThe bit becomes a permanent latch on dp->dl_recall.cb_flags: every\nsubsequent break_lease() on the same delegation hits the early-return\nguard in nfsd_break_one_deleg() and silently skips the recall, so the\ndelegation is never broken and the conflicting open or lock stalls.\n\nFix by clearing NFSD4_CALLBACK_RUNNING on the !queued branch alongside\nthe refcount_dec.",
   "datePublished": "Sep 11, 2026, 7:46:12 PM",
-  "dateUpdated": "Sep 11, 2026, 7:46:12 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 17, 2026, 10:23:58 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/3c13a8dda2048995dae656a2be1d34bbe46aaa52",
     "https://git.kernel.org/stable/c/b137930ee52e3ef38915a3511d4c070463b63a32",
     "https://git.kernel.org/stable/c/cb2d0c4d1b3d301d042ed61365eaa8cb0141a254",
     "https://git.kernel.org/stable/c/b036727d334b1b7cd4c1f1fba3b59ba93a6bbe96"
   ],
   "aliases": [
-    "CVE-2026-89692"
+    "CVE-2026-89692",
+    "GHSA-mcqc-fm6v-5h2r"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.63,
   "enisaIdProduct": [
+    {
+      "id": "10692e34-787d-3964-a560-0213f64c1a12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "1608a026-0505-3a4d-8a7a-89fa1d7c00d5",
       "product": {
@@ -57,16 +71,6 @@
       "product_version": "1054e8ffc5c492f341bdf1888b882f1d163dd3d8 <b137930ee52e3ef38915a3511d4c070463b63a32"
     },
     {
-      "id": "810834b3-6dab-3d8c-8618-c70967b1a67f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "84e9ab6b-1530-3495-9d5f-9b61c1d17011",
       "product": {
         "name": "Linux",
@@ -85,6 +89,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "ba58bde1-9808-3495-a3b6-88e4f2eaabc2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "918b58471bf98b0af31bb79f911e36cbde1d37db <3c13a8dda2048995dae656a2be1d34bbe46aaa52"
     },
     {
       "id": "faefd87f-2865-3055-8384-17e668016921",

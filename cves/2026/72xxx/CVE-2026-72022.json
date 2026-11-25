@@ -2,8 +2,8 @@
   "id": "EUVD-2026-58980",
   "enisaUuid": "68d4e875-6785-3c47-bacb-4aafbb5783a7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nllc: fix SAP refcount leak in llc_ui_autobind()\n\nllc_ui_autobind() opens a SAP after choosing a dynamic LSAP.\nllc_sap_open() returns a reference owned by the caller, and\nllc_sap_add_socket() takes a second reference for the socket's\nmembership in the SAP hash tables.\n\nllc_ui_bind() drops the caller's reference after adding the socket,\nbut llc_ui_autobind() keeps it. When the socket is closed,\nllc_sap_remove_socket() releases only the socket reference, leaving\nthe SAP on llc_sap_list with sk_count == 0.\n\nThis is user-visible because repeated autobind and close cycles can consume\nall dynamic SAP values and make later autobinds fail with -EUSERS.\n\nDrop the caller's reference after a successful autobind, matching\nllc_ui_bind()'s ownership model.",
-  "datePublished": "Aug 15, 2026, 6:32:09 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:09 AM",
+  "datePublished": "Aug 15, 2026, 5:51:47 AM",
+  "dateUpdated": "Aug 17, 2026, 5:06:45 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/79dc4b508e3f2649390a1f745f7657813e5938ec",
@@ -13,15 +13,14 @@
     "https://git.kernel.org/stable/c/b2fc9955ddc7c4ca03be44b995193bd6486c62e1",
     "https://git.kernel.org/stable/c/61a7ff4a62003b55a15022567486741b3bd83914",
     "https://git.kernel.org/stable/c/21a537606fe35be2b85971a5fd35c0023b6ef98f",
-    "https://git.kernel.org/stable/c/660667cd406648bbaffbd5c0d897c2263a852f11",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72022"
+    "https://git.kernel.org/stable/c/660667cd406648bbaffbd5c0d897c2263a852f11"
   ],
   "aliases": [
     "GHSA-8wqh-fvw2-pqc7",
     "CVE-2026-72022"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0e0c153f-9461-3531-bf81-57c694bb0c01",
@@ -94,6 +93,16 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b589a965184dde49c43b8caf5bcc65715a7b4ef2"
     },
     {
+      "id": "4ef8d238-dff3-3cdc-b83b-432fd3d4d938",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "55d58b7a-e619-3cca-ac4c-39011659e286",
       "product": {
         "name": "Linux",
@@ -142,16 +151,6 @@
         }
       },
       "product_version": "patch: 6.1.178"
-    },
-    {
-      "id": "acfc0965-29cd-3845-a974-09c993dd6654",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     },
     {
       "id": "e06fff21-0b65-3c34-85b1-6726d6d7e9c1",

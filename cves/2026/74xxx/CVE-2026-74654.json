@@ -3,7 +3,7 @@
   "enisaUuid": "f6631da0-c959-3bf9-8f8f-fb0bcec0d9e7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nserial: 8250_dma: Clear stale RX state on shutdown\n\nserial8250_release_dma() terminates RX DMA and releases the channel, but\nleaves rx_running set.  If the port is closed while an RX transfer is\nactive, the stale state remains while rxchan is NULL until the channel is\nrequested again on the next open.\n\nThe DesignWare BUSY workaround added by commit a7b9ce39fbe4\n(\"serial: 8250_dw: Ensure BUSY is deasserted\") calls\nserial8250_rx_dma_flush() from the LCR write path during startup.  This\nhappens before serial8250_request_dma() obtains a new RX channel.  On\nreopen, the stale rx_running state therefore makes the flush path pass a\nNULL channel to dmaengine_pause(), causing a kernel Oops.\n\nClear rx_running after terminating RX DMA, matching the TX cleanup.  Also\nmake the flush helper return if the DMA object or RX channel is not\navailable so startup and teardown paths cannot pass a NULL channel to the\nDMAengine API.",
   "datePublished": "Aug 22, 2026, 3:32:29 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:29 PM",
+  "dateUpdated": "Nov 6, 2026, 5:05:49 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/bf4fb620e02962b2b52500a4b3d8420f351eb46a",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/e2fe6a0efecbef00e3ecc2db64dd5afa8c212b41"
   ],
   "aliases": [
-    "CVE-2026-74654"
+    "CVE-2026-74654",
+    "GHSA-m9j6-hfqp-5v8v"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0328f66c-cbf6-3d9c-bee1-b6992733bcbe",

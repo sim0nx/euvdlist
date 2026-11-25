@@ -3,8 +3,10 @@
   "enisaUuid": "a219325b-4f65-384b-93e8-2a41898a31ce",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfc: llcp: read llcp_sock->local under the socket lock in getsockopt\n\nnfc_llcp_getsockopt() read llcp_sock->local before lock_sock(sk) and\nthen dereferenced the cached pointer inside the locked region.\nllcp_sock_bind() assigns and clears llcp_sock->local under the same\nsocket lock, dropping the last reference on its error path. A\ngetsockopt() racing an in-flight bind() can observe the pointer, block\non lock_sock(), and then dereference a freed nfc_llcp_local once bind()\nhas unwound.\n\nMove the llcp_sock->local read and the NULL check inside the\nlock_sock(sk) region so bind() cannot mutate or free the pointer between\nthe load and the use.",
   "datePublished": "Sep 17, 2026, 4:07:34 PM",
-  "dateUpdated": "Sep 17, 2026, 4:07:34 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:00:01 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/56fd158fef20268f48db6cdfe5d722e930134eda",
     "https://git.kernel.org/stable/c/8ba8cec0586727cc135ca4827921fc7b52946d71",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/36812527052c5bfb1ec6c1e292d67a5bf76b750f"
   ],
   "aliases": [
-    "CVE-2026-90225"
+    "CVE-2026-90225",
+    "GHSA-jphp-9f5v-q6mv"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "158a0fca-6277-3402-ae62-9973ad0c6e50",
@@ -142,16 +145,6 @@
       "product_version": "3.10"
     },
     {
-      "id": "82c47c9b-8234-3636-934b-86b70e45f7c4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "8ce7596a-d2e0-3997-b19d-15beb7ae1ce5",
       "product": {
         "name": "Linux",
@@ -170,6 +163,16 @@
         }
       },
       "product_version": "26fd76cab2e61cedc5c25f7151fb31b57ddc53c7 <2d8ac24565be85bf56580b87bf1b874d35625eb5"
+    },
+    {
+      "id": "9511ac57-265f-3dad-a4a7-8d540248b003",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "a1594880-ac0d-3817-b6ca-1c2b9ded4b79",

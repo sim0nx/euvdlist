@@ -3,17 +3,19 @@
   "enisaUuid": "c65b84f3-6bd8-3221-ab25-bf9b96e92452",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\naccel/amdxdna: Fix race condition when checking rpm_on\n\nWhen autosuspend is triggered, driver rpm_on flag is set to indicate that\na suspend/resume is already in progress. However, when a userspace\napplication submits a command during this narrow window,\namdxdna_pm_resume_get() may incorrectly skip the resume operation because\nthe rpm_on flag is still set. This results in commands being submitted\nwhile the device has not actually resumed, causing unexpected behavior.\n\nThe set_dpm() is called by suspend/resume, it relied on rpm_on flag to\navoid calling into rpm suspend/resume recursivly. So to fix this, remove\nthe use of the rpm_on flag entirely. Instead, introduce aie2_pm_set_dpm()\nwhich explicitly resumes the device before invoking set_dpm(). With this\nchange, set_dpm() is called directly inside the suspend or resume execution\npath. Otherwise, aie2_pm_set_dpm() is called.",
   "datePublished": "May 27, 2026, 12:14:51 PM",
-  "dateUpdated": "May 27, 2026, 12:14:51 PM",
+  "dateUpdated": "Oct 15, 2026, 10:06:52 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/a82142af837f67a3f0a257a6dc355448ace58926",
     "https://git.kernel.org/stable/c/e7cb75b6a5127d78298e39750b4f3185eca0dafc",
     "https://git.kernel.org/stable/c/00ffe45ece80160aef446d74ded906352f21dd72"
   ],
   "aliases": [
+    "GHSA-9hw7-7g65-g445",
     "CVE-2025-71303"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.11,
   "enisaIdProduct": [
     {
       "id": "1edb9758-36f0-31f0-a061-2dbeaba130af",
@@ -74,6 +76,16 @@
         }
       },
       "product_version": "063db451832b8849faf1b0b8404b3a6a39995b29 <00ffe45ece80160aef446d74ded906352f21dd72"
+    },
+    {
+      "id": "ffc1e9be-9eed-3809-8c8e-3e2b5e422d95",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3bdd26582d026bdd86aa76f03989a1137b2490a0 <a82142af837f67a3f0a257a6dc355448ace58926"
     }
   ],
   "enisaIdVendor": [

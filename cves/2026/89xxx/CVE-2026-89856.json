@@ -3,8 +3,10 @@
   "enisaUuid": "dfb78144-d18c-3962-96f5-8569f1e25a12",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Clamp MSI-X derived queue counts to avoid truncation\n\nha->msix_count is u16, but ha->max_req_queues, ha->max_rsp_queues and\nha->max_qpairs are u8. Deriving the queue count as\n\"ha->max_req_queues = ha->msix_count - 1\" therefore truncates: a board\n(or a misconfigured/malicious hot-plugged device) advertising 257 MSI-X\nvectors yields msix_count - 1 == 256, which truncates to 0. An MSI-X\ncount of 1 zeroes it as well, and in target mode the subsequent\n\"ha->max_req_queues--\" then underflows 0 to 255.\n\nWhen the count is 0, qla2x00_alloc_queues() calls\nkzalloc_objs(struct req_que *, 0), which returns ZERO_SIZE_PTR. That is\nnot NULL, so the allocation check passes and the following\n\"ha->req_q_map[0] = req\" dereferences ZERO_SIZE_PTR, corrupting memory\nor crashing the kernel.\n\nAdd qla_calc_queue_count() to clamp the derived value into\n[1, QLA_MAX_QUEUES - 1] so it always fits in u8 and is never zero, and\nuse it at all three derivation sites (qla25xx_iospace_config(),\nqla83xx_iospace_config() and qla24xx_enable_msix()). Also guard the\ntarget-mode decrement so it cannot reintroduce a zero (which would in\nturn underflow max_qpairs).",
   "datePublished": "Sep 16, 2026, 10:31:29 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:29 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:53:48 AM",
+  "baseScore": 8.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/cf623d32761b00f221a9cfded3303d56e84b429d",
     "https://git.kernel.org/stable/c/9eeddbeaa896f39d943644b16d83a6ad0ceab255",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/ebfd35c64433821bd5619a6d07ccc2df8b5b1de3"
   ],
   "aliases": [
+    "GHSA-m9fj-xvr8-vh59",
     "CVE-2026-89856"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
     {
       "id": "0fa2b53b-a48d-36ca-983c-7e53349263c7",
@@ -60,6 +63,16 @@
         }
       },
       "product_version": "patch: 7.2.5"
+    },
+    {
+      "id": "3f6bcbc0-e570-3582-ae0b-85d8ba216279",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "447f464a-b411-3119-a8b7-f955ee697239",
@@ -160,16 +173,6 @@
         }
       },
       "product_version": "patch: 6.12.110"
-    },
-    {
-      "id": "c79e9559-a865-30ba-ae84-31c811e1bb4a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "e5637048-759e-34b5-a94d-09a620627fee",

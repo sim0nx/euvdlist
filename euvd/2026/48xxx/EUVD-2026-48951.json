@@ -3,7 +3,7 @@
   "enisaUuid": "49bf54f8-48af-3fb4-93f8-6c7766e7c4d8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: btnxpuart: Fix out-of-bounds firmware read in nxp_recv_fw_req_v3()\n\nDuring the v3 firmware download the controller sends a v3_data_req with a\n32 bit offset and a 16 bit len. nxp_recv_fw_req_v3() checks only the lower\nbound of the offset and then sends firmware from that offset.\n\n  nxpdev->fw_dnld_v3_offset = offset - nxpdev->fw_v3_offset_correction;\n  serdev_device_write_buf(nxpdev->serdev, nxpdev->fw->data +\n                          nxpdev->fw_dnld_v3_offset, len);\n\nNothing checks that fw_dnld_v3_offset + len stays within nxpdev->fw->size,\nso a controller that asks for an offset or length past the firmware image\nmakes the driver read past the end of nxpdev->fw->data and send that\nmemory back over UART.\n\nnxp_recv_fw_req_v1() already bounds the same write. Add the equivalent\ncheck to the v3 path, reject the request when it falls outside the firmware\nimage, and zero len on the error path so the fw_v3_prev_sent bookkeeping at\nfree_skb stays consistent.",
   "datePublished": "Jul 25, 2026, 8:50:48 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:48 AM",
+  "dateUpdated": "Aug 17, 2026, 4:55:05 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/21e60eb4d95854196e7c0e77383f35e7ac95df61",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/badff6c3bed8923a1257a853f137d447976eec30"
   ],
   "aliases": [
-    "CVE-2026-64407"
+    "CVE-2026-64407",
+    "GHSA-vpwp-65cp-hgqm"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "0073bc41-b930-3ea9-ad9f-223e94981a75",
@@ -37,16 +38,6 @@
         }
       },
       "product_version": "689ca16e523278470c38832a3010645a78c544d8 <441088792ffec3ca01f4efe2934060570eb11eb8"
-    },
-    {
-      "id": "18220c5e-95da-3805-a7be-68e8510deb9e",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     },
     {
       "id": "2cf551bc-a593-3ba0-9242-c5886dc6f364",
@@ -127,6 +118,16 @@
         }
       },
       "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "f9fee18e-e2fb-367d-b093-b36094193444",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "fd122f65-cb2e-3c77-8b04-003225a77b2e",

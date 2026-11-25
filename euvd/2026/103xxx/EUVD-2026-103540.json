@@ -3,7 +3,7 @@
   "enisaUuid": "79a7f7b3-ef1b-3d06-8a06-d5941d6cb171",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Restrict CO-RE poisoning to relocatable instructions\n\nCO-RE relocation records can name any instruction offset. When a\nrelocation cannot be resolved, bpf_core_patch_insn() currently poisons its\ntarget before checking whether that instruction is a valid relocation\ntarget. Malformed metadata can therefore replace jumps, calls, exits,\nregister-source arithmetic, or non-immediate loads instead of failing at\nthe relocation step.\n\nHandle poisoning only after the instruction has passed the same class and\noperand-form checks used for a resolved relocation. Route invalid forms\nthrough the existing diagnostic and return a hard error. Keep poisoning\nsupported instructions, including both halves of a plain ldimm64, so an\nunresolved relocation in dead code remains valid.\n\nExtend bpf_core_poison_insn() to poison both halves of ldimm64, and return\nits status directly from each validated instruction case. This avoids\nrouting the success path through a common label and leaves the helper free\nto report errors.\n\nThe shared relocation code applies this restriction to both libbpf and\nin-kernel CO-RE.",
   "datePublished": "Oct 18, 2026, 3:19:47 PM",
-  "dateUpdated": "Oct 18, 2026, 3:19:47 PM",
+  "dateUpdated": "Oct 19, 2026, 9:22:54 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/a8c47e62d9aea2d47a09e06c1682c59c21b92449",
@@ -15,10 +15,11 @@
     "https://git.kernel.org/stable/c/394ae398337c5f87e567f6cd63b937fc2b2f6ddc"
   ],
   "aliases": [
+    "GHSA-7qcx-cmxq-wh7w",
     "CVE-2026-98626"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "135d2c0b-7ccc-3bfb-93d7-fa820d04fc7f",
@@ -49,6 +50,16 @@
         }
       },
       "product_version": "5.6"
+    },
+    {
+      "id": "266e34c8-ca63-379e-893e-a4351b5d581f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "2a32798d-9883-33aa-8c1e-023a3b3f5816",
@@ -89,16 +100,6 @@
         }
       },
       "product_version": "patch: 5.15.222"
-    },
-    {
-      "id": "593ef717-2584-34bd-bbab-2c1b2cf0ccc9",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "830f430e-b80b-383c-866a-b4f86b5499f1",

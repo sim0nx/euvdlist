@@ -1,0 +1,235 @@
+{
+  "id": "EUVD-2022-53732",
+  "enisaUuid": "ef4c3bf6-fda0-3bd5-85a7-305253d2dc83",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nswiotlb: fix info leak with DMA_FROM_DEVICE\n\nThe problem I'm addressing was discovered by the LTP test covering\ncve-2018-1000204.\n\nA short description of what happens follows:\n1) The test case issues a command code 00 (TEST UNIT READY) via the SG_IO\n   interface with: dxfer_len == 524288, dxdfer_dir == SG_DXFER_FROM_DEV\n   and a corresponding dxferp. The peculiar thing about this is that TUR\n   is not reading from the device.\n2) In sg_start_req() the invocation of blk_rq_map_user() effectively\n   bounces the user-space buffer. As if the device was to transfer into\n   it. Since commit a45b599ad808 (\"scsi: sg: allocate with __GFP_ZERO in\n   sg_build_indirect()\") we make sure this first bounce buffer is\n   allocated with GFP_ZERO.\n3) For the rest of the story we keep ignoring that we have a TUR, so the\n   device won't touch the buffer we prepare as if the we had a\n   DMA_FROM_DEVICE type of situation. My setup uses a virtio-scsi device\n   and the  buffer allocated by SG is mapped by the function\n   virtqueue_add_split() which uses DMA_FROM_DEVICE for the \"in\" sgs (here\n   scatter-gather and not scsi generics). This mapping involves bouncing\n   via the swiotlb (we need swiotlb to do virtio in protected guest like\n   s390 Secure Execution, or AMD SEV).\n4) When the SCSI TUR is done, we first copy back the content of the second\n   (that is swiotlb) bounce buffer (which most likely contains some\n   previous IO data), to the first bounce buffer, which contains all\n   zeros.  Then we copy back the content of the first bounce buffer to\n   the user-space buffer.\n5) The test case detects that the buffer, which it zero-initialized,\n  ain't all zeros and fails.\n\nOne can argue that this is an swiotlb problem, because without swiotlb\nwe leak all zeros, and the swiotlb should be transparent in a sense that\nit does not affect the outcome (if all other participants are well\nbehaved).\n\nCopying the content of the original buffer into the swiotlb buffer is\nthe only way I can think of to make swiotlb transparent in such\nscenarios. So let's do just that if in doubt, but allow the driver\nto tell us that the whole mapped buffer is going to be overwritten,\nin which case we can preserve the old behavior and avoid the performance\nimpact of the extra bounce.",
+  "datePublished": "Jul 16, 2024, 12:25:19 PM",
+  "dateUpdated": "May 11, 2026, 6:48:24 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/fd97de9c7b973f46a6103f4170c5efc7b8ef8797",
+    "https://git.kernel.org/stable/c/aaf166f37eb6bb55d81c3e40a2a460c8875c8813",
+    "https://git.kernel.org/stable/c/06cb238b0f7ac1669cb06390704c61794724c191",
+    "https://git.kernel.org/stable/c/b2f140a9f980806f572d672e1780acea66b9a25c",
+    "https://git.kernel.org/stable/c/f3f2247ac31cb71d1f05f56536df5946c6652f4a",
+    "https://git.kernel.org/stable/c/7007c894631cf43041dcfa0da7142bbaa7eb673c",
+    "https://git.kernel.org/stable/c/dcead36b19d999d687cd9c99b7f37520d9102b57",
+    "https://git.kernel.org/stable/c/f2141881b530738777c28bb51c62175895c8178b",
+    "https://git.kernel.org/stable/c/901c7280ca0d5e2b4a8929fbe0bfb007ac2a6544"
+  ],
+  "aliases": [
+    "CVE-2022-48853",
+    "GHSA-p622-mwq3-26f2"
+  ],
+  "assigner": "Linux",
+  "epss": 0.26,
+  "enisaIdProduct": [
+    {
+      "id": "1c6333fe-64bb-39e0-9e0a-c63b84ff2933",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "1cdecb05-046e-3b05-91f7-82fa60741998",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16.19"
+    },
+    {
+      "id": "41eea8ba-2cfb-3a72-9e41-f62d3f5b9728",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.196"
+    },
+    {
+      "id": "46bd0e92-c5ec-3772-8f83-5eb60d9330e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <7007c894631cf43041dcfa0da7142bbaa7eb673c"
+    },
+    {
+      "id": "56379d3f-cd4d-38dd-9a14-a2a752e46926",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <aaf166f37eb6bb55d81c3e40a2a460c8875c8813"
+    },
+    {
+      "id": "5e2f9c42-6453-3b49-bf7f-b186c11d6aa6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.281"
+    },
+    {
+      "id": "5e95523f-6ac7-31db-ad4b-bfeeaaeeba64",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b2f140a9f980806f572d672e1780acea66b9a25c"
+    },
+    {
+      "id": "63ed389b-b5f2-3046-bd3a-fc51570382f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <901c7280ca0d5e2b4a8929fbe0bfb007ac2a6544"
+    },
+    {
+      "id": "76e9a769-230a-3aaa-ade7-4426c23f0852",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <06cb238b0f7ac1669cb06390704c61794724c191"
+    },
+    {
+      "id": "89327c62-b6a4-377b-90fc-bc5bebf0cf1c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.17.2"
+    },
+    {
+      "id": "ad83318d-397f-3c22-92e9-39b045c599b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.118"
+    },
+    {
+      "id": "ba06bc80-2446-38ac-8b40-7bdf55e5d00b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f2141881b530738777c28bb51c62175895c8178b"
+    },
+    {
+      "id": "d24bb8dc-4b40-3f02-b0b1-4bf9a7128b0d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.9.320"
+    },
+    {
+      "id": "d47a8661-46ca-3d7d-a9be-002fa23c3c03",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "db89ac21-9eef-35c6-b4f4-d0c6378a35bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <fd97de9c7b973f46a6103f4170c5efc7b8ef8797"
+    },
+    {
+      "id": "db9df324-fee4-3236-90aa-9bceb3f6bf58",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.33"
+    },
+    {
+      "id": "e195fbe5-bef0-3243-904e-b50179bc3140",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.245"
+    },
+    {
+      "id": "efc98f26-58ab-34e7-a2ed-a94812c1186b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <dcead36b19d999d687cd9c99b7f37520d9102b57"
+    },
+    {
+      "id": "f39dc293-cc8a-3948-aed8-97ef2b8e4da9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f3f2247ac31cb71d1f05f56536df5946c6652f4a"
+    },
+    {
+      "id": "fb1ea420-f94c-395c-9a4c-0e40980c5d24",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.18"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "cf38f6d7-4f77-3339-89a2-625caa5a8c9d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

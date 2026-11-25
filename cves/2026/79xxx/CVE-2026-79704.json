@@ -3,16 +3,19 @@
   "enisaUuid": "29b275a5-5024-30f9-bf2f-0a6c5d83de61",
   "description": "An out-of-bounds read vulnerability exists in the streaming RPC client of Apache bRPC (versions 1.11.0 through\u00a0 1.17.0) on all platforms. A client that creates multiple streams in a single RPC expects the server response to carry exactly one extra_stream_id for every additional stream. The response handling path indexed the returned identifiers using the locally created stream count without first validating the size of the returned list, so a malicious or compromised server (or an on-path attacker) can trigger an out-of-bounds read in the client by returning a malformed StreamSettings response with fewer extra_stream_ids than expected. This may crash the client process (denial of service) or leak unintended memory contents into subsequent stream handling; surplus identifiers have no valid client-stream mapping and are processed inconsistently.\n\nRoot Cause:\nSince bRPC 1.11.0, a client can create multiple streams in one RPC via batch StreamCreate. The expected behavior is that the server response must return exactly (N-1) extra_stream_ids, where N is the number of locally created streams. In Controller::HandleStreamConnection, the response path reads extra_stream_ids[i-1] for each additional local stream without first comparing the returned list size with (N-1). If the server returns fewer identifiers, the read runs past the end of the returned list (out-of-bounds read); if it returns more, the surplus identifiers have no corresponding client-side stream.\n\nAffected Scenarios:\nA bRPC client using multi-stream RPC (creating more than one stream in a single RPC) that connects to an untrusted, malicious, or compromised server or to a server reached through an untrusted network path. The server sends a malformed StreamSettings response to trigger the issue.\n\n\nHow to Fix: \n(Choose one of the following options)\u00a0\n1. Upgrade bRPC to version 1.18.0, which fixes this issue.\n2. Apply this patch:  https://github.com/apache/brpc/pull/3485 \n\n\nNote:\nThe fix makes the client reject responses whose extra_stream_ids count does not exactly match the number of additional client streams. Such mismatched responses now fail the RPC with ERESPONSE and go through the existing stream cleanup path, instead of being partially processed.",
   "datePublished": "Oct 21, 2026, 11:56:20 AM",
-  "dateUpdated": "Oct 21, 2026, 11:56:20 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 5:03:38 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://lists.apache.org/thread/2pf15ojj0vr7rtx95677kgtl1mx3gdgb"
   ],
   "aliases": [
-    "CVE-2026-79704"
+    "CVE-2026-79704",
+    "GHSA-xp33-gmw5-5ggc"
   ],
   "assigner": "apache",
-  "epss": 0.0,
+  "epss": 0.51,
   "enisaIdProduct": [
     {
       "id": "7057e3ac-49d4-3159-a79d-e33797921358",

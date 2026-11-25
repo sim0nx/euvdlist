@@ -3,7 +3,7 @@
   "enisaUuid": "7e03f11c-32d0-3589-9c6e-27c901e5453e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/erdma: Fix CEQ tasklet use-after-free on removal\n\nEach CEQ interrupt handler only schedules eqc->tasklet. The tasklet calls\nerdma_ceq_completion_handler(), which reads the DMA-coherent EQ ring\nthrough get_next_valid_eqe() and updates eq->dbrec through notify_eq().\n\nerdma_ceqs_uninit() frees each CEQ IRQ and then destroys its EQ.\nfree_irq() prevents another hard IRQ and waits for an in-flight handler,\nbut it does not drain a tasklet that the handler already scheduled. The\ntasklet can therefore access eq->qbuf or eq->dbrec after\nerdma_eq_destroy() frees them.\n\nClearing ceq_cb->ready does not synchronize with a tasklet that already\npassed the check at the start of erdma_ceq_completion_handler().\n\nKill the tasklet after free_irq(), when no handler can schedule it again,\nand before erdma_ceq_uninit_one() releases the EQ buffers.",
   "datePublished": "Sep 17, 2026, 4:10:23 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:23 PM",
+  "dateUpdated": "Oct 19, 2026, 9:04:20 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/0e8b78dabb1f156db05ffe74c6eae861167c7c21",
@@ -14,11 +14,22 @@
     "https://git.kernel.org/stable/c/0ca79979384f031d710c4b3bae065dcb5d95aca3"
   ],
   "aliases": [
+    "GHSA-mcv5-xwww-xj32",
     "CVE-2026-92514"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "29b4157c-2064-3980-9c99-11ca87705edc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "2e2ce597-a7b0-33a8-93fe-fff56fa428ca",
       "product": {
@@ -28,16 +39,6 @@
         }
       },
       "product_version": "f2a0a630b953451a59a2612ad8c29246638f0a38 <6e129c1310abfa786a510cc63e69c5ef12349048"
-    },
-    {
-      "id": "2ee9570b-2e34-356c-bc69-e2160c067d39",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "33520d52-0038-3a4c-929b-7a62f75d6054",

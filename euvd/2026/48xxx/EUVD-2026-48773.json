@@ -3,7 +3,7 @@
   "enisaUuid": "f58c1720-7e12-302d-9714-bb8ed1b4cd19",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngpio: eic-sprd: use raw_spinlock_t in the irq startup path\n\nsprd_eic_irq_unmask() enables the GPIO IRQ and then updates controller\nstate through sprd_eic_update(), which takes sprd_eic->lock with\nspin_lock_irqsave().  The callback can be reached from irq_startup()\nwhile setting up a requested IRQ.  That path is not sleepable, but on\nPREEMPT_RT a regular spinlock_t becomes a sleeping lock.\n\nThis issue was found by our static analysis tool and then manually\nreviewed against the current tree.\n\nThe grounded PoC kept the request_threaded_irq() -> __setup_irq() ->\nirq_startup() -> sprd_eic_irq_unmask() -> sprd_eic_update() carrier and\nused the original spin_lock_irqsave(&sprd_eic->lock) edge.  Lockdep\n\n  BUG: sleeping function called from invalid context\n  hardirqs last disabled at ... __setup_irq.constprop.0 ... [vuln_msv]\n  sprd_rt_spin_lock_irqsave+0x1c/0x30 [vuln_msv]\n  sprd_eic_update.constprop.0+0x48/0x90 [vuln_msv]\n  sprd_eic_irq_unmask.constprop.0+0x35/0x50 [vuln_msv]\n  __setup_irq.constprop.0+0xd/0x30 [vuln_msv]\n\nConvert the Spreadtrum EIC controller lock to raw_spinlock_t.  The\nlocked section only serializes MMIO register updates and does not contain\nsleepable operations, so keeping it non-sleeping is appropriate for the\nirqchip callbacks.",
   "datePublished": "Jul 25, 2026, 8:51:06 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:06 AM",
+  "dateUpdated": "Aug 17, 2026, 4:55:29 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/96612bf2712cd961dbd9b52f3a9b4ab668f57628",
@@ -16,21 +16,12 @@
     "https://git.kernel.org/stable/c/90f0109019e6817eb40a486671b7722d1544ae29"
   ],
   "aliases": [
-    "CVE-2026-64429"
+    "CVE-2026-64429",
+    "GHSA-6pwp-xwgp-j72q"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.1,
   "enisaIdProduct": [
-    {
-      "id": "00ad63e8-58fb-3538-8e8c-40d41ffbcce4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
     {
       "id": "0ab526ef-b72a-34bc-b597-ff5bc4f74665",
       "product": {
@@ -80,6 +71,16 @@
         }
       },
       "product_version": "25518e024e3a6e5715d672f1daa91e1d100f7436 <4750909a40da9016185e0ac991510a278cecb1e7"
+    },
+    {
+      "id": "35053221-45b2-3806-9f31-eeadbf2532f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "48bf1464-93af-3515-b713-0fb594d41c2b",

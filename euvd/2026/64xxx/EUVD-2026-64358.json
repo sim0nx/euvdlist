@@ -3,7 +3,7 @@
   "enisaUuid": "8043ad0d-5194-3c9d-b522-333061776107",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nima: fix out-of-bounds read in xattr_verify()\n\nThe digest-length check in xattr_verify() mixes int and size_t:\n\n\tif (xattr_len - sizeof(xattr_value->type) - hash_start >=\n\t\t\tiint->ima_hash->length)\n\nsizeof() yields size_t, so the usual arithmetic conversions promote\nthe whole left-hand side to unsigned 64-bit before the subtraction\nruns. For a truncated xattr this underflows instead of going negative:\na 1-byte IMA_XATTR_DIGEST_NG xattr (xattr_len == 1, hash_start == 1)\nturns \"1 - 1 - 1\" into SIZE_MAX, which is trivially >= ima_hash->length.\nThe check then passes and the following memcmp() reads\niint->ima_hash->length bytes starting past the end of the buffer\nvfs_getxattr_alloc() allocated for it.\n\nNothing upstream clamps xattr_len back into a safe range first:\nima_get_hash_algo() only special-cases xattr_len < 2 to pick a default\nalgorithm, and evm_verifyxattr() returns INTEGRITY_UNKNOWN rather than\nfailing when no HMAC key is loaded, so a truncated security.ima value\nreaches the length check as-is.\n\nRewrite the comparison so every operand stays a signed int and no\nimplicit conversion to size_t can occur.",
   "datePublished": "Aug 22, 2026, 3:32:41 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:41 PM",
+  "dateUpdated": "Nov 6, 2026, 5:05:50 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/d823b5f4557083d1dd92096f796a78a2b1b06d10",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/5ff232d31106f45ac87c3b64e1d35a0667777797"
   ],
   "aliases": [
+    "GHSA-g8m3-q9h2-qp8g",
     "CVE-2026-74671"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "1ceb0620-5a6a-3491-8878-6817bfbb914a",

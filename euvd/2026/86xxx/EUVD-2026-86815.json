@@ -3,20 +3,32 @@
   "enisaUuid": "a6e02639-62cc-3541-9e4a-f20575933880",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nperf/core: Allow list_del during perf_event_overflow()\n\nA PMU might use perf_sched_cb_inc() and perf_sched_cb_dec()\ninterface to get the PMU call back function pmu::sched_task\ninvoked at schedule in and schedule out. This is achieved\nby walking along the list anchored by sched_cb_list.\n\nThe following scenario might lead to a list corruption.\n\n   perf_pmu_sched_task()\n      for_each_list_entry(..., &sched_cb_list)\n      +--> __perf_pmu_sched_task()\n           +--> event->pmu->sched_task())\n                +--> PMU_push_sample()\n                     +--> perf_event_overflow()\n                          +--> __perf_event_overflow()\n                               +--> pmu->stop()\n                                    +--> perf_sched_cb_dec()\n                                         remove entry from sched_cb_list\n                                         while list node in use.\n\nThis happens when ioctl(fd, PERF_EVENT_IOC_REFRESH, xxx) has been\ninvoked and perf_event::event_limit hits zero.\n\nPrevent the list corruption and convert for_each_list_entry()\nto for_each_list_entry_safe().",
   "datePublished": "Sep 25, 2026, 10:23:05 AM",
-  "dateUpdated": "Sep 25, 2026, 10:23:05 AM",
+  "dateUpdated": "Oct 21, 2026, 12:53:52 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/fa360a018369f3eb4fe4f4792238adfc1f6fd5dc",
     "https://git.kernel.org/stable/c/723e85fb2c3bcd237ac02cbd69502ed62ce0068c",
     "https://git.kernel.org/stable/c/6d0b9ce3be221c9077653f3670d60d66bb725ee2",
     "https://git.kernel.org/stable/c/e2770c76a02452fddb52e9e05c7ed6acfef06c32",
     "https://git.kernel.org/stable/c/59e63416f5153e7d58652c616fbdcb7d5e01fff7"
   ],
   "aliases": [
-    "CVE-2026-97961"
+    "CVE-2026-97961",
+    "GHSA-prpp-c3xm-jcfh"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "1b927b1f-6f08-37ef-8ebd-ac6a42985df3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "2ec38fab-3e04-3b87-8d64-eac656749906",
       "product": {
@@ -68,6 +80,16 @@
       "product_version": "patch: 7.2.7"
     },
     {
+      "id": "885a865a-10f9-33be-9da0-a3e27c648085",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bd27568117664b8b3e259721393df420ed51f57b <fa360a018369f3eb4fe4f4792238adfc1f6fd5dc"
+    },
+    {
       "id": "987367f2-2f12-3345-bfce-a0188ce4a73f",
       "product": {
         "name": "Linux",
@@ -78,14 +100,14 @@
       "product_version": "patch: 6.12.111"
     },
     {
-      "id": "bad6d262-52a0-3129-904a-ab9e579c545b",
+      "id": "c9921d02-b648-3e2f-840a-b111771a6e83",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc3"
+      "product_version": "patch: 6.6.160"
     },
     {
       "id": "d89c809f-565e-33f9-aa33-5ed76ebcf81b",

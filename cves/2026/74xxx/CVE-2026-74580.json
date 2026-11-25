@@ -3,8 +3,10 @@
   "enisaUuid": "2f1c0db4-9b01-3b64-9cca-fae2ca3a5928",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvhost: reset the vring metadata cache on vring reconfiguration\n\nvq->meta_iotlb[] caches the vhost_iotlb_map that backs each vring\nmetadata region, and iotlb_access_ok() returns early on a cache hit,\ntaking the hit as proof that the region has already been validated:\n\n\tif (vhost_vq_meta_fetch(vq, addr, len, type))\n\t\treturn true;\n\nThe cache is reset on VHOST_IOTLB_UPDATE and VHOST_IOTLB_INVALIDATE, on\ndevice IOTLB (re)initialisation and on vq reset, but not when\nVHOST_SET_VRING_ADDR replaces vq->desc, vq->avail and vq->used, nor when\nVHOST_SET_VRING_NUM changes the region sizes.\n\nWith a device IOTLB attached both ioctls are accepted while the vq is\nlive, and neither validates the addresses at ioctl time: vq_access_ok()\nand vq_log_used_access_ok() return true early because the addresses are\nGIOVAs, deferring validation to prefetch time.  Once the cache has been\npopulated that deferred validation no longer runs -- vq_meta_prefetch()\nhits the stale entry and returns true -- and vhost_vq_meta_fetch() keeps\ntranslating through the old mapping as\n\n\tmap->addr + addr - map->start\n\nfor an address the mapping no longer covers.  vhost_copy_to_user() and\nvhost_copy_from_user() consume the result with __copy_to_user() and\n__copy_from_user(), which do not check it either, so a subsequent used\nring update or descriptor fetch accesses memory outside the region the\nIOTLB actually maps.\n\nReset the metadata cache whenever the vring is reconfigured, so the new\naddresses are pushed back through iotlb_access_ok()'s slow path.",
   "datePublished": "Aug 21, 2026, 4:31:54 PM",
-  "dateUpdated": "Aug 21, 2026, 4:31:54 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 29, 2026, 3:57:01 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/5224bd37e37d36076a550d99b2aebba33939fd95",
     "https://git.kernel.org/stable/c/54617e9119be2eb728ecdd8d977b99c99d4c498a",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/de845981da67a6b049080c87e605130b0c30adc5"
   ],
   "aliases": [
+    "GHSA-mr6w-hqp3-cg59",
     "CVE-2026-74580"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.5,
   "enisaIdProduct": [
     {
       "id": "18560632-9fbb-3c4c-99ed-342e7267771b",

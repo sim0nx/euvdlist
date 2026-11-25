@@ -3,20 +3,37 @@
   "enisaUuid": "340b8768-c3fd-3513-95fc-a0d7f574c955",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nceph: fix integer overflow in the snap trace bounds check\n\nceph_update_snap_trace() bounds the two encoded snapid arrays that follow a\nstruct ceph_mds_snap_realm with sizeof(u64) * (num_snaps +\nnum_prior_parent_snaps).  Both counts come straight off the wire as __le32,\nso the addition is evaluated in unsigned int and wraps before sizeof(u64)\npromotes it to size_t: an MDS sending num_snaps = 1 and\nnum_prior_parent_snaps = 0xffffffff makes the sum zero and the check\ndegenerates to ceph_decode_need(&p, e, 0, bad), which always passes.\ndup_array() then reads num_snaps * 8 bytes past the end of the message\nfront, which ceph_msg_new2() allocates at exactly front_len bytes.  An\nunsolicited CEPH_MSG_CLIENT_SNAP reaches this from a malicious or\ncompromised MDS with no client-side action, as do the snaptraces carried in\nan MDS reply and in a cap import.\n\nCompute the length with size_add()/size_mul() so it saturates at SIZE_MAX\ninstead of wrapping, in the style fs/ceph/mdsmap.c already uses for\nnum_export_targets.\n\n  BUG: KASAN: slab-out-of-bounds in dup_array (include/linux/unaligned.h:28 fs/ceph/snap.c:500)\n  Read of size 8 at addr ffff8880102a16c8 by task kworker/1:2/129\n  Workqueue: ceph-msgr ceph_con_workfn\n  Call Trace:\n   dump_stack_lvl (lib/dump_stack.c:94 lib/dump_stack.c:120)\n   print_report (mm/kasan/report.c:378 mm/kasan/report.c:482)\n   kasan_report (mm/kasan/report.c:595)\n   dup_array (include/linux/unaligned.h:28 fs/ceph/snap.c:500)\n   ceph_update_snap_trace (fs/ceph/snap.c:836)\n   ceph_handle_snap (fs/ceph/snap.c:1155)\n   mds_dispatch (fs/ceph/mds_client.c:7234)\n   ceph_con_process_message (net/ceph/messenger.c:1424)\n   ceph_con_v1_try_read (net/ceph/messenger_v1.c:1430)\n   ceph_con_workfn (net/ceph/messenger.c:1576)\n   process_one_work (kernel/workqueue.c:3396)\n   worker_thread (kernel/workqueue.c:3479 kernel/workqueue.c:3560)\n   kthread (kernel/kthread.c:436)\n   ret_from_fork (arch/x86/kernel/process.c:158)\n   ret_from_fork_asm (arch/x86/entry/entry_64.S:245)\n  ...\n  The buggy address is located 0 bytes to the right of\n   allocated 72-byte region [ffff8880102a1680, ffff8880102a16c8)",
   "datePublished": "Nov 16, 2026, 9:59:29 AM",
-  "dateUpdated": "Nov 16, 2026, 9:59:29 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:01:08 AM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/b4e69d35322036487941d32fd4055deb6a49f267",
+    "https://git.kernel.org/stable/c/63560ef6e6bd060414fe67fc2d1c89008184ad17",
+    "https://git.kernel.org/stable/c/442b879c34020ae8034626c83192f94bf6e048e0",
+    "https://git.kernel.org/stable/c/dc59983d1a4c8968645c7005f843ec6d8c86291e",
     "https://git.kernel.org/stable/c/bf8f13872959af1d87e36b7d27096a09fdcf6e47",
     "https://git.kernel.org/stable/c/f0dbd6b9b05e919ebab668f3479aebbcd2431fce",
     "https://git.kernel.org/stable/c/25ae51760b751d170e29425b7851ee577e2cd5ba",
     "https://git.kernel.org/stable/c/b3bf89767e3ca9506f1c7167cac97c41ec254d42"
   ],
   "aliases": [
-    "CVE-2026-99304"
+    "CVE-2026-99304",
+    "GHSA-gwm4-f7gj-p7vj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.54,
   "enisaIdProduct": [
+    {
+      "id": "2ae3da54-81c8-3054-b843-f68481aba698",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "963b61eb041e8850807d95f8d7a4c6a454c45000 <b4e69d35322036487941d32fd4055deb6a49f267"
+    },
     {
       "id": "30222389-0fa0-3d02-9789-42f684698bba",
       "product": {
@@ -26,6 +43,46 @@
         }
       },
       "product_version": "963b61eb041e8850807d95f8d7a4c6a454c45000 <bf8f13872959af1d87e36b7d27096a09fdcf6e47"
+    },
+    {
+      "id": "438119f8-6a5a-3e40-bb8c-6968f29c0fa3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "518d602f-dfa0-38d9-bbbd-d2d3c24795f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "963b61eb041e8850807d95f8d7a4c6a454c45000 <63560ef6e6bd060414fe67fc2d1c89008184ad17"
+    },
+    {
+      "id": "5727ed29-c1e5-3402-863e-18699ff23d3e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "58d26ce3-b500-3f44-91df-7a54480a0c8f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "86c9e4bb-2752-3cfd-ad09-c8dd5549548b",
@@ -48,6 +105,16 @@
       "product_version": "patch: 6.12.117"
     },
     {
+      "id": "98430439-1b37-32be-82da-930c69bb364a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "963b61eb041e8850807d95f8d7a4c6a454c45000 <dc59983d1a4c8968645c7005f843ec6d8c86291e"
+    },
+    {
       "id": "9b795f66-b0b7-3359-92d3-2bf2ceab61a6",
       "product": {
         "name": "Linux",
@@ -66,6 +133,16 @@
         }
       },
       "product_version": "patch: 6.18.63"
+    },
+    {
+      "id": "b0abbe2c-931c-34d9-a660-3deb8d89bd7e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "963b61eb041e8850807d95f8d7a4c6a454c45000 <442b879c34020ae8034626c83192f94bf6e048e0"
     },
     {
       "id": "b3d77200-3f46-30ec-98c0-7361efdcf952",
@@ -116,6 +193,16 @@
         }
       },
       "product_version": "2.6.34"
+    },
+    {
+      "id": "efd0369a-6482-365d-8856-8309ae752b20",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     }
   ],
   "enisaIdVendor": [

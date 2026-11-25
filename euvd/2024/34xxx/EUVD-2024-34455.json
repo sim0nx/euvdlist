@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2024-34455",
+  "enisaUuid": "801d2681-573d-3fd8-8ecf-c98d6de33932",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngenirq/cpuhotplug, x86/vector: Prevent vector leak during CPU offline\n\nThe absence of IRQD_MOVE_PCNTXT prevents immediate effectiveness of\ninterrupt affinity reconfiguration via procfs. Instead, the change is\ndeferred until the next instance of the interrupt being triggered on the\noriginal CPU.\n\nWhen the interrupt next triggers on the original CPU, the new affinity is\nenforced within __irq_move_irq(). A vector is allocated from the new CPU,\nbut the old vector on the original CPU remains and is not immediately\nreclaimed. Instead, apicd->move_in_progress is flagged, and the reclaiming\nprocess is delayed until the next trigger of the interrupt on the new CPU.\n\nUpon the subsequent triggering of the interrupt on the new CPU,\nirq_complete_move() adds a task to the old CPU's vector_cleanup list if it\nremains online. Subsequently, the timer on the old CPU iterates over its\nvector_cleanup list, reclaiming old vectors.\n\nHowever, a rare scenario arises if the old CPU is outgoing before the\ninterrupt triggers again on the new CPU.\n\nIn that case irq_force_complete_move() is not invoked on the outgoing CPU\nto reclaim the old apicd->prev_vector because the interrupt isn't currently\naffine to the outgoing CPU, and irq_needs_fixup() returns false. Even\nthough __vector_schedule_cleanup() is later called on the new CPU, it\ndoesn't reclaim apicd->prev_vector; instead, it simply resets both\napicd->move_in_progress and apicd->prev_vector to 0.\n\nAs a result, the vector remains unreclaimed in vector_matrix, leading to a\nCPU vector leak.\n\nTo address this issue, move the invocation of irq_force_complete_move()\nbefore the irq_needs_fixup() call to reclaim apicd->prev_vector, if the\ninterrupt is currently or used to be affine to the outgoing CPU.\n\nAdditionally, reclaim the vector in __vector_schedule_cleanup() as well,\nfollowing a warning message, although theoretically it should never see\napicd->move_in_progress with apicd->prev_cpu pointing to an offline CPU.",
+  "datePublished": "Jun 21, 2024, 10:18:04 AM",
+  "dateUpdated": "May 11, 2026, 8:10:48 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/a40209d355afe4ed6d533507838c9e5cd70a76d8",
+    "https://git.kernel.org/stable/c/f5f4675960609d8c5ee95f027fbf6ce380f98372",
+    "https://git.kernel.org/stable/c/6752dfcfff3ac3e16625ebd3f0ad9630900e7e76",
+    "https://git.kernel.org/stable/c/9eeda3e0071a329af1eba15f4e57dc39576bb420",
+    "https://git.kernel.org/stable/c/e9c96d01d520498b169ce734a8ad1142bef86a30",
+    "https://git.kernel.org/stable/c/59f86a2908380d09cdc726461c0fbb8d8579c99f",
+    "https://git.kernel.org/stable/c/ebfb16fc057a016abb46a9720a54abf0d4f6abe1",
+    "https://git.kernel.org/stable/c/a6c11c0a5235fb144a65e0cb2ffd360ddc1f6c32"
+  ],
+  "aliases": [
+    "CVE-2024-31076",
+    "GHSA-7362-fxfh-r4x4"
+  ],
+  "assigner": "Linux",
+  "epss": 0.26,
+  "enisaIdProduct": [
+    {
+      "id": "0bc954de-18bd-39d8-b5a0-07d96a8c57a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f0383c24b4855f6a4b5a358c7b2d2c16e0437e9b <a40209d355afe4ed6d533507838c9e5cd70a76d8"
+    },
+    {
+      "id": "356723ff-e5e1-38ba-823b-39346d379cec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f0383c24b4855f6a4b5a358c7b2d2c16e0437e9b <a6c11c0a5235fb144a65e0cb2ffd360ddc1f6c32"
+    },
+    {
+      "id": "46655658-bca6-3df7-8679-37a81bb0e83c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f0383c24b4855f6a4b5a358c7b2d2c16e0437e9b <ebfb16fc057a016abb46a9720a54abf0d4f6abe1"
+    },
+    {
+      "id": "473b7c78-575c-3fc1-a0c7-8d3ee3910c87",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.219"
+    },
+    {
+      "id": "70ab1a2f-6af9-3ba5-a9dd-89f690bf7a90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.93"
+    },
+    {
+      "id": "7a69d602-2068-3992-8e41-e8cad46348c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.316"
+    },
+    {
+      "id": "852e173d-b787-31ab-af8e-62952b964260",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f0383c24b4855f6a4b5a358c7b2d2c16e0437e9b <e9c96d01d520498b169ce734a8ad1142bef86a30"
+    },
+    {
+      "id": "87354381-944d-3066-bf17-3400a58e5af1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f0383c24b4855f6a4b5a358c7b2d2c16e0437e9b <59f86a2908380d09cdc726461c0fbb8d8579c99f"
+    },
+    {
+      "id": "91826092-0500-33ba-8196-367027e08156",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.278"
+    },
+    {
+      "id": "9e568887-37cc-374c-9ea7-488cec0547c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a49b2d9b-4d9c-30b3-881c-277f65e8a0b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.13"
+    },
+    {
+      "id": "a7c682ab-8b5f-385e-b8eb-ea035c183c88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f0383c24b4855f6a4b5a358c7b2d2c16e0437e9b <9eeda3e0071a329af1eba15f4e57dc39576bb420"
+    },
+    {
+      "id": "d158e78a-9e04-38c4-ab8d-4c6706b49c42",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f0383c24b4855f6a4b5a358c7b2d2c16e0437e9b <f5f4675960609d8c5ee95f027fbf6ce380f98372"
+    },
+    {
+      "id": "de173722-e432-3b90-935c-43d8ffbce7a3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f0383c24b4855f6a4b5a358c7b2d2c16e0437e9b <6752dfcfff3ac3e16625ebd3f0ad9630900e7e76"
+    },
+    {
+      "id": "df875dad-da5a-3d21-b653-74a2e51f12c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.161"
+    },
+    {
+      "id": "e92fbd71-0708-38d2-a0a2-e8523181672c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.4"
+    },
+    {
+      "id": "f579f5f8-c5ec-30b3-ac2d-5f7ee63ce183",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "fdad413f-58e9-3cd0-81cb-51115b5ae2e4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.33"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f5737cc3-48f6-35ee-9324-4f5d5a5a4cb0",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

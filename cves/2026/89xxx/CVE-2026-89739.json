@@ -3,18 +3,21 @@
   "enisaUuid": "087a8a14-857d-3647-a8a6-5d9600fad788",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: dwc3: gadget: Fix use-after-free in dwc3_gadget_free_endpoints due to race condition\n\nIn dwc3_gadget_init_endpoint, &dep->nostream_work is bound with\ndwc3_nostream_work, and dwc3_gadget_endpoint_stream_event can queue\nthis delayed work on system_percpu_wq when a DEPEVT_STREAM_NOSTREAM\nevent is received.\n\nIf we remove the gadget, dwc3_gadget_free_endpoints makes cleanup and\nthe memory allocated for dep with kzalloc() is released by kfree(dep),\nwhile the delayed work mentioned above may still be pending or\nrunning. The sequence of operations that may lead to a UAF bug is as\nfollows:\n\nCPU0                                      CPU1\n\n                                          | dwc3_thread_interrupt\n                                          | dwc3_endpoint_interrupt\n                                          | dwc3_gadget_endpoint_stream_event\n                                          | queue_delayed_work(system_percpu_wq,\n                                          |                    &dep->nostream_work)\ndwc3_gadget_free_endpoints                |\ndwc3_free_trb_pool(dep)                   |\nlist_del(&dep->endpoint.ep_list)          |\ndwc3_debugfs_remove_endpoint_dir(dep)     |\nkfree(dep)                                |\n// dep is freed                           |\n                                          | dwc3_nostream_work\n                                          | // use dep (use-after-free)\n\nFix it by canceling the delayed work before kfree(dep) in\ndwc3_gadget_free_endpoints.",
   "datePublished": "Sep 11, 2026, 7:46:46 PM",
-  "dateUpdated": "Sep 11, 2026, 7:46:46 PM",
+  "dateUpdated": "Nov 23, 2026, 7:59:09 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/34b92575704f95802b60ff1c2a324a4b5c1f9fc4",
+    "https://git.kernel.org/stable/c/5f359265f616873edf32db418bd1513fdae3ddec",
     "https://git.kernel.org/stable/c/448e95c0f3eaa8d99f16ccae92ab94545f14413b",
     "https://git.kernel.org/stable/c/93e08b13a7a30e4e78556d993720e0bc36231ec7",
     "https://git.kernel.org/stable/c/9c855832790cd488d87de1885974f4c37cfe7358"
   ],
   "aliases": [
-    "CVE-2026-89739"
+    "CVE-2026-89739",
+    "GHSA-5q8g-48x9-ppw2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "052e8b96-c026-3822-bf0a-7bccab9c9a65",
@@ -25,6 +28,36 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "18a70547-5ca6-39a2-a0e0-2a6b897bff92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5212f8f452b87318e735ca304728f6f8fb55ff7b <34b92575704f95802b60ff1c2a324a4b5c1f9fc4"
+    },
+    {
+      "id": "3c307f7c-51cb-348b-8f1e-034cd558efe5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "4aa2fc9d-e42a-359b-8f94-b0d0dac7e482",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f41ffcd656615754741f190afca00ca3c4bde9f1 <5f359265f616873edf32db418bd1513fdae3ddec"
     },
     {
       "id": "58708e33-5f3f-3319-a26c-b166c28e6dea",
@@ -57,6 +90,16 @@
       "product_version": "dcfe437492e27d54f3ac491aed024da760f5c43c <9c855832790cd488d87de1885974f4c37cfe7358"
     },
     {
+      "id": "8c7527cd-0b44-356d-a5d4-0b9ebd8c7afe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "a2bf0bf1-0d4d-3c82-8ad6-1f5ca33b614e",
       "product": {
         "name": "Linux",
@@ -87,14 +130,14 @@
       "product_version": "patch: 7.2.4"
     },
     {
-      "id": "d2ec98bb-fb80-303a-947a-0e0a2f85ec9c",
+      "id": "d1a37472-e35a-30cb-84b3-d6da6ca70987",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "6.6.160 <6.6.163"
     }
   ],
   "enisaIdVendor": [

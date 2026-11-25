@@ -1,0 +1,216 @@
+{
+  "id": "EUVD-2023-57227",
+  "enisaUuid": "7df0facd-5b21-3749-9a8d-0b5e4ce6047e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nUBSAN: array-index-out-of-bounds in dtSplitRoot\n\nSyzkaller reported the following issue:\n\noop0: detected capacity change from 0 to 32768\n\nUBSAN: array-index-out-of-bounds in fs/jfs/jfs_dtree.c:1971:9\nindex -2 is out of range for type 'struct dtslot [128]'\nCPU: 0 PID: 3613 Comm: syz-executor270 Not tainted 6.0.0-syzkaller-09423-g493ffd6605b2 #0\nHardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/22/2022\nCall Trace:\n <TASK>\n __dump_stack lib/dump_stack.c:88 [inline]\n dump_stack_lvl+0x1b1/0x28e lib/dump_stack.c:106\n ubsan_epilogue lib/ubsan.c:151 [inline]\n __ubsan_handle_out_of_bounds+0xdb/0x130 lib/ubsan.c:283\n dtSplitRoot+0x8d8/0x1900 fs/jfs/jfs_dtree.c:1971\n dtSplitUp fs/jfs/jfs_dtree.c:985 [inline]\n dtInsert+0x1189/0x6b80 fs/jfs/jfs_dtree.c:863\n jfs_mkdir+0x757/0xb00 fs/jfs/namei.c:270\n vfs_mkdir+0x3b3/0x590 fs/namei.c:4013\n do_mkdirat+0x279/0x550 fs/namei.c:4038\n __do_sys_mkdirat fs/namei.c:4053 [inline]\n __se_sys_mkdirat fs/namei.c:4051 [inline]\n __x64_sys_mkdirat+0x85/0x90 fs/namei.c:4051\n do_syscall_x64 arch/x86/entry/common.c:50 [inline]\n do_syscall_64+0x3d/0xb0 arch/x86/entry/common.c:80\n entry_SYSCALL_64_after_hwframe+0x63/0xcd\nRIP: 0033:0x7fcdc0113fd9\nCode: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 c0 ff ff ff f7 d8 64 89 01 48\nRSP: 002b:00007ffeb8bc67d8 EFLAGS: 00000246 ORIG_RAX: 0000000000000102\nRAX: ffffffffffffffda RBX: 0000000000000000 RCX: 00007fcdc0113fd9\nRDX: 0000000000000000 RSI: 0000000020000340 RDI: 0000000000000003\nRBP: 00007fcdc00d37a0 R08: 0000000000000000 R09: 00007fcdc00d37a0\nR10: 00005555559a72c0 R11: 0000000000000246 R12: 00000000f8008000\nR13: 0000000000000000 R14: 00083878000000f8 R15: 0000000000000000\n </TASK>\n\nThe issue is caused when the value of fsi becomes less than -1.\nThe check to break the loop when fsi value becomes -1 is present\nbut syzbot was able to produce value less than -1 which cause the error.\nThis patch simply add the change for the values less than 0.\n\nThe patch is tested via syzbot.",
+  "datePublished": "Mar 6, 2024, 6:45:29 AM",
+  "dateUpdated": "Aug 5, 2026, 9:10:37 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/e30b52a2ea3d1e0aaee68096957cf90a2f4ec5af",
+    "https://git.kernel.org/stable/c/fd3486a893778770557649fe28afa5e463d4ed07",
+    "https://git.kernel.org/stable/c/7aa33854477d9c346f5560a1a1fcb3fe7783e2a8",
+    "https://git.kernel.org/stable/c/e4ce01c25ccbea02a09a5291c21749b1fc358e39",
+    "https://git.kernel.org/stable/c/e4cbc857d75d4e22a1f75446e7480b1f305d8d60",
+    "https://git.kernel.org/stable/c/edff092a59260bf0b0a2eba219cb3da6372c2f9f",
+    "https://git.kernel.org/stable/c/6e2902ecc77e9760a9fc447f56d598383e2372d2",
+    "https://git.kernel.org/stable/c/27e56f59bab5ddafbcfe69ad7a4a6ea1279c1b16"
+  ],
+  "aliases": [
+    "CVE-2023-52603",
+    "GHSA-pxxv-p7c4-h643"
+  ],
+  "assigner": "Linux",
+  "epss": 0.29,
+  "enisaIdProduct": [
+    {
+      "id": "17dbabbd-cab9-3c42-99b4-83a3de368275",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.16"
+    },
+    {
+      "id": "1e8cd25a-6ca4-3208-9d5e-6a72fa19e878",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.149"
+    },
+    {
+      "id": "2c936710-4817-3ea8-abe6-6960fe936f23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <27e56f59bab5ddafbcfe69ad7a4a6ea1279c1b16"
+    },
+    {
+      "id": "2d6ad33f-4f96-3a1d-b9f8-b7a73c8b66c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <fd3486a893778770557649fe28afa5e463d4ed07"
+    },
+    {
+      "id": "455d13a8-441b-3943-b807-a39ac0805df3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "4fa2b159-8456-3663-b8fa-c42905baa123",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.307"
+    },
+    {
+      "id": "51cd5dee-5d8e-3d78-a8f2-1651867b86c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.210"
+    },
+    {
+      "id": "563945f6-a2cd-37a6-aec8-2a956f3c8dad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6e2902ecc77e9760a9fc447f56d598383e2372d2"
+    },
+    {
+      "id": "7263d8ac-e858-377c-8184-65cbea2247a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <7aa33854477d9c346f5560a1a1fcb3fe7783e2a8"
+    },
+    {
+      "id": "781badd2-9d7d-39f5-bfe5-d72ed0a3967f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.4"
+    },
+    {
+      "id": "8175d1d6-ef2e-3603-8a2a-dad304351aeb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <edff092a59260bf0b0a2eba219cb3da6372c2f9f"
+    },
+    {
+      "id": "959c0204-6606-31b0-9319-605385e1a6b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e4ce01c25ccbea02a09a5291c21749b1fc358e39"
+    },
+    {
+      "id": "a50fe735-8017-3a1c-a6a4-fefc27cc6924",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "bf2b376e-9ae6-3975-8ed0-0eb9839df9e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e4cbc857d75d4e22a1f75446e7480b1f305d8d60"
+    },
+    {
+      "id": "ea8a21a9-5c1a-3480-9d00-ac3517220a2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e30b52a2ea3d1e0aaee68096957cf90a2f4ec5af"
+    },
+    {
+      "id": "ef6199ff-38cd-35bd-adf8-1bb482320068",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "f5aeafa8-9c6c-3189-ac39-52c0632735ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.269"
+    },
+    {
+      "id": "ffd68793-4681-31ee-9b6d-3a781a987ecd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.77"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b81ded59-43de-3bef-b8a5-d518bef92724",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,19 +3,21 @@
   "enisaUuid": "34858210-cd60-3ac4-b1e9-5c684d66a4a9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/nouveau/uvmm: fix NULL deref unwinding an OP_MAP_SPARSE op\n\nEach bind_job_op is zeroed by kzalloc_obj() in bind_job_op_from_uop(),\nand the OP_MAP_SPARSE case in nouveau_uvmm_bind_job_submit() only creates\na region, so op->ops stays NULL for a successfully processed sparse map.\n\nIf a later op in the same job fails, the reverse unwind loop revisits that\nop and calls drm_gpuva_ops_free(&uvmm->base, op->ops) unconditionally.\ndrm_gpuva_ops_free() dereferences its argument right away\n(list_for_each_entry_safe on &ops->list), so a NULL op->ops oopses. The\npath is reachable by any render-node fd holder, since NOUVEAU_VM_BIND is\nDRM_RENDER_ALLOW.\n\nGuard the free with IS_ERR_OR_NULL(), as nouveau_uvmm_bind_job_cleanup()\nalready does for the identical free.",
   "datePublished": "Sep 16, 2026, 10:30:35 AM",
-  "dateUpdated": "Sep 16, 2026, 10:30:35 AM",
+  "dateUpdated": "Oct 21, 2026, 12:48:45 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/d8ec34618e71018fd7a3f73c57c6b92d71a6c7c3",
     "https://git.kernel.org/stable/c/3bf493cf7ed0c2b3df728977a257e0d99b4db1c6",
     "https://git.kernel.org/stable/c/b7dc03e09313d22a6d230b759de3b05d504c008f",
     "https://git.kernel.org/stable/c/3857238de6bce6c1573e8cb86c37b067e5208f05",
     "https://git.kernel.org/stable/c/412a6ceb56d501ef2f8202e26ab4b5d4dfbca566"
   ],
   "aliases": [
-    "CVE-2026-89802"
+    "CVE-2026-89802",
+    "GHSA-c2hc-j8hj-4mw2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "012a99a8-b650-39b9-b07a-2a214568422f",
@@ -38,14 +40,14 @@
       "product_version": "patch: 7.2.5"
     },
     {
-      "id": "57208f6c-2b7a-3c03-872f-ae054df59d66",
+      "id": "50db8ad7-7b09-3833-a685-bb6eb4364715",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc2"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "5f2645ef-872e-378f-9cb1-c967a5952779",
@@ -116,6 +118,26 @@
         }
       },
       "product_version": "6.6"
+    },
+    {
+      "id": "f39c7e3c-2536-321b-be6b-4abb0f7ec84a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b88baab828713ce0b49b185444b2ee83bed373a8 <d8ec34618e71018fd7a3f73c57c6b92d71a6c7c3"
+    },
+    {
+      "id": "f6a305de-89e0-3b53-8162-56ceeace39d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     }
   ],
   "enisaIdVendor": [

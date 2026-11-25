@@ -1,0 +1,193 @@
+{
+  "id": "EUVD-2024-42044",
+  "enisaUuid": "1c85fa84-06cc-32a6-a15b-0202a8650901",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntcp_bpf: fix return value of tcp_bpf_sendmsg()\n\nWhen we cork messages in psock->cork, the last message triggers the\nflushing will result in sending a sk_msg larger than the current\nmessage size. In this case, in tcp_bpf_send_verdict(), 'copied' becomes\nnegative at least in the following case:\n\n468         case __SK_DROP:\n469         default:\n470                 sk_msg_free_partial(sk, msg, tosend);\n471                 sk_msg_apply_bytes(psock, tosend);\n472                 *copied -= (tosend + delta); // <==== HERE\n473                 return -EACCES;\n\nTherefore, it could lead to the following BUG with a proper value of\n'copied' (thanks to syzbot). We should not use negative 'copied' as a\nreturn value here.\n\n  ------------[ cut here ]------------\n  kernel BUG at net/socket.c:733!\n  Internal error: Oops - BUG: 00000000f2000800 [#1] PREEMPT SMP\n  Modules linked in:\n  CPU: 0 UID: 0 PID: 3265 Comm: syz-executor510 Not tainted 6.11.0-rc3-syzkaller-00060-gd07b43284ab3 #0\n  Hardware name: linux,dummy-virt (DT)\n  pstate: 61400009 (nZCv daif +PAN -UAO -TCO +DIT -SSBS BTYPE=--)\n  pc : sock_sendmsg_nosec net/socket.c:733 [inline]\n  pc : sock_sendmsg_nosec net/socket.c:728 [inline]\n  pc : __sock_sendmsg+0x5c/0x60 net/socket.c:745\n  lr : sock_sendmsg_nosec net/socket.c:730 [inline]\n  lr : __sock_sendmsg+0x54/0x60 net/socket.c:745\n  sp : ffff800088ea3b30\n  x29: ffff800088ea3b30 x28: fbf00000062bc900 x27: 0000000000000000\n  x26: ffff800088ea3bc0 x25: ffff800088ea3bc0 x24: 0000000000000000\n  x23: f9f00000048dc000 x22: 0000000000000000 x21: ffff800088ea3d90\n  x20: f9f00000048dc000 x19: ffff800088ea3d90 x18: 0000000000000001\n  x17: 0000000000000000 x16: 0000000000000000 x15: 000000002002ffaf\n  x14: 0000000000000000 x13: 0000000000000000 x12: 0000000000000000\n  x11: 0000000000000000 x10: ffff8000815849c0 x9 : ffff8000815b49c0\n  x8 : 0000000000000000 x7 : 000000000000003f x6 : 0000000000000000\n  x5 : 00000000000007e0 x4 : fff07ffffd239000 x3 : fbf00000062bc900\n  x2 : 0000000000000000 x1 : 0000000000000000 x0 : 00000000fffffdef\n  Call trace:\n   sock_sendmsg_nosec net/socket.c:733 [inline]\n   __sock_sendmsg+0x5c/0x60 net/socket.c:745\n   ____sys_sendmsg+0x274/0x2ac net/socket.c:2597\n   ___sys_sendmsg+0xac/0x100 net/socket.c:2651\n   __sys_sendmsg+0x84/0xe0 net/socket.c:2680\n   __do_sys_sendmsg net/socket.c:2689 [inline]\n   __se_sys_sendmsg net/socket.c:2687 [inline]\n   __arm64_sys_sendmsg+0x24/0x30 net/socket.c:2687\n   __invoke_syscall arch/arm64/kernel/syscall.c:35 [inline]\n   invoke_syscall+0x48/0x110 arch/arm64/kernel/syscall.c:49\n   el0_svc_common.constprop.0+0x40/0xe0 arch/arm64/kernel/syscall.c:132\n   do_el0_svc+0x1c/0x28 arch/arm64/kernel/syscall.c:151\n   el0_svc+0x34/0xec arch/arm64/kernel/entry-common.c:712\n   el0t_64_sync_handler+0x100/0x12c arch/arm64/kernel/entry-common.c:730\n   el0t_64_sync+0x19c/0x1a0 arch/arm64/kernel/entry.S:598\n  Code: f9404463 d63f0060 3108441f 54fffe81 (d4210000)\n  ---[ end trace 0000000000000000 ]---",
+  "datePublished": "Sep 18, 2024, 7:12:39 AM",
+  "dateUpdated": "Oct 15, 2026, 12:50:54 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6f9fdf5806cced888c43512bccbdf7fefd50f510",
+    "https://git.kernel.org/stable/c/3efe53eb221a38e207c1e3f81c51e4ca057d50c2",
+    "https://git.kernel.org/stable/c/78bb38d9c5a311c5f8bdef7c9557d7d81ca30e4a",
+    "https://git.kernel.org/stable/c/810a4e7d92dea4074cb04c25758320909d752193",
+    "https://git.kernel.org/stable/c/c8219a27fa43a2cbf99f5176f6dddfe73e7a24ae",
+    "https://git.kernel.org/stable/c/126d72b726c4cf1119f3a7fe413a78d341c3fea9",
+    "https://git.kernel.org/stable/c/fe1910f9337bd46a9343967b547ccab26b4b2c6e"
+  ],
+  "aliases": [
+    "CVE-2024-46783",
+    "GHSA-g75v-mhrr-qmm9"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "3a83f152-4e0d-39be-afd7-f31e94b317c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4f738adba30a7cfc006f605707e7aee847ffefa0 <126d72b726c4cf1119f3a7fe413a78d341c3fea9"
+    },
+    {
+      "id": "43d329e1-4315-3992-95cc-bdd1d69ac386",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.17"
+    },
+    {
+      "id": "486eb22c-fe5f-35d6-a2fa-1b2bbbccbd65",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.10"
+    },
+    {
+      "id": "5485009a-ef1f-3049-96f1-9893c2331c69",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.284"
+    },
+    {
+      "id": "78c47478-6381-3200-b714-28a04313b779",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.167"
+    },
+    {
+      "id": "7bca89c6-b34a-34d6-9b6f-4ef153a30eb6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "7c7d6820-418f-34e3-ae32-c9326feaaea5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4f738adba30a7cfc006f605707e7aee847ffefa0 <fe1910f9337bd46a9343967b547ccab26b4b2c6e"
+    },
+    {
+      "id": "86877f87-6e37-36ce-b7a7-0139a6bab5a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "89a4bce7-e9aa-3975-af9b-b54e2176a5dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.51"
+    },
+    {
+      "id": "9ddf7d7e-a2d3-38eb-b104-d24656e572c3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4f738adba30a7cfc006f605707e7aee847ffefa0 <c8219a27fa43a2cbf99f5176f6dddfe73e7a24ae"
+    },
+    {
+      "id": "abb06352-d0c3-3055-bfe4-d11f34aab4d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4f738adba30a7cfc006f605707e7aee847ffefa0 <78bb38d9c5a311c5f8bdef7c9557d7d81ca30e4a"
+    },
+    {
+      "id": "af7ec268-f631-3571-96c8-91af66a15104",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4f738adba30a7cfc006f605707e7aee847ffefa0 <810a4e7d92dea4074cb04c25758320909d752193"
+    },
+    {
+      "id": "c3f256d6-cb88-36e3-9959-34feb463a7f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.110"
+    },
+    {
+      "id": "d97a9b20-9506-3adc-853b-ccb1c512f396",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.226"
+    },
+    {
+      "id": "e1860877-c205-3128-884a-a209188e3b64",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4f738adba30a7cfc006f605707e7aee847ffefa0 <6f9fdf5806cced888c43512bccbdf7fefd50f510"
+    },
+    {
+      "id": "fb7b728c-c89d-3417-aa83-08580bdb00da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4f738adba30a7cfc006f605707e7aee847ffefa0 <3efe53eb221a38e207c1e3f81c51e4ca057d50c2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "00c6c43f-ebeb-3150-a7e8-7937f23d4f6c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

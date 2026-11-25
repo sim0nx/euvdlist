@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2022-53857",
+  "enisaUuid": "78d8a566-f238-3efc-94ac-088ec2713d58",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: core: fix shift-out-of-bounds in hid_report_raw_event\n\nSyzbot reported shift-out-of-bounds in hid_report_raw_event.\n\nmicrosoft 0003:045E:07DA.0001: hid_field_extract() called with n (128) >\n32! (swapper/0)\n======================================================================\nUBSAN: shift-out-of-bounds in drivers/hid/hid-core.c:1323:20\nshift exponent 127 is too large for 32-bit type 'int'\nCPU: 0 PID: 0 Comm: swapper/0 Not tainted\n6.1.0-rc4-syzkaller-00159-g4bbf3422df78 #0\nHardware name: Google Compute Engine/Google Compute Engine, BIOS\nGoogle 10/26/2022\nCall Trace:\n <IRQ>\n __dump_stack lib/dump_stack.c:88 [inline]\n dump_stack_lvl+0x1e3/0x2cb lib/dump_stack.c:106\n ubsan_epilogue lib/ubsan.c:151 [inline]\n __ubsan_handle_shift_out_of_bounds+0x3a6/0x420 lib/ubsan.c:322\n snto32 drivers/hid/hid-core.c:1323 [inline]\n hid_input_fetch_field drivers/hid/hid-core.c:1572 [inline]\n hid_process_report drivers/hid/hid-core.c:1665 [inline]\n hid_report_raw_event+0xd56/0x18b0 drivers/hid/hid-core.c:1998\n hid_input_report+0x408/0x4f0 drivers/hid/hid-core.c:2066\n hid_irq_in+0x459/0x690 drivers/hid/usbhid/hid-core.c:284\n __usb_hcd_giveback_urb+0x369/0x530 drivers/usb/core/hcd.c:1671\n dummy_timer+0x86b/0x3110 drivers/usb/gadget/udc/dummy_hcd.c:1988\n call_timer_fn+0xf5/0x210 kernel/time/timer.c:1474\n expire_timers kernel/time/timer.c:1519 [inline]\n __run_timers+0x76a/0x980 kernel/time/timer.c:1790\n run_timer_softirq+0x63/0xf0 kernel/time/timer.c:1803\n __do_softirq+0x277/0x75b kernel/softirq.c:571\n __irq_exit_rcu+0xec/0x170 kernel/softirq.c:650\n irq_exit_rcu+0x5/0x20 kernel/softirq.c:662\n sysvec_apic_timer_interrupt+0x91/0xb0 arch/x86/kernel/apic/apic.c:1107\n======================================================================\n\nIf the size of the integer (unsigned n) is bigger than 32 in snto32(),\nshift exponent will be too large for 32-bit type 'int', resulting in a\nshift-out-of-bounds bug.\nFix this by adding a check on the size of the integer (unsigned n) in\nsnto32(). To add support for n greater than 32 bits, set n to 32, if n\nis greater than 32.",
+  "datePublished": "Oct 21, 2024, 8:05:57 PM",
+  "dateUpdated": "May 11, 2026, 6:50:50 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/151493fe5a6ed1a88decc929a7368a3f2a246914",
+    "https://git.kernel.org/stable/c/809783f8b4b600c7fb3bccb10fefef822601ea3b",
+    "https://git.kernel.org/stable/c/8e14f20e12224ee2429f75a5c9418a700e26a8d3",
+    "https://git.kernel.org/stable/c/db1ed1b3fb4ec0d19080a102956255769bc45c79",
+    "https://git.kernel.org/stable/c/bc03f809da78fc79e4aee132d4e5c6a2b3aeec73",
+    "https://git.kernel.org/stable/c/f755d11c55b29049b77da5cd9ab2faae96eb33c3",
+    "https://git.kernel.org/stable/c/2b3b4d7aadaa1b6b58d0f34823bf86cfe8a31b4d",
+    "https://git.kernel.org/stable/c/ec61b41918587be530398b0d1c9a0d16619397e5"
+  ],
+  "aliases": [
+    "CVE-2022-48978",
+    "GHSA-qr7m-wmg3-5x2f"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "123ff58f-91fa-33e3-8f12-d98e91c58c06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.9.336"
+    },
+    {
+      "id": "1e592448-1d6a-3828-bd62-0103b3a3566d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1"
+    },
+    {
+      "id": "25ec2475-887b-3bda-8a4b-d98b45626d8c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dde5845a529ff753364a6d1aea61180946270bfa <db1ed1b3fb4ec0d19080a102956255769bc45c79"
+    },
+    {
+      "id": "2ea1c3a8-b160-3b38-bca1-7ecff77aa845",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.159"
+    },
+    {
+      "id": "377ea8d4-5756-3257-9980-f9edaf38ed57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.227"
+    },
+    {
+      "id": "3e81514f-dea3-373a-8048-96b1d01f8ef8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.83"
+    },
+    {
+      "id": "42f7eb85-19fc-3eda-96fc-9b22a0cc57bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dde5845a529ff753364a6d1aea61180946270bfa <8e14f20e12224ee2429f75a5c9418a700e26a8d3"
+    },
+    {
+      "id": "58e0f365-2a28-31b0-9f39-ec4e301b13e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dde5845a529ff753364a6d1aea61180946270bfa <f755d11c55b29049b77da5cd9ab2faae96eb33c3"
+    },
+    {
+      "id": "63f7da06-f3a1-319d-a300-bc25e16f0239",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.0.13"
+    },
+    {
+      "id": "6d1c3cf6-6c72-3023-827c-121d56424dab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.269"
+    },
+    {
+      "id": "7ff427ea-7f73-3bdc-9385-c56a0f6c8ab3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.20"
+    },
+    {
+      "id": "88023d05-29eb-3bb0-b13b-6d0ad02fa7d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dde5845a529ff753364a6d1aea61180946270bfa <2b3b4d7aadaa1b6b58d0f34823bf86cfe8a31b4d"
+    },
+    {
+      "id": "8b1ecb6f-13d9-3ffb-9993-e84eb6bc3b93",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dde5845a529ff753364a6d1aea61180946270bfa <bc03f809da78fc79e4aee132d4e5c6a2b3aeec73"
+    },
+    {
+      "id": "a37bb530-a596-391e-a7c9-d8e4071e6a57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dde5845a529ff753364a6d1aea61180946270bfa <809783f8b4b600c7fb3bccb10fefef822601ea3b"
+    },
+    {
+      "id": "abb27f7b-7bdb-3a5e-b60e-b2f9856279bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c97fe8e8-28c0-3516-ae35-4d880bb05383",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.302"
+    },
+    {
+      "id": "d59ccfd3-18ca-3d9b-a8d4-82f00868cb5c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dde5845a529ff753364a6d1aea61180946270bfa <151493fe5a6ed1a88decc929a7368a3f2a246914"
+    },
+    {
+      "id": "f578bf1d-4d94-3ec4-b936-c00fcb44c7b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dde5845a529ff753364a6d1aea61180946270bfa <ec61b41918587be530398b0d1c9a0d16619397e5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4f895932-f1a3-3d1b-ad5e-305557cb44ed",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

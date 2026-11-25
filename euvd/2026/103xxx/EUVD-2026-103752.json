@@ -3,8 +3,10 @@
   "enisaUuid": "b7a21bc1-d6ed-39c9-b6fd-7652cb221dc2",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/nouveau: RCU-free the scheduler-containing nouveau_sched\n\nstruct nouveau_sched embeds a struct drm_gpu_scheduler (base).\nnouveau_sched_destroy() calls nouveau_sched_fini() (which does\ndrm_sched_fini(&sched->base)) and then frees the object with plain\nkfree(sched).\n\ndrm_sched_fence_get_timeline_name() returns fence->sched->name, and the\nscheduler fence keeps a .release callback so it is not ops-detached on\nsignalling.  A finished fence exported to userspace via drm_syncobj /\nsync_file therefore keeps pointing at &sched->base after nouveau_sched_destroy(),\nand a later get_timeline_name() -- reachable unprivileged through\nSYNC_IOC_FILE_INFO -- dereferences freed memory (KASAN slab-use-after-free\nread).\n\nPer the dma-fence lifetime contract the exporter must keep the data backing a\nsignalled fence alive for an RCU grace period.  Free the scheduler-containing\nobject with kfree_rcu() instead of kfree().",
   "datePublished": "Oct 18, 2026, 3:17:27 PM",
-  "dateUpdated": "Oct 18, 2026, 3:17:27 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 24, 2026, 2:09:12 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/40edf5eefc3fd94592a91d6eb074d4fc6f606c75",
     "https://git.kernel.org/stable/c/35151e9a8274174ccbb92e3b3ba7dc7a008dcada",
@@ -12,21 +14,12 @@
     "https://git.kernel.org/stable/c/f7eae6d8d768fabd6b59779ca7da79e02c74e113"
   ],
   "aliases": [
+    "GHSA-2689-7jhq-fvhw",
     "CVE-2026-98512"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
-    {
-      "id": "03cd944c-7cbd-3307-9808-644fa189b433",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
-    },
     {
       "id": "0d030006-f780-39e2-8d73-c39b73593ddd",
       "product": {
@@ -106,6 +99,16 @@
         }
       },
       "product_version": "patch: 6.12.112"
+    },
+    {
+      "id": "b4ec1aeb-f6cb-3e93-bf80-d316bc63d516",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "f660a0eb-f0e1-36b9-b084-a9f2e70f7c78",

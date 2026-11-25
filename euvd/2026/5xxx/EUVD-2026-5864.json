@@ -3,7 +3,7 @@
   "enisaUuid": "ed663838-89c6-3ac3-92e7-dc9e68af5210",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm, shmem: prevent infinite loop on truncate race\n\nWhen truncating a large swap entry, shmem_free_swap() returns 0 when the\nentry's index doesn't match the given index due to lookup alignment.  The\nfailure fallback path checks if the entry crosses the end border and\naborts when it happens, so truncate won't erase an unexpected entry or\nrange.  But one scenario was ignored.\n\nWhen `index` points to the middle of a large swap entry, and the large\nswap entry doesn't go across the end border, find_get_entries() will\nreturn that large swap entry as the first item in the batch with\n`indices[0]` equal to `index`.  The entry's base index will be smaller\nthan `indices[0]`, so shmem_free_swap() will fail and return 0 due to the\n\"base < index\" check.  The code will then call shmem_confirm_swap(), get\nthe order, check if it crosses the END boundary (which it doesn't), and\nretry with the same index.\n\nThe next iteration will find the same entry again at the same index with\nsame indices, leading to an infinite loop.\n\nFix this by retrying with a round-down index, and abort if the index is\nsmaller than the truncate range.",
   "datePublished": "Feb 14, 2026, 4:27:09 PM",
-  "dateUpdated": "Feb 14, 2026, 4:27:09 PM",
+  "dateUpdated": "May 11, 2026, 10:01:48 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/dfc3ab6bd64860f8022d69903be299d09be86e11",
@@ -11,71 +11,96 @@
     "https://git.kernel.org/stable/c/2030dddf95451b4e7a389f052091e7c4b7b274c6"
   ],
   "aliases": [
+    "GHSA-xwq7-47qj-qwwf",
     "CVE-2026-23177"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
-      "id": "08f30a93-fbe4-48da-8ae2-7833c500d49c",
+      "id": "10016418-3756-39b7-9e3d-e263703bb830",
       "product": {
-        "name": "Linux"
-      },
-      "product_version": "809bc86517cc408b5b8cb8e08e69096639432bc8 <2030dddf95451b4e7a389f052091e7c4b7b274c6"
-    },
-    {
-      "id": "1db7987d-a94c-458b-a8e7-268f11b9e743",
-      "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.19"
     },
     {
-      "id": "36b48c70-31ae-4a76-895a-cd6bf7139904",
+      "id": "4afe3dbe-23b4-34c4-90ab-6721934de691",
       "product": {
-        "name": "Linux"
-      },
-      "product_version": "patch: 0"
-    },
-    {
-      "id": "401c6453-8509-44f7-bd78-cca676586273",
-      "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.18.10"
     },
     {
-      "id": "903e5afe-c278-4ee5-a952-d5c68e377d63",
+      "id": "96329d25-2389-385c-b587-0f9c689f8a51",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.12.70"
     },
     {
-      "id": "9a8a129b-1654-4a1e-940c-97220f0cb0ca",
+      "id": "9fb9e605-1971-32f1-9fe7-890839791319",
       "product": {
-        "name": "Linux"
-      },
-      "product_version": "6.12"
-    },
-    {
-      "id": "c0e68c2c-7e5f-41b2-8c73-266b8f1b48ba",
-      "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "809bc86517cc408b5b8cb8e08e69096639432bc8 <7b6a0f121d50234aab3e7ab9a62ebe826d40a32a"
     },
     {
-      "id": "c949a745-3a22-4870-9a3c-55f339a312ed",
+      "id": "cbedbf89-4651-3235-bfc0-84745b4314d1",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12"
+    },
+    {
+      "id": "d6f47164-17cd-3ccc-b9ba-21b8bfc761ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "d8a96262-13e8-305e-bc09-1a17ccd6a5ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "809bc86517cc408b5b8cb8e08e69096639432bc8 <dfc3ab6bd64860f8022d69903be299d09be86e11"
+    },
+    {
+      "id": "ee54afd9-ac4f-3705-8b24-53410c62f5f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "809bc86517cc408b5b8cb8e08e69096639432bc8 <2030dddf95451b4e7a389f052091e7c4b7b274c6"
     }
   ],
   "enisaIdVendor": [
     {
-      "id": "179d2ff6-05b4-499e-88fe-723a4bd8ae26",
+      "id": "7a348e22-ebc9-3a3f-b4aa-2a47ad7fa42e",
       "vendor": {
         "name": "Linux"
       }

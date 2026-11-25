@@ -3,9 +3,14 @@
   "enisaUuid": "3c6ee140-b381-3032-8054-806055a8620d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nstrparser: make sure __strp_recv isn't running before tearing down the parser\n\nThe comment above strp_done() claims that if strp is stopped,\nstrp_recv will no longer be called. That's only true if the caller has\na mechanism (eg locking) to guarantee that strp_recv() calls that\nstarted before strp_stop() have completed by the time we call\nstrp_done().\n\nThis adds a dummy lock_sock/release_sock pair to guarantee that any\nin-flight strp_recv() (which runs under either bh_lock_sock or\nlock_sock, depending if it's called from ->sk_data_ready or strp_work)\nhas completed.\n\nOnly espintcp can be affected by this race condition, but this patch\nmakes sure no future user of strp can have the bug.\n\nThis could crash on strp->sk (\"general mode\" of strp), but this mode\nhas been here for 9 years and has never been used. It'll be gone soon,\nno point worrying about it.\n\nSwitch the stopped/paused/etc bits to u8's to avoid races between\nstrp_stop() and strp_pause/unpause().\n\nA reproducer has been published and turns the possible UAF into an\nexploit [1].",
   "datePublished": "Oct 23, 2026, 12:22:42 PM",
-  "dateUpdated": "Oct 23, 2026, 12:22:42 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:41:22 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/b09071e2f8460b35c7d355addad0fc7b31c6904d",
+    "https://git.kernel.org/stable/c/933df60a465b1b82ff92dcd6870504da90ba4e9b",
+    "https://git.kernel.org/stable/c/61cc5dac60d50dee06cf5c7b7ab246f9c825a715",
     "https://git.kernel.org/stable/c/a18dd388045dc7263d99a07db9de4e0f149ca8f1",
     "https://git.kernel.org/stable/c/9f3e9fe1b155e9b4572054d8d140586bc3512ecf",
     "https://git.kernel.org/stable/c/d2b5f637b9b67a79a50d42614d10653c13b4e449",
@@ -13,10 +18,11 @@
     "https://git.kernel.org/stable/c/0984ebc631792acf8fff105112ee74a6b8f1efcc"
   ],
   "aliases": [
+    "GHSA-cxj6-cg32-r3fc",
     "CVE-2026-99056"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "02590de0-d695-352f-a32f-d11f5b20b251",
@@ -57,6 +63,36 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "5a2dd993-c43d-3e13-901a-4c1917584223",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "6ea08861-9b11-3244-8bc5-e46fcb5cd420",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e27cca96cd68fa2c6814c90f9a1cfd36bb68c593 <61cc5dac60d50dee06cf5c7b7ab246f9c825a715"
+    },
+    {
+      "id": "7a6df0a5-6b08-3aa0-80ee-f7d9c8786df7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e27cca96cd68fa2c6814c90f9a1cfd36bb68c593 <933df60a465b1b82ff92dcd6870504da90ba4e9b"
     },
     {
       "id": "8add68d5-70ef-3a1a-b9ff-7d4ecdd35798",
@@ -109,6 +145,16 @@
       "product_version": "patch: 6.18.57"
     },
     {
+      "id": "b983bf8b-ed10-3dc3-85c3-38463aaef8f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
       "id": "bd0c825c-ddfd-38a7-96a4-23f61ae970c1",
       "product": {
         "name": "Linux",
@@ -117,6 +163,16 @@
         }
       },
       "product_version": "e27cca96cd68fa2c6814c90f9a1cfd36bb68c593 <a18dd388045dc7263d99a07db9de4e0f149ca8f1"
+    },
+    {
+      "id": "ddc77ba4-b221-325b-bedd-60cd92721fb7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e27cca96cd68fa2c6814c90f9a1cfd36bb68c593 <b09071e2f8460b35c7d355addad0fc7b31c6904d"
     },
     {
       "id": "de5c4fe6-2250-3877-ba10-cf461735e2cc",
@@ -137,6 +193,16 @@
         }
       },
       "product_version": "e27cca96cd68fa2c6814c90f9a1cfd36bb68c593 <d2b5f637b9b67a79a50d42614d10653c13b4e449"
+    },
+    {
+      "id": "fdebdc17-d36c-39a2-8375-51dacdcfa6a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     }
   ],
   "enisaIdVendor": [

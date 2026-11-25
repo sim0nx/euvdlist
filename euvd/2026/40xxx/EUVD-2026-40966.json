@@ -3,20 +3,35 @@
   "enisaUuid": "3d523ded-3f7f-3617-b710-701ad5d25ad9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nslimbus: qcom-ngd-ctrl: Register callbacks after creating the ngd\n\nWhen the remoteproc starts in parallel with the NGD driver being probed,\nor the remoteproc is already up when the PDR lookup is being registered,\nor in the theoretical event that we get an interrupt from the hardware,\nthese callbacks will operate on uninitialized data. This result in\nissues to boot the affected boards.\n\nOne such example can be seen in the following fault, where\nqcom_slim_ngd_ssr_pdr_notify() schedules work on the NULL ngd_up_work.\n\n[   21.858578] ------------[ cut here ]------------\n[   21.858745] WARNING: kernel/workqueue.c:2338 at __queue_work+0x5e0/0x790, CPU#2: kworker/2:2/116\n...\n[   21.859251] Call trace:\n[   21.859255]  __queue_work+0x5e0/0x790 (P)\n[   21.859265]  queue_work_on+0x6c/0xf0\n[   21.859273]  qcom_slim_ngd_ssr_pdr_notify+0x110/0x150 [slim_qcom_ngd_ctrl]\n[   21.859304]  qcom_slim_ngd_ssr_notify+0x24/0x40 [slim_qcom_ngd_ctrl]\n[   21.859318]  notifier_call_chain+0xa4/0x230\n[   21.859329]  srcu_notifier_call_chain+0x64/0xb8\n[   21.859338]  ssr_notify_start+0x40/0x78 [qcom_common]\n[   21.859355]  rproc_start+0x130/0x230\n[   21.859367]  rproc_boot+0x3d4/0x518\n...\n\nMove the enablement of interrupts, and the registration of SSR and PDR\nuntil after the NGD device has been registered.\n\nThis could be further refined by moving initialization to the control\ndriver probe and by removing the platform driver model from the picture.",
   "datePublished": "Jul 1, 2026, 1:32:16 PM",
-  "dateUpdated": "Jul 1, 2026, 1:32:16 PM",
+  "dateUpdated": "Jul 24, 2026, 2:33:51 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/946b97d632f0f58a705dafac644c1e9346e01f35",
+    "https://git.kernel.org/stable/c/2047eeb38db878a31f58db19d98f8aedf284342e",
+    "https://git.kernel.org/stable/c/afc631e246936a40558f494112a4188401382671",
+    "https://git.kernel.org/stable/c/290014c7987636e6105bba89fa04cb4d59f775c1",
     "https://git.kernel.org/stable/c/fa3790c7ea98328ddc3f7d8bf40247556245a6fc",
     "https://git.kernel.org/stable/c/24ec89123fc9d0d24ce719dcf7fd6c57e5b0d753",
     "https://git.kernel.org/stable/c/08564e15c47a5fb0af6643a43ee15521d49bcdea",
     "https://git.kernel.org/stable/c/2a9d50e9ea406e0c8735938484adc20515ef1b47"
   ],
   "aliases": [
+    "GHSA-4447-2m4q-w32j",
     "CVE-2026-53332"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
+    {
+      "id": "1abb0f82-166d-3025-ab88-1bc04917b686",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
     {
       "id": "20084ab8-8707-36a2-af58-daa0ee1c1029",
       "product": {
@@ -26,6 +41,46 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "393f63d4-47d9-3436-9df3-583bacc4216c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.212"
+    },
+    {
+      "id": "51bd5f6a-edc5-33b4-892f-d39686859115",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "917809e2280bb83994be8b642373fd941d40c407 <2047eeb38db878a31f58db19d98f8aedf284342e"
+    },
+    {
+      "id": "5975cd90-19c7-3db6-8489-066c90b0946b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "917809e2280bb83994be8b642373fd941d40c407 <290014c7987636e6105bba89fa04cb4d59f775c1"
+    },
+    {
+      "id": "5ed75fcb-d9ad-3cff-9717-dcc9184bfad4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.178"
     },
     {
       "id": "656d715c-29b3-3e45-8d66-3b316f4aba6a",
@@ -56,6 +111,16 @@
         }
       },
       "product_version": "patch: 7.0.13"
+    },
+    {
+      "id": "70c3d470-5a66-3a64-aa93-03cdf94f0ffe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "917809e2280bb83994be8b642373fd941d40c407 <946b97d632f0f58a705dafac644c1e9346e01f35"
     },
     {
       "id": "7ad7d0eb-8a6b-3aea-a481-4c0ad3dc932a",
@@ -116,6 +181,26 @@
         }
       },
       "product_version": "917809e2280bb83994be8b642373fd941d40c407 <2a9d50e9ea406e0c8735938484adc20515ef1b47"
+    },
+    {
+      "id": "f543906b-f1a1-3362-9d52-2b385781f701",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "917809e2280bb83994be8b642373fd941d40c407 <afc631e246936a40558f494112a4188401382671"
+    },
+    {
+      "id": "ff4cc6ba-6142-3596-b0e8-64a696dd0831",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.260"
     }
   ],
   "enisaIdVendor": [

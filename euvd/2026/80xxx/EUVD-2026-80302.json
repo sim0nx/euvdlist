@@ -2,9 +2,11 @@
   "id": "EUVD-2026-80302",
   "enisaUuid": "51cc81e4-ec08-31d8-ba26-92d003461646",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs/ntfs3: fix out-of-bounds read in read_log_rec_buf()\n\nread_log_rec_buf() copies a log record into a caller buffer starting at\n\n\tu32 off = lsn_to_page_off(log, lsn) + log->record_header_len;\n\nlog->record_header_len (and log->data_off, used for the following pages)\ncomes verbatim from the on-disk restart area and is only checked for\n8-byte alignment in is_rst_area_valid(), so off can exceed\nlog->page_size. \"tail = log->page_size - off\" then underflows and\nmemcpy() reads past the page_size-sized buffer returned by\nread_log_page(), spilling adjacent slab memory into the replay buffer.\n\nThis is reachable by mounting a crafted NTFS image:\n\n BUG: KASAN: slab-out-of-bounds in read_log_rec_buf+0x216/0x580\n Read of size 64 at addr ffff88800a877ff8 by task exploit/127\n  read_log_rec_buf fs/ntfs3/fslog.c:2299\n  log_replay fs/ntfs3/fslog.c:4216\n  ntfs_loadlog_and_replay fs/ntfs3/fsntfs.c:324\n  ntfs_fill_super fs/ntfs3/super.c:1392\n  get_tree_bdev_flags fs/super.c:1694\n  __x64_sys_mount fs/namespace.c:4360\n The buggy address is located 4088 bytes to the right of\n the 4096-byte region [ffff88800a876000, ffff88800a877000)\n\nReject an in-page offset outside the current page before the copy.\n\n[almaz.alexandrovich@paragon-software.com: replaced the >= sign with >]",
-  "datePublished": "Sep 16, 2026, 9:30:30 AM",
-  "dateUpdated": "Sep 16, 2026, 9:30:30 AM",
-  "baseScore": 0.0,
+  "datePublished": "Sep 16, 2026, 8:48:20 AM",
+  "dateUpdated": "Oct 19, 2026, 8:52:33 AM",
+  "baseScore": 8.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/df099bfdb57773ba7f40f8a9dcc82e75af277922",
     "https://git.kernel.org/stable/c/1b2d31f1083beb80c55d1152249f652c1445a559",
@@ -12,15 +14,14 @@
     "https://git.kernel.org/stable/c/49f7cbc902b08b56eb7d2633163ecc57a0e7145a",
     "https://git.kernel.org/stable/c/74a83aa05f73033af719771ab1f0c269928b4865",
     "https://git.kernel.org/stable/c/53e56f7aa1d0f950a8bc2e4cdb3ba9fe45967531",
-    "https://git.kernel.org/stable/c/de603b9d377fab57a5e6432fa84a9f36b32c1636",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-89781"
+    "https://git.kernel.org/stable/c/de603b9d377fab57a5e6432fa84a9f36b32c1636"
   ],
   "aliases": [
     "CVE-2026-89781",
     "GHSA-xf98-5fqf-rh4f"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
     {
       "id": "050dd65b-ef85-3991-bf47-fc6f99803f9b",
@@ -51,6 +52,16 @@
         }
       },
       "product_version": "patch: 5.15.221"
+    },
+    {
+      "id": "31603ba5-3acc-3ca6-afb0-625b6a2bb616",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "380519b5-c86f-3c1a-b8a0-ec3575649ac8",
@@ -131,16 +142,6 @@
         }
       },
       "product_version": "patch: 6.12.110"
-    },
-    {
-      "id": "ab8e9357-209b-3bba-b368-20f86a73d917",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "af3a4980-496b-308b-a396-e3c0cffb3972",

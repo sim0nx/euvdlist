@@ -3,9 +3,10 @@
   "enisaUuid": "0ee943a2-d7f4-382b-9652-381462de4a9f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nstaging: rtl8723bs: fix OOB read in WMM_param_handler()\n\nWMM_param_handler() copies a fixed-size WMM parameter element out of a\nreceived information element without checking that the element is long\nenough, causing an out-of-bounds read for a short WMM IE.\n\nThe handler reads sizeof(struct WMM_para_element) (18) bytes at\npIE->data + 6, so it requires pIE->length to be at least 24\n(WLAN_WMM_LEN), but it never validates the length. Two of its three\ncallers reach it after matching only the WMM OUI: OnAssocRsp() in\nrtw_mlme_ext.c matches a 6-byte OUI, and join_cmd_hdl() matches a\n4-byte OUI, before calling the handler. A vendor-specific IE carrying\nthe WMM OUI but a length between 6 and 23, placed in an association\nresponse or in the IE blob handed to join_cmd_hdl(), passes the OUI\ncheck and then makes the memcmp() and memcpy() at pIE->data + 6 read\npast the end of the element. OnAssocRsp() parses a frame received from\nthe AP, so this is reachable from a remote peer.\n\nThe remaining caller in rtw_wlan_util.c already guards the handler with\n\"pIE->length == WLAN_WMM_LEN\". Move the equivalent check into the\nhandler itself so every caller is covered; the sibling IE handlers in\nthe same parsing loop (HT_caps_handler(), HT_info_handler(),\nERP_IE_handler()) likewise bound their accesses by pIE->length.",
   "datePublished": "Aug 22, 2026, 3:32:26 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:26 PM",
+  "dateUpdated": "Nov 6, 2026, 5:05:49 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/5df2fd06567df5f178c8faae0bdaefd203618d21",
     "https://git.kernel.org/stable/c/6cdca4c8b64c15a3ab9ad7a85f482e9519eadf93",
     "https://git.kernel.org/stable/c/2bee6f7a0f0125238951e31da2e96d06fe359043",
     "https://git.kernel.org/stable/c/1158b9931207392d6dd136aa0c4be18893b50fa1",
@@ -15,10 +16,11 @@
     "https://git.kernel.org/stable/c/ae21407350151bddfd4fea7aa39bd0643c0ca9d3"
   ],
   "aliases": [
-    "CVE-2026-74650"
+    "CVE-2026-74650",
+    "GHSA-96vf-829x-rg43"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "11a83b81-c26b-3e92-a0b5-4a8063e48a1b",
@@ -49,6 +51,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "5e3c4ddf-4da2-3e3d-83e6-2f5e60452686",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "554c0a3abf216c991c5ebddcdb2c08689ecd290b <5df2fd06567df5f178c8faae0bdaefd203618d21"
     },
     {
       "id": "743a7c64-d457-3010-abcb-dc4fbd3cb029",
@@ -119,6 +131,16 @@
         }
       },
       "product_version": "554c0a3abf216c991c5ebddcdb2c08689ecd290b <e5b7610008f4e6a80c8b071aa77ddbd5e17ea472"
+    },
+    {
+      "id": "e810698a-8ef5-3e24-8655-553a2ea7870e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.267"
     },
     {
       "id": "ed488c18-bd82-3fce-a04d-22dacff19167",

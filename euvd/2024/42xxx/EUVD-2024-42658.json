@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2024-42658",
+  "enisaUuid": "63050e26-fcca-3129-9d56-cb640829fa30",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbtrfs: fix race setting file private on concurrent lseek using same fd\n\nWhen doing concurrent lseek(2) system calls against the same file\ndescriptor, using multiple threads belonging to the same process, we have\na short time window where a race happens and can result in a memory leak.\n\nThe race happens like this:\n\n1) A program opens a file descriptor for a file and then spawns two\n   threads (with the pthreads library for example), lets call them\n   task A and task B;\n\n2) Task A calls lseek with SEEK_DATA or SEEK_HOLE and ends up at\n   file.c:find_desired_extent() while holding a read lock on the inode;\n\n3) At the start of find_desired_extent(), it extracts the file's\n   private_data pointer into a local variable named 'private', which has\n   a value of NULL;\n\n4) Task B also calls lseek with SEEK_DATA or SEEK_HOLE, locks the inode\n   in shared mode and enters file.c:find_desired_extent(), where it also\n   extracts file->private_data into its local variable 'private', which\n   has a NULL value;\n\n5) Because it saw a NULL file private, task A allocates a private\n   structure and assigns to the file structure;\n\n6) Task B also saw a NULL file private so it also allocates its own file\n   private and then assigns it to the same file structure, since both\n   tasks are using the same file descriptor.\n\n   At this point we leak the private structure allocated by task A.\n\nBesides the memory leak, there's also the detail that both tasks end up\nusing the same cached state record in the private structure (struct\nbtrfs_file_private::llseek_cached_state), which can result in a\nuse-after-free problem since one task can free it while the other is\nstill using it (only one task took a reference count on it). Also, sharing\nthe cached state is not a good idea since it could result in incorrect\nresults in the future - right now it should not be a problem because it\nend ups being used only in extent-io-tree.c:count_range_bits() where we do\nrange validation before using the cached state.\n\nFix this by protecting the private assignment and check of a file while\nholding the inode's spinlock and keep track of the task that allocated\nthe private, so that it's used only by that task in order to prevent\nuser-after-free issues with the cached state record as well as potentially\nusing it incorrectly in the future.",
+  "datePublished": "Oct 21, 2024, 12:14:09 PM",
+  "dateUpdated": "Aug 5, 2026, 11:39:51 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/f56a6d9c267ec7fa558ede7755551c047b1034cd",
+    "https://git.kernel.org/stable/c/a412ca489ac27b9d0e603499315b7139c948130d",
+    "https://git.kernel.org/stable/c/33d1310d4496e904123dab9c28b2d8d2c1800f97",
+    "https://git.kernel.org/stable/c/7ee85f5515e86a4e2a2f51969795920733912bad"
+  ],
+  "aliases": [
+    "CVE-2024-47741",
+    "GHSA-q9qm-3ff2-jc35"
+  ],
+  "assigner": "Linux",
+  "epss": 0.17,
+  "enisaIdProduct": [
+    {
+      "id": "020f35a8-0fc5-3a72-93d1-5f936aa9bb84",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "100c4992-afe4-3648-9942-e338bc286ea6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "16637133-77be-39b7-b55a-fd0adcfc5ea1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3c32c7212f1639471ec0197ff1179b8ef2e0f3d3 <7ee85f5515e86a4e2a2f51969795920733912bad"
+    },
+    {
+      "id": "1eab915e-c8c3-3d85-a9ba-9e6d8669263d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.2"
+    },
+    {
+      "id": "73255466-219d-3ba5-84de-dcf3ee1664bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3c32c7212f1639471ec0197ff1179b8ef2e0f3d3 <f56a6d9c267ec7fa558ede7755551c047b1034cd"
+    },
+    {
+      "id": "86fb5c1b-780d-33e4-a7b8-e97f11b37dad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.2"
+    },
+    {
+      "id": "ac491599-e477-3ef0-b43f-dcac30a7179b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.13"
+    },
+    {
+      "id": "adad40f8-3d88-3a0c-a025-1526ba8e55d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3c32c7212f1639471ec0197ff1179b8ef2e0f3d3 <a412ca489ac27b9d0e603499315b7139c948130d"
+    },
+    {
+      "id": "e293aa75-bbee-3b26-9289-96e37d8011bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.54"
+    },
+    {
+      "id": "e4876628-403b-3e59-a0bf-56154b2ee601",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3c32c7212f1639471ec0197ff1179b8ef2e0f3d3 <33d1310d4496e904123dab9c28b2d8d2c1800f97"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f78e4122-7283-36ea-9a9d-a979005ededd",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

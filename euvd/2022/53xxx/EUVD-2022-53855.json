@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2022-53855",
+  "enisaUuid": "11c10a56-2bbb-35d5-b3c4-e18969c54a4d",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: flowtable_offload: fix using __this_cpu_add in preemptible\n\nflow_offload_queue_work() can be called in workqueue without\nbh disabled, like the call trace showed in my act_ct testing,\ncalling NF_FLOW_TABLE_STAT_INC() there would cause a call\ntrace:\n\n  BUG: using __this_cpu_add() in preemptible [00000000] code: kworker/u4:0/138560\n  caller is flow_offload_queue_work+0xec/0x1b0 [nf_flow_table]\n  Workqueue: act_ct_workqueue tcf_ct_flow_table_cleanup_work [act_ct]\n  Call Trace:\n   <TASK>\n   dump_stack_lvl+0x33/0x46\n   check_preemption_disabled+0xc3/0xf0\n   flow_offload_queue_work+0xec/0x1b0 [nf_flow_table]\n   nf_flow_table_iterate+0x138/0x170 [nf_flow_table]\n   nf_flow_table_free+0x140/0x1a0 [nf_flow_table]\n   tcf_ct_flow_table_cleanup_work+0x2f/0x2b0 [act_ct]\n   process_one_work+0x6a3/0x1030\n   worker_thread+0x8a/0xdf0\n\nThis patch fixes it by using NF_FLOW_TABLE_STAT_INC_ATOMIC()\ninstead in flow_offload_queue_work().\n\nNote that for FLOW_CLS_REPLACE branch in flow_offload_queue_work(),\nit may not be called in preemptible path, but it's good to use\nNF_FLOW_TABLE_STAT_INC_ATOMIC() for all cases in\nflow_offload_queue_work().",
+  "datePublished": "Oct 21, 2024, 8:05:55 PM",
+  "dateUpdated": "May 23, 2026, 3:21:14 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/a220a11fda012fba506b35929672374c2723ae6d",
+    "https://git.kernel.org/stable/c/a81047154e7ce4eb8769d5d21adcbc9693542a79"
+  ],
+  "aliases": [
+    "GHSA-3v5r-242w-7766",
+    "CVE-2022-48976"
+  ],
+  "assigner": "Linux",
+  "epss": 0.2,
+  "enisaIdProduct": [
+    {
+      "id": "3225650e-6838-367a-97cd-6590098a7f3c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.0"
+    },
+    {
+      "id": "4b85fd97-930a-3631-8ffd-320877dca3c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b038177636f83bbf87c2b238706474145dd2cd04 <a220a11fda012fba506b35929672374c2723ae6d"
+    },
+    {
+      "id": "5ce9d47e-3c75-35eb-bf89-6949fba0f64e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1"
+    },
+    {
+      "id": "6d9fddb2-f7e5-35b4-9e6e-de8481148776",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6f4fe984-0e76-3637-af65-c3deb3da66a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.157 <5.16"
+    },
+    {
+      "id": "a125c7ff-98e7-38e9-a212-9b2edcd8f085",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.0.13"
+    },
+    {
+      "id": "a30e23d3-cb91-3909-8ea7-1e0835d5ee02",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b038177636f83bbf87c2b238706474145dd2cd04 <a81047154e7ce4eb8769d5d21adcbc9693542a79"
+    },
+    {
+      "id": "bb2c4a2a-8f3d-3729-a674-05be63ddb5a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5345d78ae64d5a760c211cd2da995dc71c5b29e4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "53b6c7a1-fac4-3b75-90d7-4e604e87aa39",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

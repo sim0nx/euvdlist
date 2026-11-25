@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2024-38893",
+  "enisaUuid": "ca91397d-6d07-3061-9d26-22a3bc083f16",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nPCI/MSI: Fix UAF in msi_capability_init\n\nKFENCE reports the following UAF:\n\n BUG: KFENCE: use-after-free read in __pci_enable_msi_range+0x2c0/0x488\n\n Use-after-free read at 0x0000000024629571 (in kfence-#12):\n  __pci_enable_msi_range+0x2c0/0x488\n  pci_alloc_irq_vectors_affinity+0xec/0x14c\n  pci_alloc_irq_vectors+0x18/0x28\n\n kfence-#12: 0x0000000008614900-0x00000000e06c228d, size=104, cache=kmalloc-128\n\n allocated by task 81 on cpu 7 at 10.808142s:\n  __kmem_cache_alloc_node+0x1f0/0x2bc\n  kmalloc_trace+0x44/0x138\n  msi_alloc_desc+0x3c/0x9c\n  msi_domain_insert_msi_desc+0x30/0x78\n  msi_setup_msi_desc+0x13c/0x184\n  __pci_enable_msi_range+0x258/0x488\n  pci_alloc_irq_vectors_affinity+0xec/0x14c\n  pci_alloc_irq_vectors+0x18/0x28\n\n freed by task 81 on cpu 7 at 10.811436s:\n  msi_domain_free_descs+0xd4/0x10c\n  msi_domain_free_locked.part.0+0xc0/0x1d8\n  msi_domain_alloc_irqs_all_locked+0xb4/0xbc\n  pci_msi_setup_msi_irqs+0x30/0x4c\n  __pci_enable_msi_range+0x2a8/0x488\n  pci_alloc_irq_vectors_affinity+0xec/0x14c\n  pci_alloc_irq_vectors+0x18/0x28\n\nDescriptor allocation done in:\n__pci_enable_msi_range\n    msi_capability_init\n        msi_setup_msi_desc\n            msi_insert_msi_desc\n                msi_domain_insert_msi_desc\n                    msi_alloc_desc\n                        ...\n\nFreed in case of failure in __msi_domain_alloc_locked()\n__pci_enable_msi_range\n    msi_capability_init\n        pci_msi_setup_msi_irqs\n            msi_domain_alloc_irqs_all_locked\n                msi_domain_alloc_locked\n                    __msi_domain_alloc_locked => fails\n                    msi_domain_free_locked\n                        ...\n\nThat failure propagates back to pci_msi_setup_msi_irqs() in\nmsi_capability_init() which accesses the descriptor for unmasking in the\nerror exit path.\n\nCure it by copying the descriptor and using the copy for the error exit path\nunmask operation.\n\n[ tglx: Massaged change log ]",
+  "datePublished": "Jul 29, 2024, 3:48:09 PM",
+  "dateUpdated": "Aug 5, 2026, 11:35:21 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/0ae40b2d0a5de6b045504098e365d4fdff5bbeba",
+    "https://git.kernel.org/stable/c/ff1121d2214b794dc1772081f27bdd90721a84bc",
+    "https://git.kernel.org/stable/c/45fc8d20e0768ab0a0ad054081d0f68aa3c83976",
+    "https://git.kernel.org/stable/c/9eee5330656bf92f51cb1f09b2dc9f8cf975b3d1"
+  ],
+  "aliases": [
+    "CVE-2024-41096",
+    "GHSA-f5xx-949w-7ch3"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "2e519a4f-0db9-33e8-8095-8bab3599146b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.109"
+    },
+    {
+      "id": "3c6ea764-2570-3ef8-bf73-9c086fa8e7c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "671a1db4-6549-3a92-9a3e-5560c1bc8bd0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.37"
+    },
+    {
+      "id": "675cb539-6d6c-3356-b1c3-0ca805932b0a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.17"
+    },
+    {
+      "id": "8dc19835-be46-318e-aa01-805ea8162ba0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bf6e054e0e3fbc9614355b760e18c8a14f952a4e <45fc8d20e0768ab0a0ad054081d0f68aa3c83976"
+    },
+    {
+      "id": "9e504e34-00a2-3a6d-96a1-7885945adb57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bf6e054e0e3fbc9614355b760e18c8a14f952a4e <0ae40b2d0a5de6b045504098e365d4fdff5bbeba"
+    },
+    {
+      "id": "dacac4a0-d756-3b0e-b8fc-71e9e4846d62",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bf6e054e0e3fbc9614355b760e18c8a14f952a4e <9eee5330656bf92f51cb1f09b2dc9f8cf975b3d1"
+    },
+    {
+      "id": "db605779-5496-398e-8bc4-3de4427d6520",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "e0d5bf3e-8182-3863-95be-7e11aba448ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.8"
+    },
+    {
+      "id": "ffddddf7-64ea-34d1-a89c-8219d3d3ffcc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bf6e054e0e3fbc9614355b760e18c8a14f952a4e <ff1121d2214b794dc1772081f27bdd90721a84bc"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "da83ac94-ee82-3843-a3a7-b96403cf8d8f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,9 +3,12 @@
   "enisaUuid": "db17ea25-949e-3100-8b52-798b7435ec1e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbtrfs: fix missing last_unlink_trans update when removing a directory\n\nWhen removing a directory we are not updating its last_unlink_trans field,\nwhich can result in incorrect fsync behaviour in case some one fsyncs the\ndirectory after it was removed because it's holding a file descriptor on\nit.\n\nExample scenario:\n\n   mkdir /mnt/dir1\n   mkdir /mnt/dir1/dir2\n   mkdir /mnt/dir3\n\n   sync -f /mnt\n\n   # Do some change to the directory and fsync it.\n   chmod 700 /mnt/dir1\n   xfs_io -c fsync /mnt/dir1\n\n   # Move dir2 out of dir1 so that dir1 becomes empty.\n   mv /mnt/dir1/dir2 /mnt/dir3/\n\n   open fd on /mnt/dir1\n   call rmdir(2) on path \"/mnt/dir1\"\n   fsync fd\n\n   <trigger power failure>\n\nWhen attempting to mount the filesystem, the log replay will fail with\nan -EIO error and dmesg/syslog has the following:\n\n   [445771.626482] BTRFS info (device dm-0): first mount of filesystem 0368bbea-6c5e-44b5-b409-09abe496e650\n   [445771.626486] BTRFS info (device dm-0): using crc32c checksum algorithm\n   [445771.627912] BTRFS info (device dm-0): start tree-log replay\n   [445771.628335] page: refcount:2 mapcount:0 mapping:0000000061443ddc index:0x1d00 pfn:0x7072a5\n   [445771.629453] memcg:ffff89f400351b00\n   [445771.629892] aops:btree_aops [btrfs] ino:1\n   [445771.630737] flags: 0x17fffc00000402a(uptodate|lru|private|writeback|node=0|zone=2|lastcpupid=0x1ffff)\n   [445771.632359] raw: 017fffc00000402a fffff47284d950c8 fffff472907b7c08 ffff89f458e412b8\n   [445771.633713] raw: 0000000000001d00 ffff89f6c51d1a90 00000002ffffffff ffff89f400351b00\n   [445771.635029] page dumped because: eb page dump\n   [445771.635825] BTRFS critical (device dm-0): corrupt leaf: root=5 block=30408704 slot=10 ino=258, invalid nlink: has 2 expect no more than 1 for dir\n   [445771.638088] BTRFS info (device dm-0): leaf 30408704 gen 10 total ptrs 17 free space 14878 owner 5\n   [445771.638091] BTRFS info (device dm-0): refs 4 lock_owner 0 current 3581087\n   [445771.638094] \titem 0 key (256 INODE_ITEM 0) itemoff 16123 itemsize 160\n   [445771.638097] \t\tinode generation 3 transid 9 size 16 nbytes 16384\n   [445771.638098] \t\tblock group 0 mode 40755 links 1 uid 0 gid 0\n   [445771.638100] \t\trdev 0 sequence 2 flags 0x0\n   [445771.638102] \t\tatime 1775744884.0\n   [445771.660056] \t\tctime 1775744885.645502983\n   [445771.660058] \t\tmtime 1775744885.645502983\n   [445771.660060] \t\totime 1775744884.0\n   [445771.660062] \titem 1 key (256 INODE_REF 256) itemoff 16111 itemsize 12\n   [445771.660064] \t\tindex 0 name_len 2\n   [445771.660066] \titem 2 key (256 DIR_ITEM 1843588421) itemoff 16077 itemsize 34\n   [445771.660068] \t\tlocation key (259 1 0) type 2\n   [445771.660070] \t\ttransid 9 data_len 0 name_len 4\n   [445771.660075] \titem 3 key (256 DIR_ITEM 2363071922) itemoff 16043 itemsize 34\n   [445771.660076] \t\tlocation key (257 1 0) type 2\n   [445771.660077] \t\ttransid 9 data_len 0 name_len 4\n   [445771.660078] \titem 4 key (256 DIR_INDEX 2) itemoff 16009 itemsize 34\n   [445771.660079] \t\tlocation key (257 1 0) type 2\n   [445771.660080] \t\ttransid 9 data_len 0 name_len 4\n   [445771.660081] \titem 5 key (256 DIR_INDEX 3) itemoff 15975 itemsize 34\n   [445771.660082] \t\tlocation key (259 1 0) type 2\n   [445771.660083] \t\ttransid 9 data_len 0 name_len 4\n   [445771.660084] \titem 6 key (257 INODE_ITEM 0) itemoff 15815 itemsize 160\n   [445771.660086] \t\tinode generation 9 transid 9 size 8 nbytes 0\n   [445771.660087] \t\tblock group 0 mode 40777 links 1 uid 0 gid 0\n   [445771.660088] \t\trdev 0 sequence 2 flags 0x0\n   [445771.660089] \t\tatime 1775744885.641174097\n   [445771.660090] \t\tctime 1775744885.645502983\n   [445771.660091] \t\tmtime 1775744885.645502983\n   [445771.660105] \t\totime 1775744885.641174097\n   [445771.660106] \titem 7 key (257 INODE_REF 256) itemoff 15801 itemsize 14\n   [445771.660107] \t\tindex 2 name_len 4\n   [445771.660108] \titem 8 key (257 DIR_ITEM 2676584006) itemoff 15767 itemsize 34\n   [445771.660109] \t\tlocation key (2\n---truncated---",
   "datePublished": "May 28, 2026, 9:36:15 AM",
-  "dateUpdated": "May 28, 2026, 9:36:15 AM",
+  "dateUpdated": "Nov 6, 2026, 4:13:42 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/af467162290f5fe79d6a361b7c84302e45b1fd9f",
+    "https://git.kernel.org/stable/c/2525998ac956476bded26b9f34c4164dc890b87a",
+    "https://git.kernel.org/stable/c/6acbb2f6dff23c9bb9761fb98b516525b9cf1ce9",
     "https://git.kernel.org/stable/c/cc3c0a0f965754ce230d93ba44ee5b34fbe6138a",
     "https://git.kernel.org/stable/c/aa9c3ecaf7337df3a689318584f879b5339ede0f",
     "https://git.kernel.org/stable/c/fb388eb58c1ba047ccabc33901839acfecadcf49",
@@ -13,70 +16,111 @@
     "https://git.kernel.org/stable/c/999757231c49376cd1a37308d2c8c4c9932571e1"
   ],
   "aliases": [
+    "GHSA-xvrh-2655-9jjv",
     "CVE-2026-46160"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
-      "id": "10161307-2eea-3ba3-805d-26a750af2c01",
+      "id": "0a5c929d-6109-3175-8aa4-9cd0c07e86c4",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <cc3c0a0f965754ce230d93ba44ee5b34fbe6138a"
+      "product_version": "12fcfd22fe5bf4fe74710232098bc101af497995 <fb388eb58c1ba047ccabc33901839acfecadcf49"
     },
     {
-      "id": "335ad3fb-5ae0-33d7-95d1-c99be8916abc",
+      "id": "22b8047a-f61c-3a5a-9524-a95756b7b68c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.1-rc2"
+      "product_version": "12fcfd22fe5bf4fe74710232098bc101af497995 <6acbb2f6dff23c9bb9761fb98b516525b9cf1ce9"
     },
     {
-      "id": "3817947f-cee2-3ae7-bf0a-f8611638fdbc",
+      "id": "267f6f72-4970-3a54-aa6c-360e48ed8cb9",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.12.91"
+      "product_version": "12fcfd22fe5bf4fe74710232098bc101af497995 <999757231c49376cd1a37308d2c8c4c9932571e1"
     },
     {
-      "id": "65d30804-3271-34ff-81fd-181f3b5ce6b5",
+      "id": "2e588d3d-efb0-39b2-8ecb-f35b4543f936",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <999757231c49376cd1a37308d2c8c4c9932571e1"
+      "product_version": "patch: 6.1.176"
     },
     {
-      "id": "7678f00b-6fcc-376c-9936-737d3cfa1bab",
+      "id": "4bcfdea3-ce5f-3e85-94e5-d7f4cee0d1cd",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.0.7"
+      "product_version": "12fcfd22fe5bf4fe74710232098bc101af497995 <af467162290f5fe79d6a361b7c84302e45b1fd9f"
     },
     {
-      "id": "a0a7f873-1738-392c-9fcc-c7e3b088be86",
+      "id": "65b1cbcd-01b9-3f57-b659-59e4f79fb0ff",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <fb388eb58c1ba047ccabc33901839acfecadcf49"
+      "product_version": "12fcfd22fe5bf4fe74710232098bc101af497995 <aa9c3ecaf7337df3a689318584f879b5339ede0f"
+    },
+    {
+      "id": "6be7a723-466b-3f39-a778-333f00e755dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.259"
+    },
+    {
+      "id": "975c825c-ea88-3f24-a15f-be2decf79420",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "12fcfd22fe5bf4fe74710232098bc101af497995 <cc3c0a0f965754ce230d93ba44ee5b34fbe6138a"
+    },
+    {
+      "id": "a32700b5-c425-3ef0-9eb2-a1e7bf23b767",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.210"
+    },
+    {
+      "id": "a6f5fe30-e2e9-3f0a-a23d-cb2a8748df8e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "b07c5222-4992-36d0-85ab-3e08e9cefccc",
@@ -89,24 +133,34 @@
       "product_version": "patch: 7.0.7"
     },
     {
-      "id": "bd3a6458-3a5d-31e1-8f53-9a9f09f59ffb",
+      "id": "b7f2c90c-02c9-3741-a2eb-063a7e6d0050",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.6.141"
+      "product_version": "12fcfd22fe5bf4fe74710232098bc101af497995 <2525998ac956476bded26b9f34c4164dc890b87a"
     },
     {
-      "id": "be89852f-63b3-3717-af42-29ecd15c6b82",
+      "id": "c1b586f5-ddb8-3e0c-b9ac-c9aa21026b32",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.18.30"
+      "product_version": "2.6.30"
+    },
+    {
+      "id": "c6d31467-646e-3524-8358-4faef3bdcb1a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
     },
     {
       "id": "c71fe4ba-badf-30f0-af23-f74360bc6c0a",
@@ -119,26 +173,6 @@
       "product_version": "patch: 6.6.141"
     },
     {
-      "id": "c7251a88-5b0f-38ea-a0ac-1f55bfcbbd0c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <36fcc2c7517f8a86379154c9793f867592aa8b7e"
-    },
-    {
-      "id": "c83f4a5f-d5bd-3b5e-83c7-374405ada94b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <aa9c3ecaf7337df3a689318584f879b5339ede0f"
-    },
-    {
       "id": "d42f3cff-78ed-3f1e-8a35-4250c7fd4ca4",
       "product": {
         "name": "Linux",
@@ -147,6 +181,16 @@
         }
       },
       "product_version": "patch: 6.12.91"
+    },
+    {
+      "id": "dc971a4d-8fc5-3a6a-a12b-00a216b16445",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "12fcfd22fe5bf4fe74710232098bc101af497995 <36fcc2c7517f8a86379154c9793f867592aa8b7e"
     },
     {
       "id": "ebd0a80a-0776-3e5f-b54c-5a8eda914f9d",

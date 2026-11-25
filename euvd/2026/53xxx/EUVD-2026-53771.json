@@ -3,9 +3,14 @@
   "enisaUuid": "27696b4c-a59e-3ee0-b4f9-bf8443c09ecc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: f_midi: cancel pending IN work before freeing the midi object\n\nThe f_midi driver embeds a work item (midi->work) whose handler,\nf_midi_in_work(), dereferences the enclosing struct f_midi through\ncontainer_of().  This work is armed from two sites: f_midi_complete(),\non a normal IN-endpoint completion, and f_midi_in_trigger(), on an ALSA\nrawmidi output-stream start.\n\nNeither f_midi_disable() nor f_midi_unbind() cancels midi->work.\nf_midi_disable() only disables the endpoints and drains the in_req_fifo;\nit does not synchronize the work item, and the sound card is released\nasynchronously to the final free of the midi object.\n\nThe midi object is reference-counted (midi->free_ref) and is freed in\nf_midi_free() only once both the usb_function reference and the rawmidi\nprivate_data reference have been dropped.  In f_midi_unbind(),\nf_midi_disable() runs before the sound card is released, so while the\nUSB endpoints are already disabled the rawmidi device is still usable by\nan open substream.  A concurrent userspace write on such a substream can\nreach f_midi_in_trigger() and queue midi->work again after\nf_midi_disable() has returned.  A work item armed this way may still be\npending when the last reference drops and f_midi_free() proceeds to\nkfree(midi), letting f_midi_in_work() dereference the struct after it\nhas been freed, a use-after-free.\n\nFor this reason cancelling midi->work in f_midi_disable() would not be\nsufficient: the ALSA trigger path can rearm the work after disable()\nreturns.  Cancelling at the refcount-zero free site is the boundary\nafter which neither arming source can survive, because by then both\nreferences that keep the midi object alive have been dropped: the USB\nendpoints are already disabled and the rawmidi device has been released.\n\nFix this by calling cancel_work_sync(&midi->work) in the refcount-zero\nblock of f_midi_free(), before the embedded work_struct is freed along\nwith the rest of the structure.  opts->lock is a sleeping mutex, so\ncalling cancel_work_sync() under it is permitted, and the handler takes\nmidi->transmit_lock rather than opts->lock, so no self-deadlock can\noccur while it waits for a running instance of the work to finish.\n\nThis issue was found by an in-house static analysis tool.",
   "datePublished": "Aug 6, 2026, 7:06:25 AM",
-  "dateUpdated": "Aug 6, 2026, 7:06:25 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 19, 2026, 4:29:12 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/f3c6f2c38062703d3dc7f86958bb0790c6959add",
+    "https://git.kernel.org/stable/c/df18150126f66817e4d3f79f309e9c92d6ff384e",
+    "https://git.kernel.org/stable/c/620955b222c47332297d6bf38f78541aa699238a",
     "https://git.kernel.org/stable/c/380b4bef46c2eb260c7a9c6bb2c5be33ce5a38f9",
     "https://git.kernel.org/stable/c/87bc316dd6fc90072297c635e10b9aa6075ecda1",
     "https://git.kernel.org/stable/c/f45089eaad0a083d71d84ff175741d7e157d9b69",
@@ -13,21 +18,12 @@
     "https://git.kernel.org/stable/c/5650c18d93a1db7e27cb5a40b394747eb4686d5b"
   ],
   "aliases": [
-    "CVE-2026-64584"
+    "CVE-2026-64584",
+    "GHSA-m3h2-47px-55rm"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
-    {
-      "id": "0a015062-c1dc-3179-a303-9adab3a748a3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
-    },
     {
       "id": "0d09d762-ae55-3ec5-bc61-c3545aa5ae5b",
       "product": {
@@ -37,6 +33,16 @@
         }
       },
       "product_version": "8653d71ce3763aedcf3d2331f59beda3fecd79e4 <f45089eaad0a083d71d84ff175741d7e157d9b69"
+    },
+    {
+      "id": "14bfa42a-b6bf-3fc5-bc4a-c51234b60f7b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
     },
     {
       "id": "177536c3-dcbd-3f54-95c5-cf8312f7b524",
@@ -59,14 +65,24 @@
       "product_version": "8653d71ce3763aedcf3d2331f59beda3fecd79e4 <5650c18d93a1db7e27cb5a40b394747eb4686d5b"
     },
     {
-      "id": "35534446-b3ec-3865-b7dd-991388ad9989",
+      "id": "215e30dc-f636-3122-a5aa-78fcfc0d365c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "3635523e9b96213969693c320302d536774d8e9b"
+      "product_version": "3635523e9b96213969693c320302d536774d8e9b <f3c6f2c38062703d3dc7f86958bb0790c6959add"
+    },
+    {
+      "id": "3408faa2-18d1-3ac0-96a4-6ba38a5558e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.235 <5.10.265"
     },
     {
       "id": "396c0188-cd68-3fba-886b-d8822cb7bee6",
@@ -77,6 +93,16 @@
         }
       },
       "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "5c130dee-b774-373f-88ce-7128527f7371",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8653d71ce3763aedcf3d2331f59beda3fecd79e4 <df18150126f66817e4d3f79f309e9c92d6ff384e"
     },
     {
       "id": "5ec49269-448b-39fe-b82e-59f301a0ea56",
@@ -109,6 +135,16 @@
       "product_version": "89019ab7a64fcdf98a2ba7799e5c6aff58d4a05d"
     },
     {
+      "id": "87e9a016-8289-35b2-80bf-01eaa82125e7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
       "id": "89c315e1-ec3b-31de-856c-7f6727d3e6fc",
       "product": {
         "name": "Linux",
@@ -129,14 +165,34 @@
       "product_version": "patch: 7.1.6"
     },
     {
-      "id": "abacd6ff-fbb1-3d89-bc2c-fdd6919475e0",
+      "id": "aa3027c1-6be2-3a54-bdd5-441c23a6851a",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "5.10.235 <5.11"
+      "product_version": "8653d71ce3763aedcf3d2331f59beda3fecd79e4 <620955b222c47332297d6bf38f78541aa699238a"
+    },
+    {
+      "id": "ae3ec9f9-e0e6-3a3e-9b36-c40400dec664",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "c25eef8a-42cf-3aba-bf86-953ef999fee1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "c95da1f9-a8b6-3398-9739-8da55600832b",

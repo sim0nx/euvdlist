@@ -2,9 +2,11 @@
   "id": "EUVD-2026-59382",
   "enisaUuid": "f4242a25-b5dd-3721-9ccf-e428f92cd2cd",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: host: max3421: Fix shift-out-of-bounds in max3421_hub_control()\n\nThe `max3421_hub_control()` function handles USB hub class requests\nto the virtual root hub. In the `default` branches of both the\n`ClearPortFeature` and `SetPortFeature` switch statements, it modifies\n`max3421_hcd->port_status` by left shifting 1 by the request's `value`\nparameter. However, it does not validate whether this shift will exceed\nthe width of `port_status`.\n\nSo if a malicious userspace task with access to the root hub via\n/dev/bus/usb/.../001 issues a USBDEVFS_CONTROL ioctl with `wValue`\ngreater than or equal to 32, the left shift operation invokes\nshift-out-of-bounds undefined behavior. This results in arbitrary\nbit corruption of `port_status`, including the normally-immutable\nchange bits, which can bypass internal state checks and confuse the\nhub status.\n\nFix this by rejecting requests whose `value` exceeds the shift width\nbefore performing the shift.\n\nThis issue was found using a KLEE-based symbolic execution tool for\nkernel drivers that I'm currently developing.",
-  "datePublished": "Aug 15, 2026, 6:32:26 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:26 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:57:20 AM",
+  "dateUpdated": "Aug 17, 2026, 5:44:46 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/e5fa9d8f40746ec3447335c9642c03410f5fd3af",
     "https://git.kernel.org/stable/c/08b1d4cab0230697bc74c63fc4e40170a7559c54",
@@ -13,15 +15,14 @@
     "https://git.kernel.org/stable/c/00dd025324b56d39d37e57a08f473dab3a660f30",
     "https://git.kernel.org/stable/c/02d03c61e8a7b016956acb48e8a2512d16d87517",
     "https://git.kernel.org/stable/c/4da073d57176d8e1c2bca34febfbc81d2560c1a5",
-    "https://git.kernel.org/stable/c/cff06b03b530ae1fe8a13e93a7848f2130e00fb4",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72483"
+    "https://git.kernel.org/stable/c/cff06b03b530ae1fe8a13e93a7848f2130e00fb4"
   ],
   "aliases": [
     "CVE-2026-72483",
     "GHSA-fc4h-xff9-jp24"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
     {
       "id": "0040a9d8-9176-3c9b-af58-cc2ba2b80843",
@@ -42,16 +43,6 @@
         }
       },
       "product_version": "2d53139f31626bad6f8983d8e519ddde2cbba921 <00dd025324b56d39d37e57a08f473dab3a660f30"
-    },
-    {
-      "id": "0662738a-0ffd-3307-a74c-4b11f245b345",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "0c9b488f-ceba-3906-b18f-666dd8217fe4",
@@ -142,6 +133,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "8ef93824-8654-34e6-b171-e41e6433646d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "9a88cfb2-940c-3397-818b-115b1f0219a6",

@@ -1,27 +1,29 @@
 {
   "id": "EUVD-2026-25355",
   "enisaUuid": "94ca5439-5da2-36c8-97b8-0809c24dde04",
-  "description": "melange has Path Traversal When Resolving External Pipelines via Unvalidated pipeline[].uses",
-  "datePublished": "Apr 23, 2026, 9:53:33 PM",
-  "dateUpdated": "Apr 23, 2026, 9:53:33 PM",
+  "description": "melange allows users to build apk packages using declarative pipelines. Starting in version 0.32.0 and prior to version 0.43.4, an attacker who can influence a melange configuration file \u2014 for example through pull-request-driven CI or build-as-a-service scenarios \u2014 could set `pipeline[].uses` to a value containing `../` sequences or an absolute path. The `(*Compiled).compilePipeline` function in `pkg/build/compile.go` passed `uses` directly to `filepath.Join(pipelineDir, uses + \".yaml\")` without validating the value, so the resolved path could escape each `--pipeline-dir` and read an arbitrary YAML-parseable file visible to the melange process. Because the loaded file is subsequently interpreted as a melange pipeline and its `runs:` block is executed via `/bin/sh -c` in the build sandbox, this additionally allowed shell commands sourced from an out-of-tree file to run during the build, bypassing the review boundary that normally covers the in-tree pipeline definition. The issue is fixed in melange v0.43.4 via commit 5829ca4. The fix rejects `uses` values that are absolute paths or contain `..`, and verifies (via `filepath.Rel` after `filepath.Clean`) that the resolved target remains within the pipeline directory. As a workaround, only run `melange build` against configuration files from trusted sources. In CI systems that build user-supplied melange configs, gate builds behind manual review of `pipeline[].uses` values and reject any containing `..` or leading `/`.",
+  "datePublished": "Apr 23, 2026, 11:58:39 PM",
+  "dateUpdated": "Apr 25, 2026, 1:38:30 AM",
   "baseScore": 6.1,
   "baseScoreVersion": "3.1",
   "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:L/A:N",
   "references": [
-    "https://github.com/chainguard-dev/melange/security/advisories/GHSA-98f2-w9h9-7fp9",
-    "https://github.com/chainguard-dev/melange/commit/5829ca45cfe14dfeb73ffb716992db3b1b7892ac"
+    "https://github.com/chainguard-dev/melange/security/advisories/GHSA-98f2-w9h9-7fp9"
   ],
   "aliases": [
     "GHSA-98f2-w9h9-7fp9",
     "CVE-2026-29050"
   ],
   "assigner": "GitHub_M",
-  "epss": 0.0,
+  "epss": 0.15,
   "enisaIdProduct": [
     {
       "id": "13207452-c055-37f2-a0e7-e52f1c8a9d28",
       "product": {
-        "name": "melange"
+        "name": "melange",
+        "vendor": {
+          "name": "chainguard-dev"
+        }
       },
       "product_version": "0.32.0, < 0.43.4"
     }

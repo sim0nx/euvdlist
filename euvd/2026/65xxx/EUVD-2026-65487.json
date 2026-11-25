@@ -3,8 +3,10 @@
   "enisaUuid": "00c7886f-c6da-327f-af4d-f70e15648f05",
   "description": "Issue summary: OpenSSL CMP password based protection verification only\nchecks whether the protectionAlg parameter was not NULL and not its\nASN.1 type, before treating it as a PBMParameter. A crafted message can\ncontain a parameter of a different type, which is then dereferenced as an\ninvalid pointer.\n\nImpact summary: A remote, unauthenticated attacker can crash an application\nacting as a CMP server that accepts PBM-protected messages, or a CMP client\ntalking to a malicious or intercepted CMP server, resulting in a Denial of\nService.\n\nCWE: CWE-476: NULL Pointer Dereference\n\nDescription: When verifying the password-based MAC protection of a CMP\nmessage, OpenSSL library reads the protectionAlg algorithm parameter with\nX509_ALGOR_get0(), which returns both the parameter type and its value\npointer. The value is then cast to an ASN1_STRING and treated as the\nexpected PBMParameter after only checking that pointer is not NULL. The\nparameter type returned by X509_ALGOR_get0() was never consulted.\n\nThis happens during protection verification, before any MAC is computed, so\nno knowledge of the PBM shared secret is required; the only precondition is\nthat PBM verification is reachable. On the server side this is reached from\nOSSL_CMP_SRV_process_request() for any application that stands up a CMP\nserver accepting PBM-protected messages, and on the client side from CMP\nresponse validation against a malicious or on-path (MITM) server. The\nreliable consequence is a denial of service; there is no memory disclosure,\nno controlled memory write, and no path to code execution. CMP is a\nspecialized feature that an application must explicitly enable.\n\nFIPS impact: no\nAs the CMP code lives outside the FIPS module boundary, no FIPS modules\nare affected by this CVE.",
   "datePublished": "Aug 25, 2026, 1:00:11 PM",
-  "dateUpdated": "Aug 25, 2026, 1:00:11 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 25, 2026, 2:37:32 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://openssl-library.org/news/secadv/20260825.txt",
     "https://github.com/openssl/openssl/commit/a17cc8d612ecff6d94a9b7ca8b5283ddf5ff570e",
@@ -14,10 +16,11 @@
     "https://github.com/openssl/openssl/commit/37882aa2e0256e1072442a8f62f7db45b995c45b"
   ],
   "aliases": [
-    "CVE-2026-63076"
+    "CVE-2026-63076",
+    "GHSA-r3hf-pf7x-wgqg"
   ],
   "assigner": "openssl",
-  "epss": 0.0,
+  "epss": 1.63,
   "enisaIdProduct": [
     {
       "id": "8bb1736e-e1b3-313d-908f-5c4b809de3fd",

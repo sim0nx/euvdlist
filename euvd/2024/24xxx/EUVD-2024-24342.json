@@ -1,0 +1,159 @@
+{
+  "id": "EUVD-2024-24342",
+  "enisaUuid": "aa1c4567-3462-33c7-8c65-65f9c66de4e3",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbtrfs: fix race when detecting delalloc ranges during fiemap\n\nFor fiemap we recently stopped locking the target extent range for the\nwhole duration of the fiemap call, in order to avoid a deadlock in a\nscenario where the fiemap buffer happens to be a memory mapped range of\nthe same file. This use case is very unlikely to be useful in practice but\nit may be triggered by fuzz testing (syzbot, etc).\n\nThis however introduced a race that makes us miss delalloc ranges for\nfile regions that are currently holes, so the caller of fiemap will not\nbe aware that there's data for some file regions. This can be quite\nserious for some use cases - for example in coreutils versions before 9.0,\nthe cp program used fiemap to detect holes and data in the source file,\ncopying only regions with data (extents or delalloc) from the source file\nto the destination file in order to preserve holes (see the documentation\nfor its --sparse command line option). This means that if cp was used\nwith a source file that had delalloc in a hole, the destination file could\nend up without that data, which is effectively a data loss issue, if it\nhappened to hit the race described below.\n\nThe race happens like this:\n\n1) Fiemap is called, without the FIEMAP_FLAG_SYNC flag, for a file that\n   has delalloc in the file range [64M, 65M[, which is currently a hole;\n\n2) Fiemap locks the inode in shared mode, then starts iterating the\n   inode's subvolume tree searching for file extent items, without having\n   the whole fiemap target range locked in the inode's io tree - the\n   change introduced recently by commit b0ad381fa769 (\"btrfs: fix\n   deadlock with fiemap and extent locking\"). It only locks ranges in\n   the io tree when it finds a hole or prealloc extent since that\n   commit;\n\n3) Note that fiemap clones each leaf before using it, and this is to\n   avoid deadlocks when locking a file range in the inode's io tree and\n   the fiemap buffer is memory mapped to some file, because writing\n   to the page with btrfs_page_mkwrite() will wait on any ordered extent\n   for the page's range and the ordered extent needs to lock the range\n   and may need to modify the same leaf, therefore leading to a deadlock\n   on the leaf;\n\n4) While iterating the file extent items in the cloned leaf before\n   finding the hole in the range [64M, 65M[, the delalloc in that range\n   is flushed and its ordered extent completes - meaning the corresponding\n   file extent item is in the inode's subvolume tree, but not present in\n   the cloned leaf that fiemap is iterating over;\n\n5) When fiemap finds the hole in the [64M, 65M[ range by seeing the gap in\n   the cloned leaf (or a file extent item with disk_bytenr == 0 in case\n   the NO_HOLES feature is not enabled), it will lock that file range in\n   the inode's io tree and then search for delalloc by checking for the\n   EXTENT_DELALLOC bit in the io tree for that range and ordered extents\n   (with btrfs_find_delalloc_in_range()). But it finds nothing since the\n   delalloc in that range was already flushed and the ordered extent\n   completed and is gone - as a result fiemap will not report that there's\n   delalloc or an extent for the range [64M, 65M[, so user space will be\n   mislead into thinking that there's a hole in that range.\n\nThis could actually be sporadically triggered with test case generic/094\nfrom fstests, which reports a missing extent/delalloc range like this:\n\n  generic/094 2s ... - output mismatch (see /home/fdmanana/git/hub/xfstests/results//generic/094.out.bad)\n      --- tests/generic/094.out\t2020-06-10 19:29:03.830519425 +0100\n      +++ /home/fdmanana/git/hub/xfstests/results//generic/094.out.bad\t2024-02-28 11:00:00.381071525 +0000\n      @@ -1,3 +1,9 @@\n       QA output created by 094\n       fiemap run with sync\n       fiemap run without sync\n      +ERROR: couldn't find extent at 7\n      +map is 'HHDDHPPDPHPH'\n      +logical: [       5..       6] phys:\n---truncated---",
+  "datePublished": "May 1, 2024, 1:05:02 PM",
+  "dateUpdated": "Oct 30, 2026, 12:18:12 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/49d640d2946c35a17b051d54171a032dd95b0f50",
+    "https://git.kernel.org/stable/c/ced63fffd63072c0ca55d5a451010d71bf08c0b3",
+    "https://git.kernel.org/stable/c/978b63f7464abcfd364a6c95f734282c50f3decf"
+  ],
+  "aliases": [
+    "GHSA-j5v2-r4pg-j7h4",
+    "CVE-2024-27080"
+  ],
+  "assigner": "Linux",
+  "epss": 0.19,
+  "enisaIdProduct": [
+    {
+      "id": "01ab63c1-5aec-398a-be16-416ef00b85fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "31f574b8-f4f0-3718-8799-f7e000f6f97c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.24 <6.6.26"
+    },
+    {
+      "id": "349bf439-b3f5-33ce-b068-ce18d0ac6b48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.26"
+    },
+    {
+      "id": "55bbba95-daa4-332f-b6b1-08fafee52689",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.191 <6.2"
+    },
+    {
+      "id": "56d3734a-fbc4-311e-a401-99efe0380a1f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.2"
+    },
+    {
+      "id": "6daefab7-f668-32f5-9a64-e8b961cf6114",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "77c7c8c6-970f-33d7-9845-f19f6c537c69",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b0ad381fa7690244802aed119b478b4bdafc31dd <ced63fffd63072c0ca55d5a451010d71bf08c0b3"
+    },
+    {
+      "id": "b36ba737-d479-3665-8281-817450cb74fa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "89bca7fe6382d61e88c67a0b0e7bce315986fb8b"
+    },
+    {
+      "id": "b7155f9e-773a-3bb6-80af-fcbf9e66f4c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ded566b4637f1b6b4c9ba74e7d0b8493e93f19cf <49d640d2946c35a17b051d54171a032dd95b0f50"
+    },
+    {
+      "id": "c0150b1c-b09b-39c3-96f2-1deff1c00541",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b0ad381fa7690244802aed119b478b4bdafc31dd <978b63f7464abcfd364a6c95f734282c50f3decf"
+    },
+    {
+      "id": "c517bc13-04e5-3fce-907b-e4485eacd0d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "06d3879bb51be205a04b3da752cfd121a3367fb1"
+    },
+    {
+      "id": "c608f525-8e69-3cc1-aa1c-3797054d17f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.7.12 <6.8"
+    },
+    {
+      "id": "dc08f242-8761-3232-bfe2-640d63b586b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.8"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e03843f9-8580-30bf-b2a6-cec7eb037746",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2021-33630",
+  "enisaUuid": "6041d1d0-709b-3cfa-833b-a0727cd02053",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nf2fs: compress: fix race condition of overwrite vs truncate\n\npos_fsstress testcase complains a panic as belew:\n\n------------[ cut here ]------------\nkernel BUG at fs/f2fs/compress.c:1082!\ninvalid opcode: 0000 [#1] SMP PTI\nCPU: 4 PID: 2753477 Comm: kworker/u16:2 Tainted: G           OE     5.12.0-rc1-custom #1\nHardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.14.0-2 04/01/2014\nWorkqueue: writeback wb_workfn (flush-252:16)\nRIP: 0010:prepare_compress_overwrite+0x4c0/0x760 [f2fs]\nCall Trace:\n f2fs_prepare_compress_overwrite+0x5f/0x80 [f2fs]\n f2fs_write_cache_pages+0x468/0x8a0 [f2fs]\n f2fs_write_data_pages+0x2a4/0x2f0 [f2fs]\n do_writepages+0x38/0xc0\n __writeback_single_inode+0x44/0x2a0\n writeback_sb_inodes+0x223/0x4d0\n __writeback_inodes_wb+0x56/0xf0\n wb_writeback+0x1dd/0x290\n wb_workfn+0x309/0x500\n process_one_work+0x220/0x3c0\n worker_thread+0x53/0x420\n kthread+0x12f/0x150\n ret_from_fork+0x22/0x30\n\nThe root cause is truncate() may race with overwrite as below,\nso that one reference count left in page can not guarantee the\npage attaching in mapping tree all the time, after truncation,\nlater find_lock_page() may return NULL pointer.\n\n- prepare_compress_overwrite\n - f2fs_pagecache_get_page\n - unlock_page\n\t\t\t\t\t- f2fs_setattr\n\t\t\t\t\t - truncate_setsize\n\t\t\t\t\t  - truncate_inode_page\n\t\t\t\t\t   - delete_from_page_cache\n - find_lock_page\n\nFix this by avoiding referencing updated page.",
+  "datePublished": "Feb 28, 2024, 8:13:11 AM",
+  "dateUpdated": "May 11, 2026, 1:45:40 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/5639b73fd3bc6fc8ca72e3a9ac15aacaabd7ebff",
+    "https://git.kernel.org/stable/c/64acb100fe3beb5d20184d0ae3307235bd3555c4",
+    "https://git.kernel.org/stable/c/936158b15e2648253afb824d252c910c496d34b5",
+    "https://git.kernel.org/stable/c/a949dc5f2c5cfe0c910b664650f45371254c0744"
+  ],
+  "aliases": [
+    "GHSA-phj2-fhf8-vr32",
+    "CVE-2021-46982"
+  ],
+  "assigner": "Linux",
+  "epss": 0.18,
+  "enisaIdProduct": [
+    {
+      "id": "2044e6fe-98ed-3589-85c6-f6b79ff131f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c8ff7095bef64fc47e996a938f7d57f9e077da3 <5639b73fd3bc6fc8ca72e3a9ac15aacaabd7ebff"
+    },
+    {
+      "id": "3cfd4b2f-70ce-3fcd-8d7d-aec5cf94a9d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c8ff7095bef64fc47e996a938f7d57f9e077da3 <64acb100fe3beb5d20184d0ae3307235bd3555c4"
+    },
+    {
+      "id": "4aac4fde-d402-3834-9831-3a074ae774b0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.11.22"
+    },
+    {
+      "id": "4ee30a8d-6f1f-3e15-988c-43c39e744071",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.5"
+    },
+    {
+      "id": "53e94b98-4a3e-3ea7-b79b-36348c66560f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.6"
+    },
+    {
+      "id": "7ecb7eef-922d-3667-97a2-5427d6a9cf15",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b836d072-466f-3282-ad08-e67325aaad87",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c8ff7095bef64fc47e996a938f7d57f9e077da3 <a949dc5f2c5cfe0c910b664650f45371254c0744"
+    },
+    {
+      "id": "bc9e1051-6250-31ab-922c-096e5b3a3e98",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4c8ff7095bef64fc47e996a938f7d57f9e077da3 <936158b15e2648253afb824d252c910c496d34b5"
+    },
+    {
+      "id": "d382a243-4307-3286-9eb8-a948695e87a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    },
+    {
+      "id": "e9f23456-87e0-39fd-9034-afb268546b06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.38"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e9c4741f-2c77-3292-9129-e7f68e2446ea",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

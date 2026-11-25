@@ -3,7 +3,7 @@
   "enisaUuid": "b2265c1a-d26e-3d7a-9e50-0b95711a6dbf",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: sch_hfsc: bound the classify inner-filter walk with a drift budget\n\nhfsc_classify() applies the \"filter may only point downwards\" level check\nonly when the filter result carries no bound class. A filter created with\na flowid gets res.class set once at bind time, so the check never runs for\nit during classification. hfsc_adjust_levels() can later raise a class's\nlevel without revalidating existing bindings, leaving two binds that were\neach legal at bind time pointing at each other; the classify walk then\nbounces between two interior classes forever with the qdisc lock held and\nBH disabled \u2014 a soft lockup from a single packet. The stuck walk trips\nthe watchdog:\n\n  watchdog: BUG: soft lockup - CPU#3 stuck for 13s! [ping:444]\n  RIP: 0010:u32_classify+0x542/0x17f0\n  ...\n  tcf_classify+0x66/0xa0\n  hfsc_enqueue+0x166/0xdf0\n\nBound the traversal with a budget of non-descending hops, the only way a\nconfigured walk can move without descending the class tree once levels\ndrift after bind time. The budget is cumulative over the whole walk and\nis deliberately not reset on a descending hop: a chain that alternates a\ndescent with a lateral hop would return the budget every lap and never\ntrip. Descending hops never decrement it, so legitimately deep trees are\nunaffected and a terminating lateral chain still classifies normally.\nDrop the packet with a rate-limited warning once the budget is exhausted,\nmirroring the merged HTB fix.\n\nThis is a follow-up to commit 729c4896ab82 (\"net/sched: sch_htb: limit\nhtb_classify inner-class filter hops\"), which bounded the same classify\nloop on the HTB side but left the HFSC walk unbounded.\n\nConditions to recreate the bug:\n- CONFIG_NET_SCHED, CONFIG_NET_SCH_HFSC, CONFIG_NET_CLS_U32,\n  CONFIG_LOCKUP_DETECTOR.\n- Build a cycle with two legal-at-bind-time flowid binds and a level\n  drift: class X 1:1 (child of root) with leaf child 1:10; class Y 1:2\n  (sibling of X) with children 1:20 and 1:200; root u32 filter flowid\n  1:1; filter on X flowid 1:2 (legal when Y is a leaf); after Y's level\n  rises to 2, filter on Y flowid 1:1 (legal then). Send one packet (ping\n  on the device). Unfixed kernel: classify spins with the qdisc lock\n  held; with softlockup_panic=1 it panics.\n- Reachable from unprivileged user via unshare -Urn (CAP_NET_ADMIN).",
   "datePublished": "Oct 18, 2026, 3:19:25 PM",
-  "dateUpdated": "Oct 18, 2026, 3:19:25 PM",
+  "dateUpdated": "Oct 19, 2026, 9:22:37 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/d4fd251e3311727c32af89344d3332f788c153a2",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/8a60ade2277e1f0e0d0578d565354e52292fa46d"
   ],
   "aliases": [
-    "CVE-2026-98610"
+    "CVE-2026-98610",
+    "GHSA-72rf-5f28-vmph"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "006545a5-aca7-3b72-afe5-6d2eca4fde4d",
@@ -102,6 +103,16 @@
       "product_version": "a2f79227138c71e08627af5f8961197364edbc98 <30d7fea767e830bd81ac2f73d2e33c877cb2e679"
     },
     {
+      "id": "9e7316dd-3adf-3d45-81c3-456aabfcabcf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "a3775719-8c31-3304-abf0-1604e82b6acc",
       "product": {
         "name": "Linux",
@@ -120,16 +131,6 @@
         }
       },
       "product_version": "a2f79227138c71e08627af5f8961197364edbc98 <0fa25ba50a382d79c0cf060214c2095756836f5f"
-    },
-    {
-      "id": "c9ebe69c-035b-36be-94e9-3228ed13f5a1",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "cfeea11d-d34f-3dec-b8ad-3479d8ffc1a6",

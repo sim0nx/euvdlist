@@ -1,0 +1,112 @@
+{
+  "id": "EUVD-2023-59620",
+  "enisaUuid": "90e08e37-6da6-35af-b9d6-9c122dd9fdea",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfsd: fix handling of cached open files in nfsd4_open codepath\n\nCommit fb70bf124b05 (\"NFSD: Instantiate a struct file when creating a\nregular NFSv4 file\") added the ability to cache an open fd over a\ncompound. There are a couple of problems with the way this currently\nworks:\n\nIt's racy, as a newly-created nfsd_file can end up with its PENDING bit\ncleared while the nf is hashed, and the nf_file pointer is still zeroed\nout. Other tasks can find it in this state and they expect to see a\nvalid nf_file, and can oops if nf_file is NULL.\n\nAlso, there is no guarantee that we'll end up creating a new nfsd_file\nif one is already in the hash. If an extant entry is in the hash with a\nvalid nf_file, nfs4_get_vfs_file will clobber its nf_file pointer with\nthe value of op_file and the old nf_file will leak.\n\nFix both issues by making a new nfsd_file_acquirei_opened variant that\ntakes an optional file pointer. If one is present when this is called,\nwe'll take a new reference to it instead of trying to open the file. If\nthe nfsd_file already has a valid nf_file, we'll just ignore the\noptional file and pass the nfsd_file back as-is.\n\nAlso rework the tracepoints a bit to allow for an \"opened\" variant and\ndon't try to avoid counting acquisitions in the case where we already\nhave a cached open file.",
+  "datePublished": "Aug 21, 2024, 6:10:50 AM",
+  "dateUpdated": "Aug 5, 2026, 9:11:55 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/45c08a752982116f3287afcd1bd9c50f4fab0c28",
+    "https://git.kernel.org/stable/c/0b778361998d6c6356b8d2fc7ddf025fb3224654",
+    "https://git.kernel.org/stable/c/973acfdfe90c8a4e58ade97ff0653a498531ff2e",
+    "https://git.kernel.org/stable/c/0b3a551fa58b4da941efeb209b3770868e2eddd7"
+  ],
+  "aliases": [
+    "CVE-2023-52909",
+    "GHSA-qw5v-wmjr-8fpc"
+  ],
+  "assigner": "Linux",
+  "epss": 0.64,
+  "enisaIdProduct": [
+    {
+      "id": "0888c18b-f174-34aa-b9bd-89dafd92cca6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb70bf124b051d4ded4ce57511dfec6d3ebf2b43 <973acfdfe90c8a4e58ade97ff0653a498531ff2e"
+    },
+    {
+      "id": "2739e8f6-9225-3e31-985e-e0d1f717beff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.7"
+    },
+    {
+      "id": "63b6d29c-f1af-317a-9700-534cc812ac59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fb70bf124b051d4ded4ce57511dfec6d3ebf2b43 <0b3a551fa58b4da941efeb209b3770868e2eddd7"
+    },
+    {
+      "id": "66d5e474-6af1-3b34-a1a8-a0a521ecdcab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.2"
+    },
+    {
+      "id": "730f8dfe-935c-369c-b4a8-d535fb32ce74",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c20097329d2c196b818c4666c7820c1378d69d61 <45c08a752982116f3287afcd1bd9c50f4fab0c28"
+    },
+    {
+      "id": "76fdd9b5-735b-3456-9aca-317fe2ee0c59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "106331a12b0fa5afa6995b1f9ebb03ddcaac6915 <0b778361998d6c6356b8d2fc7ddf025fb3224654"
+    },
+    {
+      "id": "a742d0f1-3df1-323e-985f-3c3bd510e446",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.19"
+    },
+    {
+      "id": "ebd6f7a5-7ab4-3b4a-933a-1fee51de667f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4af22d14-7e4c-3c99-a9ce-2079dbcee095",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

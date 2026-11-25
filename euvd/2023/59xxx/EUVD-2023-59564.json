@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2023-59564",
+  "enisaUuid": "25a3b25d-5485-38b9-b28c-242c31fe851e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nIB/mlx5: Fix init stage error handling to avoid double free of same QP and UAF\n\nIn the unlikely event that workqueue allocation fails and returns NULL in\nmlx5_mkey_cache_init(), delete the call to\nmlx5r_umr_resource_cleanup() (which frees the QP) in\nmlx5_ib_stage_post_ib_reg_umr_init().  This will avoid attempted double\nfree of the same QP when __mlx5_ib_add() does its cleanup.\n\nResolves a splat:\n\n   Syzkaller reported a UAF in ib_destroy_qp_user\n\n   workqueue: Failed to create a rescuer kthread for wq \"mkey_cache\": -EINTR\n   infiniband mlx5_0: mlx5_mkey_cache_init:981:(pid 1642):\n   failed to create work queue\n   infiniband mlx5_0: mlx5_ib_stage_post_ib_reg_umr_init:4075:(pid 1642):\n   mr cache init failed -12\n   ==================================================================\n   BUG: KASAN: slab-use-after-free in ib_destroy_qp_user (drivers/infiniband/core/verbs.c:2073)\n   Read of size 8 at addr ffff88810da310a8 by task repro_upstream/1642\n\n   Call Trace:\n   <TASK>\n   kasan_report (mm/kasan/report.c:590)\n   ib_destroy_qp_user (drivers/infiniband/core/verbs.c:2073)\n   mlx5r_umr_resource_cleanup (drivers/infiniband/hw/mlx5/umr.c:198)\n   __mlx5_ib_add (drivers/infiniband/hw/mlx5/main.c:4178)\n   mlx5r_probe (drivers/infiniband/hw/mlx5/main.c:4402)\n   ...\n   </TASK>\n\n   Allocated by task 1642:\n   __kmalloc (./include/linux/kasan.h:198 mm/slab_common.c:1026\n   mm/slab_common.c:1039)\n   create_qp (./include/linux/slab.h:603 ./include/linux/slab.h:720\n   ./include/rdma/ib_verbs.h:2795 drivers/infiniband/core/verbs.c:1209)\n   ib_create_qp_kernel (drivers/infiniband/core/verbs.c:1347)\n   mlx5r_umr_resource_init (drivers/infiniband/hw/mlx5/umr.c:164)\n   mlx5_ib_stage_post_ib_reg_umr_init (drivers/infiniband/hw/mlx5/main.c:4070)\n   __mlx5_ib_add (drivers/infiniband/hw/mlx5/main.c:4168)\n   mlx5r_probe (drivers/infiniband/hw/mlx5/main.c:4402)\n   ...\n\n   Freed by task 1642:\n   __kmem_cache_free (mm/slub.c:1826 mm/slub.c:3809 mm/slub.c:3822)\n   ib_destroy_qp_user (drivers/infiniband/core/verbs.c:2112)\n   mlx5r_umr_resource_cleanup (drivers/infiniband/hw/mlx5/umr.c:198)\n   mlx5_ib_stage_post_ib_reg_umr_init (drivers/infiniband/hw/mlx5/main.c:4076\n   drivers/infiniband/hw/mlx5/main.c:4065)\n   __mlx5_ib_add (drivers/infiniband/hw/mlx5/main.c:4168)\n   mlx5r_probe (drivers/infiniband/hw/mlx5/main.c:4402)\n   ...",
+  "datePublished": "May 21, 2024, 3:31:47 PM",
+  "dateUpdated": "May 11, 2026, 7:34:14 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/437f033e30c897bb3723eac9e9003cd9f88d00a3",
+    "https://git.kernel.org/stable/c/4f4a7a7d1404297f2a92df0046f7e64dc5c52dd9",
+    "https://git.kernel.org/stable/c/6387f269d84e6e149499408c4d1fc805017729b2",
+    "https://git.kernel.org/stable/c/2ef422f063b74adcc4a4a9004b0a87bb55e0a836"
+  ],
+  "aliases": [
+    "GHSA-5jrf-78p7-hw2r",
+    "CVE-2023-52851"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "01a542c7-ba3d-3d39-8c02-18b3adb6aa73",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.5.12"
+    },
+    {
+      "id": "072a2919-9e89-30a0-a360-6218c36454d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "04876c12c19e94bbbc94bb0446c7bc7cd75163de <6387f269d84e6e149499408c4d1fc805017729b2"
+    },
+    {
+      "id": "0fc4cd7e-ded4-3fea-83cb-05fc2c9f0e78",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "04876c12c19e94bbbc94bb0446c7bc7cd75163de <437f033e30c897bb3723eac9e9003cd9f88d00a3"
+    },
+    {
+      "id": "1201c80c-2df8-31d5-889a-b7ff49e9622e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7"
+    },
+    {
+      "id": "130f263b-ccc3-38f8-992f-a6a34222c0eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.2"
+    },
+    {
+      "id": "4930d2a9-06ae-3c04-90fb-36a9faf0b3f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.19"
+    },
+    {
+      "id": "86485c8f-5a07-399a-9701-28f7942dbe76",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.63"
+    },
+    {
+      "id": "b33d6291-d5b1-3f17-b629-c035f7f645ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c3fb6f16-b6b4-3748-a3f1-d625f11f9f34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "04876c12c19e94bbbc94bb0446c7bc7cd75163de <4f4a7a7d1404297f2a92df0046f7e64dc5c52dd9"
+    },
+    {
+      "id": "e78be4a2-ca52-3cf3-8edf-5846478c5d0a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "04876c12c19e94bbbc94bb0446c7bc7cd75163de <2ef422f063b74adcc4a4a9004b0a87bb55e0a836"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "491b273f-18d9-3f06-b4df-843cb34d03a6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,19 +3,26 @@
   "enisaUuid": "120173d7-83ab-3a29-bb77-182d86cd85ec",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntcp: prevent collapsing skbs across boundary in rtx queue\n\ntcp_write_collapse_fence() sets TCP_SKB_CB(skb)->eor = 1 on\ntcp_write_queue_tail(sk) to prevent skbs queued after a switch to\ndevice encryption from being collapsed into earlier skbs.\n\nThe fence is a no-op if all earlier data has already been transmitted\nwhen the switch happens: sk->sk_write_queue is empty. The not yet\nacknowledged earlier skbs wait in sk->tcp_rtx_queue with eor 0.\n\nOn a subsequent retransmit or SACK shift, tcp_retrans_try_collapse() or\ntcp_shift_skb_data() can then merge an skb queued after the switch into\none queued before it.\n\nBoth users of the fence are affected:\n\n- psp: devices only encrypt skbs with skb->decrypted set. The merged skb\n  keeps decrypted = 0 from the earlier skb, so merged data sent after\n  psp_sock_assoc_set_tx() is retransmitted in cleartext.\n\n- tls device offload: the merged skb straddles the start marker set in\n  tls_set_device_offload(). The software fallback (fill_sg_in() returns\n  -EINVAL) and the mlx5, nfp and funeth drivers cannot handle such an\n  skb and drop it. Every retransmit rebuilds the same skb, so the\n  connection stalls.\n\nFix this in two places, for defense in depth:\n\n1. Fall back to tcp_rtx_queue_tail(sk) in tcp_write_collapse_fence()\n   when tcp_write_queue_tail(sk) is NULL.\n\n2. Check !skb_cmp_decrypted(to, from) in tcp_skb_can_collapse(), as\n   tcp_skb_can_collapse_rx() does on receive. skb_shift(), which both\n   collapse paths call, already has a DEBUG_NET_WARN_ON_ONCE() for this\n   condition.",
   "datePublished": "Oct 18, 2026, 3:18:17 PM",
-  "dateUpdated": "Oct 18, 2026, 3:18:17 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:38:24 PM",
+  "baseScore": 9.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/bf785a303e5faad16439c563826a07cb811856c8",
+    "https://git.kernel.org/stable/c/7061aafc680e14e22b191f178b768886475f8524",
+    "https://git.kernel.org/stable/c/533344a00ad968181e60d0980c076a9d0de57482",
+    "https://git.kernel.org/stable/c/9e2a2f98e8c0197108c6d97a1fa43bfd89071c30",
     "https://git.kernel.org/stable/c/1ae7aee395245874d797890380d9192bd858fb7e",
     "https://git.kernel.org/stable/c/7ba87509c54cd519e7ed362e0c85e8431f066a18",
     "https://git.kernel.org/stable/c/08e835f5ec6e261c79d8c39f8618b3af29e3b0da",
     "https://git.kernel.org/stable/c/fc6d80eb504458d6416b75a94188b268c95c6533"
   ],
   "aliases": [
-    "CVE-2026-98549"
+    "CVE-2026-98549",
+    "GHSA-p59j-fj4g-255h"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.56,
   "enisaIdProduct": [
     {
       "id": "0c1efe96-259b-3634-8157-e9553552fc62",
@@ -28,6 +35,26 @@
       "product_version": "patch: 6.18.55"
     },
     {
+      "id": "1a0ca110-156c-3162-8fe9-9d947bbcce10",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e8f69799810c32dd40c6724d829eccc70baad07f <533344a00ad968181e60d0980c076a9d0de57482"
+    },
+    {
+      "id": "2ae45156-a3d3-33e6-a85e-3fcc7d5a677c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
       "id": "43bd7c5b-b135-3f47-8753-235f90a7153d",
       "product": {
         "name": "Linux",
@@ -38,14 +65,34 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "5e9f2f2a-ed4a-379c-a8c3-c05168bffe82",
+      "id": "53c38230-a12f-3c03-a143-065df51c8d21",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc5"
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "61219b86-2839-3188-b1ba-e5df6107cc7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e8f69799810c32dd40c6724d829eccc70baad07f <9e2a2f98e8c0197108c6d97a1fa43bfd89071c30"
+    },
+    {
+      "id": "6bc5c7eb-3594-3265-ac9d-2bd07e1176f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "74d1cb65-68be-3c49-b26e-abc90edfdba5",
@@ -68,6 +115,26 @@
       "product_version": "e8f69799810c32dd40c6724d829eccc70baad07f <1ae7aee395245874d797890380d9192bd858fb7e"
     },
     {
+      "id": "9b211beb-9bca-3554-809d-161f5c68b883",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e8f69799810c32dd40c6724d829eccc70baad07f <bf785a303e5faad16439c563826a07cb811856c8"
+    },
+    {
+      "id": "9da002df-c376-3715-91da-f360ec6bd202",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "b761ca89-2977-3eb7-b25d-deb02bc399ad",
       "product": {
         "name": "Linux",
@@ -88,6 +155,16 @@
       "product_version": "patch: 6.12.112"
     },
     {
+      "id": "bfaa7a69-0d10-3c50-935a-02425f0d965c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e8f69799810c32dd40c6724d829eccc70baad07f <7061aafc680e14e22b191f178b768886475f8524"
+    },
+    {
       "id": "c197c0e6-718e-3554-a445-9c8079764cc7",
       "product": {
         "name": "Linux",
@@ -96,6 +173,16 @@
         }
       },
       "product_version": "patch: 7.2.9"
+    },
+    {
+      "id": "e15f52ce-7dbb-365f-80fe-cfdd207608b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
     },
     {
       "id": "e5502f3f-32a8-3b9e-94fd-960599a2277f",

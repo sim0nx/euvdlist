@@ -3,7 +3,7 @@
   "enisaUuid": "80f7a7a7-a73b-3976-9b37-bad5a3fad165",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: nfnetlink_queue: hold nfnl mutex in event notifier\n\nWe must serialize the release notifier and the config netlink function.\nA concurrent thread can issue close() which can call the release function\nwhile unrelated socket processes UNBIND request for same portid:\n\nOops: general protection fault, [..]\nRIP: 0010:__instance_destroy+0x60/0x210 [nfnetlink_queue]\nCall Trace:\n nfqnl_recv_config+0x9b0/0xdc0 [nfnetlink_queue]\n nfnetlink_rcv_msg+0x7c2/0xeb0\n ? __pfx_nfnetlink_rcv_msg+0x10/0x10\n\nAfter this, parallel UNBIND and URELEASE events are impossible.\n\nThis change isn't nice, but its the shortest fix given instances\nare not refcounted and the nfnetlink config callback drops the\nrcu read lock early due to need for sleeping allocations.",
   "datePublished": "Oct 18, 2026, 3:19:45 PM",
-  "dateUpdated": "Oct 18, 2026, 3:19:45 PM",
+  "dateUpdated": "Oct 19, 2026, 9:22:52 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/46432f2e76f7c385d82506304a2928e7d293289f",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/9461613afc59acef44a0071b0dd5075f6e993ffe"
   ],
   "aliases": [
-    "CVE-2026-98624"
+    "CVE-2026-98624",
+    "GHSA-6phv-j3wg-rfjh"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "160039e6-6898-3cef-b740-96e68556b605",
@@ -42,14 +43,14 @@
       "product_version": "7af4cc3fa158ff1dda6e7451c7e6afa6b0bb85cb <9461613afc59acef44a0071b0dd5075f6e993ffe"
     },
     {
-      "id": "29af39a8-01d4-3ef8-b423-df940dc9ce73",
+      "id": "388dc1bb-5bf8-3bc4-8e4e-189452eebf34",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc5"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "42643395-5b02-35ce-949f-b52c4914d0fa",

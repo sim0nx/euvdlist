@@ -3,9 +3,13 @@
   "enisaUuid": "1eba528b-4dda-3ba3-ad04-66d240282403",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: validate compound request size before reading StructureSize2\n\nWhen ksmbd validates a compound (chained) SMB2 request,\nksmbd_smb2_check_message() reads pdu->StructureSize2 without first\nchecking that the compound element is large enough to contain it.\nStructureSize2 is a 2-byte field at offset 64\n(__SMB2_HEADER_STRUCTURE_SIZE) from the start of each element.\n\nThe compound-walking logic only guarantees that a full 64-byte SMB2\nheader is present for the trailing element: when NextCommand is 0, len is\nreduced to the number of bytes remaining after next_smb2_rcv_hdr_off. A\nremote client can craft a compound request whose last element has exactly\n64 bytes, so the 2-byte StructureSize2 read at offset 64 extends one byte\npast the receive buffer, producing a slab-out-of-bounds read.\n\n  BUG: KASAN: slab-out-of-bounds in ksmbd_smb2_check_message (fs/smb/server/smb2misc.c:402)\n  Read of size 2 at addr ffff888012ae31ac by task kworker/0:1/14\n  The buggy address is located 172 bytes inside of allocated 173-byte region\n  Workqueue: ksmbd-io handle_ksmbd_work\n  Call Trace:\n   ...\n   kasan_report (mm/kasan/report.c:595)\n   ksmbd_smb2_check_message (fs/smb/server/smb2misc.c:402)\n   handle_ksmbd_work (fs/smb/server/server.c:119)\n   process_one_work (kernel/workqueue.c:3314)\n   worker_thread (kernel/workqueue.c:3397)\n   kthread (kernel/kthread.c:436)\n   ret_from_fork (arch/x86/kernel/process.c:158)\n   ret_from_fork_asm (arch/x86/entry/entry_64.S:245)\n\nReject any compound element that is too small to hold StructureSize2\nbefore dereferencing it.",
   "datePublished": "Aug 5, 2026, 8:09:33 AM",
-  "dateUpdated": "Aug 5, 2026, 8:09:33 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 19, 2026, 4:29:02 PM",
+  "baseScore": 8.2,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/415d0fff0451ad7ad4caa910f2bb0f562f0fd60f",
+    "https://git.kernel.org/stable/c/1b6740525f5af90868d557c31b496ae689c8c549",
     "https://git.kernel.org/stable/c/2c307126ed8e7adddab82b8e31d962d3a2156ab1",
     "https://git.kernel.org/stable/c/f7550a91ab211726f59cb137523b7a9eae1ac6eb",
     "https://git.kernel.org/stable/c/f0e337e7db67cc1c832958bbb6c4026bdceacfdb",
@@ -13,10 +17,11 @@
     "https://git.kernel.org/stable/c/15b38176fd1530372905c602fde51fe89ec8c877"
   ],
   "aliases": [
-    "CVE-2026-64578"
+    "CVE-2026-64578",
+    "GHSA-wrjv-h4c7-cj2f"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.34,
   "enisaIdProduct": [
     {
       "id": "0bf7f50e-8d78-395a-ad7d-3c13f7b55ffc",
@@ -27,6 +32,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "10d42351-4eaa-3c90-932a-cd74a62e682c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "2a97421c-0602-3f2f-b9d6-40b3b5915a4e",
@@ -69,6 +84,16 @@
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <f0e337e7db67cc1c832958bbb6c4026bdceacfdb"
     },
     {
+      "id": "65d34d49-fc28-3b22-abe4-987dded88f29",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
+    {
       "id": "67a11d11-2373-330e-b60b-84601e5af3f7",
       "product": {
         "name": "Linux",
@@ -77,16 +102,6 @@
         }
       },
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <f7550a91ab211726f59cb137523b7a9eae1ac6eb"
-    },
-    {
-      "id": "843a8173-c64d-364c-a1f8-39d86edba9bf",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
     },
     {
       "id": "8b93dc83-cf19-37f7-b74a-b179ff4cb171",
@@ -107,6 +122,16 @@
         }
       },
       "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "91496cea-cdb4-332f-889b-487a37a64fb5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <415d0fff0451ad7ad4caa910f2bb0f562f0fd60f"
     },
     {
       "id": "a253e9ca-1637-3b20-b440-55e93348899e",
@@ -137,6 +162,26 @@
         }
       },
       "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "de5475cc-ba1e-37f2-915c-a09c0d444236",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "ebd92899-3f20-32d5-babd-e6ff56bed6e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <1b6740525f5af90868d557c31b496ae689c8c549"
     }
   ],
   "enisaIdVendor": [

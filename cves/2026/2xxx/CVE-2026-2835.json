@@ -1,29 +1,30 @@
 {
   "id": "EUVD-2026-9511",
   "enisaUuid": "dbad647d-e721-38b2-84bc-89d470f74a6a",
-  "description": "lxml-html-clean has <base> tag injection through default Cleaner configuration",
-  "datePublished": "Mar 2, 2026, 7:35:52 PM",
-  "dateUpdated": "Mar 2, 2026, 7:35:52 PM",
+  "description": "An HTTP Request Smuggling vulnerability (CWE-444) has been found in Pingora's parsing of HTTP/1.0 and Transfer-Encoding requests. The issue occurs due to improperly allowing HTTP/1.0 request bodies to be close-delimited and incorrect handling of multiple Transfer-Encoding values, allowing attackers to send HTTP/1.0 requests in a way that would desync Pingora\u2019s request framing from backend servers\u2019.\n\nImpact\n\nThis vulnerability primarily affects standalone Pingora deployments in front of certain backends that accept HTTP/1.0 requests. An attacker could craft a malicious payload following this request that Pingora forwards to the backend in order to:\n\n  *  Bypass proxy-level ACL controls and WAF logic\n\n\n\n\n  *  Poison caches and upstream connections, causing subsequent requests from legitimate users to receive responses intended for smuggled requests\n\n\n\n\n  *  Perform cross-user attacks by hijacking sessions or smuggling requests that appear to originate from the trusted proxy IP\n\n\n\n\nCloudflare's CDN infrastructure was not affected by this vulnerability, as its ingress proxy layers forwarded HTTP/1.1 requests only, rejected ambiguous framing such as invalid Content-Length values, and forwarded a single Transfer-Encoding: chunked header for chunked requests.\n\n\nMitigation:\n\nPingora users should upgrade to Pingora v0.8.0 or higher that fixes this issue by correctly parsing message length headers per RFC 9112 and strictly adhering to more RFC guidelines, including that HTTP request bodies are never close-delimited.\n\nAs a workaround, users can reject certain requests with an error in the request filter logic in order to stop processing bytes on the connection and disable downstream connection reuse. The user should reject any non-HTTP/1.1 request, or a request that has invalid Content-Length, multiple Transfer-Encoding headers, or Transfer-Encoding header that is not an exact \u201cchunked\u201d string match.",
+  "datePublished": "Mar 4, 2026, 11:32:41 PM",
+  "dateUpdated": "Mar 6, 2026, 6:24:48 PM",
   "baseScore": 9.3,
   "baseScoreVersion": "4.0",
   "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:H/VA:N/SC:H/SI:H/SA:N",
   "references": [
-    "https://github.com/cloudflare/pingora",
-    "https://github.com/fedora-python/lxml_html_clean/security/advisories/GHSA-xvp8-3mhv-424c",
-    "https://github.com/fedora-python/lxml_html_clean/commit/9c5612ca33b941eec4178abf8a5294b103403f34"
+    "https://github.com/cloudflare/pingora"
   ],
   "aliases": [
-    "CVE-2026-2835",
-    "GHSA-xvp8-3mhv-424c",
-    "CVE-2026-28350"
+    "GHSA-hj7x-879w-vrp7",
+    "GHSA-262p-vjx5-45xh",
+    "CVE-2026-2835"
   ],
   "assigner": "cloudflare",
-  "epss": 0.0,
+  "epss": 0.89,
   "enisaIdProduct": [
     {
       "id": "edb24562-b3ba-342e-96e1-c75f4f2493c4",
       "product": {
-        "name": "https://github.com/cloudflare/pingora"
+        "name": "https://github.com/cloudflare/pingora",
+        "vendor": {
+          "name": "Cloudflare"
+        }
       },
       "product_version": "0 <0.8.0"
     }

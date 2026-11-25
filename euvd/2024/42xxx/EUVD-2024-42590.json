@@ -1,0 +1,216 @@
+{
+  "id": "EUVD-2024-42590",
+  "enisaUuid": "143ece9a-88df-3cc6-b3df-28bbc3e81167",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnilfs2: fix state management in error path of log writing function\n\nAfter commit a694291a6211 (\"nilfs2: separate wait function from\nnilfs_segctor_write\") was applied, the log writing function\nnilfs_segctor_do_construct() was able to issue I/O requests continuously\neven if user data blocks were split into multiple logs across segments,\nbut two potential flaws were introduced in its error handling.\n\nFirst, if nilfs_segctor_begin_construction() fails while creating the\nsecond or subsequent logs, the log writing function returns without\ncalling nilfs_segctor_abort_construction(), so the writeback flag set on\npages/folios will remain uncleared.  This causes page cache operations to\nhang waiting for the writeback flag.  For example,\ntruncate_inode_pages_final(), which is called via nilfs_evict_inode() when\nan inode is evicted from memory, will hang.\n\nSecond, the NILFS_I_COLLECTED flag set on normal inodes remain uncleared. \nAs a result, if the next log write involves checkpoint creation, that's\nfine, but if a partial log write is performed that does not, inodes with\nNILFS_I_COLLECTED set are erroneously removed from the \"sc_dirty_files\"\nlist, and their data and b-tree blocks may not be written to the device,\ncorrupting the block mapping.\n\nFix these issues by uniformly calling nilfs_segctor_abort_construction()\non failure of each step in the loop in nilfs_segctor_do_construct(),\nhaving it clean up logs and segment usages according to progress, and\ncorrecting the conditions for calling nilfs_redirty_inodes() to ensure\nthat the NILFS_I_COLLECTED flag is cleared.",
+  "datePublished": "Oct 9, 2024, 2:14:01 PM",
+  "dateUpdated": "Aug 5, 2026, 11:39:18 AM",
+  "baseScore": 7.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/40a2757de2c376ef8a08d9ee9c81e77f3c750adf",
+    "https://git.kernel.org/stable/c/036441e8438b29111fa75008f0ce305fb4e83c0a",
+    "https://git.kernel.org/stable/c/efdde00d4a1ef10bb71e09ebc67823a3d3ad725b",
+    "https://git.kernel.org/stable/c/3e349d7191f0688fc9808ef24fd4e4b4ef5ca876",
+    "https://git.kernel.org/stable/c/30562eff4a6dd35c4b5be9699ef61ad9f5f20a06",
+    "https://git.kernel.org/stable/c/0a1a961bde4351dc047ffdeb2f1311ca16a700cc",
+    "https://git.kernel.org/stable/c/74866c16ea2183f52925fa5d76061a1fe7f7737b",
+    "https://git.kernel.org/stable/c/6576dd6695f2afca3f4954029ac4a64f82ba60ab"
+  ],
+  "aliases": [
+    "GHSA-g9rj-gvxx-c5jc",
+    "CVE-2024-47669"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "06376ec9-c9ef-31c2-ab24-8ae56122b134",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a694291a6211537189c6080f77f63cdabfc9b63e <40a2757de2c376ef8a08d9ee9c81e77f3c750adf"
+    },
+    {
+      "id": "17b9f312-85df-334a-bede-422bff21e31f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a694291a6211537189c6080f77f63cdabfc9b63e <6576dd6695f2afca3f4954029ac4a64f82ba60ab"
+    },
+    {
+      "id": "1c8046cd-5957-320a-bd5d-4d185cfd4f2f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.33"
+    },
+    {
+      "id": "2212fb5c-3540-3756-9a54-ea167f7acd93",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.10"
+    },
+    {
+      "id": "373a9b9f-5c9a-3c5c-a443-17f4b7b229f4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.110"
+    },
+    {
+      "id": "3cca794d-b12f-3e62-85fe-7c9f42dddc49",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.284"
+    },
+    {
+      "id": "5fa26435-b96a-3f35-a9cd-e4360a30d8bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a694291a6211537189c6080f77f63cdabfc9b63e <3e349d7191f0688fc9808ef24fd4e4b4ef5ca876"
+    },
+    {
+      "id": "60adab3f-57ec-34df-8e94-12ee58cbe0a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "7718dbb6-5e12-3f5e-8855-e5d7fba4e2d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.167"
+    },
+    {
+      "id": "875027cf-f516-390d-87f2-6658a61db67a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a694291a6211537189c6080f77f63cdabfc9b63e <036441e8438b29111fa75008f0ce305fb4e83c0a"
+    },
+    {
+      "id": "8f1e2be6-93eb-3aba-9c87-73aca981e68a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "973a1bbb-2e2e-39bb-a272-37e8d01633f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a694291a6211537189c6080f77f63cdabfc9b63e <0a1a961bde4351dc047ffdeb2f1311ca16a700cc"
+    },
+    {
+      "id": "b14105e0-6783-34c2-9c95-183f38fc579f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.51"
+    },
+    {
+      "id": "be11c648-ebf0-3197-9ade-86edceccdaec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.226"
+    },
+    {
+      "id": "bf05bf51-7211-3b53-b794-490c2fadd51f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a694291a6211537189c6080f77f63cdabfc9b63e <30562eff4a6dd35c4b5be9699ef61ad9f5f20a06"
+    },
+    {
+      "id": "c26741ae-0c76-353e-a690-68b13b8284a3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a694291a6211537189c6080f77f63cdabfc9b63e <efdde00d4a1ef10bb71e09ebc67823a3d3ad725b"
+    },
+    {
+      "id": "d1e34bc8-a957-3e6f-97dd-8dcca4cb60da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.322"
+    },
+    {
+      "id": "fb3cfb17-77cd-3387-ad13-a5770f958049",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a694291a6211537189c6080f77f63cdabfc9b63e <74866c16ea2183f52925fa5d76061a1fe7f7737b"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e8686a1a-fefc-3f40-be7b-b3c78bda29ac",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

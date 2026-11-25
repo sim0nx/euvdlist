@@ -3,7 +3,7 @@
   "enisaUuid": "37a84d7f-11cf-329a-9165-18270a8a29bc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncpufreq: imx6q: fix devres accumulation across driver rebind\n\nimx6_soc_volt is allocated with devm_kcalloc(cpu_dev, ...), where cpu_dev\nis the CPU device from get_cpu_device(0). That device is never unbound, so\nits devres list is never released, and imx6q_cpufreq_remove() does not free\nthe array either. Every probe therefore adds an allocation that stays for\nthe lifetime of the system.\n\nAllocate against the platform device instead. Its devres is released when\nthe driver is unbound, which is exactly the lifetime the array wants:\nimx6q_set_target() reads it, and nothing may reach that after\ncpufreq_unregister_driver().\n\nThat makes the array actually go away on unbind, so also clear the\nfile-scope pointer in remove and on the failed-probe path, rather than\nleave it pointing at memory devres is about to release.\n\nTested by rebinding the driver on qemu's mcimx6ul-evk.",
   "datePublished": "Sep 17, 2026, 4:08:21 PM",
-  "dateUpdated": "Sep 17, 2026, 4:08:21 PM",
+  "dateUpdated": "Oct 19, 2026, 9:01:14 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/493c4d5982f037f288509a1cee352b8b9705fb38",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/22c23c72c3b21fa3ec3db5070dfc0582794e0ef9"
   ],
   "aliases": [
-    "CVE-2026-90296"
+    "CVE-2026-90296",
+    "GHSA-rfcg-vqg6-9mfp"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "01c6d6e9-5d14-397e-bb76-7848828c7bbd",
@@ -52,14 +53,14 @@
       "product_version": "patch: 6.18.52"
     },
     {
-      "id": "4fa3cd82-4a72-3bd9-a175-1c8ed1473be1",
+      "id": "34531bb5-21e2-3f9a-ab92-cf7c62fd61cb",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "6d989732-847b-34cd-be0d-ba837270d37b",

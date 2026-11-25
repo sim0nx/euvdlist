@@ -3,8 +3,10 @@
   "enisaUuid": "39a9789c-a80a-3f99-ae9f-1de111aee640",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: hci_qca: Clear memdump state on invalid dump size\n\nqca_controller_memdump() allocates qca->qca_memdump before processing\nthe first dump packet. For a sequence-zero packet it then disables IBS,\nmarks memdump collection active, and reads the advertised dump size.\n\nIf the controller reports a zero dump size, the error path frees the\nlocal qca_memdump object and returns without clearing qca->qca_memdump\nor undoing the collection state. A later memdump work item initializes\nits local pointer from qca->qca_memdump and skips allocation when that\npointer is non-NULL, so it can operate on freed memory. The stale\ncollection and IBS-disabled flags can also leave waiters or later\ntransmit handling blocked behind an aborted dump.\n\nClear the saved pointer and memdump state before returning from the\ninvalid-size path, matching the cleanup used when hci_devcd_init() fails.\n\nA static analysis checker reported the stale memdump state, and manual\nsource review confirmed the invalid-size failure path.",
   "datePublished": "Aug 10, 2026, 12:04:08 PM",
-  "dateUpdated": "Aug 10, 2026, 12:04:08 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 5:04:36 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/5a3945e8dea6c9a8ec9e981169ac9487e1d6ad6a",
     "https://git.kernel.org/stable/c/069258d5111eed9ac9586bee42d03d38e2975715",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/bf587a10c33e5571a299742e45bc18960b9912e7"
   ],
   "aliases": [
-    "CVE-2026-68389"
+    "CVE-2026-68389",
+    "GHSA-ghf3-w254-j47x"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.25,
   "enisaIdProduct": [
     {
       "id": "0550e6b4-905d-3e08-99dc-94f08b6b5610",
@@ -27,16 +30,6 @@
         }
       },
       "product_version": "patch: 6.6.148"
-    },
-    {
-      "id": "351a81b6-bab2-318e-9900-c3e501a5e9fc",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
     },
     {
       "id": "5c670a89-0d3b-3f41-86ce-a11d0e101e7e",
@@ -87,6 +80,16 @@
         }
       },
       "product_version": "06d3fdfcdf5cefb06f2024b9d3dad356779399cf <cefb44c367b2b52e50f97bc8526d39df9bcf5e60"
+    },
+    {
+      "id": "bdf7340c-0be1-3f86-ab28-28dadedf2e66",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "c68fcda1-b7b6-3d14-b75b-8424101be603",

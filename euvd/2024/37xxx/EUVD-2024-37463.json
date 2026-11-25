@@ -1,0 +1,172 @@
+{
+  "id": "EUVD-2024-37463",
+  "enisaUuid": "eb070536-dcc4-3805-a1ca-4eb3cd0426a2",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: Fix deadlocks with kctl removals at disconnection\n\nIn snd_card_disconnect(), we set card->shutdown flag at the beginning,\ncall callbacks and do sync for card->power_ref_sleep waiters at the\nend.  The callback may delete a kctl element, and this can lead to a\ndeadlock when the device was in the suspended state.  Namely:\n\n* A process waits for the power up at snd_power_ref_and_wait() in\n  snd_ctl_info() or read/write() inside card->controls_rwsem.\n\n* The system gets disconnected meanwhile, and the driver tries to\n  delete a kctl via snd_ctl_remove*(); it tries to take\n  card->controls_rwsem again, but this is already locked by the\n  above.  Since the sleeper isn't woken up, this deadlocks.\n\nAn easy fix is to wake up sleepers before processing the driver\ndisconnect callbacks but right after setting the card->shutdown flag.\nThen all sleepers will abort immediately, and the code flows again.\n\nSo, basically this patch moves the wait_event() call at the right\ntiming.  While we're at it, just to be sure, call wait_event_all()\ninstead of wait_event(), although we don't use exclusive events on\nthis queue for now.",
+  "datePublished": "Jun 19, 2024, 1:45:48 PM",
+  "dateUpdated": "May 11, 2026, 8:19:51 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/ff80185e7b7b547a0911fcfc8aefc61c3e8304d7",
+    "https://git.kernel.org/stable/c/c2fb439f4f1425a961d20bec818fed2c2d9ef70a",
+    "https://git.kernel.org/stable/c/2f103287ef7960854808930499d1181bd0145d68",
+    "https://git.kernel.org/stable/c/88ce3fe255d58a93624b467af036dc3519f309c7",
+    "https://git.kernel.org/stable/c/6b55e879e7bd023a03888fc6c8339edf82f576f4",
+    "https://git.kernel.org/stable/c/87988a534d8e12f2e6fc01fe63e6c1925dc5307c"
+  ],
+  "aliases": [
+    "GHSA-3h59-8483-h44f",
+    "CVE-2024-38600"
+  ],
+  "assigner": "Linux",
+  "epss": 0.19,
+  "enisaIdProduct": [
+    {
+      "id": "025acb88-8467-32d1-a0f7-874fe100975b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e94fdbd7b25d87e64688bb109e2c550217a4c879 <88ce3fe255d58a93624b467af036dc3519f309c7"
+    },
+    {
+      "id": "07ee79b3-bfd7-3675-9c82-5eec0a18ccca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.14"
+    },
+    {
+      "id": "1e6750e8-4a2a-31df-bd78-4dfc6f5795f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.12"
+    },
+    {
+      "id": "338ce135-6f77-3e78-99f6-1cbe6c09c6ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e94fdbd7b25d87e64688bb109e2c550217a4c879 <6b55e879e7bd023a03888fc6c8339edf82f576f4"
+    },
+    {
+      "id": "51fbb1ed-db98-3f81-b7e2-666e89018826",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.93"
+    },
+    {
+      "id": "546db3e3-f088-3b56-aa58-755c402359fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.161"
+    },
+    {
+      "id": "701af29b-61da-3e21-a606-a34a0d9957e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e94fdbd7b25d87e64688bb109e2c550217a4c879 <ff80185e7b7b547a0911fcfc8aefc61c3e8304d7"
+    },
+    {
+      "id": "7cb2518e-a14a-31d6-8ddc-68096fd0358c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "91e3a659-f8bb-35c0-adfe-ff73fe2cb46f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e94fdbd7b25d87e64688bb109e2c550217a4c879 <c2fb439f4f1425a961d20bec818fed2c2d9ef70a"
+    },
+    {
+      "id": "9524974e-ee52-3880-a78f-a60b196de788",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e94fdbd7b25d87e64688bb109e2c550217a4c879 <87988a534d8e12f2e6fc01fe63e6c1925dc5307c"
+    },
+    {
+      "id": "babec0c2-4b2b-38ad-83da-1a8476ae8207",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "d0d72830-b7cc-3fae-97ac-161be01c4fbb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.3"
+    },
+    {
+      "id": "dd9bda16-ad87-3b61-ad3f-40f4e41ac460",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e94fdbd7b25d87e64688bb109e2c550217a4c879 <2f103287ef7960854808930499d1181bd0145d68"
+    },
+    {
+      "id": "f70b6f6e-b7a6-3144-9ae9-2cd666684f5c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.33"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "f79eaee7-ca8f-3ff5-8ada-081e3b2c97fc",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

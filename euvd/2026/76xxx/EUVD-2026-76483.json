@@ -3,18 +3,21 @@
   "enisaUuid": "af45e88f-7be2-39c1-b705-cf1043d36e2c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncxl/features: bound fwctl command payload to the input buffer\n\nfwctl_cmd_rpc() copies cmd->in_len bytes into inbuf = kvzalloc(cmd->in_len)\nand passes inbuf and in_len to ->fw_rpc(). The CXL callback cxlctl_fw_rpc()\nignores in_len and never checks the user-controlled op_size against it.\n\ncxlctl_set_feature() bounds op_size only from below\n(op_size <= sizeof(feat_in->hdr)) and then reads op_size - sizeof(hdr)\nbytes from feat_in->feat_data via cxl_set_feature(). With a small in_len\nand a large op_size the first memcpy() already reads past the\nkvzalloc(in_len) buffer; the out-of-bounds bytes are placed in the mailbox\npayload and sent to the device, and a large enough op_size can walk into\nunmapped memory and oops the kernel. The Get paths pin op_size to a fixed\nsize but likewise read the input struct without checking in_len.\n\nReject, at the single dispatch point, any request whose fixed header plus\nop_size does not fit in the copied-in buffer. The lower-bound test guards\nthe subtraction and ensures op_size was copied in before it is read.",
   "datePublished": "Sep 11, 2026, 7:44:40 PM",
-  "dateUpdated": "Sep 11, 2026, 7:44:40 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:49:04 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/14d52c15d5d99477b20a2d61fe36f347080da6cd",
     "https://git.kernel.org/stable/c/d8957545fe96f7905791c937758ebfc1ae1e5b17",
     "https://git.kernel.org/stable/c/f687394af983df5660b6afae7e0d06969f3af206"
   ],
   "aliases": [
-    "CVE-2026-89571"
+    "CVE-2026-89571",
+    "GHSA-x7fx-9652-j55v"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "322cd909-82d1-3014-9966-b8b8032dbf6f",
@@ -25,6 +28,16 @@
         }
       },
       "product_version": "6.15"
+    },
+    {
+      "id": "4f1c27dd-da2c-3b50-8c22-74f9b01e9e1e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "5243c837-d7f4-33be-9b30-38c577dd84b8",
@@ -85,16 +98,6 @@
         }
       },
       "product_version": "patch: 6.18.50"
-    },
-    {
-      "id": "df646fee-6517-3354-90d9-8890351ade13",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     }
   ],
   "enisaIdVendor": [

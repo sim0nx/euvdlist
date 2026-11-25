@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2024-24018",
+  "enisaUuid": "36dcebc1-30ff-39f6-85a2-a7f2baacbf7f",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmd: Don't register sync_thread for reshape directly\n\nCurrently, if reshape is interrupted, then reassemble the array will\nregister sync_thread directly from pers->run(), in this case\n'MD_RECOVERY_RUNNING' is set directly, however, there is no guarantee\nthat md_do_sync() will be executed, hence stop_sync_thread() will hang\nbecause 'MD_RECOVERY_RUNNING' can't be cleared.\n\nLast patch make sure that md_do_sync() will set MD_RECOVERY_DONE,\nhowever, following hang can still be triggered by dm-raid test\nshell/lvconvert-raid-reshape.sh occasionally:\n\n[root@fedora ~]# cat /proc/1982/stack\n[<0>] stop_sync_thread+0x1ab/0x270 [md_mod]\n[<0>] md_frozen_sync_thread+0x5c/0xa0 [md_mod]\n[<0>] raid_presuspend+0x1e/0x70 [dm_raid]\n[<0>] dm_table_presuspend_targets+0x40/0xb0 [dm_mod]\n[<0>] __dm_destroy+0x2a5/0x310 [dm_mod]\n[<0>] dm_destroy+0x16/0x30 [dm_mod]\n[<0>] dev_remove+0x165/0x290 [dm_mod]\n[<0>] ctl_ioctl+0x4bb/0x7b0 [dm_mod]\n[<0>] dm_ctl_ioctl+0x11/0x20 [dm_mod]\n[<0>] vfs_ioctl+0x21/0x60\n[<0>] __x64_sys_ioctl+0xb9/0xe0\n[<0>] do_syscall_64+0xc6/0x230\n[<0>] entry_SYSCALL_64_after_hwframe+0x6c/0x74\n\nMeanwhile mddev->recovery is:\nMD_RECOVERY_RUNNING |\nMD_RECOVERY_INTR |\nMD_RECOVERY_RESHAPE |\nMD_RECOVERY_FROZEN\n\nFix this problem by remove the code to register sync_thread directly\nfrom raid10 and raid5. And let md_check_recovery() to register\nsync_thread.",
+  "datePublished": "Apr 3, 2024, 5:00:40 PM",
+  "dateUpdated": "May 11, 2026, 8:03:34 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/13b520fb62b772e408f9b79c5fe18ad414e90417",
+    "https://git.kernel.org/stable/c/ad39c08186f8a0f221337985036ba86731d6aafe"
+  ],
+  "aliases": [
+    "CVE-2024-26756",
+    "GHSA-85g7-5359-r834"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "614bc766-32f0-32ed-a336-0e826d28cc2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f67055780caac6a99f43834795c43acf99eba6a6 <ad39c08186f8a0f221337985036ba86731d6aafe"
+    },
+    {
+      "id": "802c6210-0070-33c8-b5c5-6a510ca1a6e7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "82b9f607-2a32-3435-b5c7-5040e5e1167d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "bf171471-4342-39f0-b181-cfec4c73e128",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f67055780caac6a99f43834795c43acf99eba6a6 <13b520fb62b772e408f9b79c5fe18ad414e90417"
+    },
+    {
+      "id": "daa2de75-a3b3-3577-908f-d260d13217df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.17"
+    },
+    {
+      "id": "f3892e3f-c2a1-35d8-97d3-e5ba1e3293fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.7"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e382be66-07c9-3216-b31d-5ddadb40c943",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

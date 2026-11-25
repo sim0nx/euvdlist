@@ -3,19 +3,23 @@
   "enisaUuid": "85930703-a743-3e1d-a30a-0f3a10b9e62c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfs: fail recovery on a committed log item with no regions\n\nIf the first op of a transaction is a bare transaction header\n(len == sizeof(struct xfs_trans_header)), xlog_recover_add_to_trans()\nadds an item but no region, leaving it on r_itemq with ri_cnt == 0 and\nri_buf == NULL.\n\nThe header can be split across op records, so later ops may still add\nregions; the item is only invalid if the transaction commits with none.\nThe runtime commit path never emits such a transaction, so this only\nhappens on a crafted log.  It came from an AI-assisted code audit of the\nrecovery parser.\n\nxlog_recover_reorder_trans() calls ITEM_TYPE() on the item, which reads\n*(unsigned short *)item->ri_buf[0].iov_base and faults on the NULL\nri_buf.  Reject it there, before the commit handlers that also read\nri_buf[0].\n\n KASAN: null-ptr-deref in range [0x0000000000000000-0x0000000000000007]\n RIP: 0010:xlog_recover_reorder_trans (fs/xfs/xfs_log_recover.c:1836)\n  xlog_recover_commit_trans (fs/xfs/xfs_log_recover.c:2043)\n  xlog_recover_process_data (fs/xfs/xfs_log_recover.c:2501)\n  xlog_do_recovery_pass (fs/xfs/xfs_log_recover.c:3244)\n  xlog_recover (fs/xfs/xfs_log_recover.c:3493)\n  xfs_log_mount (fs/xfs/xfs_log.c:618)\n  xfs_mountfs (fs/xfs/xfs_mount.c:1034)\n  xfs_fs_fill_super (fs/xfs/xfs_super.c:1938)\n  vfs_get_tree (fs/super.c:1695)\n  path_mount (fs/namespace.c:4161)\n  __x64_sys_mount (fs/namespace.c:4367)",
   "datePublished": "Jul 20, 2026, 4:27:46 PM",
-  "dateUpdated": "Jul 20, 2026, 4:27:46 PM",
+  "dateUpdated": "Nov 6, 2026, 4:34:29 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/5105426424ad6981db827cc1ada835a488fab035",
+    "https://git.kernel.org/stable/c/226a3c8bea7163c39fe0a1c0ffc7ab7410ef3ba4",
+    "https://git.kernel.org/stable/c/d0ae7ec3aa61db5140b107f0a63e017f63e56a96",
     "https://git.kernel.org/stable/c/d50b1fd066d66ceb548ba43e332cfe8a47e5e55a",
     "https://git.kernel.org/stable/c/d98f22d2e11e0a36493aeb25b2933571ee90d9a4",
     "https://git.kernel.org/stable/c/cccbabeb9a18fcb978d76d6047f2b59214aa7749",
     "https://git.kernel.org/stable/c/2094dab19d45c487285617b7b68913d0cc0c1211"
   ],
   "aliases": [
+    "GHSA-5fjh-93mh-6xvw",
     "CVE-2026-64187"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "08f8099e-7a3c-3bcc-b783-113c80bcc80a",
@@ -26,16 +30,6 @@
         }
       },
       "product_version": "89cebc8477290b152618ffa110bbeae340d50900 <2094dab19d45c487285617b7b68913d0cc0c1211"
-    },
-    {
-      "id": "16202ab0-0385-31ea-8bdc-2b685c9d23a7",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
     },
     {
       "id": "24e89d43-699d-3dc5-abd4-f7c3fb7923af",
@@ -58,6 +52,16 @@
       "product_version": "patch: 6.18.39"
     },
     {
+      "id": "3c3f753e-cf65-3f50-b92e-e9e40ea97938",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "3d95d11d-d4cd-3296-bcb8-db01e3b57378",
       "product": {
         "name": "Linux",
@@ -78,6 +82,16 @@
       "product_version": "4.3"
     },
     {
+      "id": "4b51efa0-29a2-3c0c-bfb6-9d46f6cccffd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "89cebc8477290b152618ffa110bbeae340d50900 <226a3c8bea7163c39fe0a1c0ffc7ab7410ef3ba4"
+    },
+    {
       "id": "671b73c8-3465-3143-87b5-fd5fd6e615db",
       "product": {
         "name": "Linux",
@@ -88,6 +102,16 @@
       "product_version": "89cebc8477290b152618ffa110bbeae340d50900 <d50b1fd066d66ceb548ba43e332cfe8a47e5e55a"
     },
     {
+      "id": "726c3757-b299-30e8-b6dc-5aa22beeb9d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.212"
+    },
+    {
       "id": "80de1a4f-343e-3ffc-aca3-91bb0c77787a",
       "product": {
         "name": "Linux",
@@ -96,6 +120,26 @@
         }
       },
       "product_version": "89cebc8477290b152618ffa110bbeae340d50900 <cccbabeb9a18fcb978d76d6047f2b59214aa7749"
+    },
+    {
+      "id": "8af21384-46b5-3b09-b62a-1af82287f8e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "8ce4c34a-dcc0-32f1-a2be-3699e26c17e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.178"
     },
     {
       "id": "9d995693-5c3f-312a-8c82-4d135395c4b7",
@@ -116,6 +160,26 @@
         }
       },
       "product_version": "patch: 6.12.96"
+    },
+    {
+      "id": "d476cb43-1305-342d-a931-6c47f6d76a63",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "89cebc8477290b152618ffa110bbeae340d50900 <d0ae7ec3aa61db5140b107f0a63e017f63e56a96"
+    },
+    {
+      "id": "ebd7e78b-26fa-3f21-b844-f64e4390bd99",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "89cebc8477290b152618ffa110bbeae340d50900 <5105426424ad6981db827cc1ada835a488fab035"
     }
   ],
   "enisaIdVendor": [

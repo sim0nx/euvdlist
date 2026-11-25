@@ -3,9 +3,12 @@
   "enisaUuid": "91b10848-9aca-310c-b5d1-364ed7570d62",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: saa7134: Fix a possible memory leak in saa7134_video_init1\n\nIn saa7134_video_init1(), the return value of the first\nsaa7134_pgtable_alloc() is not checked. If it fails, the function\ncontinues as if successful, leaving the driver with an invalid page\ntable. Additionally, if vb2_queue_init() for the VBI queue fails after\nthe video queue page table has been allocated, the allocated memory is\nnot freed before returning. The second saa7134_pgtable_alloc() also\nlacks a return value check. Errors occur during device probing before\nthe device is fully registered, the normal cleanup path in\nsaa7134_finidev() is not executed, leading to memory leaks and\npotential use of uninitialized DMA resources.\n\nCheck the return value of both saa7134_pgtable_alloc() calls and\npropagate errors. On failure of any later step, free allocated page\ntables to avoid memory leaks. Ensure control handlers are also\nreleased on error to prevent further resource leakage.\n\nFound by code review.",
   "datePublished": "Aug 10, 2026, 12:00:31 PM",
-  "dateUpdated": "Aug 10, 2026, 12:00:31 PM",
+  "dateUpdated": "Nov 6, 2026, 4:45:01 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/e773b1d4bd191e7520bf9e02cb676d62c1b20556",
+    "https://git.kernel.org/stable/c/44e16e3e022bf4a26adf03bc05a6dd5ffc34ef6d",
+    "https://git.kernel.org/stable/c/34082a48376fd225a5c3d971c8962eb1320a54e0",
     "https://git.kernel.org/stable/c/134c979dd721e22f196d71026432ee37d1f5cc38",
     "https://git.kernel.org/stable/c/e1ef361ee31d1dba5dcae2cdd50f9c1352df0c23",
     "https://git.kernel.org/stable/c/b7936e8cbec1b96b126058eeb005e5b9111df38e",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/f86ed548386e3050e5f8f25b450d09dc009d9a88"
   ],
   "aliases": [
+    "GHSA-f8wh-4fq2-8xv3",
     "CVE-2026-68212"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "10f2d16b-6c0c-3605-b310-25244f39acff",
@@ -29,6 +33,36 @@
       "product_version": "patch: 7.1.6"
     },
     {
+      "id": "11739ee0-bc2c-3709-b5dc-1d74343581da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a00e68888d5d2b583b13d7d58204a27207af95fd <44e16e3e022bf4a26adf03bc05a6dd5ffc34ef6d"
+    },
+    {
+      "id": "17d958e9-2c1b-3180-8af2-36c56ebc350e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "302267aa-9b2d-3e09-b917-9324bfc49b5f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a00e68888d5d2b583b13d7d58204a27207af95fd <e773b1d4bd191e7520bf9e02cb676d62c1b20556"
+    },
+    {
       "id": "3589f7b2-43d4-3354-b81f-862ca9cea367",
       "product": {
         "name": "Linux",
@@ -37,6 +71,16 @@
         }
       },
       "product_version": "a00e68888d5d2b583b13d7d58204a27207af95fd <f86ed548386e3050e5f8f25b450d09dc009d9a88"
+    },
+    {
+      "id": "3d74e610-888c-3950-b180-9cbc9c443f45",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
     },
     {
       "id": "406718ee-83ab-35aa-b912-197d0d6d1e6f",
@@ -79,14 +123,14 @@
       "product_version": "patch: 6.12.101"
     },
     {
-      "id": "aa35ba13-b95b-3596-84ff-29fc33e467b4",
+      "id": "94fd100f-60c1-307c-8654-e759c7ed9536",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "a00e68888d5d2b583b13d7d58204a27207af95fd <34082a48376fd225a5c3d971c8962eb1320a54e0"
     },
     {
       "id": "acfa73c9-786b-328a-b63a-aa955369b358",
@@ -137,6 +181,26 @@
         }
       },
       "product_version": "a00e68888d5d2b583b13d7d58204a27207af95fd <e1ef361ee31d1dba5dcae2cdd50f9c1352df0c23"
+    },
+    {
+      "id": "eb70d196-05bd-3bdb-af54-5b25448d4813",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "edc72330-1983-3bd7-ab3b-d5037a7f4d04",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
     }
   ],
   "enisaIdVendor": [

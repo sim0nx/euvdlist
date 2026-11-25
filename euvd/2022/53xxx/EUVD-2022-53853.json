@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2022-53853",
+  "enisaUuid": "1dbd0473-101a-3383-90a4-429f0a3b5eae",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: conntrack: fix using __this_cpu_add in preemptible\n\nCurrently in nf_conntrack_hash_check_insert(), when it fails in\nnf_ct_ext_valid_pre/post(), NF_CT_STAT_INC() will be called in the\npreemptible context, a call trace can be triggered:\n\n   BUG: using __this_cpu_add() in preemptible [00000000] code: conntrack/1636\n   caller is nf_conntrack_hash_check_insert+0x45/0x430 [nf_conntrack]\n   Call Trace:\n    <TASK>\n    dump_stack_lvl+0x33/0x46\n    check_preemption_disabled+0xc3/0xf0\n    nf_conntrack_hash_check_insert+0x45/0x430 [nf_conntrack]\n    ctnetlink_create_conntrack+0x3cd/0x4e0 [nf_conntrack_netlink]\n    ctnetlink_new_conntrack+0x1c0/0x450 [nf_conntrack_netlink]\n    nfnetlink_rcv_msg+0x277/0x2f0 [nfnetlink]\n    netlink_rcv_skb+0x50/0x100\n    nfnetlink_rcv+0x65/0x144 [nfnetlink]\n    netlink_unicast+0x1ae/0x290\n    netlink_sendmsg+0x257/0x4f0\n    sock_sendmsg+0x5f/0x70\n\nThis patch is to fix it by changing to use NF_CT_STAT_INC_ATOMIC() for\nnf_ct_ext_valid_pre/post() check in nf_conntrack_hash_check_insert(),\nas well as nf_ct_ext_valid_post() in __nf_conntrack_confirm().\n\nNote that nf_ct_ext_valid_pre() check in __nf_conntrack_confirm() is\nsafe to use NF_CT_STAT_INC(), as it's under local_bh_disable().",
+  "datePublished": "Oct 21, 2024, 8:05:54 PM",
+  "dateUpdated": "May 11, 2026, 6:50:45 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/d9bf1138a5db419db13bd9fcd3a7178d6bb20f7c",
+    "https://git.kernel.org/stable/c/9464d0b68f11a9bc768370c3260ec02b3550447b"
+  ],
+  "aliases": [
+    "GHSA-g3gx-vxgx-5xvc",
+    "CVE-2022-48974"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "34510543-14ea-3884-a82a-80cf92fcb2d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "859bb797-1eb6-37bf-bfbc-379178413daf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c56716c69ce1ac320432fb1ea5654196ba24d2f8 <9464d0b68f11a9bc768370c3260ec02b3550447b"
+    },
+    {
+      "id": "8817dcc6-37e3-36fd-a428-4e9ab41d30ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.19"
+    },
+    {
+      "id": "9affc1b2-826f-3b80-b355-cfc258175747",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c56716c69ce1ac320432fb1ea5654196ba24d2f8 <d9bf1138a5db419db13bd9fcd3a7178d6bb20f7c"
+    },
+    {
+      "id": "d28a8d49-f50b-3958-a182-88b4364c3ac2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.0.13"
+    },
+    {
+      "id": "f868d692-ad2a-3300-afde-a79d0317c6b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "82920bf3-57a4-3dbe-acdb-f58608181f40",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,20 +3,33 @@
   "enisaUuid": "ce10fd89-dd44-3f4c-b337-c08be97072c7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nhwrng: core - use RCU and work_struct to fix race condition\n\nCurrently, hwrng_fill is not cleared until the hwrng_fillfn() thread\nexits. Since hwrng_unregister() reads hwrng_fill outside the rng_mutex\nlock, a concurrent hwrng_unregister() may call kthread_stop() again on\nthe same task.\n\nAdditionally, if hwrng_unregister() is called immediately after\nhwrng_register(), the stopped thread may have never been executed. Thus,\nhwrng_fill remains dirty even after hwrng_unregister() returns. In this\ncase, subsequent calls to hwrng_register() will fail to start new\nthreads, and hwrng_unregister() will call kthread_stop() on the same\nfreed task. In both cases, a use-after-free occurs:\n\nrefcount_t: addition on 0; use-after-free.\nWARNING: ... at lib/refcount.c:25 refcount_warn_saturate+0xec/0x1c0\nCall Trace:\n kthread_stop+0x181/0x360\n hwrng_unregister+0x288/0x380\n virtrng_remove+0xe3/0x200\n\nThis patch fixes the race by protecting the global hwrng_fill pointer\ninside the rng_mutex lock, so that hwrng_fillfn() thread is stopped only\nonce, and calls to kthread_run() and kthread_stop() are serialized\nwith the lock held.\n\nTo avoid deadlock in hwrng_fillfn() while being stopped with the lock\nheld, we convert current_rng to RCU, so that get_current_rng() can read\ncurrent_rng without holding the lock. To remove the lock from put_rng(),\nwe also delay the actual cleanup into a work_struct.\n\nSince get_current_rng() no longer returns ERR_PTR values, the IS_ERR()\nchecks are removed from its callers.\n\nWith hwrng_fill protected by the rng_mutex lock, hwrng_fillfn() can no\nlonger clear hwrng_fill itself. Therefore, if hwrng_fillfn() returns\ndirectly after current_rng is dropped, kthread_stop() would be called on\na freed task_struct later. To fix this, hwrng_fillfn() calls schedule()\nnow to keep the task alive until being stopped. The kthread_stop() call\nis also moved from hwrng_unregister() to drop_current_rng(), ensuring\nkthread_stop() is called on all possible paths where current_rng becomes\nNULL, so that the thread would not wait forever.",
   "datePublished": "May 27, 2026, 12:18:05 PM",
-  "dateUpdated": "May 27, 2026, 12:18:05 PM",
+  "dateUpdated": "Nov 6, 2026, 4:03:16 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/d60bd663b746f17fc01fdc44dd01642594176344",
+    "https://git.kernel.org/stable/c/1cde96d5d53b9105b48617afbc4682a83db4ff04",
     "https://git.kernel.org/stable/c/d5b7730f06994499632026c30e38e0317c4569e2",
     "https://git.kernel.org/stable/c/dcf416eb88eafe1e3c0f920a14bdffd10bc4d259",
     "https://git.kernel.org/stable/c/ad38f2cdfef9a2f2899c30cad269baec5bfd4a5d",
     "https://git.kernel.org/stable/c/cc2f39d6ac48e6e3cb2d6240bc0d6df839dd0828"
   ],
   "aliases": [
-    "CVE-2026-45949"
+    "CVE-2026-45949",
+    "GHSA-f8m7-rc76-gphg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.09,
   "enisaIdProduct": [
+    {
+      "id": "09b80f40-cd0c-3c8c-8209-15a8cc329553",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "be4000bc4644d027c519b6361f5ae3bbfc52c347 <d60bd663b746f17fc01fdc44dd01642594176344"
+    },
     {
       "id": "2a62a877-43be-3129-bb24-5c0fb1cb2222",
       "product": {
@@ -46,6 +59,16 @@
         }
       },
       "product_version": "be4000bc4644d027c519b6361f5ae3bbfc52c347 <ad38f2cdfef9a2f2899c30cad269baec5bfd4a5d"
+    },
+    {
+      "id": "47b1d671-9d7b-36b6-b0fa-0bbbf4014917",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "be4000bc4644d027c519b6361f5ae3bbfc52c347 <1cde96d5d53b9105b48617afbc4682a83db4ff04"
     },
     {
       "id": "5d6905cd-2b7a-3b47-9c63-95fe83781b1d",
@@ -116,6 +139,26 @@
         }
       },
       "product_version": "patch: 6.18.14"
+    },
+    {
+      "id": "e9afaa4a-b5cd-3677-89ab-08b040b4dbf0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "f34be278-03a4-3c2b-8be2-14ece53535f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     }
   ],
   "enisaIdVendor": [

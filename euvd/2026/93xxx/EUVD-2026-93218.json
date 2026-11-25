@@ -3,8 +3,10 @@
   "enisaUuid": "4a5ff326-59c0-3171-a42f-a86c34e44e8f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: RFCOMM: avoid socket lock inversion in listener cleanup\n\nrfcomm_sock_cleanup_listen() closes unaccepted child sockets through\nrfcomm_sock_close(), which takes the child socket lock before\nrfcomm_dlc_close() acquires rfcomm_mutex. The RFCOMM worker takes these\nlocks in reverse order while handling connections and DLC state changes,\nso lockdep reports a possible deadlock.\n\nClose dequeued children without taking their socket lock. The accept queue\nowns a reference to each child, and bt_accept_dequeue() locks the child\nwhile unlinking it and clearing its parent pointer.\n\nDropping the child lock makes it important to prevent a concurrent\nrfcomm_connect_ind() from enqueueing a new child after cleanup observes an\nempty queue. Set a listening socket to BT_CLOSED while its lock is still\nheld, before dropping the lock and draining the queue. The state check in\nrfcomm_connect_ind() then rejects new children once cleanup starts.",
   "datePublished": "Oct 6, 2026, 8:45:50 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:50 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:17:01 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/eb4adaa46e4c9e6efa7be3ce06398f4d7c39b57c",
     "https://git.kernel.org/stable/c/4aafb47301a799d3e01230d6568c4e93524e1523",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/801fb950cae7048eb7d83b18857d1ca37b8cd5a4"
   ],
   "aliases": [
-    "CVE-2026-98290"
+    "CVE-2026-98290",
+    "GHSA-vgg6-jhr8-9c2m"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.24,
   "enisaIdProduct": [
     {
       "id": "16a4d78b-daee-364d-9a1f-ef38102eb0c5",
@@ -59,16 +62,6 @@
         }
       },
       "product_version": "5.15"
-    },
-    {
-      "id": "2f7439e2-fdf5-3046-a249-42c8aa24d3c9",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "5885577e-2047-3b6c-96d6-5f4fb365bc7b",
@@ -149,6 +142,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "c270450d-1c39-3747-bb33-bd6ff5d431d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "d283b0f6-20b2-3d17-bc22-bd4fec0fd810",

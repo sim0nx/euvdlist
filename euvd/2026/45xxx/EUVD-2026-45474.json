@@ -3,8 +3,10 @@
   "enisaUuid": "8f24d585-a0ee-32e2-92b5-b525c86f30a2",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nexfat: fix potential use-after-free in exfat_find_dir_entry()\n\nIn exfat_find_dir_entry(), the buffer_head obtained from\nexfat_get_dentry() is released with brelse(bh) before the fall-through\nTYPE_EXTEND branch reads the directory entry through ep (which points\ninto bh->b_data):\n\n\tbrelse(bh);\n\tif (entry_type == TYPE_EXTEND) {\n\t\t...\n\t\tlen = exfat_extract_uni_name(ep, entry_uniname);\n\t\t...\n\t}\n\nAfter brelse() drops our reference, nothing guarantees that the\nunderlying page backing bh->b_data remains valid for the subsequent\nexfat_extract_uni_name() read. This is the same pattern fixed in\ncommit fc961522ddbd (\"exfat: Fix potential use after free in\nexfat_load_upcase_table()\").\n\nMove brelse(bh) so it runs after ep is no longer dereferenced on\neach branch.\n\nConfirmed on QEMU x86_64 with CONFIG_KASAN=y + CONFIG_DEBUG_PAGEALLOC=y\n+ CONFIG_PAGE_POISONING=y on linux-next, using a crafted exFAT image\n(long filename with same-hash collisions forcing the TYPE_EXTEND path).\nWith a debug-only invalidate_bdev() inserted between brelse(bh) and\nthe ep read to make the stale-deref window deterministic, the\nunpatched kernel faults:\n\n  BUG: KASAN: use-after-free in exfat_find_dir_entry+0x133b/0x15a0\n  BUG: unable to handle page fault for address: ffff88801a5fa0c2\n  Oops: 0000 [#1] SMP DEBUG_PAGEALLOC KASAN NOPTI\n  RIP: 0010:exfat_find_dir_entry+0x1188/0x15a0\n\nWith this patch applied, the same instrumented harness completes\ncleanly under the same sanitizer stack. I have not reproduced a\ncrash on an uninstrumented kernel under ordinary reclaim; the\ninstrumented A/B establishes the lifetime violation and that the\npatch closes it, not an unaided triggerability claim.",
   "datePublished": "Jul 19, 2026, 12:02:11 PM",
-  "dateUpdated": "Jul 19, 2026, 12:02:11 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:07:48 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/e6f1a11cfb808441a43ffae9b476cc135732cd27",
     "https://git.kernel.org/stable/c/e48f413c2815787b8cade2795e194e3c4cd782ef",
@@ -20,7 +22,7 @@
     "CVE-2026-63808"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.53,
   "enisaIdProduct": [
     {
       "id": "23a50c25-2b30-31de-a25b-8e7e93ac17a8",
@@ -113,16 +115,6 @@
       "product_version": "ca06197382bde0a3bc20215595d1c9ce20c6e341 <3f5f8ee9917cc2b9076ac533492d8a200edcabb8"
     },
     {
-      "id": "7d092081-8b9e-355b-be35-eff2728e2280",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
-    {
       "id": "89edd0e4-03cb-37ed-bc74-ba5740a58ee3",
       "product": {
         "name": "Linux",
@@ -201,6 +193,16 @@
         }
       },
       "product_version": "ca06197382bde0a3bc20215595d1c9ce20c6e341 <e6f1a11cfb808441a43ffae9b476cc135732cd27"
+    },
+    {
+      "id": "ef605778-1ecd-3393-9e6e-ea7d9a2fa31b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

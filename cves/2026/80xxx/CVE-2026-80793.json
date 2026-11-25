@@ -3,7 +3,7 @@
   "enisaUuid": "ecadec8b-4b33-3b0a-890a-0e68437c1b94",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipv4: reject undersized MTUs in ip_do_fragment()\n\nip_do_fragment() subtracts the IPv4 header length from the effective\nMTU and passes the resulting payload MTU to ip_frag_next().\n\nIf the effective MTU is smaller than hlen + 8, ip_frag_next() rounds\nthe fragment payload length down to zero. The fragmentation state then\nnever makes forward progress: state->left, state->ptr and state->offset\nstay unchanged while ip_do_fragment() keeps allocating and transmitting\nheader-only fragments until the softlockup detector fires.\n\nThis is reproducible with a route installed using \"mtu lock 20\", but it\nis also reproducible without route MTU lock, for example by forwarding a\npacket to a device whose MTU is 20.\n\nFix it in ip_do_fragment() by rejecting mtu < hlen + 8 with -EMSGSIZE,\nmatching the existing IPv6 fragmentation check.",
   "datePublished": "Sep 4, 2026, 3:13:05 PM",
-  "dateUpdated": "Sep 4, 2026, 3:13:05 PM",
+  "dateUpdated": "Nov 6, 2026, 5:05:54 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/a716a64a4ba68cd46f2745fba2b1099fe8e0aa59",
@@ -17,10 +17,11 @@
     "https://git.kernel.org/stable/c/c0726f0caf8c6b3208552949e17d23634a2f3129"
   ],
   "aliases": [
+    "GHSA-vc8f-29mh-24xv",
     "CVE-2026-80793"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "0fe785a8-792d-367f-93f2-9410113f7e0a",
@@ -41,16 +42,6 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a716a64a4ba68cd46f2745fba2b1099fe8e0aa59"
-    },
-    {
-      "id": "1c521f4c-90c6-3f94-a515-18211b0295cc",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "31b40721-3f08-3a13-91e9-0a18a8d43638",
@@ -201,6 +192,16 @@
         }
       },
       "product_version": "patch: 5.15.218"
+    },
+    {
+      "id": "e49372a7-a756-3624-bc18-54abd741c24a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "f190076f-ad31-31f6-be5f-c42eaf1df927",

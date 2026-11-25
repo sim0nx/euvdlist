@@ -3,8 +3,10 @@
   "enisaUuid": "9b8f69e3-a586-32f2-8712-ab03e3b17a07",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: policy: fix use-after-free on inexact bin in xfrm_policy_bysel_ctx()\n\nFix the race by pruning the bin while still holding xfrm_policy_lock,\nbefore dropping it. Use __xfrm_policy_inexact_prune_bin() directly since\nthe lock is already held. The wrapper xfrm_policy_inexact_prune_bin()\nbecomes unused and is removed.\n\nRace:\n\n  CPU0 (XFRM_MSG_DELPOLICY)           CPU1 (XFRM_MSG_NEWSPDINFO)\n  ==========================          ==========================\n  xfrm_policy_bysel_ctx():\n    spin_lock_bh(xfrm_policy_lock)\n    bin = xfrm_policy_inexact_lookup()\n    __xfrm_policy_unlink(pol)\n    spin_unlock_bh(xfrm_policy_lock)\n    xfrm_policy_kill(ret)\n    // wide window, lock not held\n                                       xfrm_hash_rebuild():\n                                         spin_lock_bh(xfrm_policy_lock)\n                                         __xfrm_policy_inexact_flush():\n                                           kfree_rcu(bin)  // bin freed\n                                         spin_unlock_bh(xfrm_policy_lock)\n    xfrm_policy_inexact_prune_bin(bin)\n    // UAF: bin is freed",
   "datePublished": "Jun 25, 2026, 8:39:35 AM",
-  "dateUpdated": "Jun 25, 2026, 8:39:35 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 10, 2026, 12:48:20 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/8fc536e9f6856230f19c7d13e71af064b6a77b22",
     "https://git.kernel.org/stable/c/c4c1ea36d83bf3c4569468ca5b8b614fda1bf821",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/7f2d76c9c03257c0782afef9d95321fa04096f60"
   ],
   "aliases": [
+    "GHSA-qmj7-fh92-4787",
     "CVE-2026-53239"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.1,
   "enisaIdProduct": [
     {
       "id": "0782e3c7-a7eb-32cc-a5f6-0567f6b18351",

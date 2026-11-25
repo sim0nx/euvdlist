@@ -3,9 +3,12 @@
   "enisaUuid": "ab7b680e-4f6b-391d-ac09-b3857a2f0229",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: fix use-after-free in __close_file_table_ids()\n\nA ksmbd_file can remain alive after logical close while another session\nholds a temporary reference obtained through ksmbd_lookup_fd_inode().\nksmbd_close_fd() currently marks the file closed and drops the idr-owned\nreference, but leaves the pointer published in the closing session's idr\nuntil the final reference is dropped.\n\nIf the foreign holder performs the final ksmbd_fd_put(), __put_fd_final()\nsupplies the foreign session's file table to __ksmbd_close_fd(). The object\nis then freed without being removed from its owner's idr, and the owner\nsession later dereferences the stale pointer during file-table teardown.\n\nRemove the volatile id from the owner's idr while ksmbd_close_fd() still\nholds that table's lock, and clear volatile_id before dropping\nthe idr-owned reference. A later foreign final put then only performs\nphysical destruction and cannot remove the object from the wrong table.",
   "datePublished": "Aug 15, 2026, 12:27:39 PM",
-  "dateUpdated": "Aug 15, 2026, 12:27:39 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 19, 2026, 4:38:25 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/19bfd90d5aaf63217735d81964585c5306158e5f",
     "https://git.kernel.org/stable/c/67aaec2a1fdce3e1dde46c45b5d1ef8cf22f65cd",
     "https://git.kernel.org/stable/c/0c3918c2cee62ec6c9de8d5c73ebfe6f833961ac",
     "https://git.kernel.org/stable/c/9be4a66f019ea90bd9deca70511f4f9ffebf5c6f",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/e7188199eff46a636f3436356f0aae039be6dd66"
   ],
   "aliases": [
-    "CVE-2026-74522"
+    "CVE-2026-74522",
+    "GHSA-r5jm-2247-f5r8"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.44,
   "enisaIdProduct": [
     {
       "id": "1ba552c1-9cec-3445-a000-8f89834a1e49",
@@ -89,6 +93,16 @@
       "product_version": "5.15.38 <5.16"
     },
     {
+      "id": "6f4a5dae-154c-3b96-bb81-83ba02362926",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "75417d2f-4180-3921-bb92-a6730fcfbace",
       "product": {
         "name": "Linux",
@@ -97,6 +111,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "75b7a2da-0f9d-3476-a22c-1b0e7eafe7ad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8510a043d334ecdf83d4604782f288db6bf21d60 <19bfd90d5aaf63217735d81964585c5306158e5f"
     },
     {
       "id": "7fcbc234-04b7-3261-bedc-dc9d298fe80a",
@@ -119,16 +143,6 @@
       "product_version": "df30cbfd3d8a70e61ce59f63ce5ed2261799ac10"
     },
     {
-      "id": "b5663211-b139-3de1-9174-b14adb3de1ee",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc6"
-    },
-    {
       "id": "bc04f739-1050-36de-95ff-5e4f83325b86",
       "product": {
         "name": "Linux",
@@ -147,6 +161,16 @@
         }
       },
       "product_version": "8510a043d334ecdf83d4604782f288db6bf21d60 <67aaec2a1fdce3e1dde46c45b5d1ef8cf22f65cd"
+    },
+    {
+      "id": "db2cacaf-967f-3141-a8d6-06b563b1528e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "e64f97c5-319c-3781-a38f-09dda3d4933d",

@@ -3,7 +3,7 @@
   "enisaUuid": "667dcc7a-c053-34a2-916b-64a2ff8b5458",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfc: llcp: fix OOB read and u8 offset wrap in TLV parsers\n\nnfc_llcp_parse_gb_tlv() and nfc_llcp_parse_connection_tlv() contain\nthree related bugs in their TLV parsing loops:\n\n1. 'offset' is declared u8 but tlv_array_len is u16. When TLV data\n   advances offset past 255 it silently wraps to zero, causing\n   infinite loops or double-processing of buffer data.\n\n2. Before reading tlv[0] (type) and tlv[1] (length) there is no\n   check that offset+2 <= tlv_array_len. A truncated TLV causes\n   an OOB read of one byte past the buffer end.\n\n3. After reading the length field, the value bytes are accessed\n   without checking offset+2+length <= tlv_array_len. A crafted\n   length=0xFF on a short buffer causes up to 255 bytes of OOB\n   read past the buffer end.\n\nBoth functions are reachable without authentication via\nnfc_llcp_set_remote_gb() which feeds remote LLCP general bytes\ndirectly into nfc_llcp_parse_gb_tlv() with no additional\nvalidation.\n\nFix all three issues by widening offset from u8 to u16 and adding\nbounds checks for both the TLV header and value field before each\naccess.",
   "datePublished": "Sep 4, 2026, 3:13:13 PM",
-  "dateUpdated": "Sep 4, 2026, 3:13:13 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:52 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2c1456fe09ab1a5a9fe1d8339ca6d509589b56e1",
@@ -17,10 +17,11 @@
     "https://git.kernel.org/stable/c/78b20c8eeacd2e44a2d8a4cb5316d3c521d90911"
   ],
   "aliases": [
+    "GHSA-2vfp-4qhq-6rfc",
     "CVE-2026-80799"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.23,
   "enisaIdProduct": [
     {
       "id": "00078454-ed1b-3879-8275-332184c1516b",
@@ -51,16 +52,6 @@
         }
       },
       "product_version": "patch: 7.1.11"
-    },
-    {
-      "id": "08e75163-6004-355a-a8d0-9ea7c5d4f087",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "1b213e83-37fe-3f43-81e4-904c22c60188",
@@ -211,6 +202,16 @@
         }
       },
       "product_version": "patch: 6.6.154"
+    },
+    {
+      "id": "c4e151e9-f829-3eae-927f-608d0b5b497f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "d5f54e37-4f8b-355d-8c97-ae0ad7750acd",

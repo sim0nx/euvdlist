@@ -3,8 +3,10 @@
   "enisaUuid": "c28c69c8-4291-3274-a987-40f5f1f1daf4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusbnet: gl620a: fix out-of-bounds read in genelink_rx_fixup()\n\ngenelink_rx_fixup() splits an aggregated RX frame into its individual\npackets, using a per-packet length taken from device-supplied data. That\nlength is only bounded by GL_MAX_PACKET_LEN (1514); it is never compared\nagainst how many bytes were actually received.\n\nA malicious GeneLink (GL620A) device can therefore send a short URB whose\nheader claims packet_count > 1 and a first packet of up to 1514 bytes.\n\n\tskb_put_data(gl_skb, packet->packet_data, size);\n\nthen copies past the end of the receive buffer and hands the adjacent slab\ncontents up the network stack, an out-of-bounds read that leaks kernel heap.\nNo privilege is required: the path runs in the usbnet RX softirq as soon as\nthe interface is up.\n\n  BUG: KASAN: slab-out-of-bounds in genelink_rx_fixup (drivers/net/usb/gl620a.c:112)\n  Read of size 1514 at addr ffff888011309708 by task ksoftirqd/0/14\n  Call Trace:\n    ...\n    __asan_memcpy (mm/kasan/shadow.c:105)\n    genelink_rx_fixup (include/linux/skbuff.h:2814 drivers/net/usb/gl620a.c:112)\n    usbnet_bh (drivers/net/usb/usbnet.c:572 drivers/net/usb/usbnet.c:1589)\n    process_one_work (kernel/workqueue.c:3322)\n    bh_worker (kernel/workqueue.c:3405)\n    tasklet_action (kernel/softirq.c:965)\n    handle_softirqs (kernel/softirq.c:622)\n    run_ksoftirqd (kernel/softirq.c:1076)\n    ...\n\nskb_pull() already verifies that the requested length fits the buffer and\nreturns NULL otherwise. Move it ahead of the copy and check its result, so\na packet that overruns the received data is rejected before it is read.\nWell-formed frames, whose packets are fully present, are unaffected.",
   "datePublished": "Jul 27, 2026, 8:10:33 PM",
-  "dateUpdated": "Jul 27, 2026, 8:10:33 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:48:39 PM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/255d03551f94c7bdd86c7d9181a70b21917d829f",
     "https://git.kernel.org/stable/c/4359376e6238d89977a35086e47ca3b07f43e850",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/8ff7f2a6da4fccaa5cc9be7251a24e71e29fbd1a"
   ],
   "aliases": [
+    "GHSA-rwwq-q965-ghfj",
     "CVE-2026-64540"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.28,
   "enisaIdProduct": [
     {
       "id": "0ad416bf-3108-3a6f-aa78-261077ffddf4",
@@ -60,16 +63,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "2f989b95-9398-36bb-a346-ea4d25d6398c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc2"
     },
     {
       "id": "5af3098d-4428-361e-a448-472ae690adcf",
@@ -190,6 +183,16 @@
         }
       },
       "product_version": "47ee3051c856cc2aa95d35d577a8cb37279d540f <3ef79fa3860e644c8de7834fa7300e1c58f38862"
+    },
+    {
+      "id": "d52ddd79-c150-3da0-9a02-da686c70f6d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "ed347c60-9ca4-3fa7-88a8-51ac3cae7f2a",

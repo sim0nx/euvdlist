@@ -3,7 +3,7 @@
   "enisaUuid": "9fd912da-9db4-3022-abea-22eae6f12940",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\next4: skip extra isize expansion during mount to prevent deadlock\n\next4_try_to_expand_extra_isize() is called from __ext4_mark_inode_dirty()\nwhile holding an active jbd2 handle.  During mount (!SB_ACTIVE), the\nexpand path may move xattrs to external blocks and release ea_inodes via\niput().  When !SB_ACTIVE, iput() calls write_inode_now() which acquires\ns_writepages_rwsem, creating a circular lock dependency:\n\n  s_writepages_rwsem --> jbd2_handle --> xattr_sem --> s_writepages_rwsem\n\nThis can be triggered via:\n\n  ext4_process_orphan() -> ext4_truncate() -> ext4_mark_inode_dirty()\n    -> ext4_try_to_expand_extra_isize()\n\nor:\n\n  ext4_evict_inode() -> ext4_mark_inode_dirty()\n    -> ext4_try_to_expand_extra_isize()\n\nSkip expansion when !SB_ACTIVE.  This is a minor loss of functionality\n(extra isize won't grow for these inodes during mount), which e2fsck\ncan resolve later if needed.",
   "datePublished": "Sep 24, 2026, 3:52:07 PM",
-  "dateUpdated": "Sep 24, 2026, 3:52:07 PM",
+  "dateUpdated": "Oct 19, 2026, 9:08:22 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/41897f1bcf4ace5f1f28d0be784b6f4f0e929641",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/7461c60b9c6a839b13ad4c3490681a0cf5aa0637"
   ],
   "aliases": [
+    "GHSA-7gm5-hpmg-j6v2",
     "CVE-2026-93268"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "00c86313-2357-366f-9a6c-8dd76f5fcbe7",
@@ -92,16 +93,6 @@
       "product_version": "c8585c6fcaf2011de54c3592e80a634a2b9e1a7f <2fb8ff81659a57c42bb7b49e8339a2be2a318ef8"
     },
     {
-      "id": "6f329276-a867-307f-94bb-66019c7c897f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "8270ebcd-9e6d-38bd-83dd-3573e9553fdc",
       "product": {
         "name": "Linux",
@@ -160,6 +151,16 @@
         }
       },
       "product_version": "c8585c6fcaf2011de54c3592e80a634a2b9e1a7f <7ace189b9ea79cf78df9c32b940ce12735f9459a"
+    },
+    {
+      "id": "ceacd897-a99d-3a85-9c4a-6f368a82123c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "d106db76-2759-338c-89c3-5cad1ec31956",

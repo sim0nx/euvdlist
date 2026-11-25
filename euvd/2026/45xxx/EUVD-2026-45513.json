@@ -3,8 +3,10 @@
   "enisaUuid": "72a99c0f-492d-39c5-b29c-c8ccd8527973",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nNFSv4/pNFS: reject zero-length r_addr in nfs4_decode_mp_ds_addr\n\nnfs4_decode_mp_ds_addr() decodes the r_netid and r_addr opaques of a\nnetaddr4 from a GETDEVICEINFO multipath-DS body, then immediately\ncalls strrchr(buf, '.') to locate the port separator. Both decodes\nuse xdr_stream_decode_string_dup(), and the current code checks only\n\"nlen < 0\" / \"rlen < 0\" before dereferencing the returned string.\n\nWhen the on-wire opaque has length zero, xdr_stream_decode_opaque_inline()\nreturns 0 and xdr_stream_decode_string_dup() falls through to its\n\"*str = NULL; return ret\" tail, leaving buf NULL with a return value\nof 0. The \"< 0\" check does not catch this, and the next line is\nstrrchr(NULL, '.'), a kernel NULL pointer dereference reachable from\nany pNFS-flexfile client mounted against a malicious or compromised\nmetadata server.\n\nReject the zero-length cases explicitly so the decoder fails with\n-EBADMSG (treated as a malformed GETDEVICEINFO body) instead of\npanicking the client.",
   "datePublished": "Jul 19, 2026, 12:01:55 PM",
-  "dateUpdated": "Jul 19, 2026, 12:01:55 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:07:45 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/76b94cbd32aacf36a641956385a852635c6802b9",
     "https://git.kernel.org/stable/c/c8e4e0c701d0192a2efb6df059c0f9e19678c23d",
@@ -19,7 +21,7 @@
     "GHSA-72jx-g4pr-67hm"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.52,
   "enisaIdProduct": [
     {
       "id": "2c679d1d-39cb-3d7a-ac08-87ac995fdea2",
@@ -52,6 +54,16 @@
       "product_version": "patch: 6.12.95"
     },
     {
+      "id": "71724bdc-dbe6-3677-91a4-a01e25c597c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "74c019fd-5dec-3730-98db-ae9c92da16a6",
       "product": {
         "name": "Linux",
@@ -70,16 +82,6 @@
         }
       },
       "product_version": "6b7f3cf96364eaf597940cb5c68a682894829915 <30aae62e50b4e074a90a9a5e15246548fbdc1182"
-    },
-    {
-      "id": "8434d5f1-952e-3464-a945-d3e4192b077b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "8b198dbd-de71-3fb7-94c6-5792994e6a64",

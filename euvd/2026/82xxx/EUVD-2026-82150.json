@@ -3,7 +3,7 @@
   "enisaUuid": "ffe171fe-693f-345f-8d9b-7b933f84c2eb",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndmaengine: dw-edma: Serialize channel state checks\n\npause() and resume() read and update channel state without holding vc.lock,\nwhile the interrupt handlers update the same state under it. Take the same\nlock around those state checks so that request, status, and configured stay\nconsistent.\n\nFor example, pause() can observe EDMA_ST_BUSY right before the interrupt\nhandler completes the final descriptor and moves the channel to\nEDMA_ST_IDLE, and then record EDMA_REQ_PAUSE on an already idle channel. No\nfurther interrupt will acknowledge the request, and since issue_pending()\nrequires EDMA_REQ_NONE, the channel is wedged for good: terminate_all()\nleaves the stale request behind, so even reconfiguring the channel does not\nrecover it.\n\nissue_pending() already runs under vc.lock, but it tests configured before\ntaking it. Move that test under the lock as well, so configured, request,\nand status are evaluated as one channel-state snapshot.",
   "datePublished": "Sep 17, 2026, 4:10:33 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:33 PM",
+  "dateUpdated": "Oct 19, 2026, 9:04:35 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/be0072af8ce6e9458cc586e0e8b41a251e7d4316",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/f7d1619f3e10c619b62c6cd6d95371b5c526c85a"
   ],
   "aliases": [
-    "CVE-2026-93040"
+    "CVE-2026-93040",
+    "GHSA-3g95-h923-8hfc"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0898c76c-be35-3b47-b371-86f9eb9af211",
@@ -132,6 +133,16 @@
       "product_version": "e63d79d1ffcd2201a2dbff1d7a1184b8f3ec74cf <b6293a8a38f4d5866ce1a264c138265a02e4c53a"
     },
     {
+      "id": "9f044a83-5a8b-3586-b6bb-1048aa1ffb9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "a206a2a3-024e-3b36-9a03-314c0a0331bb",
       "product": {
         "name": "Linux",
@@ -180,16 +191,6 @@
         }
       },
       "product_version": "e63d79d1ffcd2201a2dbff1d7a1184b8f3ec74cf <2d76b91deeab973dd8a8c2ee587ce27f881de768"
-    },
-    {
-      "id": "f8afd85d-77b0-3f74-acfe-6d14a7a1c670",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "feed5caf-8b27-3662-98b3-af52f85630a5",

@@ -3,7 +3,7 @@
   "enisaUuid": "fcecdadf-44fc-3a65-a49d-f750681033a9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nkeys: Avoid the owner account dereference in named keyring lookup\n\nNamed keyring lookup must keep the storage containing the owner UID\nalive through the namespace mapping check.  find_keyring_by_name()\nreads keyring->user->uid under keyring_name_lock, but that lock protects\nthe keyring's name entry and allocation, not its separate key_user.\n\nA named session-keyring join can overlap a privileged KEYCTL_CHOWN on\nanother CPU.  If the keyring holds the last reference to its old dynamic\nkey_user and the ownership transfer succeeds, the following ordering is\npossible:\n\n    Named join                         Chown\n    find_keyring_by_name()              keyctl_chown_key()\n      read_lock(keyring_name_lock)       down_write(key->sem)\n      load old keyring->user\n                                         replace key->user and key->uid\n                                         up_write(key->sem)\n                                         key_put(key)\n                                         key_user_put(old user): free\n      read old user->uid\n      read_unlock(keyring_name_lock)\n\nChown neither takes keyring_name_lock nor key_session_mutex, so it can\nfree the old account between the pointer load and the UID read.  The\nlookup then reads freed memory even though the keyring itself is alive.\n\nUse keyring->uid for the mapping check.  key_alloc() initializes this\ninline owner UID and keyctl_chown_key() updates it on chown.\nThe existing name lock keeps its containing keyring allocated throughout\nthe check, so lookup no longer depends on the account's lifetime.  This\nalso matches the owner UID used by the permission check.\n\nKASAN report as below:\n\n    BUG: KASAN: slab-use-after-free in find_keyring_by_name+0x577/0x5d0\n    Read of size 4 at addr ffff8881128ae2ec by task keycase/500",
   "datePublished": "Nov 2, 2026, 4:06:35 PM",
-  "dateUpdated": "Nov 2, 2026, 4:06:35 PM",
+  "dateUpdated": "Nov 3, 2026, 7:12:58 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/77249d4b1bb5ad43552b7023c4a0978937aa7a56",
@@ -13,13 +13,15 @@
     "https://git.kernel.org/stable/c/c9664f780f861dd9f11f120c7a03ed0993671ebb",
     "https://git.kernel.org/stable/c/b0830a26e2c3008a6e21863126b4a0e68b2761cd",
     "https://git.kernel.org/stable/c/5c6a9512887a6cc694d594d9c0b57c0841d215b5",
-    "https://git.kernel.org/stable/c/40b12b93ae4ab9e22c3d571e9b09fd08afad53f6"
+    "https://git.kernel.org/stable/c/40b12b93ae4ab9e22c3d571e9b09fd08afad53f6",
+    "https://git.kernel.org/stable/c/51409aaa01f8602552c336009fd22b226b0cdf1d"
   ],
   "aliases": [
-    "CVE-2026-99226"
+    "CVE-2026-99226",
+    "GHSA-9pjv-mg4c-3j9m"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "1d1e20e2-2d26-3d9a-b27e-30966964c90f",
@@ -30,6 +32,16 @@
         }
       },
       "product_version": "2.6.30"
+    },
+    {
+      "id": "2689c033-c295-343d-a087-d8a32c3f47c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2ea190d0a006ce5218baa6e798512652446a605a <51409aaa01f8602552c336009fd22b226b0cdf1d"
     },
     {
       "id": "26b512f6-7cb2-33b1-b5b4-a695e58ca04f",
@@ -120,6 +132,16 @@
         }
       },
       "product_version": "2ea190d0a006ce5218baa6e798512652446a605a <5c6a9512887a6cc694d594d9c0b57c0841d215b5"
+    },
+    {
+      "id": "657be2cc-2ea9-371e-a1f8-76327abc3d5a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
     },
     {
       "id": "6c2f0172-491a-37c1-9010-f10896808c87",

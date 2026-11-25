@@ -1,0 +1,90 @@
+{
+  "id": "EUVD-2021-33857",
+  "enisaUuid": "93af0e57-e037-389d-8c07-825d046d8606",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsched/fair: Prevent dead task groups from regaining cfs_rq's\n\nKevin is reporting crashes which point to a use-after-free of a cfs_rq\nin update_blocked_averages(). Initial debugging revealed that we've\nlive cfs_rq's (on_list=1) in an about to be kfree()'d task group in\nfree_fair_sched_group(). However, it was unclear how that can happen.\n\nHis kernel config happened to lead to a layout of struct sched_entity\nthat put the 'my_q' member directly into the middle of the object\nwhich makes it incidentally overlap with SLUB's freelist pointer.\nThat, in combination with SLAB_FREELIST_HARDENED's freelist pointer\nmangling, leads to a reliable access violation in form of a #GP which\nmade the UAF fail fast.\n\nMichal seems to have run into the same issue[1]. He already correctly\ndiagnosed that commit a7b359fc6a37 (\"sched/fair: Correctly insert\ncfs_rq's to list on unthrottle\") is causing the preconditions for the\nUAF to happen by re-adding cfs_rq's also to task groups that have no\nmore running tasks, i.e. also to dead ones. His analysis, however,\nmisses the real root cause and it cannot be seen from the crash\nbacktrace only, as the real offender is tg_unthrottle_up() getting\ncalled via sched_cfs_period_timer() via the timer interrupt at an\ninconvenient time.\n\nWhen unregister_fair_sched_group() unlinks all cfs_rq's from the dying\ntask group, it doesn't protect itself from getting interrupted. If the\ntimer interrupt triggers while we iterate over all CPUs or after\nunregister_fair_sched_group() has finished but prior to unlinking the\ntask group, sched_cfs_period_timer() will execute and walk the list of\ntask groups, trying to unthrottle cfs_rq's, i.e. re-add them to the\ndying task group. These will later -- in free_fair_sched_group() -- be\nkfree()'ed while still being linked, leading to the fireworks Kevin\nand Michal are seeing.\n\nTo fix this race, ensure the dying task group gets unlinked first.\nHowever, simply switching the order of unregistering and unlinking the\ntask group isn't sufficient, as concurrent RCU walkers might still see\nit, as can be seen below:\n\n    CPU1:                                      CPU2:\n      :                                        timer IRQ:\n      :                                          do_sched_cfs_period_timer():\n      :                                            :\n      :                                            distribute_cfs_runtime():\n      :                                              rcu_read_lock();\n      :                                              :\n      :                                              unthrottle_cfs_rq():\n    sched_offline_group():                             :\n      :                                                walk_tg_tree_from(\u2026,tg_unthrottle_up,\u2026):\n      list_del_rcu(&tg->list);                           :\n (1)  :                                                  list_for_each_entry_rcu(child, &parent->children, siblings)\n      :                                                    :\n (2)  list_del_rcu(&tg->siblings);                         :\n      :                                                    tg_unthrottle_up():\n      unregister_fair_sched_group():                         struct cfs_rq *cfs_rq = tg->cfs_rq[cpu_of(rq)];\n        :                                                    :\n        list_del_leaf_cfs_rq(tg->cfs_rq[cpu]);               :\n        :                                                    :\n        :                                                    if (!cfs_rq_is_decayed(cfs_rq) || cfs_rq->nr_running)\n (3)    :                                                        list_add_leaf_cfs_rq(cfs_rq);\n      :                                                      :\n      :                                                    :\n      :                                                  :\n      :                                                :\n      :                           \n---truncated---",
+  "datePublished": "Apr 10, 2024, 7:01:51 PM",
+  "dateUpdated": "Aug 5, 2026, 8:46:44 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/512e21c150c1c3ee298852660f3a796e267e62ec",
+    "https://git.kernel.org/stable/c/b027789e5e50494c2325cc70c8642e7fd6059479"
+  ],
+  "aliases": [
+    "CVE-2021-47209",
+    "GHSA-m59q-rgx4-6vq4"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "2b2d6e84-342c-3a54-81b2-ccfe6b8223ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.5"
+    },
+    {
+      "id": "705d4aa7-9a74-3611-996b-ed6da38dcbb6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.13"
+    },
+    {
+      "id": "860485ca-cfc2-387f-b9d3-80f0516c6a2a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a7b359fc6a37faaf472125867c8dc5a068c90982 <b027789e5e50494c2325cc70c8642e7fd6059479"
+    },
+    {
+      "id": "aa6a20b1-12f0-3fa4-9b7a-430c30c984d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c000026a-f209-321b-83e9-7794f8ce7911",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a7b359fc6a37faaf472125867c8dc5a068c90982 <512e21c150c1c3ee298852660f3a796e267e62ec"
+    },
+    {
+      "id": "fb15e024-9e16-3ebe-93ad-33526914cbc2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7f833003-0d1b-37ae-a2a0-9fc7d930267b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

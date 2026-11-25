@@ -3,8 +3,10 @@
   "enisaUuid": "97fb780d-a5d4-3640-bec7-beb0ebb52fbe",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: bridge: make ebt_snat ARP rewrite writable\n\nThe ebtables SNAT target keeps the Ethernet source address rewrite\nbehind skb_ensure_writable(skb, 0).  This is intentional: at the bridge\nebtables hooks the Ethernet header is addressed through\nskb_mac_header()/eth_hdr(), while skb->data points at the Ethernet\npayload.  Asking skb_ensure_writable() for ETH_HLEN bytes would check\nthe payload, not the Ethernet header, and would reintroduce the small\npacket regression fixed by commit 63137bc5882a.\n\nHowever, the optional ARP sender hardware address rewrite is different.\nIt writes through skb_store_bits() at an offset relative to skb->data:\n\n        skb_store_bits(skb, sizeof(struct arphdr), info->mac, ETH_ALEN)\n\nskb_header_pointer() only safely reads the ARP header; it does not make\nthe later sender hardware address range writable.  If that range is\nstill held in a nonlinear skb fragment backed by a splice-imported file\npage, skb_store_bits() maps the frag page and copies the new MAC address\ndirectly into it.\n\nEnsure the ARP SHA range is writable before reading the ARP header and\nbefore calling skb_store_bits().",
   "datePublished": "Jun 25, 2026, 8:39:53 AM",
-  "dateUpdated": "Jun 25, 2026, 8:39:53 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Sep 19, 2026, 3:56:22 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/bf84ad7c7a9ede46e31afaa41a1ba06a159e8c87",
     "https://git.kernel.org/stable/c/76280b78cc9f23bdc6438e10ad6dff148ef8375b",
@@ -16,10 +18,12 @@
     "https://git.kernel.org/stable/c/67ba971ae02514d85818fe0c32549ab4bfa3bf49"
   ],
   "aliases": [
-    "CVE-2026-53266"
+    "CVE-2026-53266",
+    "GHSA-xmhg-rr34-2chj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.93,
+  "exploitedSince": "Sep 18, 2026, 12:00:00 AM",
   "enisaIdProduct": [
     {
       "id": "0a39eaa3-c7a4-3eee-8ec3-21a960e09116",

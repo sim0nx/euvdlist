@@ -3,7 +3,7 @@
   "enisaUuid": "d37dddd7-1882-3499-94ff-4f4f5350ec93",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: em28xx: fix use-after-free of dev_next->devlist on disconnect\n\nWhen a device with has_dual_ts=1 is probed and the is_audio_only path\nis taken, both dev and dev->dev_next are added to the global\nem28xx_devlist via em28xx_init_extension(). However, during disconnect,\nem28xx_close_extension(dev) only calls list_del(&dev->devlist), leaving\ndev->dev_next->devlist still linked in the global list. When dev_next is\nsubsequently freed via kref_put(), its devlist entry becomes a dangling\npointer in em28xx_devlist. The next device probe that calls\nem28xx_init_extension() triggers a list corruption BUG when list_add_tail\ndetects the freed node.\n\nThis bug was exposed by commit a368ecde8a50 (\"USB: core: Fix duplicate\nendpoint bug by clearing reserved bits in the descriptor\") which clears\nreserved bits in bEndpointAddress during endpoint parsing. This causes\nfuzzed endpoint addresses like 0xf3 to be normalized to 0x83, which\nem28xx interprets as a vendor audio endpoint, enabling the\nis_audio_only + has_dual_ts code path that was previously unreachable\nwith such descriptors.\n\nFix this by removing dev->dev_next->devlist from the global list in\nem28xx_close_extension() before the device is freed.",
   "datePublished": "Sep 16, 2026, 10:31:53 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:53 AM",
+  "dateUpdated": "Oct 19, 2026, 8:54:24 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/f61720346fdcc1a2deec59a2f6cbb0cc20d1dc18",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/826915b6b65e2d3251e7248ea54289a22d748c84"
   ],
   "aliases": [
-    "CVE-2026-89891"
+    "CVE-2026-89891",
+    "GHSA-5cx6-377w-hc5f"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "05a3d547-4232-3a9c-91fb-8b082ce2b299",
@@ -112,16 +113,6 @@
       "product_version": "patch: 6.18.51"
     },
     {
-      "id": "8c650be6-947f-3589-a837-432a0bc9330c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "9a296a0d-a3ec-3b67-ac2d-75db1494e12f",
       "product": {
         "name": "Linux",
@@ -130,6 +121,16 @@
         }
       },
       "product_version": "patch: 5.10.270"
+    },
+    {
+      "id": "9bed2c11-95ac-3ac0-b38a-f4f9b5eacf82",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "9dd69196-4230-3208-896c-cf57ad5466dd",

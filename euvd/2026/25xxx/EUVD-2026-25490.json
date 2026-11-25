@@ -2,78 +2,228 @@
   "id": "EUVD-2026-25490",
   "enisaUuid": "77bd6ac0-934c-3f3e-9416-fe77a12759c5",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: fix use-after-free in ocfs2_fault() when VM_FAULT_RETRY\n\nfilemap_fault() may drop the mmap_lock before returning VM_FAULT_RETRY,\nas documented in mm/filemap.c:\n\n  \"If our return value has VM_FAULT_RETRY set, it's because the mmap_lock\n  may be dropped before doing I/O or by lock_folio_maybe_drop_mmap().\"\n\nWhen this happens, a concurrent munmap() can call remove_vma() and free\nthe vm_area_struct via RCU. The saved 'vma' pointer in ocfs2_fault() then\nbecomes a dangling pointer, and the subsequent trace_ocfs2_fault() call\ndereferences it -- a use-after-free.\n\nFix this by saving ip_blkno as a plain integer before calling\nfilemap_fault(), and removing vma from the trace event. Since\nip_blkno is copied by value before the lock can be dropped, it\nremains valid regardless of what happens to the vma or inode\nafterward.",
-  "datePublished": "Apr 24, 2026, 3:32:34 PM",
-  "dateUpdated": "Apr 24, 2026, 3:32:35 PM",
-  "baseScore": 0.0,
+  "datePublished": "Apr 24, 2026, 2:42:22 PM",
+  "dateUpdated": "Aug 5, 2026, 12:23:41 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/36539c4d536f851a3b346a6ebb27b51bc3d77a94",
+    "https://git.kernel.org/stable/c/35c2c05261d6f6d84aaa1355afa201d507943e76",
+    "https://git.kernel.org/stable/c/3f5e74b5db9353b01ed50f4de84e75b755f8fbc2",
+    "https://git.kernel.org/stable/c/6f072daefcab1d84ce37c073645615f63be91006",
     "https://git.kernel.org/stable/c/4cf2768a0291a0cdd0dae801ea0eafa3878a349d",
     "https://git.kernel.org/stable/c/d45ff441b416d4aa1af72b1db23d959601c04da2",
     "https://git.kernel.org/stable/c/76a602fdbb78dd05b2da06f74a988cebc97e82d0",
     "https://git.kernel.org/stable/c/925bf22c1b823e231b1baea761fe8a1512e442f2",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-31597"
+    "https://git.kernel.org/stable/c/7de554cabf160e331e4442e2a9ad874ca9875921"
   ],
   "aliases": [
     "GHSA-8pwc-q4rq-xxf3",
     "CVE-2026-31597"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
-      "id": "1e02d61a-8e1d-3343-8934-0062eb8e9952",
+      "id": "02b3229c-e0e2-39b4-9a17-2acb8e841cf3",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4cf2768a0291a0cdd0dae801ea0eafa3878a349d"
+      "product_version": "patch: 5.15.209"
+    },
+    {
+      "id": "0db8e400-1c9c-38a5-adba-68efa9082dd2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "247aabde-c535-347b-884f-19462cb9f02e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.175"
     },
     {
       "id": "2bf2a315-d281-3c02-aefa-f09bf28b3a7d",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.19.14"
     },
     {
       "id": "2f2d0ccd-4650-3c9b-8202-6ff4bb3dcc18",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.18.24"
     },
     {
-      "id": "4f596d89-cf06-3c78-a115-a8ac73d3ede8",
+      "id": "46c848b6-2dca-3802-a001-9a9ba99c92bf",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d45ff441b416d4aa1af72b1db23d959601c04da2"
+      "product_version": "614a9e849ca6ea24843795251cb30af525d5336b <925bf22c1b823e231b1baea761fe8a1512e442f2"
     },
     {
-      "id": "52efff4a-eef2-3006-86cc-32a10a14af0f",
+      "id": "5edad62c-3a57-32fa-9b5c-7ea0cb53493f",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <925bf22c1b823e231b1baea761fe8a1512e442f2"
+      "product_version": "614a9e849ca6ea24843795251cb30af525d5336b <35c2c05261d6f6d84aaa1355afa201d507943e76"
     },
     {
-      "id": "71783d62-5a83-3e41-a71d-4c6a6cb87d72",
+      "id": "6c074203-786f-34d1-a94b-4dd67d88c706",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <76a602fdbb78dd05b2da06f74a988cebc97e82d0"
+      "product_version": "614a9e849ca6ea24843795251cb30af525d5336b <6f072daefcab1d84ce37c073645615f63be91006"
+    },
+    {
+      "id": "71f9bebd-affd-3678-a71c-9ba699bf7437",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "614a9e849ca6ea24843795251cb30af525d5336b <4cf2768a0291a0cdd0dae801ea0eafa3878a349d"
+    },
+    {
+      "id": "7eb1d8b1-a895-3b92-8dc3-64de26047cc1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.136"
+    },
+    {
+      "id": "92d1a831-1302-3cb7-915e-1307af4b8d4f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "614a9e849ca6ea24843795251cb30af525d5336b <d45ff441b416d4aa1af72b1db23d959601c04da2"
     },
     {
       "id": "96817aa4-b72b-3241-a7c5-7ba5db9040c4",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 7.0.1"
     },
     {
       "id": "a5c0a9a2-734a-3b77-b456-e6edc744d812",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.12.83"
+    },
+    {
+      "id": "b05720aa-5943-30db-8d55-82b1e0037eed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.39"
+    },
+    {
+      "id": "b0dc7792-18e8-3d6b-9413-4c2cdd62f6a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "614a9e849ca6ea24843795251cb30af525d5336b <76a602fdbb78dd05b2da06f74a988cebc97e82d0"
+    },
+    {
+      "id": "b45146bd-958e-3519-9240-71e87b973afa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "c1947b0f-132b-3f33-b97e-dbe627b6117d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.258"
+    },
+    {
+      "id": "e2865081-ee9f-3982-8d54-a98684e5d751",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "614a9e849ca6ea24843795251cb30af525d5336b <7de554cabf160e331e4442e2a9ad874ca9875921"
+    },
+    {
+      "id": "f21db696-1c59-31de-80ca-cdc668cd2c34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "614a9e849ca6ea24843795251cb30af525d5336b <36539c4d536f851a3b346a6ebb27b51bc3d77a94"
+    },
+    {
+      "id": "f2b5e1a1-bc35-3e36-a5e3-decb28ba411e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "614a9e849ca6ea24843795251cb30af525d5336b <3f5e74b5db9353b01ed50f4de84e75b755f8fbc2"
     }
   ],
   "enisaIdVendor": [

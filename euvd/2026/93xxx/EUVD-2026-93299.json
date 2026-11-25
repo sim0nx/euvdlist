@@ -3,7 +3,7 @@
   "enisaUuid": "8fc2f0b7-b594-3fc9-b883-9d84643255bd",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: pcm: set timer->private_data before registering the PCM timer\n\nsnd_pcm_timer_init() calls snd_device_register() to link the new\nstruct snd_timer into the global timer list while it still carries\nhw.c_resolution = snd_pcm_timer_resolution (and hw.start/hw.stop),\nand only afterwards sets timer->private_data = substream.\n\nOnce the timer is on the list under register_mutex, a concurrent\nreader can already reach it through the same mutex and invoke these\ncallbacks. /proc/asound/timers does this via c_resolution(), and\nsnd_timer_open()+snd_timer_start() reach start()/stop() the same way.\nAll three dereference timer->private_data, which for this brief\nwindow is NULL, giving a NULL-pointer dereference:\n\n  substream = timer->private_data;\n  return substream->runtime ? ...   // substream is NULL\n\nMove the private_data/private_free assignment before\nsnd_device_register() so the timer is never visible on the list\nwithout its private_data set. On the snd_device_register() failure\npath, private_free() (snd_pcm_timer_free()) can now run, but it only\ndoes substream->timer = NULL, which is already NULL at that point\nsince substream->timer is set to the new timer just once, after a\nsuccessful registration -- so the failure path stays safe.",
   "datePublished": "Oct 6, 2026, 8:46:09 AM",
-  "dateUpdated": "Oct 6, 2026, 8:46:09 AM",
+  "dateUpdated": "Oct 19, 2026, 9:17:24 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/27f167e117eca310661fbcbacb352ea08face067",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/1e713f9bb2ac583521f06b0eb4e22440b1e3d078"
   ],
   "aliases": [
+    "GHSA-f958-2rwj-98rc",
     "CVE-2026-98314"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "04ceaa77-ba86-39dc-8d99-6e8dfc9b31ab",
@@ -62,16 +63,6 @@
       "product_version": "patch: 5.10.271"
     },
     {
-      "id": "202cf7eb-3b09-3997-9399-c3c470c19cea",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
-    {
       "id": "20f1afe9-e27a-37eb-8393-b87bea6f9d65",
       "product": {
         "name": "Linux",
@@ -90,6 +81,16 @@
         }
       },
       "product_version": "patch: 6.18.54"
+    },
+    {
+      "id": "72a61b0f-5f9a-3ba0-a56b-82aff21b7e14",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "7435ed8d-aef1-3e26-ab81-6ba7f8db7a40",

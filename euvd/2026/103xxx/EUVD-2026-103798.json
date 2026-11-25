@@ -3,7 +3,7 @@
   "enisaUuid": "1ad01fb2-6e34-3b9c-a69b-21703303b9d0",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring: fix task_work add use-after-free with SQPOLL\n\nFor SQPOLL, the sqpoll thread runs task_work off its own list and\ndoesn't need to be told about it, so it can pop and complete a request\nas soon as mpscq_push() has published it. If that was the last request\nholding the ring alive, io_ring_exit_work() then frees the ctx, stops\nthe thread, and with it the tctx, while io_req_normal_work_add() is\nstill looking at both after the push:\n\n  BUG: KASAN: slab-use-after-free in io_req_normal_work_add+0x439/0x510\n  Read of size 4 at addr ff11000000ca0000 by task repro/55\n  (...)\n  BUG: KASAN: slab-use-after-free in queue_work_on+0x25/0x70\n  Write of size 8 at addr ff11000000c3bd00 by task repro/55\n\nHold an RCU read lock across the add, like io_req_local_work_add() already\ndoes, and have io_ring_exit_work() wait for a grace period for SQPOLL rings\nas well before freeing the ctx.",
   "datePublished": "Oct 18, 2026, 3:51:19 PM",
-  "dateUpdated": "Oct 18, 2026, 3:51:19 PM",
+  "dateUpdated": "Oct 19, 2026, 9:26:52 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/42b3332efacfd2140be4cd0dedad4fb96b8ae90e",
@@ -12,20 +12,21 @@
     "https://git.kernel.org/stable/c/a92193c91e8839fe5fc209616ea95465ae4b919d"
   ],
   "aliases": [
-    "CVE-2026-98858"
+    "CVE-2026-98858",
+    "GHSA-v42g-qm29-227m"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
-      "id": "12e2d3f5-e194-32ca-873b-a63d81f57473",
+      "id": "3143c0bb-7720-3d06-a854-d3afc529171a",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc6"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "653c47f4-273d-33be-a9b6-9fe30e5b5e4e",

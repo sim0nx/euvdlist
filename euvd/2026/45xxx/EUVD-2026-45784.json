@@ -3,8 +3,10 @@
   "enisaUuid": "27e9922d-2940-370c-84ed-b2f9a05502da",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/v3d: Fix use-after-free of CPU job query arrays on error path\n\nThe CPU job ioctl's fail label calls kvfree() on cpu_job's timestamp and\nperformance query arrays after v3d_job_cleanup(), which drops the job's\nlast reference and frees cpu_job. Reading cpu_job at that point is a\nuse-after-free. Also, on the early v3d_job_init() failure path, it is a\nNULL dereference, since v3d_job_deallocate() zeroes the local pointer.\n\nIn the success path, the arrays are released from the scheduler's\n.free_job callback, but on the error path, they are freed manually, as\nthe job was never pushed to the scheduler. While the success path deals\nwith this correctly, the fail path doesn't.\n\nOn top of that, the manual kvfree() calls only free the array storage;\nthey don't drm_syncobj_put() the per-query syncobjs that\nv3d_timestamp_query_info_free() and v3d_performance_query_info_free()\nrelease on the success path. So the same fail path that triggers the\nuse-after-free also leaks one syncobj reference per query.\n\nUnify the CPU job teardown into the CPU job's kref destructor, mirroring\nv3d_render_job_free(). The scheduler's .free_job slot reverts to the\ngeneric v3d_sched_job_free() and the fail label drops the manual\nkvfree() calls, leaving a single teardown path that is reached from both\nthe scheduler and the ioctl error path. That removes the use-after-free,\nthe NULL dereference, and the syncobj leak by construction.",
   "datePublished": "Jul 19, 2026, 3:40:04 PM",
-  "dateUpdated": "Jul 19, 2026, 3:40:04 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:39:13 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/acd55ea40d03e06f20a9986363019e0e5173990e",
     "https://git.kernel.org/stable/c/0f8efc45740b0628a787d1b0be8a0ddabd700625",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/b0fe80c0b9250b35e2211bf3117e7aca814a21b0"
   ],
   "aliases": [
+    "GHSA-6q8x-m3wr-crj5",
     "CVE-2026-64099"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "0e7007ce-fb06-3a26-96a3-031d4fdc0eac",

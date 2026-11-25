@@ -3,8 +3,10 @@
   "enisaUuid": "da08f66b-2efa-358c-bd5b-b54845d17b69",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nNFSv4/pnfs: key the data server cache on the NFS version\n\nnfs4_pnfs_ds_add() keys the per-net data server cache on the multipath\naddress set alone, and struct nfs4_pnfs_ds records no version. That\nsuffices for the files layout driver, which always connects with version\n4, but flexfiles takes its version tuple from GETDEVICEINFO per device,\nand one address can legitimately serve both NFSv3 and NFSv4.\n\nTwo deviceids on one address with different ds_versions[0].version\ntherefore share a single nfs4_pnfs_ds, and whichever mirror connects\nfirst pins ds_clp to its own version. The other one is handed that\nclient anyway, so it selects rpc_call_ops for a version the connection\ndoes not speak, and the mismatched sequence-slot handling dereferences\nNULL.\n\nAdd the version to the cache key so the two cannot alias, giving each\nversion its own nfs4_pnfs_ds and connection while both mirrors stay\nusable. Only the major version is compared, since that is what selects\nrpc_call_ops and rpc_ops; v4.0 and v4.1 keep sharing a client. The files\nlayout driver passes the 4 it already hardcodes at connect time.",
   "datePublished": "Sep 17, 2026, 4:06:12 PM",
-  "dateUpdated": "Sep 17, 2026, 4:06:12 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:58:00 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ffb100b0da0e217d5d63ce6fe092f9c29e59f7dd",
     "https://git.kernel.org/stable/c/02e160922bc83cd25e346a028ed43cbdb0b57e1a",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/13c23c5cb977f66390795437fd3837887ce1fd75"
   ],
   "aliases": [
-    "CVE-2026-90102"
+    "CVE-2026-90102",
+    "GHSA-wj5v-2g3c-hmrh"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.7,
   "enisaIdProduct": [
     {
       "id": "0bc41842-5996-3e08-a6d8-2bf010925164",
@@ -100,16 +103,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "58d55c06-f462-311b-98b9-85308968aa42",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "5f01bdef-ac78-322c-8db0-ca4f7a4d4e22",
@@ -200,6 +193,16 @@
         }
       },
       "product_version": "patch: 6.6.157"
+    },
+    {
+      "id": "f1beb985-eb43-3425-b5ac-11f4c4bddd11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

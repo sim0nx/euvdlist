@@ -3,9 +3,12 @@
   "enisaUuid": "bd42215a-8eb1-3855-ba1c-1b549e58d289",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnamespace: handle mount locking for automounts correctly\n\nIf mounts are propagated across user namespaces, attach_recursive_mnt()\nlocks every copy of the source mount to protect overmounts from\nvanishing and revealing the underlying files or directories.\n\nThe user namespace is taken from the caller's mount namespaces since\nthis is where the mounts end up. Except, that's not always true.\nAutomounts may legitimately get popped in by tasks located in a\ndifferent mount and user namespace during path lookup.\n\nThen check doesn't make sense at that point. The copy in the namespace\nof the parent - which may be the host's - is now locked and the host\ncannot change the flags of its own mounts anymore.\n\nHere's the reproducer:\n\n- host has debugfs mounted nosuid,nodev,noexec and shared\n- tracefs automount below it is not yet active\n- hand a child process a directory descriptor on that mount\n- child process enters auser and mount namespace\n- child process' namespace now holds a locked copy of the host's debugfs\n  mount that receives propagation from it\n- child process stats \"tracing/.\" through the descriptor\n- lookup runs on the host's mount so the automount lands below the host's mount\n- propagation puts a copy below the child's copy\n- both try to clear the flags on the mount they got, with a bind remount:\n\n    host, on its own automount:            MS_REMOUNT|MS_BIND = EPERM\n    child, on the copy in its namespace:   MS_REMOUNT|MS_BIND = 0\n\nSo the lock landed on the host's mount instead of the child's copy.\nCongrats. So we need to compare with the owner of the namespace the\nmount actually gets mounted on. For all regular cases that is the\ncaller's mount namespace and so nothing changes.\n\nDetached trees in anonymous mount namespaces by be handed over via\nSCM_RIGHTS or inherited in other ways on purpose so the attaching task's\nmount namespace is authoritative, not the creator of the detached tree.",
   "datePublished": "Oct 23, 2026, 12:19:50 PM",
-  "dateUpdated": "Oct 23, 2026, 12:19:50 PM",
+  "dateUpdated": "Oct 30, 2026, 12:40:39 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/f9b488641cfa63f9b41321530c543688b2e34f03",
+    "https://git.kernel.org/stable/c/91676705756af6a59a515087b8b854c8a28d12eb",
+    "https://git.kernel.org/stable/c/587d25c4b13d49c8fd05df2f71240f73bb2a058c",
     "https://git.kernel.org/stable/c/5e8f3ac8fa3d411b422ad32b9168c46a4824cc79",
     "https://git.kernel.org/stable/c/b3ccde78f1608836e62320428abc0e8aa9cf2329",
     "https://git.kernel.org/stable/c/e01c79761c7b3373e80094c5eadb21cb864fa8bc",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/33aadc7c72055fca93cb5a3691d836ebf8b31c9b"
   ],
   "aliases": [
-    "CVE-2026-98977"
+    "CVE-2026-98977",
+    "GHSA-qrj7-g2h3-853j"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "1e90f806-50d7-330b-8bd1-6ac3ba9126c6",
@@ -49,6 +53,16 @@
       "product_version": "patch: 6.6.160"
     },
     {
+      "id": "345fc1e3-cdbb-3cc1-8502-662d67f4fbbe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "132c94e31b8bca8ea921f9f96a57d684fa4ae0a9 <587d25c4b13d49c8fd05df2f71240f73bb2a058c"
+    },
+    {
       "id": "39442248-fa93-34f0-bde4-45656482ac9c",
       "product": {
         "name": "Linux",
@@ -77,6 +91,36 @@
         }
       },
       "product_version": "132c94e31b8bca8ea921f9f96a57d684fa4ae0a9 <5e8f3ac8fa3d411b422ad32b9168c46a4824cc79"
+    },
+    {
+      "id": "7b1acb3e-9544-38a8-8122-4f28cdb442f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "85ce54a3-b13c-3b29-82c6-4a7c2e7c44b3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "8a290732-baba-3f6e-a4da-6913762deab3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "a1c349c8-b9c1-36e4-8233-fbf96dc834fc",
@@ -109,6 +153,16 @@
       "product_version": "132c94e31b8bca8ea921f9f96a57d684fa4ae0a9 <b3ccde78f1608836e62320428abc0e8aa9cf2329"
     },
     {
+      "id": "a75fe30a-3aa3-3da5-b1c8-5114f477adf9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "132c94e31b8bca8ea921f9f96a57d684fa4ae0a9 <91676705756af6a59a515087b8b854c8a28d12eb"
+    },
+    {
       "id": "b107437d-8bdd-38b1-a7f1-e17da5c2a8bd",
       "product": {
         "name": "Linux",
@@ -127,6 +181,16 @@
         }
       },
       "product_version": "patch: 7.3"
+    },
+    {
+      "id": "b266377a-a3dd-32d5-a829-00e20d757402",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "132c94e31b8bca8ea921f9f96a57d684fa4ae0a9 <f9b488641cfa63f9b41321530c543688b2e34f03"
     },
     {
       "id": "d2788655-2f5a-3b9b-a5b2-20b935a3bd42",

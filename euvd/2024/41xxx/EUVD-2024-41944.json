@@ -1,0 +1,90 @@
+{
+  "id": "EUVD-2024-41944",
+  "enisaUuid": "5d10c43d-a8c1-3c01-86a8-5801dfa513fe",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/xe: prevent UAF around preempt fence\n\nThe fence lock is part of the queue, therefore in the current design\nanything locking the fence should then also hold a ref to the queue to\nprevent the queue from being freed.\n\nHowever, currently it looks like we signal the fence and then drop the\nqueue ref, but if something is waiting on the fence, the waiter is\nkicked to wake up at some later point, where upon waking up it first\ngrabs the lock before checking the fence state. But if we have already\ndropped the queue ref, then the lock might already be freed as part of\nthe queue, leading to uaf.\n\nTo prevent this, move the fence lock into the fence itself so we don't\nrun into lifetime issues. Alternative might be to have device level\nlock, or only release the queue in the fence release callback, however\nthat might require pushing to another worker to avoid locking issues.\n\nReferences: https://gitlab.freedesktop.org/drm/xe/kernel/-/issues/2454\nReferences: https://gitlab.freedesktop.org/drm/xe/kernel/-/issues/2342\nReferences: https://gitlab.freedesktop.org/drm/xe/kernel/-/issues/2020\n(cherry picked from commit 7116c35aacedc38be6d15bd21b2fc936eed0008b)",
+  "datePublished": "Sep 13, 2024, 5:29:15 AM",
+  "dateUpdated": "Aug 5, 2026, 11:37:56 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/10081b0b0ed201f53e24bd92deb2e0f3c3e713d4",
+    "https://git.kernel.org/stable/c/730b72480e29f63fd644f5fa57c9d46109428953"
+  ],
+  "aliases": [
+    "CVE-2024-46683",
+    "GHSA-w6fj-6wrc-6vhr"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "02954e92-98eb-394a-9713-db6069630769",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "3a8fd90b-9a48-38b8-a8d8-8af56e3265eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.8"
+    },
+    {
+      "id": "4e02a101-664d-358d-8c6f-1c09361acacf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dd08ebf6c3525a7ea2186e636df064ea47281987 <730b72480e29f63fd644f5fa57c9d46109428953"
+    },
+    {
+      "id": "6c6ff7a0-902b-3c86-864f-30333904c91b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "a12aff11-5c02-353f-a3aa-9d07522e3864",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.8"
+    },
+    {
+      "id": "e4e33661-f914-353b-a1fc-5e0714ade1ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "dd08ebf6c3525a7ea2186e636df064ea47281987 <10081b0b0ed201f53e24bd92deb2e0f3c3e713d4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d02e3d23-fb63-37f1-9726-ba6749950e6c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

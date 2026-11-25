@@ -3,8 +3,10 @@
   "enisaUuid": "9625eb0d-107f-3eb7-9323-fb12594f3bb5",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipc: limit next_id allocation to the valid ID range\n\nThe checkpoint/restore sysctl path can request the next SysV IPC id\nthrough ids->next_id.  ipc_idr_alloc() currently forwards that request to\nidr_alloc() with an open-ended upper bound.\n\nIf the valid tail of the SysV IPC id space is full, the allocation can\nspill beyond ipc_mni.  The returned SysV IPC id still uses the normal\nindex encoding, so later lookup and removal can target the wrong slot. \nThis leaves the real IDR entry behind and breaks the IDR state for the\nobject.\n\nThe bug is in ipc_idr_alloc() in the checkpoint/restore path.\n\n1. ids->next_id is passed to:\n\n       idr_alloc(&ids->ipcs_idr, new, ipcid_to_idx(next_id), 0, ...)\n\n2. The zero upper bound makes the allocation effectively open-ended.\n   Once the valid SysV IPC tail is occupied, idr_alloc() can spill past\n   ipc_mni and allocate an entry beyond the valid IPC id range.\n\n3. The new object id is still encoded with the narrower SysV IPC index\n   width:\n\n       new->id = (new->seq << ipcmni_seq_shift()) + idx\n\n4. Later removal goes through ipc_rmid(), which uses:\n\n       ipcid_to_idx(ipcp->id)\n\n   That truncates the real IDR index. An object actually stored at a\n   high index can then be removed as if it lived at a low in-range\n   index.\n\n5. For shared memory, shm_destroy() frees the current object anyway, but\n   the real high IDR slot is left behind as a dangling pointer.\n\n6. A subsequent walk of /proc/sysvipc/shm reaches the stale IDR entry\n   and dereferences freed memory.\n\nPrevent this by bounding the requested allocation to ipc_mni so the\ncheckpoint/restore path fails once the valid range is exhausted.",
   "datePublished": "Jun 24, 2026, 7:14:17 AM",
-  "dateUpdated": "Jun 24, 2026, 7:14:17 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:47:07 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/3bbe2bb9111ce6967a951bfac79af142d816fae5",
     "https://git.kernel.org/stable/c/8c58a92849175f5e2ab7bc2734b3b89afe79f6ef",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/fa0b9b2b7ae3539908d69c2b9ac0d144d9bc5139"
   ],
   "aliases": [
+    "GHSA-m237-4jxg-w5jh",
     "CVE-2026-52923"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "2f156216-b1fd-35fa-ac4e-345b8e9dc5fe",

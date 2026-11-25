@@ -3,7 +3,7 @@
   "enisaUuid": "4c2a0253-b286-3e12-acae-3873cb20cb30",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: hhf: clamp quantum before hhf_change() to avoid overflow\n\nhhf_init() sets q->quantum = psched_mtu(qdisc_dev(sch)) with no overflow\ncheck. A device with a huge MTU (e.g. dummy with max_mtu == 0 accepting\nMTU 2147483634) makes weight * quantum overflow the signed deficit in\nhhf_dequeue(), spinning forever.\n\nClamp q->quantum before hhf_change() so both the opt and !opt paths see\na sane quantum. Without this, bare \"tc qdisc add ... hhf\" succeeds with\na clamped quantum but \"tc qdisc add ... hhf limit 1000\" (any option\npresent) fails with -EINVAL because hhf_change() re-validates the\nunclamped default (sch_hhf.c:559). 256 matches fq_codel's floor and is\na sane minimum for a DRR quantum.\n\nConditions to recreate the bug: a device whose MTU (plus\nhard_header_len) wraps psched_mtu() into the sign bit (e.g. a dummy\ndevice with max_mtu == 0 accepting MTU 2147483634). Requires\nCAP_NET_ADMIN in a user namespace.",
   "datePublished": "Sep 17, 2026, 4:05:53 PM",
-  "dateUpdated": "Sep 17, 2026, 4:05:53 PM",
+  "dateUpdated": "Oct 19, 2026, 8:57:30 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2e0f0729f922c8de13801004e2131b57646c7c5f",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/2164b512b97bb053e8ce4d6e95576f11bed6a005"
   ],
   "aliases": [
-    "CVE-2026-90073"
+    "CVE-2026-90073",
+    "GHSA-xxq9-2g6r-mm98"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0929e87e-b203-3326-b767-8708ed0865a7",
@@ -52,6 +53,16 @@
       "product_version": "10239edf86f137ce4c39b62ea9575e8053c549a0 <dea2789a9d5ff38bdd77f2e64d550430899e2839"
     },
     {
+      "id": "30cea85d-e2d2-30de-847a-1b56cea85bc6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "39cd81b1-f4fc-30c3-9cb6-71a043e6376e",
       "product": {
         "name": "Linux",
@@ -60,16 +71,6 @@
         }
       },
       "product_version": "patch: 5.10.270"
-    },
-    {
-      "id": "54fcb45b-057e-365b-81a6-96500c14c12f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "83cf4bcf-e719-3d3b-8e50-4a9b2b826f6a",

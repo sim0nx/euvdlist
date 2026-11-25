@@ -3,18 +3,22 @@
   "enisaUuid": "b8910c53-70c2-321a-be24-327f6a33801a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: flush and commit data before querying allocated ranges\n\nThe mode 0 / FALLOC_FL_KEEP_SIZE fallocate emulation for small interior\nranges in smb3_simple_fallocate_range() issues\nFSCTL_QUERY_ALLOCATED_RANGES and zero-fills any sub-range the server\nreports as an unallocated hole, to force block allocation without\nchanging file contents.\n\nThis is unsafe against Windows servers.  Per the Win32 documentation,\nFSCTL_QUERY_ALLOCATED_RANGES only reports ranges that *may* contain\nnonzero data and is explicitly not coherent with recently written data:\n\n  \"a call to FSCTL_QUERY_ALLOCATED_RANGES [after writing to a network\n   file] would not necessarily return a correct list of allocated\n   regions.  To ensure coherency [...] flush the data to the file\"\n\nfsx (generic/363) reproduces the resulting corruption against Windows\nServer 2022: a range is written, an uncached read returns the data, yet\nthe next FSCTL_QUERY_ALLOCATED_RANGES on that range reports it as a whole\nhole, so the emulation overwrites live data with zeroes.  A network trace\nconfirmed the WRITE, the READ returning data and the query returning an\nempty range list within microseconds.  Samba does not exhibit this; its\nquery is coherent with the written data.\n\nWrite back the dirty pages, drain any outstanding I/O and issue an SMB2\nFLUSH to force the server to commit the data before querying the\nallocated ranges, so the query reflects the data actually present.\n\nWith this, generic/363 passes against both Windows Server 2022 and Samba\nover 100000 fsx operations.",
   "datePublished": "Oct 18, 2026, 3:45:52 PM",
-  "dateUpdated": "Oct 18, 2026, 3:45:52 PM",
+  "dateUpdated": "Nov 23, 2026, 8:00:11 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/697949f6b226084bf3697a3b699b00b4bcfee100",
+    "https://git.kernel.org/stable/c/a6891ec0e940380844dd335f87c3bece299470ea",
+    "https://git.kernel.org/stable/c/6787575545cd8af1da3778d7c1ae43a4398a6b26",
     "https://git.kernel.org/stable/c/f82242fe3109a3ef72f429540b5bdde08fbfb0e4",
     "https://git.kernel.org/stable/c/bf84e44ff0ed802778eafd7ecb623635379cb506",
     "https://git.kernel.org/stable/c/aa994489bd835547c191827acc460192e147032d"
   ],
   "aliases": [
-    "CVE-2026-98684"
+    "CVE-2026-98684",
+    "GHSA-6247-f99h-hr72"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "05eaf6c8-7cb6-3d27-9e3f-1952c9e87191",
@@ -35,6 +39,16 @@
         }
       },
       "product_version": "5e397c943424de94879830e72c95f2679e297a76"
+    },
+    {
+      "id": "1b56eeb2-2405-3bb3-a565-e9b52af13782",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "2b29cd1d-60e1-3890-8a21-b365090c7d8a",
@@ -87,6 +101,16 @@
       "product_version": "patch: 6.18.56"
     },
     {
+      "id": "75a182be-0f65-3eab-b652-e682ef228aec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "76251b22-1b28-34c4-a716-4a90f9f9c0bb",
       "product": {
         "name": "Linux",
@@ -95,6 +119,26 @@
         }
       },
       "product_version": "2f9f4a2d0e6fcf0673ed51195e06e47abe966900"
+    },
+    {
+      "id": "7750fbeb-0ddb-3e40-8a50-14053aece6bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "966a3cb7c7db786452a87afdc3b48858fc4d4d6b <6787575545cd8af1da3778d7c1ae43a4398a6b26"
+    },
+    {
+      "id": "8078b435-7da6-3efb-90f6-f23b7623d1f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "8305378a-7087-3df3-9840-9ff870d608d7",
@@ -117,6 +161,16 @@
       "product_version": "patch: 7.2.10"
     },
     {
+      "id": "b0040871-9bac-32e0-b54a-107abdafa1ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "966a3cb7c7db786452a87afdc3b48858fc4d4d6b <a6891ec0e940380844dd335f87c3bece299470ea"
+    },
+    {
       "id": "b031f6ab-2061-3536-bad2-96b004d5104e",
       "product": {
         "name": "Linux",
@@ -137,6 +191,16 @@
       "product_version": "966a3cb7c7db786452a87afdc3b48858fc4d4d6b <aa994489bd835547c191827acc460192e147032d"
     },
     {
+      "id": "c11051bf-a8bc-3402-beca-d9ca7a73bfb9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "966a3cb7c7db786452a87afdc3b48858fc4d4d6b <697949f6b226084bf3697a3b699b00b4bcfee100"
+    },
+    {
       "id": "e459e608-a24b-3f85-9ae8-8fe53aa96079",
       "product": {
         "name": "Linux",
@@ -147,14 +211,14 @@
       "product_version": "5.13.2 <5.14"
     },
     {
-      "id": "eb7da8ad-2f2e-3850-aa68-c3cd0f0e0151",
+      "id": "ed278329-54ab-3099-82fc-68dcc10c107c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc6"
+      "product_version": "patch: 6.12.117"
     }
   ],
   "enisaIdVendor": [

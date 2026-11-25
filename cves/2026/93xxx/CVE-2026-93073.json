@@ -3,7 +3,7 @@
   "enisaUuid": "71715726-30b3-376f-bedb-451bf2a17ffc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndax: read holder_ops once in dax_holder_notify_failure()\n\ndax_holder_notify_failure() reads dax_dev->holder_ops twice without\nREAD_ONCE() -- once for the NULL check and once for the indirect\nnotify_failure() call. A concurrent fs_put_dax() can clear holder_ops\nbetween the two reads, so the check can observe a non-NULL pointer while\nthe call dereferences NULL. (kill_dax() also clears holder_ops, but only\nafter synchronize_srcu(), so it cannot race a reader that is inside\ndax_read_lock(); fs_put_dax() does no such synchronization.)\n\nFetch holder_ops once into a local with READ_ONCE() so the NULL check and\nthe indirect call observe the same value.",
   "datePublished": "Sep 17, 2026, 4:10:56 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:56 PM",
+  "dateUpdated": "Oct 19, 2026, 9:05:09 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1661b9bf78def01a8c96409569772d9b2592f4ba",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/7ae9d15bdcde0f2955ae13b6a95587f9e23b2359"
   ],
   "aliases": [
-    "CVE-2026-93073"
+    "CVE-2026-93073",
+    "GHSA-xxf3-2jmr-5rfc"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "019d9cf8-1124-37dd-a238-21861a252629",
@@ -28,16 +29,6 @@
         }
       },
       "product_version": "patch: 7.2.6"
-    },
-    {
-      "id": "0ddc9ee0-160c-3160-9a87-edcfb482e2b6",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "166896ca-36f2-3804-9e51-f54991b4c566",
@@ -128,6 +119,16 @@
         }
       },
       "product_version": "8012b866085523758780850087102421dbcce522 <7ae9d15bdcde0f2955ae13b6a95587f9e23b2359"
+    },
+    {
+      "id": "bbaf2d71-61b8-3783-b9eb-74e6bf82923d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "cc396513-0831-3fc3-81c6-197af2617ad2",

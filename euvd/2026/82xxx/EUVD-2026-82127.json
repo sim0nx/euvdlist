@@ -3,9 +3,10 @@
   "enisaUuid": "73f2b0d8-53ca-318d-884a-4c5b34f5d346",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfirmware: arm_scmi: Fix requested device removal race\n\nscmi_protocol_device_unrequest() drops scmi_requested_devices_mtx while\nnotifying listeners but continues to retain the per-protocol list head.\nWhen two SCMI drivers for the same protocol unregister concurrently, one\nthread can remove the final request and free the list head while the other\nis running its notifier. The latter then dereferences the freed list head\nafter reacquiring the mutex and can free it a second time.\n\nComplete the list and IDR updates, including freeing an empty list head,\nbefore dropping the mutex. Keep the blocking notifier outside the critical\nsection and retain only the detached request across the callback.",
   "datePublished": "Sep 17, 2026, 4:10:18 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:18 PM",
+  "dateUpdated": "Oct 30, 2026, 12:35:44 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/803e50af43ab1c3f76cbc744e496532ec151f305",
     "https://git.kernel.org/stable/c/2ff7713b7308cd6bea3328f7cd750b5eaab42af3",
     "https://git.kernel.org/stable/c/1c35915eaaa81a12340c838c5c2ccb02be2194c3",
     "https://git.kernel.org/stable/c/c3d4ef1c0ca6917aad6f1093b49f3932944a8c19",
@@ -13,10 +14,11 @@
     "https://git.kernel.org/stable/c/2c4097e6c4aed276c5e9ec2ab331ab397ea780bf"
   ],
   "aliases": [
-    "CVE-2026-92506"
+    "CVE-2026-92506",
+    "GHSA-5f27-8j35-25fh"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "17c8c555-7ef3-32db-a039-e13104439fd7",
@@ -69,6 +71,26 @@
       "product_version": "patch: 6.6.157"
     },
     {
+      "id": "846c2397-b852-3da9-86f5-4530588af533",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a6fe96b2e371d5fd300cca24459cdcf471c2c741 <803e50af43ab1c3f76cbc744e496532ec151f305"
+    },
+    {
+      "id": "98d73594-cce3-3d62-a6ee-4c2f59b38a0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "9f7eba8c-6fc4-3d20-95e2-0d92ea2b2b0b",
       "product": {
         "name": "Linux",
@@ -77,16 +99,6 @@
         }
       },
       "product_version": "patch: 6.18.52"
-    },
-    {
-      "id": "a28b4869-e169-3b15-8ea6-b522736d85dc",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "bab0370a-85c9-39a0-a514-5ee6fa66b2a5",

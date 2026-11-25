@@ -3,7 +3,7 @@
   "enisaUuid": "df2089fa-24f5-3c70-8907-546c52cd1093",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: usb-audio: fix stack info leak in RME Digiface status\n\nsnd_rme_digiface_read_status() reads a four-word status block from the\ndevice into an uninitialised on-stack __le32 buf[4] and, whenever the\nvendor control-IN transfer does not return a negative error, copies all\nfour words into the caller's status[].\n\nsnd_usb_ctl_msg() copies the full requested size back into the caller's\nbuffer regardless of how many bytes the data stage actually delivered:\n\n\tbuf = kmemdup(data, size, GFP_KERNEL);\n\terr = usb_control_msg(dev, pipe, request, requesttype,\n\t\t\t      value, index, buf, size, timeout);\n\tmemcpy(data, buf, size);\n\nusb_control_msg() returns the transferred length on a short control-IN,\nwhich is a non-negative value, and writes only that many bytes.  The\nremainder of the copy back is the kmemdup()ed image of the caller's\nbuffer, so a device answering with a short data stage leaves the\ntrailing words of buf[] holding leftover kernel stack.  The only guard\nin the caller is err < 0, so those words are stored into status[].\n\nThey then reach user space: snd_rme_digiface_get_status_val() selects a\n16-bit halfword of status[] per the control's reg/mask, and the eight\nDigiface status controls together expose the whole 16-byte frame to an\nunprivileged reader of /dev/snd/controlC*.\n\nZero-initialise the buffer so a short read yields zeros instead of stack\nresidue.  This mirrors snd_rme_get_status1(), which already clears its\noutput word before the same kind of vendor read.\n\nDiscovered by XBOW, triaged by Baul Lee <baul.lee@xbow.com>",
   "datePublished": "Aug 15, 2026, 12:27:26 PM",
-  "dateUpdated": "Aug 15, 2026, 12:27:26 PM",
+  "dateUpdated": "Aug 17, 2026, 5:20:38 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b3a346d5c99dd73cf84711f2a43e42691990efd2",
@@ -12,21 +12,12 @@
     "https://git.kernel.org/stable/c/441aaad150c57edaf57ee482a79a3bf4c5b7e353"
   ],
   "aliases": [
-    "CVE-2026-74500"
+    "CVE-2026-74500",
+    "GHSA-fgmp-3fcj-wj99"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
-    {
-      "id": "0133dc53-7d77-3d86-9720-98cdf95f82f7",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc6"
-    },
     {
       "id": "101b5458-58d5-3302-b29e-e5094688fbdc",
       "product": {
@@ -146,6 +137,16 @@
         }
       },
       "product_version": "6.12"
+    },
+    {
+      "id": "cbc9cfc4-7036-32be-8360-11658c0b0d16",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "e16c2f19-e03f-38bd-a25f-c54f573189b9",

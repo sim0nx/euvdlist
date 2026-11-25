@@ -1,0 +1,111 @@
+{
+  "id": "EUVD-2024-23885",
+  "enisaUuid": "2e317cfd-c1b4-3b12-a573-e0a58ea74cb8",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npds_core: Prevent race issues involving the adminq\n\nThere are multiple paths that can result in using the pdsc's\nadminq.\n\n[1] pdsc_adminq_isr and the resulting work from queue_work(),\n    i.e. pdsc_work_thread()->pdsc_process_adminq()\n\n[2] pdsc_adminq_post()\n\nWhen the device goes through reset via PCIe reset and/or\na fw_down/fw_up cycle due to bad PCIe state or bad device\nstate the adminq is destroyed and recreated.\n\nA NULL pointer dereference can happen if [1] or [2] happens\nafter the adminq is already destroyed.\n\nIn order to fix this, add some further state checks and\nimplement reference counting for adminq uses. Reference\ncounting was used because multiple threads can attempt to\naccess the adminq at the same time via [1] or [2]. Additionally,\nmultiple clients (i.e. pds-vfio-pci) can be using [2]\nat the same time.\n\nThe adminq_refcnt is initialized to 1 when the adminq has been\nallocated and is ready to use. Users/clients of the adminq\n(i.e. [1] and [2]) will increment the refcnt when they are using\nthe adminq. When the driver goes into a fw_down cycle it will\nset the PDSC_S_FW_DEAD bit and then wait for the adminq_refcnt\nto hit 1. Setting the PDSC_S_FW_DEAD before waiting will prevent\nany further adminq_refcnt increments. Waiting for the\nadminq_refcnt to hit 1 allows for any current users of the adminq\nto finish before the driver frees the adminq. Once the\nadminq_refcnt hits 1 the driver clears the refcnt to signify that\nthe adminq is deleted and cannot be used. On the fw_up cycle the\ndriver will once again initialize the adminq_refcnt to 1 allowing\nthe adminq to be used again.",
+  "datePublished": "Mar 6, 2024, 6:45:32 AM",
+  "dateUpdated": "Aug 5, 2026, 11:26:20 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/22cd6046eb2148b18990257505834dd45c672a1b",
+    "https://git.kernel.org/stable/c/5939feb63ea1f011027576c64b68b681cbad31ca",
+    "https://git.kernel.org/stable/c/7e82a8745b951b1e794cc780d46f3fbee5e93447"
+  ],
+  "aliases": [
+    "CVE-2024-26623",
+    "GHSA-3fv7-f54h-j866"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "3067041e-e873-3335-a578-45329a326932",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.16"
+    },
+    {
+      "id": "5ebbce1b-3a8a-3fea-a986-69107ad0d90b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "01ba61b55b2041a39c54aefb3153c770dd59a0ef <7e82a8745b951b1e794cc780d46f3fbee5e93447"
+    },
+    {
+      "id": "6395a9a5-49ce-3adb-9eed-233f3d223476",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "01ba61b55b2041a39c54aefb3153c770dd59a0ef <22cd6046eb2148b18990257505834dd45c672a1b"
+    },
+    {
+      "id": "7d865971-6aa9-36f4-a46d-f8c90515cc50",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.4"
+    },
+    {
+      "id": "923764f4-e894-3d87-b20b-bcc2273cb85b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "b4c4b511-8908-31ea-9696-26a48c59f84f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "01ba61b55b2041a39c54aefb3153c770dd59a0ef <5939feb63ea1f011027576c64b68b681cbad31ca"
+    },
+    {
+      "id": "cc0aa96b-bcdd-347b-a3c2-6ee34b63c66a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "db512992-88e7-3b04-8c50-75ee873ac7b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e6810d46-a303-32b1-9f53-a7525498cba2",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

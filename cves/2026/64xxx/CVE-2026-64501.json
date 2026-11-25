@@ -3,29 +3,22 @@
   "enisaUuid": "cb44681d-9cdf-3228-a97f-6949fed69f5d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niio: adc: ad_sigma_delta: fix CS held asserted and state leaks\n\nIn ad_sigma_delta_single_conversion(), set_mode(AD_SD_MODE_IDLE) and\ndisable_one() were called from the out: block while keep_cs_asserted\nwas still true. This caused any SPI transfer issued by those callbacks\nto carry cs_change=1, leaving CS permanently asserted after the\nconversion. Fix by moving both calls into the out_unlock: block, after\nkeep_cs_asserted is cleared, matching the pattern already used in\nad_sd_calibrate().\n\nIn the error path of ad_sd_buffer_postenable(), if an operation fails\nafter set_mode(AD_SD_MODE_CONTINUOUS) has already succeeded (e.g.\nspi_offload_trigger_enable()), the device is left in continuous\nconversion mode with CS physically asserted. Additionally,\nbus_locked remaining true after spi_bus_unlock() causes subsequent\nSPI operations to call spi_sync_locked() without the bus lock actually\nheld, allowing concurrent SPI access.\n\nFix the error path by clearing keep_cs_asserted first, then calling\nset_mode(AD_SD_MODE_IDLE) to revert the device mode and deassert CS,\nthen clearing bus_locked before releasing the bus.\n\nFor devices that implement neither set_mode nor disable_one (such as\nMAX11205, which has no physical CS pin), no SPI transfer is issued\nduring cleanup and the cs_change flag has no effect on any physical\nline.",
   "datePublished": "Jul 25, 2026, 8:51:56 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:56 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:56:51 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/c313bb7c38855e94ceef939d152dd75e5a904b5f",
     "https://git.kernel.org/stable/c/f1de829ee87a1198d3465493ce430d36c5fa029c",
     "https://git.kernel.org/stable/c/c72da0688575e5ef39c36bb44fed53aa18f8ae65"
   ],
   "aliases": [
-    "CVE-2026-64501"
+    "CVE-2026-64501",
+    "GHSA-8j65-cc62-w2hg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
-    {
-      "id": "142a227c-b3a8-3927-9b93-788d2f747e0b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
     {
       "id": "3eafd6d8-c7a1-3a6c-ad7e-95e8a6f7c988",
       "product": {
@@ -45,6 +38,16 @@
         }
       },
       "product_version": "132d44dc6966c1cf841ffe0f6f048165687e870b <f1de829ee87a1198d3465493ce430d36c5fa029c"
+    },
+    {
+      "id": "825b28bc-90e6-32d4-ab0a-17a347a2c9fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "9bbab537-a818-388d-b88f-bb72e2108f00",

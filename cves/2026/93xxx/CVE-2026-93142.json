@@ -3,7 +3,7 @@
   "enisaUuid": "cc6fa229-9ad3-34f2-b86c-0b1375ad653a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nthermal/drivers/rcar: Fix error checking in probe()\n\nThis code accidentally calls thermal_zone_device_enable() before checking\nwhether thermal_zone_device_register_with_trips() failed.  Move the call\nuntil later to avoid an error pointer dereference of \"priv->zone\".\n\nThe driver works differently depending on if we are using OF thermal or\nnot.  We use thermal_add_hwmon_sysfs() if we are using OF thermal and\ncall thermal_zone_device_enable() if not.  We can share same error check\nfor if either of these fail.\n\nMoving the thermal_zone_device_enable() call is a bit cleaner as well.\nThe original code used a three step process to cleanup:\n1. Call thermal_zone_device_unregister() to cleanup.\n2. Set priv->zone to an error pointer to preserve the error code.\n3. Set priv->zone to NULL to avoid a second call to\n   thermal_zone_device_unregister() in the rcar_thermal_remove()\n   function.\n\nNow we can just do a direct goto error_unregister and rcar_thermal_remove()\nhandles the cleanup properly.",
   "datePublished": "Sep 17, 2026, 4:11:41 PM",
-  "dateUpdated": "Sep 17, 2026, 4:11:41 PM",
+  "dateUpdated": "Oct 19, 2026, 9:06:14 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/a85bcd0c7ef66e3404b3c99e5589c5ea622a757e",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/dd04ad1cdabcad51e34b74b4e91b9aeb7180d05d"
   ],
   "aliases": [
-    "CVE-2026-93142"
+    "CVE-2026-93142",
+    "GHSA-hm78-cgjx-c8pf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "042b9d63-8994-3efd-824b-1f4ef40fa07a",
@@ -100,14 +101,14 @@
       "product_version": "bbcf90c0646ac797700269fa6645a6a46466c79f <35bf61798e7d4abf39667d98f298f793b3dd9bbe"
     },
     {
-      "id": "a136182b-cae7-3c83-b101-8286a571d3aa",
+      "id": "b47ecd65-f2a8-3e63-8a8d-92000725de91",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "cd9d8ba3-8ba9-3118-a55b-d56b2c56bbe5",

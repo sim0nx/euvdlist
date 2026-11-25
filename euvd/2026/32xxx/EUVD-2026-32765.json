@@ -3,8 +3,10 @@
   "enisaUuid": "ed488418-0ed7-3902-809e-08a1b15f92c6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: hci_event: Fix OOB read and infinite loop in hci_le_create_big_complete_evt\n\nhci_le_create_big_complete_evt() iterates over BT_BOUND connections for\na BIG handle using a while loop, accessing ev->bis_handle[i++] on each\niteration.  However, there is no check that i stays within ev->num_bis\nbefore the array access.\n\nWhen a controller sends a LE_Create_BIG_Complete event with fewer\nbis_handle entries than there are BT_BOUND connections for that BIG,\nor with num_bis=0, the loop reads beyond the valid bis_handle[] flex\narray into adjacent heap memory.  Since the out-of-bounds values\ntypically exceed HCI_CONN_HANDLE_MAX (0x0EFF), hci_conn_set_handle()\nrejects them and the connection remains in BT_BOUND state.  The same\nconnection is then found again by hci_conn_hash_lookup_big_state(),\ncreating an infinite loop with hci_dev_lock held.\n\nFix this by terminating the BIG if in case not all BIS could be setup\nproperly.",
   "datePublished": "May 28, 2026, 9:35:54 AM",
-  "dateUpdated": "May 28, 2026, 9:35:54 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:36:52 PM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/6cb7f67bc28da787499291a562d49a084d9c90cd",
     "https://git.kernel.org/stable/c/22559ad7654f61727fc270ee4893da9f4b70cf17",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/5ddb8014261137cadaf83ab5617a588d80a22586"
   ],
   "aliases": [
+    "GHSA-wf79-2h53-8gvp",
     "CVE-2026-46138"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.28,
   "enisaIdProduct": [
     {
       "id": "1b147cad-3142-3cd5-bf84-268f36a2855c",
@@ -77,16 +80,6 @@
         }
       },
       "product_version": "a0bfde167b506423111ddb8cd71930497a40fc54 <6cb7f67bc28da787499291a562d49a084d9c90cd"
-    },
-    {
-      "id": "7fd0414d-59e7-37c0-a74e-0fad46fb172e",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc3"
     },
     {
       "id": "8b6a4d38-376e-3697-9ff1-66782117801f",
@@ -157,6 +150,16 @@
         }
       },
       "product_version": "patch: 6.6.140"
+    },
+    {
+      "id": "d7719640-1336-3856-b31e-0334a5900b51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "d99bb011-7b03-37d7-804a-929f9e020c89",

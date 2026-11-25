@@ -3,19 +3,22 @@
   "enisaUuid": "aa7b0975-3186-3636-9347-b3ff57834590",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnvme-fabrics: fix DHCHAP secret leak on parse failure\n\nnvmf_parse_options() duplicates dhchap_secret and dhchap_ctrl_secret\nwith match_strdup() before validating the DHHC-1: representation.\n\nIf validation fails, the parser returns -EINVAL before the temporary\nstring in p is assigned to opts->dhchap_secret or\nopts->dhchap_ctrl_secret. nvmf_create_ctrl() subsequently frees opts,\nbut nvmf_free_options() cannot release the unassigned temporary string.\nEach rejected option therefore leaks one allocation.\n\nThis is easy to miss because valid secrets transfer ownership to opts\nand are freed normally, while the malformed-secret path still returns\nthe expected -EINVAL to userspace.\n\nWith CONFIG_NVME_HOST_AUTH enabled, the leak is reachable before the\nrequired-option checks and transport lookup. No NVMe-oF target or\nworking transport connection is required; for example, repeatedly\nwriting\n\n\tdhchap_secret=BAD\n\nor\n\n\tdhchap_ctrl_secret=BAD\n\nto /dev/nvme-fabrics deterministically takes the leaking parse path.\n\nFree the temporary string before leaving both validation error paths.\nUse kfree_sensitive() because the copied option may contain secret\nmaterial even when its representation is rejected, matching the\nsensitive cleanup used for stored DHCHAP secrets.",
   "datePublished": "Sep 16, 2026, 10:32:53 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:53 AM",
+  "dateUpdated": "Oct 30, 2026, 12:33:39 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/35ec48228f6739339583e5a73ca315156372e30d",
+    "https://git.kernel.org/stable/c/3ce0e9b43f355dfa0bdc0e0dd889795752285791",
     "https://git.kernel.org/stable/c/702c1ae0d31b44828ec3c87079def490c1ee1fb3",
     "https://git.kernel.org/stable/c/15d7a35a489287109b5a7c157d53d9b8214f0318",
     "https://git.kernel.org/stable/c/d21da6cc91ba1c4f1ae5ba007f3cb89e1c0c7549",
     "https://git.kernel.org/stable/c/afdee49a1b88ed9bb44e2b30e855297c169bcc53"
   ],
   "aliases": [
-    "CVE-2026-89975"
+    "CVE-2026-89975",
+    "GHSA-9hxp-3v8h-pjp2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.23,
   "enisaIdProduct": [
     {
       "id": "01b034a9-9a14-3075-a223-384ad16a6f85",
@@ -58,6 +61,16 @@
       "product_version": "f50fff73d620cd6e8f48bc58d4f1c944615a3fea <afdee49a1b88ed9bb44e2b30e855297c169bcc53"
     },
     {
+      "id": "5a2f5b5f-6579-3204-a2fb-1f3fa1586f0a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f50fff73d620cd6e8f48bc58d4f1c944615a3fea <35ec48228f6739339583e5a73ca315156372e30d"
+    },
+    {
       "id": "5f9547bd-071a-395f-a455-d08ce35ed341",
       "product": {
         "name": "Linux",
@@ -88,14 +101,14 @@
       "product_version": "patch: 7.2.5"
     },
     {
-      "id": "a2a8e3b6-d25d-31c8-939e-8f0eae05457a",
+      "id": "d28af492-2ae8-3df6-95ec-1b112efd1031",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc2"
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "d9989f33-17ea-378b-ac48-ade66d5dd4b8",
@@ -116,6 +129,36 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "e2a59dcd-3156-368c-b001-009012efdc6b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "ea22d986-a12c-3c72-81c7-825757cd5297",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "eeb9d0f2-2afb-35aa-97e8-06c4ae069429",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f50fff73d620cd6e8f48bc58d4f1c944615a3fea <3ce0e9b43f355dfa0bdc0e0dd889795752285791"
     }
   ],
   "enisaIdVendor": [

@@ -3,7 +3,7 @@
   "enisaUuid": "493593af-b92b-30d0-bf7c-094c1eb241c7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nPCI: mediatek: Fix IRQ domain leak when port fails to enable\n\nWhen mtk_pcie_enable_port() fails, mtk_pcie_port_free() removes the port\nfrom pcie->ports and frees the port structure. However, the IRQ domains set\nup earlier by mtk_pcie_init_irq_domain() are never freed.\n\nFix this by refactoring mtk_pcie_irq_teardown() into a per-port helper,\nmtk_pcie_irq_teardown_port(), and calling it from mtk_pcie_setup() when\nmtk_pcie_enable_port() fails. Since the IRQ teardown must only happen in\nthe probe error path (during resume, child devices may have active MSI\nmappings and the NOIRQ context prohibits sleeping locks),\nmtk_pcie_enable_port() is changed to return an error code so callers can\ndistinguish the two paths and act accordingly.\n\nThis issue was reported by Sashiko while reviewing the EcoNet EN7528 SoC\nsupport series.",
   "datePublished": "Jul 25, 2026, 8:51:28 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:28 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:52 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/e23da72ef202654a7d5269885c4fa39a8404db76",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/f865a57896bd92d7662eb2818d8f48872e2cbbc7"
   ],
   "aliases": [
-    "CVE-2026-64461"
+    "CVE-2026-64461",
+    "GHSA-7rvv-9qxr-rh4x"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "03d4b71b-3115-38cb-b36f-4c61fdc58f5b",
@@ -82,16 +83,6 @@
       "product_version": "patch: 6.12.97"
     },
     {
-      "id": "2ac3cc73-5d1c-3b67-ba66-507cf9fde8fa",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
-    {
       "id": "379d2a71-542d-35e6-81c5-a18dfff3a7fb",
       "product": {
         "name": "Linux",
@@ -140,6 +131,16 @@
         }
       },
       "product_version": "b099631df160ec608cd6147f4d20a8042567a5b8 <fe8c701a53c2816cd82301f66c671d952003c1b0"
+    },
+    {
+      "id": "7ec16a06-04fb-3d2a-8972-79b095061446",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "a0422c7b-eb24-3016-b665-ec78369e7750",

@@ -3,7 +3,7 @@
   "enisaUuid": "1862f99d-c0e3-3c64-ae97-f5922d95300d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: wwan: mhi_wwan_mbim: guard against a cyclic NDP chain\n\nThe NDP traversal in mhi_mbim_rx() only stops when wNextNdpIndex is\nzero.  Nothing requires the offsets to advance, so a modem that\npoints an NDP at itself, or at an earlier NDP, keeps the loop\nspinning forever on one CPU.\n\nBreak out when the next NDP offset is not larger than the current\none.\n\n\nVerified in a QEMU guest with a fault injector feeding the driver's\nreceive callback an NTB whose single NDP points at itself: the\nunpatched driver spins in mhi_mbim_rx() with one CPU pinned at 100%\nand the thread never returns.  With this check the loop terminates\nwithin one iteration.\n\nChanges in v2: move the non-increasing check to the wNextNdpIndex\nretrieval site, as suggested by Loic Poulain, instead of tracking\nthe previous offset in a separate variable.",
   "datePublished": "Oct 6, 2026, 8:45:09 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:09 AM",
+  "dateUpdated": "Oct 19, 2026, 9:16:08 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/3ed36ee1b29b028f6bc2ebe100152f61a33df05a",
@@ -15,10 +15,11 @@
     "https://git.kernel.org/stable/c/5d063822ac5184939c1ed377a339a01d8ae814e8"
   ],
   "aliases": [
-    "CVE-2026-98237"
+    "CVE-2026-98237",
+    "GHSA-p39v-8ggf-chvp"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "12e8ac83-35ac-34c4-9605-3cbce32ee8da",
@@ -49,16 +50,6 @@
         }
       },
       "product_version": "patch: 6.1.189"
-    },
-    {
-      "id": "3ad353d0-6555-3dfd-a64b-b5075efee89f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "563112dc-6516-36e1-b25a-8be354f0c0cd",
@@ -129,6 +120,16 @@
         }
       },
       "product_version": "aa730a9905b7b079ef2fffdab7f15dbb842f5c7c <e4b2c7b50d4f4aa1ddfff731b136d65f65b2b526"
+    },
+    {
+      "id": "b852ff76-bf5c-351a-af0c-6e0ec6fb972a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "b9b159d1-9c60-3bb2-a3a7-a51ef5d05c4a",

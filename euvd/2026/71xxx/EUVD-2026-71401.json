@@ -3,7 +3,7 @@
   "enisaUuid": "536c8dbf-f612-37cd-bdb6-5294d5e8c0cc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfutex: Avoid private hash use-after-free on final put\n\nfutex_private_hash_put() drops the reference to fph before evaluating\nfph->mm for wake_up_var(). futex_ref_put() enables preemption again before\nreturning. If that put drops the final reference and the task is preempted,\nanother task can pivot to the replacement hash and free the old hash after\nan RCU grace period. The first task then reads fph->mm from the freed\nallocation when it resumes.\n\nKASAN reports a slab-use-after-free in futex_private_hash_put(), with the\nread at offset 24 in a freed kmalloc-512 allocation. The allocation and\nfree stacks point to futex_hash_allocate() and the RCU free path,\nrespectively.\n\nLoad the mm pointer while the fph reference is still held and pass the\nsaved value to wake_up_var(). wake_up_var() uses the pointer as a waitqueue\nkey and does not dereference the mm through it.",
   "datePublished": "Sep 4, 2026, 3:12:27 PM",
-  "dateUpdated": "Sep 4, 2026, 3:12:27 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:14 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/dba60d26e9dda3e157ad6b0934d4232f6c6904ee",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/1c7efabfbaf796f11000a46094a69955a01ec6cc"
   ],
   "aliases": [
-    "CVE-2026-80758"
+    "CVE-2026-80758",
+    "GHSA-gw9j-5g8h-92qv"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "04503f3d-19cf-3581-9371-0c6f39d2f18f",
@@ -36,6 +37,16 @@
         }
       },
       "product_version": "bd54df5ea7cadac520e346d5f0fe5d58e635b6ba <12cd315a7b6a7d7db3f69d98bfe3909275e9451d"
+    },
+    {
+      "id": "74075b95-c9e4-39aa-8850-521a68ee55ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "788a7db4-5f4b-3004-9f05-9133a16975ef",
@@ -106,16 +117,6 @@
         }
       },
       "product_version": "patch: 7.1.11"
-    },
-    {
-      "id": "ff347a3e-f08c-3e14-a667-8c4aa6907eb2",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     }
   ],
   "enisaIdVendor": [

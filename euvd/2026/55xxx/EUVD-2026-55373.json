@@ -3,7 +3,7 @@
   "enisaUuid": "42ba3ad3-ac29-38ce-9eec-e490bacfd3da",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdgpu: validate CP_GFX_SHADOW chunk size in CS pass1\n\nAdd a minimum-length check for the AMDGPU_CHUNK_ID_CP_GFX_SHADOW chunk in\namdgpu_cs_pass1(), matching the gate already present for the IB, FENCE and\nBO_HANDLES chunk types.\n\nThe CP_GFX_SHADOW case previously shared a bare break with the dependency\nand syncobj chunk types, which do not dereference a fixed-size struct. When\nuserspace submits this chunk with length_dw == 0, vmemdup_array_user() is\ncalled with size 0 and returns ZERO_SIZE_PTR, which passes the IS_ERR()\ncheck. amdgpu_cs_p2_shadow() then dereferences chunk->kdata as a struct\ndrm_amdgpu_cs_chunk_cp_gfx_shadow (reading shadow->flags), faulting on the\nZERO_SIZE_PTR and causing a NULL-pointer dereference.\n\nThis is reachable by an unprivileged process in the render group. Reject\nundersized chunks with -EINVAL during pass1 so the bad submission is\nrejected before pass2 ever dereferences the data.\n\n(cherry picked from commit 7f61b2eef7415eccdb40850aca0de94211948657)",
   "datePublished": "Aug 10, 2026, 12:01:47 PM",
-  "dateUpdated": "Aug 10, 2026, 12:01:47 PM",
+  "dateUpdated": "Aug 17, 2026, 5:02:05 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/3f190956404da55560056ce20606010e18bc059c",
@@ -13,21 +13,12 @@
     "https://git.kernel.org/stable/c/84c4c36acd5c4b2558b5069f869a165b2c655c84"
   ],
   "aliases": [
+    "GHSA-c7h3-6rq5-x6h3",
     "CVE-2026-68272"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
-    {
-      "id": "0e4a8767-a11a-3035-8dc9-05c3dc517707",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
     {
       "id": "1cf68729-4595-341a-a8f2-16353819079c",
       "product": {
@@ -87,6 +78,16 @@
         }
       },
       "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "6d372b49-b68b-3c1c-887a-3cc731aafc60",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "8513812a-3e17-3c95-a28e-12b5b54f4487",

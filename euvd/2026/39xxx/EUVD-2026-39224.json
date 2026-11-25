@@ -3,8 +3,10 @@
   "enisaUuid": "6b0cea08-b39b-38c5-b496-e1ec4a5eb35c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntee: optee: prevent use-after-free when the client exits before the supplicant\n\nCommit 70b0d6b0a199 (\"tee: optee: Fix supplicant wait loop\") made the\nclient wait as killable so it can be interrupted during shutdown or\nafter a supplicant crash. This changes the original lifetime expectations:\nthe client task can now terminate while the supplicant is still processing\nits request.\n\nIf the client exits first it removes the request from its queue and\nkfree()s it, while the request ID remains in supp->idr. A subsequent\nlookup on the supplicant path then dereferences freed memory, leading to\na use-after-free.\n\nSerialise access to the request with supp->mutex:\n\n  * Hold supp->mutex in optee_supp_recv() and optee_supp_send() while\n    looking up and touching the request.\n  * Let optee_supp_thrd_req() notice that the client has terminated and\n    signal optee_supp_send() accordingly.\n\nWith these changes the request cannot be freed while the supplicant still\nhas a reference, eliminating the race.",
   "datePublished": "Jun 25, 2026, 8:39:57 AM",
-  "dateUpdated": "Jun 25, 2026, 8:39:57 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:57:33 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/416259cb5bffecaaae5f76539deb535a8c1b2c34",
     "https://git.kernel.org/stable/c/724d0caffd4204b46f78efe22f18f8338031c6e1",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/387a926ee166814611acecb960207fe2f3c4fd3e"
   ],
   "aliases": [
+    "GHSA-q972-3fgv-wchc",
     "CVE-2026-53273"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.15,
   "enisaIdProduct": [
     {
       "id": "3b8e0954-b30c-3f06-b6d7-036599750c36",

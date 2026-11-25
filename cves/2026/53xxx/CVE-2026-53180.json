@@ -3,8 +3,10 @@
   "enisaUuid": "6ad1c584-fe63-36b6-8195-824dd97d4191",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntimers/migration: Fix livelock in tmigr_handle_remote_up()\n\ntmigr_handle_remote_cpu() skips timer_expire_remote() when cpu ==\nsmp_processor_id(), assuming the local softirq path already handled this\nCPU's timers.\n\nThis assumption is wrong because jiffies can advance after the handling of\nthe CPU's global timers in run_timer_base(BASE_GLOBAL) and before\ntmigr_handle_remote() evaluates the expiry times.\n\nAs a consequence a timer which expires after the CPU local timer wheel\nadvanced and becomes expired in the remote handling is ignored and the\ncallback is never invoked and removed from the timer wheel.\n\nWhat's worse is that fetch_next_timer_interrupt_remote() keeps reporting it\nas expired, and the event is re-queued with expires == now on each\niteration.  The goto-again loop spins indefinitely.\n\nFix this by calling timer_expire_remote() unconditionally. That's minimal\noverhead for the common case as __run_timer_base() returns immediately if\nthere is nothing to expire in the local wheel.\n\n[ tglx: Amend change log and add a comment ]",
   "datePublished": "Jun 25, 2026, 8:38:55 AM",
-  "dateUpdated": "Jun 25, 2026, 8:38:55 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:57:26 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/07b3b83587fb3012619f4439389b64a955fc7836",
     "https://git.kernel.org/stable/c/1d6c2062b77be09ec15d6bf637b2e2221c4482fc",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/d486b4934a8e504376b85cdb3766f306d57aff5b"
   ],
   "aliases": [
+    "GHSA-gfr2-q5q8-v55v",
     "CVE-2026-53180"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.34,
   "enisaIdProduct": [
     {
       "id": "0b82ae1c-70e2-3646-865a-20f76501e9e7",

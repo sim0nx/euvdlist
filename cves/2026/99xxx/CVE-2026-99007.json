@@ -3,9 +3,12 @@
   "enisaUuid": "48a70433-8cbf-35f4-85d5-8dd3c0d33497",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/fb-helper: defer setup when fbdev_probe() fails, not just on -EAGAIN\n\n__drm_fb_helper_initial_config_and_unlock() calls\ndrm_client_modeset_probe() first, which already fills in each\nmode_set->mode/num_connectors for every connected output, and only\nafterwards calls drm_fb_helper_single_fb_probe() to create\nfb_helper->fb and wire it into those mode_sets via\ndrm_setup_crtcs_fb().\n\nIf drm_fb_helper_single_fb_probe() fails with anything other than\n-EAGAIN (e.g. dev->driver->fbdev_probe() itself fails), the function\nbails out before drm_setup_crtcs_fb() runs and before setting\nfb_helper->deferred_setup. The client is left with mode_sets that\nhave a mode and connectors but mode_set->fb == NULL, and nothing\nmarks this fb_helper as needing a retry.\n\n__drm_fb_helper_restore_fbdev_mode_unlocked() only skips committing\nwhen fb_helper->deferred_setup is set, so a later .restore() call\n(drm_lastclose() on process exit, in this report) commits the stale\nmode_set through drm_client_modeset_commit() ->\ndrm_client_modeset_commit_atomic() -> __drm_atomic_helper_set_config(),\nwhich hits WARN_ON(!set->fb).\n\nMark fb_helper->deferred_setup on any drm_fb_helper_single_fb_probe()\nfailure, not just -EAGAIN, so restore keeps skipping the commit until\na later hotplug event successfully re-probes and re-populates\nmode_set->fb. The real error code is still returned to the caller\nunchanged.",
   "datePublished": "Oct 23, 2026, 12:20:32 PM",
-  "dateUpdated": "Oct 23, 2026, 12:20:32 PM",
+  "dateUpdated": "Oct 30, 2026, 12:40:51 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/423c871a586cff8b29f48db00e3c45c21d0e8121",
+    "https://git.kernel.org/stable/c/e5f8f6e0f0a18c77c04b757d72319d897a0b4bc1",
+    "https://git.kernel.org/stable/c/9124411cb91b129ff3ffb0d723ecba7a5bf893f9",
     "https://git.kernel.org/stable/c/4a2006c675758f0c765b36fec6b49d17e89159cf",
     "https://git.kernel.org/stable/c/3b303696f61461b3569019d7fcac6a646652b2b4",
     "https://git.kernel.org/stable/c/4e7b508c7c60dec7a86b7eb2a1b7e6d174afa457",
@@ -13,11 +16,22 @@
     "https://git.kernel.org/stable/c/755c94d178b7e972bb766199d34e4ba4f63a89eb"
   ],
   "aliases": [
-    "CVE-2026-99007"
+    "CVE-2026-99007",
+    "GHSA-g687-j9p7-p4rx"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "065bcda0-d702-3880-ad04-93cf6dde9705",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca91a2758fcef6635626993557dd51cfbb6dd134 <423c871a586cff8b29f48db00e3c45c21d0e8121"
+    },
     {
       "id": "0be60f66-3f82-31df-a9b3-2a1caef0266a",
       "product": {
@@ -29,6 +43,16 @@
       "product_version": "patch: 6.18.57"
     },
     {
+      "id": "2a515415-3dcc-36f7-8079-f1a922fcd980",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca91a2758fcef6635626993557dd51cfbb6dd134 <9124411cb91b129ff3ffb0d723ecba7a5bf893f9"
+    },
+    {
       "id": "2efbc82b-b820-3600-b3d9-98d2944fa1a3",
       "product": {
         "name": "Linux",
@@ -37,6 +61,16 @@
         }
       },
       "product_version": "ca91a2758fcef6635626993557dd51cfbb6dd134 <d510ed273854177f0a3ed330145858b2fe667f81"
+    },
+    {
+      "id": "3a0339a6-b031-3453-9d33-27ee08ca1634",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
     },
     {
       "id": "3d4d8ce8-b6f4-32a5-bbe7-7e7d5557d812",
@@ -79,6 +113,16 @@
       "product_version": "patch: 6.12.113"
     },
     {
+      "id": "80ab4b6a-5977-3277-9f24-09bc5bee3536",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
       "id": "83a3d4ce-dc6d-31a7-bc5f-b72f9894b950",
       "product": {
         "name": "Linux",
@@ -99,6 +143,16 @@
       "product_version": "patch: 6.6.160"
     },
     {
+      "id": "92af40aa-5593-3cd8-add0-ae7e9a21ed35",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca91a2758fcef6635626993557dd51cfbb6dd134 <e5f8f6e0f0a18c77c04b757d72319d897a0b4bc1"
+    },
+    {
       "id": "c8cb96a2-d174-383b-8649-b45518241515",
       "product": {
         "name": "Linux",
@@ -117,6 +171,16 @@
         }
       },
       "product_version": "ca91a2758fcef6635626993557dd51cfbb6dd134 <4a2006c675758f0c765b36fec6b49d17e89159cf"
+    },
+    {
+      "id": "e8933a14-ccda-3897-b5d1-39826feff7cd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "eb7cc14a-b760-3ed8-a6e3-1d7440b96427",

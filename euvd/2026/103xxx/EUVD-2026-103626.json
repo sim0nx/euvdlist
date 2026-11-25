@@ -3,7 +3,7 @@
   "enisaUuid": "c6b49855-112c-33d0-97d2-ad957584bff1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfc: llcp: Fix list corruption / refcount desync in nfc_llcp_recv_dm()\n\nnfc_llcp_recv_dm() handles DM(NOBOUND)/DM(REJ) for a socket that is still\nlinked on local->connecting_sockets: it looks the socket up with\nnfc_llcp_connecting_sock_get(), sets sk->sk_state = LLCP_CLOSED and\nreturns, without taking the socket lock and without unlinking the socket\nfrom the connecting_sockets list.\n\nllcp_sock_release() selects the list to unlink from by sk_state: a socket\nin LLCP_CONNECTING is unlinked from connecting_sockets, otherwise from the\nsockets list.  Because recv_dm left the socket physically on\nconnecting_sockets but in the LLCP_CLOSED state, release() takes the else\nbranch and calls nfc_llcp_sock_unlink(&local->sockets, sk).  That runs\nsk_del_node_init() while holding sockets.lock, i.e. it removes the socket\nfrom the connecting_sockets hlist under the wrong lock.  A concurrent\nconnect() linking another socket onto connecting_sockets under\nconnecting_sockets.lock then mutates the same hlist unserialized, which\ncorrupts the list and desyncs the sk_add_node()/sk_del_node_init()\nsock_hold()/__sock_put() pairing.  An unprivileged local process holding\nLLCP sockets, with the DM supplied by the remote peer over an established\nLLCP link, can drive this to leak kernel sockets without bound (the\nmis-decrement goes through the non-freeing __sock_put() path, so the\nobject is never released), leading to memory exhaustion / DoS.\n\nThis is the same class of bug that was fixed in the sibling handler\nnfc_llcp_recv_cc() by commit b493ea2765cc (\"nfc: llcp: Fix use-after-free\nrace in nfc_llcp_recv_cc()\"); recv_dm did not receive the equivalent fix.\n\nFix it the same way: take lock_sock(), re-check that the socket is still\nhashed (release() may have won the race), and for the NOBOUND/REJ case\nunlink it from connecting_sockets before moving it to LLCP_CLOSED.  The\nunlink drops the connecting_sockets membership reference via\nsk_del_node_init(), leaving the socket unhashed, so the later\nnfc_llcp_sock_unlink() in llcp_sock_release() becomes a no-op and no\ndouble put occurs.",
   "datePublished": "Oct 18, 2026, 3:18:54 PM",
-  "dateUpdated": "Oct 18, 2026, 3:18:54 PM",
+  "dateUpdated": "Oct 19, 2026, 9:22:07 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/dd2d24add86b3b63cd87cf2feff98ae119ba19a6",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/bf1460acdf8cf5a07c819f59785d40f20d113099"
   ],
   "aliases": [
-    "CVE-2026-98581"
+    "CVE-2026-98581",
+    "GHSA-h227-88m5-f744"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "06d675c6-0a9c-38c3-9fcf-a7216b55db5d",
@@ -132,16 +133,6 @@
       "product_version": "a69f32af86e389dd232b1bb2269e202c1bfcc60f <dd2d24add86b3b63cd87cf2feff98ae119ba19a6"
     },
     {
-      "id": "64e4452e-a903-3f03-8e80-360dd76ff5d6",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
-    },
-    {
       "id": "677df92f-1771-32a9-8b78-12cb59acf5ba",
       "product": {
         "name": "Linux",
@@ -190,6 +181,16 @@
         }
       },
       "product_version": "patch: 6.6.158"
+    },
+    {
+      "id": "ed66e147-9755-3a82-9336-8e9623092ce7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "f34ddc77-b369-3795-9890-f1119e6b6727",

@@ -3,8 +3,10 @@
   "enisaUuid": "6dea01b0-a030-36e8-b2cd-21bf7e7a99e2",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: OOB read regression in smb_check_perm_dacl() ACE-walk loops\n\nCommit d07b26f39246 (\"ksmbd: require minimum ACE size in\nsmb_check_perm_dacl()\") introduced a transposed bounds check:\n\n    if (offsetof(struct smb_ace, sid) + aces_size < CIFS_SID_BASE_SIZE)\n\nSince offsetof(..sid) is 8 and CIFS_SID_BASE_SIZE is 8, this evaluates\nto `aces_size < 0`. Because `aces_size` is always non-negative, this\ncheck becomes dead code and never breaks the loop.\n\nWorse, that commit removed the old 4-byte guard, meaning the loop now\nreads `ace->size` (offset 2) even when `aces_size` is 0-3 bytes. This\nre-opens a 2-byte heap out-of-bounds (OOB) read past the pntsd allocation\nduring subsequent SMB2_CREATE operations.\n\nFix this by properly transposing the comparison to require at least\n16 bytes (8-byte offset + 8-byte SID base), matching the correct form\nused in smb_inherit_dacl().",
   "datePublished": "Jul 19, 2026, 2:55:15 PM",
-  "dateUpdated": "Jul 19, 2026, 2:55:15 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:37:02 PM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/5500ba1d410aed1eded3eb04a76b10cfb4409334",
     "https://git.kernel.org/stable/c/f6324b4240cf0b26a84c33f68a1222d727ff4af2",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/0e60dafe97eca61721f3db456f97d97a80c6c8ae"
   ],
   "aliases": [
+    "GHSA-77x3-ghg7-w5wj",
     "CVE-2026-63909"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.63,
   "enisaIdProduct": [
     {
       "id": "0aec3b50-9983-38f6-ad1c-e2f77f4f939e",

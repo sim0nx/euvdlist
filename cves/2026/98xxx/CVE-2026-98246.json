@@ -3,7 +3,7 @@
   "enisaUuid": "6c0912ce-ba34-3ee1-a165-d019b3e8b2d6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: hci_sync: Serialize local codec list cleanup\n\nhci_dev_close_sync() clears hdev->local_codecs after releasing hdev->lock.\nCodec list additions and both traversals in sco_sock_getsockopt() use that\nlock, but the close path does not. A close and BT_CODEC query can therefore\ninterleave as follows:\n\n  hci_dev_close_sync()          sco_sock_getsockopt()\n                                hci_dev_lock()\n                                fetch codec entry\n  hci_codec_list_clear()\n    kfree(entry)\n                                read entry->id\n\nThe reader then accesses an entry which the close path has freed. KASAN\n\n  BUG: KASAN: slab-use-after-free in sco_sock_getsockopt+0xfa0/0xfe0\n  Read of size 1 at addr ffff8881001c3450\n  Call Trace:\n   sco_sock_getsockopt+0xfa0/0xfe0\n   do_sock_getsockopt+0x537/0x7b0\n   __sys_getsockopt+0xf2/0x170\n  Allocated by task 92:\n   hci_codec_list_add.isra.0+0x2c/0x440\n   hci_read_codec_capabilities+0x224/0x590\n   hci_read_supported_codecs+0x2c2/0x640\n  Freed by task 92:\n   kfree+0x131/0x3c0\n   hci_codec_list_clear+0xd8/0x160\n   hci_dev_close_sync+0x92a/0xfa0\n\nTake hdev->lock around the clear operation at its existing point in the\nclose path. This makes the clear wait for active readers and prevents a new\ntraversal until the list is empty without changing teardown ordering.",
   "datePublished": "Oct 6, 2026, 8:45:15 AM",
-  "dateUpdated": "Oct 6, 2026, 8:45:15 AM",
+  "dateUpdated": "Oct 19, 2026, 9:16:17 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/9f407d52c0d881430d689836d3e7d32aa36f98b5",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/9a10987a2f160a44a638c9a35994ca6e3089696e"
   ],
   "aliases": [
-    "CVE-2026-98246"
+    "CVE-2026-98246",
+    "GHSA-4jxq-xw37-v6h5"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "20b776a6-dc83-3175-b087-73bb5fa268f4",
@@ -28,6 +29,16 @@
         }
       },
       "product_version": "6.5.7 <6.6"
+    },
+    {
+      "id": "22f40a0c-c19c-3d02-84cc-255765ef2b08",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "2ff2332e-87c5-30bf-a1fc-c4246ccaa3f3",
@@ -118,16 +129,6 @@
         }
       },
       "product_version": "6.6"
-    },
-    {
-      "id": "7cde43d5-b450-33e6-9f78-79d93654b06c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "a9dfa664-a54d-3afb-9068-0a8bfbb24622",

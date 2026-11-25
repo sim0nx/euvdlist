@@ -3,9 +3,12 @@
   "enisaUuid": "4a5d3cbb-5b75-3079-a559-bfab16f62b99",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: caiaq: Handle probe errors properly\n\nThe probe procedure of setup_card() in caiaq driver doesn't treat the\nerror cases gracefully, e.g. the error from snd_card_register() calls\nsnd_card_free() but continues.  This would lead to a UAF for the\nfurther calls like snd_usb_caiaq_control_init(), as Berk suggested in\nanother patch in the link below.\n\nHowever, the problem is not only that; in general, this function drops\nthe all error handlings (as it's a void function) although its caller\ncan propagate an error to snd_probe(), which eventually calls\nsnd_card_free() as a proper error path.  That said, we should treat\neach error case in setup_card(), and just return the error code\npromptly, which is then handled later as a fatal error in snd_probe().\n\nThis patch achieves it by changing the setup_card() to return an error\ncode.  Also, the superfluous snd_card_free() call is removed, too.\n\nNote that card->private_free can be set still safely at returning an\nerror.  All called functions in card_free() have checks of the\nunassigned resources or NULL checks.",
   "datePublished": "May 27, 2026, 12:56:01 PM",
-  "dateUpdated": "May 27, 2026, 12:56:01 PM",
+  "dateUpdated": "Nov 6, 2026, 4:13:31 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/da938aa9fc7826901921dcea225948ab21a97e45",
+    "https://git.kernel.org/stable/c/09616e25f502080ba684fc7fcf959d1376ab756d",
+    "https://git.kernel.org/stable/c/b956e48371f2ff72b76be9a829800ecec963bd45",
     "https://git.kernel.org/stable/c/f537e3ad69609f6924a4db6b4a7f6561f5288bdd",
     "https://git.kernel.org/stable/c/6251e3e256337a30160ef59ab1580dde4d1acd28",
     "https://git.kernel.org/stable/c/e59ecd4ee3a450db6cb4e4ecaa3efdd593f80056",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/28abd224db4a49560b452115bca3672a20e45b2f"
   ],
   "aliases": [
-    "CVE-2026-46004"
+    "CVE-2026-46004",
+    "GHSA-gmmg-288v-pj32"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "02562112-7fe6-3a31-b37f-8e8a6197cc40",
@@ -29,6 +33,36 @@
       "product_version": "patch: 6.12.86"
     },
     {
+      "id": "29d37b9f-cb58-3ed6-be20-32e19ade43ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e3cd08ed8e590952aa9a656758cb24d4ba898f8 <09616e25f502080ba684fc7fcf959d1376ab756d"
+    },
+    {
+      "id": "2a125986-6ae6-3c9e-9ea1-092862493d78",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "2b112804-85da-36d9-8b69-64e0e2865547",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e3cd08ed8e590952aa9a656758cb24d4ba898f8 <b956e48371f2ff72b76be9a829800ecec963bd45"
+    },
+    {
       "id": "2c93ffa6-3335-3e29-b1ef-2e40cafc9b41",
       "product": {
         "name": "Linux",
@@ -37,6 +71,16 @@
         }
       },
       "product_version": "patch: 7.0.4"
+    },
+    {
+      "id": "2d15f4d8-c51f-3d9b-95aa-690475acfe02",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.209"
     },
     {
       "id": "350fe6cb-68a5-38a4-8059-71dabf761c41",
@@ -89,16 +133,6 @@
       "product_version": "8e3cd08ed8e590952aa9a656758cb24d4ba898f8 <6251e3e256337a30160ef59ab1580dde4d1acd28"
     },
     {
-      "id": "7dcdd164-db20-3b23-8824-b83d89e9b140",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc1"
-    },
-    {
       "id": "8175de13-4ce8-3925-aadd-638e47b23e75",
       "product": {
         "name": "Linux",
@@ -137,6 +171,36 @@
         }
       },
       "product_version": "2.6.25"
+    },
+    {
+      "id": "dd6f287a-a357-397a-8aa1-b75f817d631b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e3cd08ed8e590952aa9a656758cb24d4ba898f8 <da938aa9fc7826901921dcea225948ab21a97e45"
+    },
+    {
+      "id": "e407885d-3309-36d3-9263-ee50bd3d337e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.258"
+    },
+    {
+      "id": "f0e17c9a-f566-36bf-828b-b7b04538d66a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.175"
     }
   ],
   "enisaIdVendor": [

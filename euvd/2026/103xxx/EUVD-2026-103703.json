@@ -3,7 +3,7 @@
   "enisaUuid": "642ea452-05c1-3e20-ad18-6a369c841dd1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsched_ext: Derive SCX_RQ_IN_WAKEUP from the core enqueue flags\n\nschedule_deferred_locked() skips scheduling a deferred action while\nSCX_RQ_IN_WAKEUP is set and relies on the task_woken_scx() call that follows\na wakeup enqueue to run it. enqueue_task_scx() sets the flag from the merged\nenqueue flags, which include the flags stashed for a remote activation.\nmove_remote_task_to_local_dsq() thus sets SCX_RQ_IN_WAKEUP on the\ndestination rq when the moved task was woken up, although no\ntask_woken_scx() follows that activation.\n\nAn IMMED insert into a busy destination requests a local reenqueue during\nthat enqueue. The request gets linked but not scheduled and stays pending\nuntil an unrelated wakeup or preemption on that CPU runs the deferred\nactions. The IMMED task sits behind the running task in the meantime. If\nnothing runs them before the scheduler is disabled, the request outlives the\nscheduler and points into its freed per-cpu area, which the next scheduler\ndereferences from run_deferred().\n\nTest the core enqueue flags for the wakeup bit. Only the core's wakeup path\nis followed by task_woken_scx().",
   "datePublished": "Oct 18, 2026, 3:15:15 PM",
-  "dateUpdated": "Oct 18, 2026, 3:15:15 PM",
+  "dateUpdated": "Oct 19, 2026, 9:20:01 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/6c401ae426e20e53a3398a8e79afd0964c0f5110",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/df5cdc2c832ca4e8a6d774596b9005558761a403"
   ],
   "aliases": [
-    "CVE-2026-98463"
+    "CVE-2026-98463",
+    "GHSA-7f2q-69qm-pp4c"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "18578ecd-19f8-3a66-a182-eb7de9464881",
@@ -87,14 +88,14 @@
       "product_version": "7.0"
     },
     {
-      "id": "83c8f13d-8039-37c0-bc0c-01ff332c7804",
+      "id": "65f840e5-f1d9-38ae-b264-a21e698e745f",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc5"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "b9f819c8-e89f-3276-8851-30a14d37efcc",

@@ -3,17 +3,20 @@
   "enisaUuid": "01760b91-7aeb-3a8f-adc7-7a5862caac8b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsched_ext: Skip sub-disable teardown for never-linked sub-schedulers\n\nA sub-scheduler enable can fail before scx_link_sched() links the sched into\nthe hierarchy, e.g. when the parent is already being disabled, and cleanup\nstill runs the full scx_sub_disable().\n\nThat is racy against root disable: drain_descendants() is the only ordering\nbetween a sub's disable-time task walk and root disable's all-task teardown,\nand an unlinked sub is invisible to it. Root's teardown can thus run between\nthe never-linked sub's drain and its walk, exiting every task to no\nscheduler.\n\nThe walk then trips the membership WARN and re-homes the exited tasks onto\nthe dying hierarchy, a use-after-free.\n\nSkip the cgroup ownership reset and the task walk if @sch was never linked,\nindicated by the empty ->sibling as unlinking only happens later in the same\nfunction. The membership WARN remains valid: a linked sub is always waited\non by an ancestor's drain.",
   "datePublished": "Aug 22, 2026, 3:33:20 PM",
-  "dateUpdated": "Aug 22, 2026, 3:33:20 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 25, 2026, 5:42:10 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/6428093a4a986c38c9089b5eb32b56d914ef437a",
     "https://git.kernel.org/stable/c/8c13364db9c9a43ed286f3a8d0fb9477b1adc43c"
   ],
   "aliases": [
+    "GHSA-39hf-rf3c-rjqv",
     "CVE-2026-74731"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "8eb11e74-6e61-3dac-b802-2027142ae87d",

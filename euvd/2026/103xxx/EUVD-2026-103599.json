@@ -3,7 +3,7 @@
   "enisaUuid": "47060b8a-58e8-3c21-8c05-29aa72f9809a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvlan: ensure sufficient headroom in vlan_dev_hard_header()\n\nCallers that only reserve ETH_HLEN or less (such as llc_alloc_frame()),\nor skbs allocated before dynamic device/headroom changes (e.g. toggling\nVLAN_FLAG_REORDER_HDR or bonding/team switching slaves), can reach\nvlan_dev_hard_header() with insufficient headroom and trigger\nskb_under_panic().\n\nUse skb_cow_head() in vlan_dev_hard_header() when VLAN_FLAG_REORDER_HDR\nis not set to ensure sufficient headroom for the VLAN header(s) and the\nunderlying device hard header.\n\nUse READ_ONCE() to read dev->hard_header_len and dev->needed_headroom as\nthey can be updated concurrently under RTNL (e.g. in\nvlan_transfer_features()) while vlan_dev_hard_header() runs locklessly on\nthe transmit path. Also avoid LL_RESERVED_SPACE(dev) here so that the\nextra HH_DATA_MOD alignment padding does not trigger unnecessary\npskb_expand_head() reallocations on inner stacked VLAN devices after the\nouter VLAN header has been pushed.",
   "datePublished": "Oct 18, 2026, 3:18:21 PM",
-  "dateUpdated": "Oct 18, 2026, 3:18:21 PM",
+  "dateUpdated": "Oct 19, 2026, 9:21:37 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/55e007fc3b4d76fa4d6b4660f6904fe6ab045a1b",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/cd5dd68267c4238795fadaf02b3575ca3f8a6500"
   ],
   "aliases": [
+    "GHSA-xh57-3wrj-366f",
     "CVE-2026-98554"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "22359b80-51b9-3d40-9285-8fd1f434001d",
@@ -122,16 +123,6 @@
       "product_version": "patch: 6.6.158"
     },
     {
-      "id": "a03c4ba1-5c65-3efa-bd0c-b5c164c2fe7b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
-    },
-    {
       "id": "a2efe1c4-4bb0-347e-8f98-9234f05ff4cc",
       "product": {
         "name": "Linux",
@@ -180,6 +171,16 @@
         }
       },
       "product_version": "patch: 5.10.271"
+    },
+    {
+      "id": "ee3428da-4088-33de-b2e9-7561d137b6fa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "f795bf90-12df-3a43-b85a-3a475fa40f9d",

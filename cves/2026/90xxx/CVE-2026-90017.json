@@ -3,8 +3,10 @@
   "enisaUuid": "2aa53980-edd6-3884-bb0a-e9710944a8ff",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nstaging: rtl8723bs: fix OOB read in rtw_action_frame_parse()\n\nrtw_action_frame_parse() takes a frame_len parameter but never\nactually checks it before indexing into the frame body:\n\n\tconst u8 *frame_body = frame + sizeof(struct ieee80211_hdr_3addr);\n\t...\n\tc = frame_body[0];\n\t...\n\ta = frame_body[1];\n\nframe_body already points 24 bytes (sizeof(struct\nieee80211_hdr_3addr)) into frame, so reading frame_body[0] and\nframe_body[1] requires frame_len >= 26. A management action frame\nshorter than that (e.g. exactly 24 bytes, the minimum a malicious\npeer can send) causes a 1-2 byte out-of-bounds read.\n\nThis is reachable from rtw_cfg80211_monitor_if_xmit_entry() and\ncfg80211_rtw_mgmt_tx() in ioctl_cfg80211.c, both of which pass\nattacker/user-influenced frame buffers and lengths straight through.\n\nAdd the missing length check before frame_body is dereferenced.",
   "datePublished": "Sep 16, 2026, 10:33:22 AM",
-  "dateUpdated": "Sep 16, 2026, 10:33:22 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:56:30 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/15081ff835b29e456da29303b32efc436df04695",
     "https://git.kernel.org/stable/c/310aaa8058d19cc431aedac0f5bb814e84479393",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/ff917923f4fb9c83717ba135ee47d7e4c1567bb7"
   ],
   "aliases": [
-    "CVE-2026-90017"
+    "CVE-2026-90017",
+    "GHSA-9fp4-x69f-gf9f"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.36,
   "enisaIdProduct": [
     {
       "id": "24956b5e-d78e-3705-be0a-cf80cc225e6e",
@@ -60,6 +63,16 @@
         }
       },
       "product_version": "patch: 6.18.51"
+    },
+    {
+      "id": "417b7728-40ac-3d52-b696-7663dfe488a8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "4a7d48bb-af5c-3347-a6b9-6f4dff7b9893",
@@ -130,16 +143,6 @@
         }
       },
       "product_version": "554c0a3abf216c991c5ebddcdb2c08689ecd290b <310aaa8058d19cc431aedac0f5bb814e84479393"
-    },
-    {
-      "id": "c6217549-fa7c-3c89-9f56-727da9853152",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc2"
     },
     {
       "id": "c9a8239c-2eea-3ab4-89ae-0c476bf8a44d",

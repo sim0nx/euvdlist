@@ -3,7 +3,7 @@
   "enisaUuid": "5eb6fa50-f443-37dd-a986-f730a1ced7f2",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncrypto: qat - fix IRQ cleanup on 6xxx probe failure\n\nWhen adf_dev_up() partially completes and then fails, the IRQ\nhandlers registered during adf_isr_resource_alloc() are not detached\nbefore the MSI-X vectors are released.\n\nSince the device is enabled with pcim_enable_device(), calling\npci_alloc_irq_vectors() internally registers pcim_msi_release() as a\ndevres action. On probe failure, devres runs pcim_msi_release() which\ncalls pci_free_irq_vectors(), tearing down the MSI-X vectors while IRQ\nhandlers (for example 'qat0-bundle0') are still attached. This causes\nremove_proc_entry() warnings:\n\n    [   22.163964] remove_proc_entry: removing non-empty directory 'irq/143', leaking at least 'qat0-bundle0'\n\nMoving the devm_add_action_or_reset() before adf_dev_up() does not solve\nthe problem since devres runs in LIFO order and pcim_msi_release(),\nregistered later inside adf_dev_up(), would still fire before\nadf_device_down().\n\nFix by calling adf_dev_down() explicitly when adf_dev_up() fails, to\nproperly free IRQ handlers before devres releases the MSI-X vectors.",
   "datePublished": "May 27, 2026, 12:57:20 PM",
-  "dateUpdated": "May 27, 2026, 12:57:20 PM",
+  "dateUpdated": "Nov 6, 2026, 4:13:34 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/27f561bf894e46bdc2d6209c50884adad79d8277",
@@ -11,21 +11,12 @@
     "https://git.kernel.org/stable/c/95aed2af87ec43fa7624cc81dd13d37824ad4972"
   ],
   "aliases": [
+    "GHSA-fgc6-7m88-3373",
     "CVE-2026-46060"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
-    {
-      "id": "1a111b71-d8a0-361f-b403-2797254edd66",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc1"
-    },
     {
       "id": "214063ec-bc8a-3ce7-a930-a685c29ef8c8",
       "product": {
@@ -45,6 +36,16 @@
         }
       },
       "product_version": "6.16"
+    },
+    {
+      "id": "312c3595-75c1-3a13-9e48-6bad86dd6569",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "3946c8fd-31b7-3c47-94df-da0ad2a5ea19",

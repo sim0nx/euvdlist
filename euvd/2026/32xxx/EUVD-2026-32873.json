@@ -3,8 +3,10 @@
   "enisaUuid": "7650c6df-74a1-3af2-938e-48344d9f23d8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/rxe: Reject non-8-byte ATOMIC_WRITE payloads\n\natomic_write_reply() at drivers/infiniband/sw/rxe/rxe_resp.c\nunconditionally dereferences 8 bytes at payload_addr(pkt):\n\n    value = *(u64 *)payload_addr(pkt);\n\ncheck_rkey() previously accepted an ATOMIC_WRITE request with pktlen ==\nresid == 0 because the length validation only compared pktlen against\nresid. A remote initiator that sets the RETH length to 0 therefore reaches\natomic_write_reply() with a zero-byte logical payload, and the responder\nreads sizeof(u64) bytes from past the logical end of the packet into\nskb->head tailroom, then writes those 8 bytes into the attacker's MR via\nrxe_mr_do_atomic_write(). That is a remote disclosure of 4 bytes of kernel\ntailroom per probe (the other 4 bytes are the packet's own trailing ICRC).\n\nIBA oA19-28 defines ATOMIC_WRITE as exactly 8 bytes. Anything else is\nprotocol-invalid. Hoist a strict length check into check_rkey() so the\nresponder never reaches the unchecked dereference, and keep the existing\nWRITE-family length logic for the normal RDMA WRITE path.\n\nReproduced on mainline with an unmodified rxe driver: a sustained\nzero-length ATOMIC_WRITE probe repeatedly leaks adjacent skb head-buffer\nbytes into the attacker's MR, including recognisable kernel strings and\npartial kernel-direct-map pointer words.  With this patch applied the\nresponder rejects the PDU and the MR stays all-zero.",
   "datePublished": "May 28, 2026, 9:35:24 AM",
-  "dateUpdated": "May 28, 2026, 9:35:24 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:26:44 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
   "references": [
     "https://git.kernel.org/stable/c/539cabb7b2d8ba70f55bba91db55faef11c2a6d7",
     "https://git.kernel.org/stable/c/d415fce3fcde6d7aeea6c25362a395b905811452",
@@ -13,21 +15,12 @@
     "https://git.kernel.org/stable/c/1114c87aa6f195cf07da55a27b2122ae26557b26"
   ],
   "aliases": [
+    "GHSA-pv35-9gqp-7q2c",
     "CVE-2026-46114"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.47,
   "enisaIdProduct": [
-    {
-      "id": "12b6ccee-e7eb-3b61-9cd0-dd367f1faa57",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc3"
-    },
     {
       "id": "3c9eb1c6-07e9-3cac-a870-5d1e00ad7cc6",
       "product": {
@@ -67,6 +60,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "891bcc05-cbdb-3f45-bbb2-413cc546e153",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "9aa24447-ecff-3978-ae49-2674a25c2120",

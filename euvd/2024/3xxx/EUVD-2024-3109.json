@@ -1,64 +1,75 @@
 {
   "id": "EUVD-2024-3109",
   "enisaUuid": "a069ae48-f26c-3fa4-a5a3-d0b5a6f07466",
-  "description": "wasmtime has a runtime crash when combining tail calls with trapping imports",
-  "datePublished": "Oct 9, 2024, 7:14:03 PM",
-  "dateUpdated": "May 2, 2025, 12:54:33 PM",
+  "description": "Wasmtime is an open source runtime for WebAssembly. Wasmtime's implementation of WebAssembly tail calls combined with stack traces can result in a runtime crash in certain WebAssembly modules. The runtime crash may be undefined behavior if Wasmtime was compiled with Rust 1.80 or prior. The runtime crash is a deterministic process abort when Wasmtime is compiled with Rust 1.81 and later. WebAssembly tail calls are a proposal which relatively recently reached stage 4 in the standardization process. Wasmtime first enabled support for tail calls by default in Wasmtime 21.0.0, although that release contained a bug where it was only on-by-default for some configurations. In Wasmtime 22.0.0 tail calls were enabled by default for all configurations. The specific crash happens when an exported function in a WebAssembly module (or component) performs a `return_call` (or `return_call_indirect` or `return_call_ref`) to an imported host function which captures a stack trace (for example, the host function raises a trap). In this situation, the stack-walking code previously assumed there was always at least one WebAssembly frame on the stack but with tail calls that is no longer true. With the tail-call proposal it's possible to have an entry trampoline appear as if it directly called the exit trampoline. This situation triggers an internal assert in the stack-walking code which raises a Rust `panic!()`. When Wasmtime is compiled with Rust versions 1.80 and prior this means that an `extern \"C\"` function in Rust is raising a `panic!()`. This is technically undefined behavior and typically manifests as a process abort when the unwinder fails to unwind Cranelift-generated frames. When Wasmtime is compiled with Rust versions 1.81 and later this panic becomes a deterministic process abort. Overall the impact of this issue is that this is a denial-of-service vector where a malicious WebAssembly module or component can cause the host to crash. There is no other impact at this time other than availability of a service as the result of the crash is always a crash and no more. This issue was discovered by routine fuzzing performed by the Wasmtime project via Google's OSS-Fuzz infrastructure. We have no evidence that it has ever been exploited by an attacker in the wild. All versions of Wasmtime which have tail calls enabled by default have been patched: * 21.0.x - patched in 21.0.2 * 22.0.x - patched in 22.0.1 * 23.0.x - patched in 23.0.3  * 24.0.x - patched in 24.0.1 * 25.0.x - patched in 25.0.2. Wasmtime versions from 12.0.x (the first release with experimental tail call support) to 20.0.x (the last release with tail-calls off-by-default) have support for tail calls but the support is disabled by default. These versions are not affected in their default configurations, but users who explicitly enabled tail call support will need to either disable tail call support or upgrade to a patched version of Wasmtime. The main workaround for this issue is to disable tail support for tail calls in Wasmtime, for example with `Config::wasm_tail_call(false)`. Users are otherwise encouraged to upgrade to patched versions.",
+  "datePublished": "Oct 9, 2024, 6:03:33 PM",
+  "dateUpdated": "Oct 9, 2024, 7:50:25 PM",
   "baseScore": 5.5,
   "baseScoreVersion": "3.1",
   "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-q8hx-mm92-4wvg",
-    "https://nvd.nist.gov/vuln/detail/CVE-2024-47763",
-    "https://github.com/bytecodealliance/wasmtime/pull/6774",
     "https://github.com/bytecodealliance/wasmtime/pull/8540",
     "https://github.com/bytecodealliance/wasmtime/pull/8682",
-    "https://github.com/bytecodealliance/wasmtime/commit/0ebe54d05f0e1f6c64b7c8bb48c9e9f6c95cacba",
     "https://docs.rs/wasmtime/latest/wasmtime/struct.Config.html#method.wasm_tail_call",
     "https://github.com/WebAssembly/proposals",
-    "https://github.com/bytecodealliance/wasmtime",
-    "https://github.com/webassembly/tail-call",
-    "https://rustsec.org/advisories/RUSTSEC-2024-0440.html"
+    "https://github.com/webassembly/tail-call"
   ],
   "aliases": [
-    "CVE-2024-47763",
-    "GHSA-q8hx-mm92-4wvg"
+    "PYSEC-2024-312",
+    "GHSA-q8hx-mm92-4wvg",
+    "CVE-2024-47763"
   ],
   "assigner": "GitHub_M",
-  "epss": 0.01,
+  "epss": 0.25,
   "enisaIdProduct": [
     {
       "id": "08c6b4b6-cc28-3dd0-995f-e8fe9229ab1a",
       "product": {
-        "name": "wasmtime"
+        "name": "wasmtime",
+        "vendor": {
+          "name": "bytecodealliance"
+        }
       },
       "product_version": "24.0.0, < 24.0.1"
     },
     {
       "id": "0f8f2cd8-ffd7-3efc-bf5c-bd2b8135f76a",
       "product": {
-        "name": "wasmtime"
+        "name": "wasmtime",
+        "vendor": {
+          "name": "bytecodealliance"
+        }
       },
       "product_version": "21.0.0, < 21.0.2"
     },
     {
       "id": "23b2ece4-b38f-38f4-8b65-b1459a3b26e5",
       "product": {
-        "name": "wasmtime"
+        "name": "wasmtime",
+        "vendor": {
+          "name": "bytecodealliance"
+        }
       },
       "product_version": "23.0.0, < 23.0.3"
     },
     {
       "id": "32d2e2ea-a09d-3515-b468-6ac0ef9f534e",
       "product": {
-        "name": "wasmtime"
+        "name": "wasmtime",
+        "vendor": {
+          "name": "bytecodealliance"
+        }
       },
       "product_version": "25.0.0, < 25.0.2"
     },
     {
       "id": "fc3beabd-db9a-308f-84af-c5bcef6b5c00",
       "product": {
-        "name": "wasmtime"
+        "name": "wasmtime",
+        "vendor": {
+          "name": "bytecodealliance"
+        }
       },
       "product_version": "22.0.0, < 22.0.1"
     }

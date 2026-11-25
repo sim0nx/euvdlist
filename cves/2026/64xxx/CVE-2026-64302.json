@@ -3,7 +3,7 @@
   "enisaUuid": "3ea276de-556d-3fd6-a77f-1a79af8fad6e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nx86/mm: Fix freeing of PMD-sized vmemmap pages\n\nCommit bf9e4e30f353 (\"x86/mm: use pagetable_free()\"), switched from\nfreeing non-boot page tables through __free_pages() to\npagetable_free().\n\nHowever, the function is also called to free vmemmap pages.\n\nGiven that vmemmap pages are not page tables, already the page_ptdesc(page)\nis wrong. But worse, pagetable_free() calls:\n\n\t__free_pages(page, compound_order(page));\n\nSince vmemmap pages are not compound pages (see vmemmap_alloc_block())\n-- except for HVO, which doesn't apply here -- only first page of a\nPMD-sized vmemmap page is freed, leaking the other ones.\n\nFix it by properly decoupling pagetable and vmemmap freeing.\nfree_pagetable() no longer has to mess with SECTION_INFO, as only the\nvmemmap is marked like that in register_page_bootmem_memmap().\n\nThe indentation in remove_pmd_table() is messed up. Fix that while\ntouching it.\n\nBootmem info handling will soon be fixed up. For now, handle it\nsimilar to free_pagetable(), just avoiding the ifdef.\n\n[ dhansen: changelog munging. More imperative voice ]",
   "datePublished": "Jul 25, 2026, 8:49:37 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:37 AM",
+  "dateUpdated": "Aug 17, 2026, 4:53:00 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/add1e4112e00b619614784bf630aeebfdefa23e1",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/39406c05f8f150f1685839acd38ffdd69ff92031"
   ],
   "aliases": [
+    "GHSA-rmr6-r8pg-m34q",
     "CVE-2026-64302"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "21e8bd96-a023-3955-ba7b-705c764040f3",
@@ -37,16 +38,6 @@
       "product_version": "bf9e4e30f3538391745a99bc2268ec4f5e4a401e <39406c05f8f150f1685839acd38ffdd69ff92031"
     },
     {
-      "id": "4cb024a1-01b9-30dd-9099-f0353da6c50b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
-    {
       "id": "4cddf0fe-cd86-30ea-9cbf-198f6e367e45",
       "product": {
         "name": "Linux",
@@ -65,6 +56,16 @@
         }
       },
       "product_version": "6.19"
+    },
+    {
+      "id": "858813e1-7883-3374-8a0a-fe90254f0171",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "9c0d62d0-f45c-3b44-8ecd-9456a1cccde6",

@@ -1,0 +1,143 @@
+{
+  "id": "EUVD-2024-43836",
+  "enisaUuid": "baf44103-cb12-326a-bd4a-711d266003db",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ni3c: master: svc: Fix use after free vulnerability in svc_i3c_master Driver Due to Race Condition\n\nIn the svc_i3c_master_probe function, &master->hj_work is bound with\nsvc_i3c_master_hj_work, &master->ibi_work is bound with\nsvc_i3c_master_ibi_work. And svc_i3c_master_ibi_work  can start the\nhj_work, svc_i3c_master_irq_handler can start the ibi_work.\n\nIf we remove the module which will call svc_i3c_master_remove to\nmake cleanup, it will free master->base through i3c_master_unregister\nwhile the work mentioned above will be used. The sequence of operations\nthat may lead to a UAF bug is as follows:\n\nCPU0                                         CPU1\n\n                                    | svc_i3c_master_hj_work\nsvc_i3c_master_remove               |\ni3c_master_unregister(&master->base)|\ndevice_unregister(&master->dev)     |\ndevice_release                      |\n//free master->base                 |\n                                    | i3c_master_do_daa(&master->base)\n                                    | //use master->base\n\nFix it by ensuring that the work is canceled before proceeding with the\ncleanup in svc_i3c_master_remove.",
+  "datePublished": "Oct 21, 2024, 6:01:14 PM",
+  "dateUpdated": "Aug 5, 2026, 11:40:17 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/56bddf543d4d7ddeff3f87b554ddacfdf086bffe",
+    "https://git.kernel.org/stable/c/4ac637122930cc4ab7e2c22e364cf3aaf96b05b1",
+    "https://git.kernel.org/stable/c/4318998892bf8fe99f97bea18c37ae7b685af75a",
+    "https://git.kernel.org/stable/c/27b55724d3f781dd6e635e89dc6e2fd78fa81a00",
+    "https://git.kernel.org/stable/c/61850725779709369c7e907ae8c7c75dc7cec4f3"
+  ],
+  "aliases": [
+    "CVE-2024-49874",
+    "GHSA-wg4j-4q4f-6cfc"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "0cf807ac-0589-3740-be70-6b434653fc0e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0f74f8b6675cc36d689abb4d9b3d75ab4049b7d7 <27b55724d3f781dd6e635e89dc6e2fd78fa81a00"
+    },
+    {
+      "id": "0e8ab997-4e71-3d77-a56b-d02e30716905",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0f74f8b6675cc36d689abb4d9b3d75ab4049b7d7 <61850725779709369c7e907ae8c7c75dc7cec4f3"
+    },
+    {
+      "id": "0f88a4ca-edbc-37de-a6e1-fe395898f38c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "22bf0c1e-9711-32dc-b5f7-c9dd49370aab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.4"
+    },
+    {
+      "id": "39dbc9df-2109-3656-b530-b7fce1230ee9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.14"
+    },
+    {
+      "id": "81d8ade1-9480-3cd5-84c8-73eb47a7b66e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.55"
+    },
+    {
+      "id": "90e70d55-2b1f-397f-8bea-81c1ddc2b805",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0f74f8b6675cc36d689abb4d9b3d75ab4049b7d7 <4ac637122930cc4ab7e2c22e364cf3aaf96b05b1"
+    },
+    {
+      "id": "cdd9aeb7-ef4d-3c2e-867b-72627ddf8e38",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0f74f8b6675cc36d689abb4d9b3d75ab4049b7d7 <4318998892bf8fe99f97bea18c37ae7b685af75a"
+    },
+    {
+      "id": "e52363f0-908f-3718-bfff-c0b0a8fe9742",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "87e0f28eda36c7843523aa8dd0c5dab3331e9718 <56bddf543d4d7ddeff3f87b554ddacfdf086bffe"
+    },
+    {
+      "id": "ef338f0b-6c5e-30d8-aa69-6a9b9ba3e023",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.3"
+    },
+    {
+      "id": "ff198010-71d3-3918-a0f4-2bbfe8088a3a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2f356400-ac59-3427-a088-b5cc9f018c38",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

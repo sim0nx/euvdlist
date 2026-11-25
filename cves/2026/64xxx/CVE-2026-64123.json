@@ -3,22 +3,26 @@
   "enisaUuid": "c2974160-2307-3c64-8dd7-24358db23cde",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: hsr: defer node table free until after RCU readers\n\nHSR node-list and node-status generic-netlink operations run under\nrcu_read_lock(). They walk hsr->node_db through hsr_get_next_node() and\nhsr_get_node_data(), but RTM_DELLINK teardown removes the same node table\nwith plain list_del() and frees each node immediately.\n\nThat lets a generic-netlink reader hold a struct hsr_node pointer across\nhsr_dellink(). In a KASAN build, widening the reader window after\nhsr_get_next_node() obtains the node reproduces a slab-use-after-free\nwhen the reader copies node->macaddress_A; the freeing stack is\nhsr_del_nodes() from hsr_dellink().\n\nUse list_del_rcu() and defer the free through the existing\nhsr_free_node_rcu() callback. This matches the lifetime rule used by the\nHSR prune paths, which already delete nodes with list_del_rcu() and\ncall_rcu().",
   "datePublished": "Jul 19, 2026, 3:40:21 PM",
-  "dateUpdated": "Jul 19, 2026, 3:40:21 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:28:13 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/0ea70fb46940620848c08d9d399455c9e82fecdb",
     "https://git.kernel.org/stable/c/8be6685cdd1255bcc85f9b59e4bfc313aefc5c1b",
     "https://git.kernel.org/stable/c/c5580114e0492bcd2e0a37613ed4c311e3fa3d4d",
     "https://git.kernel.org/stable/c/7713f4aafb577ff49fa67f0488d9c7dddc64d6ce",
     "https://git.kernel.org/stable/c/6324423a8e6591f41a16c09a8f9a84e554ac147c",
+    "https://git.kernel.org/stable/c/48d09dea506de667eb55f939bf98eec721effbdb",
     "https://git.kernel.org/stable/c/8c3af18bb0d7c921a5219194037509463eb2ffde",
     "https://git.kernel.org/stable/c/aaec7096f9961eb223b5b149abe9495525c205d9"
   ],
   "aliases": [
+    "GHSA-q3v2-68cr-qhrm",
     "CVE-2026-64123"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "1146e0aa-9403-3b3e-8915-89b8d9521dc8",
@@ -59,6 +63,16 @@
         }
       },
       "product_version": "b9a1e627405d68d475a3c1f35e685ccfb5bbe668 <6324423a8e6591f41a16c09a8f9a84e554ac147c"
+    },
+    {
+      "id": "2e0e0cdc-2c59-38b4-a4f7-5b359df83ee5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.57"
     },
     {
       "id": "3068218c-0a60-39bf-be7c-59a4af5b1ba7",
@@ -129,6 +143,16 @@
         }
       },
       "product_version": "b9a1e627405d68d475a3c1f35e685ccfb5bbe668 <0ea70fb46940620848c08d9d399455c9e82fecdb"
+    },
+    {
+      "id": "99a4f0e0-9a79-3a87-8238-64487354b820",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b9a1e627405d68d475a3c1f35e685ccfb5bbe668 <48d09dea506de667eb55f939bf98eec721effbdb"
     },
     {
       "id": "a3a468aa-ad2c-32f9-bd58-23ee9a2958a2",

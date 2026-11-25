@@ -3,17 +3,18 @@
   "enisaUuid": "9a56ad24-d0b7-30ad-be11-9b41d1920c6b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: ipv6: keep room for the mac header in dst_dev_overhead()\n\nThe seg6, ioam6 and rpl lwtunnels size their skb_cow_head() request as\nthe length they are about to push plus dst_dev_overhead(), then push the\nnew headers and rebuild the mac header below them with\nskb_mac_header_rebuild().  That rebuild needs skb->mac_len of headroom,\nbut dst_dev_overhead() leaves LL_RESERVED_SPACE() of the egress device,\n16 bytes for plain Ethernet.\n\nWhere the mac header is longer than that, as it is on ingress through a\nVLAN device with reorder_hdr off, the rebuild runs out of room:\nskb_set_mac_header(skb, -skb->mac_len) computes a negative offset,\nstores it unchecked in the u16 skb->mac_header, and the memmove that\nfollows writes skb->mac_len bytes about 64 KB past skb->head.\nForwarding plain ping6 traffic through such a device reproduces it on\nall five seg6 encapsulation modes and on the rpl and ioam6 inline paths;\nskb->mac_header comes back as 65534 on a 704-byte head.\n\nReturn the larger of the two.  The helper already returns skb->mac_len\nwhen it has no dst, so this only makes the other branch agree, and it\ncovers every caller rather than each call site in turn.",
   "datePublished": "Oct 18, 2026, 3:18:36 PM",
-  "dateUpdated": "Oct 18, 2026, 3:18:36 PM",
+  "dateUpdated": "Oct 19, 2026, 9:21:55 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/36c07127924f11fc5741a780abcaaf808fe9ef13",
     "https://git.kernel.org/stable/c/87cd6b717e4069dca34e0866e57eaeb44d3b173e"
   ],
   "aliases": [
-    "CVE-2026-98570"
+    "CVE-2026-98570",
+    "GHSA-4prh-wfp5-28j7"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
     {
       "id": "056eaf5e-1ecc-3a3e-8471-8cf62054130d",
@@ -96,16 +97,6 @@
       "product_version": "6.14"
     },
     {
-      "id": "7e5be602-e352-3258-8cc3-2a925bfff6ed",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
-    },
-    {
       "id": "86440bce-c105-35d5-b43f-46f4dd2313ee",
       "product": {
         "name": "Linux",
@@ -164,6 +155,16 @@
         }
       },
       "product_version": "6.13.4 <6.14"
+    },
+    {
+      "id": "a781f2d1-c188-3716-b1b5-a67b7a266a71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "a9029491-0fd2-3171-b3af-d50777b74e52",

@@ -3,9 +3,13 @@
   "enisaUuid": "4eae7b60-a80e-34ff-b494-e13b64d5461b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: virtio_bt: clamp rx length before skb_put\n\nvirtbt_rx_work() calls skb_put(skb, len) where len comes directly\nfrom virtqueue_get_buf() with no validation against the buffer we\nposted to the device. The RX skb is allocated in virtbt_add_inbuf()\nand exposed to virtio as exactly 1000 bytes via sg_init_one().\n\nChecking len against skb_tailroom(skb) is not sufficient because\nalloc_skb() can leave more tailroom than the 1000 bytes actually\nhanded to the device. A malicious or buggy backend can therefore\nreport used.len between 1001 and skb_tailroom(skb), causing skb_put()\nto include uninitialized kernel heap bytes that were never written by\nthe device.\n\nThe same path also accepts len == 0, in which case skb_put(skb, 0)\nleaves the skb empty but virtbt_rx_handle() still reads the pkt_type\nbyte from skb->data, consuming uninitialized memory.\n\nDefine VIRTBT_RX_BUF_SIZE once and reuse it in alloc_skb() and\nsg_init_one(), and gate virtbt_rx_work() on that same constant so\nthe bound checked matches the buffer actually exposed to the device.\nReject used.len == 0 in the same gate so an empty completion can\nno longer reach virtbt_rx_handle().\n\nUse bt_dev_err_ratelimited() because the length value comes from an\nuntrusted backend that can otherwise flood the kernel log.\n\nSame class of bug as commit c04db81cd028 (\"net/9p: Fix buffer\noverflow in USB transport layer\"), which hardened the USB 9p\ntransport against unchecked device-reported length.",
   "datePublished": "May 28, 2026, 9:35:38 AM",
-  "dateUpdated": "May 28, 2026, 9:35:38 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:29:52 PM",
+  "baseScore": 7.7,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/4236e55b2d9d1ffd3b4bdf8ebbb86e5a0a526b4a",
+    "https://git.kernel.org/stable/c/fd91fa2678ab603dfb285416c1cf3843d7be1e41",
     "https://git.kernel.org/stable/c/ed41c81d30b211a671667259c3b5feeba0e062d5",
     "https://git.kernel.org/stable/c/6c1730099a6fc18b183bd6c1adad3b54adcaeda9",
     "https://git.kernel.org/stable/c/b40cdd1b1370d76e9e760af4490cb4a351cceead",
@@ -13,10 +17,11 @@
     "https://git.kernel.org/stable/c/21bd244b6de5d2fe1063c23acc93fbdd2b20d112"
   ],
   "aliases": [
-    "CVE-2026-46123"
+    "CVE-2026-46123",
+    "GHSA-qxc2-9rg4-2rgv"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "01f3a743-824a-3c3c-8049-abce93176891",
@@ -59,6 +64,16 @@
       "product_version": "patch: 6.18.30"
     },
     {
+      "id": "1c58c270-32b8-3d37-9150-94e35f2a8db7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "160fbcf3bfb93c3c086427f9f4c8bc70f217e9be <fd91fa2678ab603dfb285416c1cf3843d7be1e41"
+    },
+    {
       "id": "2e4aa312-0061-3278-a9c6-1dedfbcbcb29",
       "product": {
         "name": "Linux",
@@ -99,24 +114,24 @@
       "product_version": "9b67438e315b925a699f0178f4a48baf3d2d6ef4"
     },
     {
-      "id": "3cb80f44-8d87-3e07-923e-2b038e6f2d78",
+      "id": "42786d56-ac83-3cd8-997d-31ddd025e379",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.1-rc3"
+      "product_version": "patch: 7.1"
     },
     {
-      "id": "562f1a51-1373-3422-8f8b-d1078611b9f5",
+      "id": "4e36a5ba-2854-365d-a0ae-7446631add05",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "cf2719a21fdb9d4c8e9c834d279163609bef575d"
+      "product_version": "patch: 5.15.209"
     },
     {
       "id": "7176734f-564a-37d7-bcfa-7fed4a2e3806",
@@ -127,16 +142,6 @@
         }
       },
       "product_version": "160fbcf3bfb93c3c086427f9f4c8bc70f217e9be <6c1730099a6fc18b183bd6c1adad3b54adcaeda9"
-    },
-    {
-      "id": "91e771ff-1ee1-385b-91c6-2e65ba1375dd",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5.15.78 <5.16"
     },
     {
       "id": "ac80d1b4-4580-3dc1-8a29-4f758bf8d62d",
@@ -167,6 +172,36 @@
         }
       },
       "product_version": "160fbcf3bfb93c3c086427f9f4c8bc70f217e9be <b40cdd1b1370d76e9e760af4490cb4a351cceead"
+    },
+    {
+      "id": "d1c6afc0-d17f-3675-b9ca-37af5ffb4200",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cf2719a21fdb9d4c8e9c834d279163609bef575d <4236e55b2d9d1ffd3b4bdf8ebbb86e5a0a526b4a"
+    },
+    {
+      "id": "d8510848-9d6f-3344-bdbe-22a0814b9673",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.78 <5.15.209"
+    },
+    {
+      "id": "eeebc824-ecf0-3348-bd70-789e555f0aec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.175"
     },
     {
       "id": "fc4f8d0f-7d4a-3cf3-b3c4-424d3fe328b5",

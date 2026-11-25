@@ -1,0 +1,151 @@
+{
+  "id": "EUVD-2024-24037",
+  "enisaUuid": "63631655-d38e-3d74-9abc-61a23aaa4c4c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\naoe: avoid potential deadlock at set_capacity\n\nMove set_capacity() outside of the section procected by (&d->lock).\nTo avoid possible interrupt unsafe locking scenario:\n\n        CPU0                    CPU1\n        ----                    ----\n[1] lock(&bdev->bd_size_lock);\n                                local_irq_disable();\n                            [2] lock(&d->lock);\n                            [3] lock(&bdev->bd_size_lock);\n   <Interrupt>\n[4]  lock(&d->lock);\n\n  *** DEADLOCK ***\n\nWhere [1](&bdev->bd_size_lock) hold by zram_add()->set_capacity().\n[2]lock(&d->lock) hold by aoeblk_gdalloc(). And aoeblk_gdalloc()\nis trying to acquire [3](&bdev->bd_size_lock) at set_capacity() call.\nIn this situation an attempt to acquire [4]lock(&d->lock) from\naoecmd_cfg_rsp() will lead to deadlock.\n\nSo the simplest solution is breaking lock dependency\n[2](&d->lock) -> [3](&bdev->bd_size_lock) by moving set_capacity()\noutside.",
+  "datePublished": "Apr 3, 2024, 5:01:01 PM",
+  "dateUpdated": "May 11, 2026, 8:03:56 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/2499fa286fb010ceb289950050199f33c26667b9",
+    "https://git.kernel.org/stable/c/2d623c94fbba3554f4446ba6f3c764994e8b0d26",
+    "https://git.kernel.org/stable/c/673629018ba04906899dcb631beec34d871f709c",
+    "https://git.kernel.org/stable/c/19a77b27163820f793b4d022979ffdca8f659b77",
+    "https://git.kernel.org/stable/c/e169bd4fb2b36c4b2bee63c35c740c85daeb2e86"
+  ],
+  "aliases": [
+    "GHSA-86m3-4q38-6prj",
+    "CVE-2024-26775"
+  ],
+  "assigner": "Linux",
+  "epss": 0.18,
+  "enisaIdProduct": [
+    {
+      "id": "08972633-903e-3341-a2a9-d0ef45538dde",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a782483cc1f875355690625d8253a232f2581418 <2499fa286fb010ceb289950050199f33c26667b9"
+    },
+    {
+      "id": "1e895377-4fe3-3317-9c71-23323742d0ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.80"
+    },
+    {
+      "id": "32e95e28-0486-3be1-a29c-d65bf1e73c07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "7e4219ac-bd10-3011-bb2d-c99c563f1157",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.189"
+    },
+    {
+      "id": "804f2bda-9250-3ce8-9f43-50e1480f3738",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.19"
+    },
+    {
+      "id": "85082997-bfdf-3b0d-b39b-e8a11065019c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a782483cc1f875355690625d8253a232f2581418 <673629018ba04906899dcb631beec34d871f709c"
+    },
+    {
+      "id": "891e7dfb-3874-3a65-82ce-54525d07846a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a782483cc1f875355690625d8253a232f2581418 <2d623c94fbba3554f4446ba6f3c764994e8b0d26"
+    },
+    {
+      "id": "8dd72c5c-fc38-3ef3-8b34-8c699e6e3176",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a782483cc1f875355690625d8253a232f2581418 <19a77b27163820f793b4d022979ffdca8f659b77"
+    },
+    {
+      "id": "a91dd3c8-71b5-3b63-8a4a-0c3340cf3be2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.7"
+    },
+    {
+      "id": "adc4f761-7533-368e-9dd8-3f74190668f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a782483cc1f875355690625d8253a232f2581418 <e169bd4fb2b36c4b2bee63c35c740c85daeb2e86"
+    },
+    {
+      "id": "b3d314b2-727f-3dac-a983-a8e6903c2bd3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.11"
+    },
+    {
+      "id": "b500777c-98b3-35e3-ad89-0cbb1dcd6b92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c1342e43-f788-36f2-b5d2-c11978dc0ef6",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

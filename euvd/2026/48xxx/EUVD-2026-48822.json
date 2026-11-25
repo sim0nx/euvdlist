@@ -3,7 +3,7 @@
   "enisaUuid": "f98f7891-31fd-37d0-b539-2bd8faf209a7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: usb-audio: avoid kobject path lookup in DualSense match\n\nThe DualSense jack-detection input handler verifies that a matching input\ndevice belongs to the same physical controller by building kobject path\nstrings for both the input device and the USB audio device, then comparing\nthe path prefix.\n\nThis was observed when a weak physical connection caused the controller\nto rapidly disconnect and reconnect. During that repeated hotplug,\nsnd_dualsense_ih_match() can run while the controller's USB device is\nbeing disconnected. kobject_get_path() walks ancestor kobjects and\ndereferences their names; if the USB device kobject name is no longer\nvalid, this can fault in strlen():\n\n  RIP: 0010:strlen+0x10/0x30\n  Call Trace:\n   kobject_get_path+0x34/0x150\n   snd_dualsense_ih_match+0x49/0xd0 [snd_usb_audio]\n   input_register_device+0x566/0x6a0\n   ps_probe+0xb89/0x1590 [hid_playstation]\n\nThe same ownership check can be done without building kobject path\nstrings. The input device is parented below the HID device, USB interface\nand USB device, so walking the input device parent chain and comparing\nagainst the mixer USB device preserves the check without dereferencing\nkobject names during disconnect.",
   "datePublished": "Jul 25, 2026, 8:51:40 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:40 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:54 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/e4c66a149c408e44e60bfec3fabf08b6b7abbc60",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/7693c0cc415f3a16a7a3355f245474a5e661be4e"
   ],
   "aliases": [
+    "GHSA-wv3c-4j75-q9c9",
     "CVE-2026-64478"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "023a223f-4059-3196-9558-19bbeef1b535",
@@ -60,16 +61,6 @@
         }
       },
       "product_version": "patch: 6.6.145"
-    },
-    {
-      "id": "35c659ae-a60e-3f51-a760-ab81afbf8bab",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "39ca6b70-017a-3c66-a90e-3ee1f3509e20",
@@ -160,6 +151,16 @@
         }
       },
       "product_version": "patch: 6.1.178"
+    },
+    {
+      "id": "941f8005-55f8-38c0-9a0c-ec5c35784e6c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "a13a6ca5-6a81-3a0a-a01a-144263acf3f5",

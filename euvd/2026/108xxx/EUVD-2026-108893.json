@@ -3,8 +3,10 @@
   "enisaUuid": "ffbd3602-bad4-39ed-94e0-eaec495e9776",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: arm64: nv: Fix life cycle of the nested_mmus array\n\nThe nested_mmus array holds the shadow page tables that are used when\na guest is running a nested context. These structures are allocated on\nVCPU_INIT for whole guest, which implies that they may have to be\nrelocated as the array grows.\n\nShould a VCPU_INIT occur whilst a vcpu is actively running an L2 and\nthat the allocation requires relocation, that vcpu will still be\nrunning with a pointer to the previous structure, which will have been\nfreed.\n\nFix this by turning the array of structures to an array of pointers,\nwhich is now allocated at VM creation, sized to the absolute maximum\nthat KVM can handle.\n\nIn turn, each VCPU_INIT contributes S2_MMU_PER_VCPU to the pool. No\nreallocation is ever performed, and the life cycle of each object is\nmuch clearer:\n\n- the nested_mmus array is allocated in kvm_init_nested(), and freed\n  in kvm_arch_destroy_vm()\n\n- s2_mmu structures are allocated in kvm_vcpu_init_nested(), and freed\n  on kvm_arch_flush_shadow_all()\n\nFinally, the freeing of vcpu->arch.vncr_array is made consistent\nrather than being done on some failure paths, but not others.",
   "datePublished": "Oct 23, 2026, 12:06:01 PM",
-  "dateUpdated": "Oct 23, 2026, 12:06:01 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 24, 2026, 2:09:32 PM",
+  "baseScore": 7.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ea242bdc29e8a8ff0e2447a64b3841114779f3af",
     "https://git.kernel.org/stable/c/81e3f065a6485626f816d791dfd5e00ddd12eff5",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/33346f8960c7bb6a3b4e273b5cfe25c5a8be349f"
   ],
   "aliases": [
-    "CVE-2026-98927"
+    "CVE-2026-98927",
+    "GHSA-2374-8v6x-x95c"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.15,
   "enisaIdProduct": [
     {
       "id": "08da9de9-e18d-39fd-a979-6a997c95a2bf",

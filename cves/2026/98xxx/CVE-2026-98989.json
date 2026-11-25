@@ -3,19 +3,63 @@
   "enisaUuid": "9e194afa-4564-32c7-850a-34acce4ed395",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnamespace: check a recursive bind mount for mount namespace loops\n\ndo_loopback() refuses to bind mount the file of a mount namespace that\nis as old as the caller's or older because a mount namespace that holds\na mount of its own file, or of an ancestor's, would cause a cycle. But\nit only checks the dentry the bind mount starts from. With MS_REC\neverything below it is copied and do_loopback() passes\nCL_COPY_MNT_NS_FILE so mount namespace files below the source are\ncopied.\n\nThat's fine for a source in the caller's own mount namespace. Every\nmount namespace file in there passed the same check when it was\nbind-mounted. It isn't fine for a source in another mount namespace.\nmay_copy_tree() accepts a bind mount of any nsfs or pidfs file no matter\nwhat mount namespace it lives in so that /proc/<pid>/ns/<ns> and pidfds\ncan be bind mounted. If we create a bind-mount stack of mount namespaces\nfile descriptors the kernel will copy them irrespective of their\nancestoral relationship to the mount namespace in question:\n\n  151 146 0:7 net:[4026531833] /tmp/nrc/y rw - nsfs nsfs rw\n  152 151 0:7 mnt:[4026532293] /tmp/nrc/y rw - nsfs nsfs rw\n\nMount 152 is a mount of the mount namespace file of mount namespace\n4026532293 inside mount namespace 4026532293. That namespace and every\nmount in it are leaked... All it takes is a process in an older mount\nnamespace that stacks the file and repeating it leaks without limit:\n\n  after control: Shmem:               380 kB\n  child: mount(/proc/self/fd/6, MS_BIND|MS_REC): ok\n  after cycle: Shmem:             65916 kB\n\ndo_move_mount() runs check_for_nsfs_mounts() over a detached tree for\nexactly that reason. Do the same for the copy before it is grafted.",
   "datePublished": "Oct 23, 2026, 12:20:08 PM",
-  "dateUpdated": "Oct 23, 2026, 12:20:08 PM",
+  "dateUpdated": "Nov 23, 2026, 8:00:27 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/66cd17e97064d94dcce8228409d85e4436eb5e7a",
+    "https://git.kernel.org/stable/c/c6653a4598e87be91de90e4daac0d4eaef273e94",
+    "https://git.kernel.org/stable/c/b82f3c1131456537a514595c3991b62652507c9d",
     "https://git.kernel.org/stable/c/a0ba48256f5dff6f75a45f8ce39fe57f21df1022",
     "https://git.kernel.org/stable/c/37a82f400efa4d263542a5fa41755b21057f1e5d",
     "https://git.kernel.org/stable/c/c640a01a78e42302879006ed7b7d5a9a943ba815"
   ],
   "aliases": [
+    "GHSA-88xj-3p4j-2c73",
     "CVE-2026-98989"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "18a4644a-e454-30fa-b5ca-f87cb33c985d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e149ed2b805fefdccf7ccdfc19eca22fdd4514ac <c6653a4598e87be91de90e4daac0d4eaef273e94"
+    },
+    {
+      "id": "368ccf59-4edd-3ff2-9b60-fd555a4603e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e149ed2b805fefdccf7ccdfc19eca22fdd4514ac <66cd17e97064d94dcce8228409d85e4436eb5e7a"
+    },
+    {
+      "id": "405e3164-3ab1-3c6f-bec0-6776ccb8b9b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "6a2d5967-abbc-3142-b8ae-aff345ff8a1f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
     {
       "id": "6ff6ec94-0f3e-399a-8c51-184c4f27536b",
       "product": {
@@ -25,6 +69,26 @@
         }
       },
       "product_version": "e149ed2b805fefdccf7ccdfc19eca22fdd4514ac <a0ba48256f5dff6f75a45f8ce39fe57f21df1022"
+    },
+    {
+      "id": "7763f1e1-de29-3c2c-aeaa-25f4634ee8df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e149ed2b805fefdccf7ccdfc19eca22fdd4514ac <b82f3c1131456537a514595c3991b62652507c9d"
+    },
+    {
+      "id": "aa9e08a8-f6e4-3186-8074-44b145e9c88d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "b62c4daf-1e00-3757-8175-040422798743",

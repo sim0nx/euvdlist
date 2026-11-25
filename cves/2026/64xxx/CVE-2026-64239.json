@@ -3,7 +3,7 @@
   "enisaUuid": "1123e12f-80a9-39aa-bfe9-4b38c5c984d3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/damon/sysfs-schemes: delete tried region in regions_rmdirs()\n\nDAMON sysfs maintains the DAMOS tried region directory objects via a\nlinked list.  When the user requests refresh of the directories, DAMON\nsysfs removes all the region directories first, and then generate updated\nregions directory on the empty space.  The removal function\n(damon_sysfs_scheme_regions_rm_dirs()) only puts the kobj objects. \nDeletion of the container region object from the linked list is done\ninside the kobj release callback function.\n\nIf somehow the callback invocation is delayed, the list will contain\nregions list that gonna be freed.  If the updated region directories\ncreation is started in this situation, the list can be corrupted and\nuse-after-free can happen.\n\nBecause the kobj objects are managed by only DAMON sysfs, the issue cannot\nhappen in normal situation.  But, such delays can be made on kernels that\nbuilt with CONFIG_DEBUG_KOBJECT_RELEASE.  On the kernel, the issue can\nindeed be reproduced like below.\n\n    # damo start --damos_action stat\n    # cd /sys/kernel/mm/damon/admin/kdamonds/0/\n    # for i in {1..10}; do echo update_schemes_tried_regions > state; done\n    # dmesg | grep underflow\n    [   89.296152] refcount_t: underflow; use-after-free.\n\nFix the issue by removing the region object from the list when\ndecrementing the reference count.\n\nAlso update damos_sysfs_populate_region_dir() to add the region object to\nthe list only after the kobject_init_and_add() is success, so that fail of\nkobject_init_and_add() is not leaving the deallocated object on the list.\n\nThe issue was discovered [1] by Sashiko.",
   "datePublished": "Jul 24, 2026, 3:27:43 PM",
-  "dateUpdated": "Jul 24, 2026, 3:27:43 PM",
+  "dateUpdated": "Nov 6, 2026, 4:34:31 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/c0e37017a452addec873865c94cf7a665663a9b2",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/441f92f7d386b85bad16de49db95a307cba048a2"
   ],
   "aliases": [
-    "CVE-2026-64239"
+    "CVE-2026-64239",
+    "GHSA-v8wj-8j36-23j2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "02c2e398-b8de-39c4-a227-98ff339a7a80",

@@ -1,0 +1,151 @@
+{
+  "id": "EUVD-2024-43716",
+  "enisaUuid": "8d6ad26e-1818-3bd4-8246-3620f20ed828",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncachefiles: fix dentry leak in cachefiles_open_file()\n\nA dentry leak may be caused when a lookup cookie and a cull are concurrent:\n\n            P1             |             P2\n-----------------------------------------------------------\ncachefiles_lookup_cookie\n  cachefiles_look_up_object\n    lookup_one_positive_unlocked\n     // get dentry\n                            cachefiles_cull\n                              inode->i_flags |= S_KERNEL_FILE;\n    cachefiles_open_file\n      cachefiles_mark_inode_in_use\n        __cachefiles_mark_inode_in_use\n          can_use = false\n          if (!(inode->i_flags & S_KERNEL_FILE))\n            can_use = true\n\t  return false\n        return false\n        // Returns an error but doesn't put dentry\n\nAfter that the following WARNING will be triggered when the backend folder\nis umounted:\n\n==================================================================\nBUG: Dentry 000000008ad87947{i=7a,n=Dx_1_1.img}  still in use (1) [unmount of ext4 sda]\nWARNING: CPU: 4 PID: 359261 at fs/dcache.c:1767 umount_check+0x5d/0x70\nCPU: 4 PID: 359261 Comm: umount Not tainted 6.6.0-dirty #25\nRIP: 0010:umount_check+0x5d/0x70\nCall Trace:\n <TASK>\n d_walk+0xda/0x2b0\n do_one_tree+0x20/0x40\n shrink_dcache_for_umount+0x2c/0x90\n generic_shutdown_super+0x20/0x160\n kill_block_super+0x1a/0x40\n ext4_kill_sb+0x22/0x40\n deactivate_locked_super+0x35/0x80\n cleanup_mnt+0x104/0x160\n==================================================================\n\nWhether cachefiles_open_file() returns true or false, the reference count\nobtained by lookup_positive_unlocked() in cachefiles_look_up_object()\nshould be released.\n\nTherefore release that reference count in cachefiles_look_up_object() to\nfix the above issue and simplify the code.",
+  "datePublished": "Oct 21, 2024, 6:01:12 PM",
+  "dateUpdated": "May 11, 2026, 8:40:49 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/d32ff64c872d7e08e893c32ba6a2374583444410",
+    "https://git.kernel.org/stable/c/c7d10fa7d7691558ff967668494672415f5fa151",
+    "https://git.kernel.org/stable/c/e4a28489b310339b2b8187bec0a437709be551c1",
+    "https://git.kernel.org/stable/c/7fa2382f97421978514a419c93054eca69f5247b",
+    "https://git.kernel.org/stable/c/da6ef2dffe6056aad3435e6cf7c6471c2a62187c"
+  ],
+  "aliases": [
+    "CVE-2024-49870",
+    "GHSA-rvgw-688x-x595"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "1b85a277-6e43-32e2-aa0f-5eebb2a46f2d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "2ff8e77f-625f-3c03-9f7e-95b7631259fa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.14"
+    },
+    {
+      "id": "680bba2e-fff2-3713-912a-7d45dd6d18f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.17"
+    },
+    {
+      "id": "6e5c9c29-0792-3697-b6bc-a04d6f47d090",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1f08c925e7a38002bde509e66f6f891468848511 <da6ef2dffe6056aad3435e6cf7c6471c2a62187c"
+    },
+    {
+      "id": "8ef64ef1-dfe0-3c39-9cc1-7214bbee9283",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1f08c925e7a38002bde509e66f6f891468848511 <d32ff64c872d7e08e893c32ba6a2374583444410"
+    },
+    {
+      "id": "9c4706c1-72f5-3823-8372-b96f7072c177",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.55"
+    },
+    {
+      "id": "b224880e-985a-3e51-a8d4-34c0cebe5b71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.113"
+    },
+    {
+      "id": "b8604e53-0172-3d9c-afe4-56c0d77b94b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1f08c925e7a38002bde509e66f6f891468848511 <e4a28489b310339b2b8187bec0a437709be551c1"
+    },
+    {
+      "id": "c3988714-2c1c-3023-a545-49beed5bec4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.3"
+    },
+    {
+      "id": "cb61e036-6a59-3f19-bd66-09b028ece716",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "cbdcb7d1-f021-308d-b229-3f31b5b31021",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1f08c925e7a38002bde509e66f6f891468848511 <7fa2382f97421978514a419c93054eca69f5247b"
+    },
+    {
+      "id": "dd37c24e-128a-3a83-80a8-2ee5cbbf5209",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1f08c925e7a38002bde509e66f6f891468848511 <c7d10fa7d7691558ff967668494672415f5fa151"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4879ca23-6a66-3c96-9b9a-5e13b43f2188",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2021-33811",
+  "enisaUuid": "811b7511-fd28-3699-a0c7-94ece847d233",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntipc: wait and exit until all work queues are done\n\nOn some host, a crash could be triggered simply by repeating these\ncommands several times:\n\n  # modprobe tipc\n  # tipc bearer enable media udp name UDP1 localip 127.0.0.1\n  # rmmod tipc\n\n  [] BUG: unable to handle kernel paging request at ffffffffc096bb00\n  [] Workqueue: events 0xffffffffc096bb00\n  [] Call Trace:\n  []  ? process_one_work+0x1a7/0x360\n  []  ? worker_thread+0x30/0x390\n  []  ? create_worker+0x1a0/0x1a0\n  []  ? kthread+0x116/0x130\n  []  ? kthread_flush_work_fn+0x10/0x10\n  []  ? ret_from_fork+0x35/0x40\n\nWhen removing the TIPC module, the UDP tunnel sock will be delayed to\nrelease in a work queue as sock_release() can't be done in rtnl_lock().\nIf the work queue is schedule to run after the TIPC module is removed,\nkernel will crash as the work queue function cleanup_beareri() code no\nlonger exists when trying to invoke it.\n\nTo fix it, this patch introduce a member wq_count in tipc_net to track\nthe numbers of work queues in schedule, and  wait and exit until all\nwork queues are done in tipc_exit_net().",
+  "datePublished": "Mar 25, 2024, 9:16:16 AM",
+  "dateUpdated": "Aug 5, 2026, 8:46:27 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/d1f76dfadaf8f47ed1753f97dbcbd41c16215ffa",
+    "https://git.kernel.org/stable/c/5195ec5e365a2a9331bfeb585b613a6e94f98dba",
+    "https://git.kernel.org/stable/c/b9f5b7ad4ac3af006443f535b1ce7bff1d130d7d",
+    "https://git.kernel.org/stable/c/04c26faa51d1e2fe71cf13c45791f5174c37f986"
+  ],
+  "aliases": [
+    "GHSA-63cm-3458-95cr",
+    "CVE-2021-47163"
+  ],
+  "assigner": "Linux",
+  "epss": 0.19,
+  "enisaIdProduct": [
+    {
+      "id": "32fd3541-b141-374f-a35a-e3a5b5193ff8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d0f91938bede204a343473792529e0db7d599836 <d1f76dfadaf8f47ed1753f97dbcbd41c16215ffa"
+    },
+    {
+      "id": "38944110-2fb8-3ad4-a381-3ea81078dfbf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "60dbd7b1-a7f7-30f5-aa8a-8f21cace7b3f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.124"
+    },
+    {
+      "id": "81063562-67f0-3661-87db-60c8e5e70545",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.42"
+    },
+    {
+      "id": "a253601f-a8ce-399f-aaf3-b001f2e2604e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.9"
+    },
+    {
+      "id": "b80ddf71-aadd-318b-83f6-354adaa15cc3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d0f91938bede204a343473792529e0db7d599836 <04c26faa51d1e2fe71cf13c45791f5174c37f986"
+    },
+    {
+      "id": "c3584e0e-d46b-3b74-8464-08ca673a56b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d0f91938bede204a343473792529e0db7d599836 <5195ec5e365a2a9331bfeb585b613a6e94f98dba"
+    },
+    {
+      "id": "c36a2920-3d77-3a34-9ce7-7c611d6f0e33",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d0f91938bede204a343473792529e0db7d599836 <b9f5b7ad4ac3af006443f535b1ce7bff1d130d7d"
+    },
+    {
+      "id": "dd56daa1-3981-3e20-a5ba-0de4f0b82c2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    },
+    {
+      "id": "f4c225e2-dc1b-344d-b60f-bc7f612ec1a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "49d3c792-6d02-395f-b6b9-6542c05c44b4",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

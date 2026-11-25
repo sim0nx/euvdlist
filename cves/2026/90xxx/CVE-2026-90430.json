@@ -3,19 +3,31 @@
   "enisaUuid": "fd1d7173-2f59-3c92-aa7d-1a4ff1c3f5e1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niommu/tegra241-cmdqv: Publish an LVCMDQ only after it is fully initialized\n\ntegra241_vintf_init_lvcmdq() stores the freshly allocated vcmdq pointer to\nthe vintf->lvcmdqs[] array, before tegra241_vcmdq_alloc_smmu_cmdq() builds\nthe vcmdq->cmdq. The error ISR dereferences that cmdq, so a latched LVCMDQ\nerror (e.g. one inherited across a kexec) firing in this window would make\ntegra241_vintf0_handle_error() pass the still-zeroed arm_smmu_cmdq down to\n__arm_smmu_cmdq_skip_err(), dereferencing NULL queue register pointers.\n\nDrop the store from tegra241_vintf_init_lvcmdq() and publish the vcmdq at\nthe end of the allocation instead, with an smp_store_release() that pairs\nwith an smp_load_acquire() in the ISR, which can see a fully built LVCMDQ\nor NULL.\n\nThe user-owned LVCMDQ allocation moves accordingly, publishing the vcmdq\nonce tegra241_vcmdq_hw_init_user() succeeds, using a plain store since a\nuser VINTF's lvcmdqs[] has no lockless reader -- the error ISR only walks\nthe VINTF0 array.",
   "datePublished": "Sep 17, 2026, 4:09:51 PM",
-  "dateUpdated": "Sep 17, 2026, 4:09:51 PM",
+  "dateUpdated": "Oct 19, 2026, 9:03:33 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/d5ec248ee1c79354979c23f7f390e856e9535651",
     "https://git.kernel.org/stable/c/792f720fc23fe5bd6508d40ed73ae739debd6dcb",
     "https://git.kernel.org/stable/c/b4535b403d6bf9bcc24dbd62096711329b9c612c",
     "https://git.kernel.org/stable/c/cbc41aacd49e695338940196e7084770365e1b68"
   ],
   "aliases": [
+    "GHSA-fq43-87xx-qq28",
     "CVE-2026-90430"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
+    {
+      "id": "252f870d-f644-340f-a1a4-27a15ee691fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "30150c5b-64a3-3f59-b0c9-47272475774b",
       "product": {
@@ -57,6 +69,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "9f4c17a8-1896-3640-ace4-0b5c756a37ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.111"
+    },
+    {
       "id": "a24bb6b9-5f8b-341a-baeb-d246829b8f25",
       "product": {
         "name": "Linux",
@@ -77,6 +99,16 @@
       "product_version": "918eb5c856f6ce4cf93b4b38e4b5e156905c5943 <cbc41aacd49e695338940196e7084770365e1b68"
     },
     {
+      "id": "ca811df0-f809-35a4-97a1-10a7e41c8c0f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "918eb5c856f6ce4cf93b4b38e4b5e156905c5943 <d5ec248ee1c79354979c23f7f390e856e9535651"
+    },
+    {
       "id": "e3b2cea4-6281-3be9-b3a4-183b707c613f",
       "product": {
         "name": "Linux",
@@ -85,16 +117,6 @@
         }
       },
       "product_version": "918eb5c856f6ce4cf93b4b38e4b5e156905c5943 <b4535b403d6bf9bcc24dbd62096711329b9c612c"
-    },
-    {
-      "id": "f83fff46-dfed-324c-a80d-d5ff5d1f9ee7",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     }
   ],
   "enisaIdVendor": [

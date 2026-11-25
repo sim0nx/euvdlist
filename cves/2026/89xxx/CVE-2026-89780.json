@@ -2,8 +2,8 @@
   "id": "EUVD-2026-80301",
   "enisaUuid": "b8f38329-5343-3176-9085-f297bd1bd823",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: qualcomm: rmnet: restore skb->dev on deaggregated frames\n\nrmnet_map_deaggregate() allocates each sub-frame with alloc_skb() and\nleaves skb->dev NULL. __rmnet_map_ingress_handler() assigns\nskb->dev = ep->egress_dev only on the data path, but a MAP command frame\nis dispatched to rmnet_map_command() before that, so rmnet_map_send_ack()\nruns netif_tx_lock(skb->dev) on a NULL device. An unprivileged user\nreaches this by unsharing a user+net namespace, creating an rmnet link\nover a tap device with INGRESS_DEAGGREGATION and INGRESS_MAP_COMMANDS,\nand writing an aggregated frame carrying a flow-control command to the\ntap fd.\n\nRestore the assignment dropped by 378e25357ac7, so every skb leaving\nrmnet_map_deaggregate() has a valid device.\n\n  BUG: KASAN: null-ptr-deref in _raw_spin_lock (kernel/locking/spinlock.c:158)\n  Write of size 4 at addr 00000000000004b4 by task exploit/144\n  Call Trace:\n   _raw_spin_lock (kernel/locking/spinlock.c:158)\n   netif_tx_lock (net/sched/sch_generic.c:497)\n   rmnet_map_command (drivers/net/ethernet/qualcomm/rmnet/rmnet_map_command.c:67)\n   rmnet_rx_handler (drivers/net/ethernet/qualcomm/rmnet/rmnet_handlers.c:125)\n   __netif_receive_skb_core.constprop.0 (net/core/dev.c:6103)\n   ...\n   __netif_receive_skb_one_core (net/core/dev.c:6214)\n   netif_receive_skb (net/core/dev.c:6474)\n   tun_get_user (drivers/net/tun.c:1966)\n   tun_chr_write_iter (drivers/net/tun.c:2012)\n   vfs_write (fs/read_write.c:687)\n   ksys_write (fs/read_write.c:739)\n   do_syscall_64 (arch/x86/entry/syscall_64.c:94)\n   entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:121)\n  Kernel panic - not syncing: Fatal exception in interrupt",
-  "datePublished": "Sep 16, 2026, 9:30:30 AM",
-  "dateUpdated": "Sep 16, 2026, 9:30:30 AM",
+  "datePublished": "Sep 16, 2026, 8:48:19 AM",
+  "dateUpdated": "Oct 19, 2026, 8:52:32 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/5aaa7409c1b4ca4c60d66e2afa99703bf4eb7ddd",
@@ -13,15 +13,14 @@
     "https://git.kernel.org/stable/c/b14c22c31d9e30f38ea1693ac06d318f32258f5d",
     "https://git.kernel.org/stable/c/7abe769e72c792e5f9eb273813eb3ecd8389854c",
     "https://git.kernel.org/stable/c/200460a0793dc6af97d3b36d92ac245350ac26fc",
-    "https://git.kernel.org/stable/c/a66734a1c5e36525ea07e9f4547fddc51e916de3",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-89780"
+    "https://git.kernel.org/stable/c/a66734a1c5e36525ea07e9f4547fddc51e916de3"
   ],
   "aliases": [
     "GHSA-2f6m-7f8f-p7hp",
     "CVE-2026-89780"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "25cd5130-cedf-32dc-a1e4-b5d3ce936280",
@@ -42,16 +41,6 @@
         }
       },
       "product_version": "4.17"
-    },
-    {
-      "id": "4010950a-5319-32b8-a7b1-81c2e79ffa76",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "44443f86-c030-3826-a413-3556628ea5ee",
@@ -172,6 +161,16 @@
         }
       },
       "product_version": "378e25357ac78ad02fbc98bec9b4e3baaa916c5c <9d18c6c6cd1666b2cb7915cad052e22abf520997"
+    },
+    {
+      "id": "ecbca69c-01ea-343c-b356-f1b14132f67b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "ee849b4d-c8f4-3cff-b0b3-29347e51c30e",

@@ -3,9 +3,12 @@
   "enisaUuid": "dc13e9ad-2266-3325-9a37-a6e4a08d62e0",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nintel_th: fix MSC output device reference leak\n\nintel_th_output_open() looks up the output device with\nbus_find_device_by_devt(), which returns the device with a reference that\nmust be dropped after use.\n\ncommit 95fc36a234da (\"intel_th: fix device leak on output open()\")\nattempted to drop the reference from intel_th_output_release(). However,\na successful open replaces file->f_op with the output driver file\noperations before returning, so close runs the output driver release\ncallback instead.\n\nFor MSC outputs, close runs intel_th_msc_release(), which only removes\nthe per-file iterator and does not drop the device reference taken by\nintel_th_output_open(). Consequently, every successful MSC output open\nleaks one device reference.\n\nDrop the device reference from intel_th_msc_release(), which is the\nrelease path actually used for MSC output files. Remove the now-unused\nintel_th_output_release() callback from intel_th_output_fops.",
   "datePublished": "Aug 10, 2026, 11:59:51 AM",
-  "dateUpdated": "Aug 10, 2026, 11:59:51 AM",
+  "dateUpdated": "Nov 6, 2026, 4:45:00 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/12ad4fad748e6e563ff4480f03b89134a41b5c37",
+    "https://git.kernel.org/stable/c/df55842fddbcdb80e6dd16680439c0f780ed592e",
+    "https://git.kernel.org/stable/c/141641a70ed337e54487f766ede745fc2ce44c42",
     "https://git.kernel.org/stable/c/ddcf2064d7ec5a8c9afa7cb74442320e443502bc",
     "https://git.kernel.org/stable/c/26e27b8dcef1e4df6f30d8f25b3304a506d482b3",
     "https://git.kernel.org/stable/c/caba30eb8bd321c465ecfc7d850ee85f5b353496",
@@ -13,20 +16,21 @@
     "https://git.kernel.org/stable/c/761b785a0cfbce43761227bc42a7f984f31f8921"
   ],
   "aliases": [
+    "GHSA-qq33-46pr-rg4r",
     "CVE-2026-68180"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
-      "id": "0279b5d9-6517-36b5-bc43-731e4e2776b2",
+      "id": "019c84ee-efb7-37be-95b2-98af20e0f1d6",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "af4b9467296b9a16ebc008147238070236982b6d"
+      "product_version": "5.15.199 <5.15.216"
     },
     {
       "id": "0397ef97-d8d3-3c6d-8465-0551908de3d5",
@@ -49,14 +53,14 @@
       "product_version": "6.12.68 <6.12.101"
     },
     {
-      "id": "13a95dba-07f0-3372-86a8-4387dfb9ce58",
+      "id": "2740d8ca-c967-3d0d-91a3-94c5aeba83c9",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc5"
+      "product_version": "5.10.249 <5.10.265"
     },
     {
       "id": "37f61894-3dec-389d-9814-6c5daa6ec696",
@@ -99,24 +103,44 @@
       "product_version": "patch: 6.18.42"
     },
     {
-      "id": "52993632-68b9-35eb-bab0-dc3cdb01c57d",
+      "id": "58a620ec-6a6f-3d75-ac1f-bfa459c77439",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "64015cbf06e8bb75b81ae95b997e847b55280f7f"
+      "product_version": "patch: 5.10.265"
     },
     {
-      "id": "6a75c89c-8455-3782-9dd5-a6434b565c54",
+      "id": "61440a1a-78ae-3f43-9044-a45fe0f1e61d",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "5.15.199 <5.16"
+      "product_version": "patch: 5.15.216"
+    },
+    {
+      "id": "68caec57-68cb-33d6-9c2a-04e674260667",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b71e64ef7ff9443835d1333e3e80ab1e49e5209f <141641a70ed337e54487f766ede745fc2ce44c42"
+    },
+    {
+      "id": "6ac3ead6-9005-3f7d-a925-bd5e7124080a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "73692b14-4e2c-3a40-9415-cc473ec9ccd9",
@@ -127,16 +151,6 @@
         }
       },
       "product_version": "bf7785434b5d05d940d936b78925080950bd54dd <ddcf2064d7ec5a8c9afa7cb74442320e443502bc"
-    },
-    {
-      "id": "771ae8d3-a423-3920-9278-f09d7a7f1a5d",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5.10.249 <5.11"
     },
     {
       "id": "8ff0631f-9f9d-3482-8dfc-f5dd80e4cb48",
@@ -159,16 +173,6 @@
       "product_version": "patch: 7.1.6"
     },
     {
-      "id": "a1e66521-fc36-3679-81d2-05e73439f070",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "b71e64ef7ff9443835d1333e3e80ab1e49e5209f"
-    },
-    {
       "id": "a30f846f-7d8e-3925-bce6-287661e653ff",
       "product": {
         "name": "Linux",
@@ -189,6 +193,26 @@
       "product_version": "0fca16c5591534cc1fec8b6181277ee3a3d0f26c <26e27b8dcef1e4df6f30d8f25b3304a506d482b3"
     },
     {
+      "id": "b8e1e668-4620-3db2-af7d-d142096dd373",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "64015cbf06e8bb75b81ae95b997e847b55280f7f <df55842fddbcdb80e6dd16680439c0f780ed592e"
+    },
+    {
+      "id": "c6f05039-d2ea-3077-8aa9-d3cb15a32130",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "cb732b74-77a8-36cf-97eb-6744f6072b57",
       "product": {
         "name": "Linux",
@@ -199,14 +223,24 @@
       "product_version": "95fc36a234da24bbc5f476f8104a5a15f99ed3e3 <761b785a0cfbce43761227bc42a7f984f31f8921"
     },
     {
-      "id": "eea1c80e-15be-3de1-92cd-3254c4be025d",
+      "id": "d0836334-5407-37e6-982c-60cfc12177cc",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "6.1.162 <6.2"
+      "product_version": "6.1.162 <6.1.183"
+    },
+    {
+      "id": "f191ca96-4a00-3c73-83c2-10c2a64930f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af4b9467296b9a16ebc008147238070236982b6d <12ad4fad748e6e563ff4480f03b89134a41b5c37"
     },
     {
       "id": "f627b5ed-a44e-3f06-804b-76f2e71e4bdb",

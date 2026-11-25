@@ -3,17 +3,18 @@
   "enisaUuid": "ce6be2e4-53fe-30a2-98b7-b21197ca9ccb",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/huge_memory: skip device-private PMDs in madvise_free_huge_pmd\n\nmadvise_free_pte_range() checks pmd_trans_huge(*pmd) unlocked, then\nmadvise_free_huge_pmd() takes pmd_trans_huge_lock().  pmd_is_huge()\nreturns true for a device-private PMD, so orig_pmd can be device-private\nand enter the !pmd_present() branch.\n\nSkip device-private PMDs in that non-present branch and continue to out\nbefore calling pmd_folio().  Downgrade the check to VM_WARN_ON_ONCE() so\nan unexpected PMD softleaf logs a warning rather than panicking.  Drop the\nthp_migration_supported() guard: it expands to\nIS_ENABLED(CONFIG_ARCH_SUPPORTS_PMD_SOFTLEAF), and both\npmd_is_migration_entry() and pmd_is_device_private_entry() already return\nfalse when that config is not selected, so the guard suppresses only the\ncase where the warning would already be silent.\n\nPotential trigger: an HMM-based GPU driver races with madvise(MADV_FREE):\nmigrate_vma_pages() flips the PMD to a device-private entry between the\ncaller's pmd_trans_huge() check and the callee's pmd_trans_huge_lock().",
   "datePublished": "Sep 24, 2026, 3:10:41 PM",
-  "dateUpdated": "Sep 24, 2026, 3:10:41 PM",
+  "dateUpdated": "Oct 19, 2026, 9:07:29 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/5e3026bf736498115884d6c7bd0308ba29e0474c",
     "https://git.kernel.org/stable/c/ce579dcf730ce5ed8043a5eeea18a3e6706a97e5"
   ],
   "aliases": [
-    "CVE-2026-93218"
+    "CVE-2026-93218",
+    "GHSA-xw3m-6qvq-wwvg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "5837e288-8640-375d-8890-8efb9a53b7f5",
@@ -36,6 +37,16 @@
       "product_version": "368076f52ebeecd33e10a9f80905d7508b6b6149 <ce579dcf730ce5ed8043a5eeea18a3e6706a97e5"
     },
     {
+      "id": "9c5d2bcc-70b9-36de-804e-83770d5ab66f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "a0c7cdb8-f755-33e0-abe2-c9e791ab9b0d",
       "product": {
         "name": "Linux",
@@ -54,16 +65,6 @@
         }
       },
       "product_version": "6.19"
-    },
-    {
-      "id": "f7bfbebb-63e0-3638-9528-1e767e69e3ed",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "fc6f5a11-c0dc-3fd2-a3b9-e98a00669fd8",

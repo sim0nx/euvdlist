@@ -3,74 +3,183 @@
   "enisaUuid": "821fe4ef-5764-339b-b6a9-ef9ae5426298",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nteam: Move team device type change at the end of team_port_add\n\nAttempting to add a port device that is already up will expectedly fail,\nbut not before modifying the team device header_ops.\n\nIn the case of the syzbot reproducer the gre0 device is\nalready in state UP when it attempts to add it as a\nport device of team0, this fails but before that\nheader_ops->create of team0 is changed from eth_header to ipgre_header\nin the call to team_dev_type_check_change.\n\nLater when we end up in ipgre_header() struct ip_tunnel* points to nonsense\nas the private data of the device still holds a struct team.\n\nExample sequence of iproute2 commands to reproduce the hang/BUG():\nip link add dev team0 type team\nip link add dev gre0 type gre\nip link set dev gre0 up\nip link set dev gre0 master team0\nip link set dev team0 up\nping -I team0 1.1.1.1\n\nMove team_dev_type_check_change down where all other checks have passed\nas it changes the dev type with no way to restore it in case\none of the checks that follow it fail.\n\nAlso make sure to preserve the origial mtu assignment:\n  - If port_dev is not the same type as dev, dev takes mtu from port_dev\n  - If port_dev is the same type as dev, port_dev takes mtu from dev\n\nThis is done by adding a conditional before the call to dev_set_mtu\nto prevent it from assigning port_dev->mtu = dev->mtu and instead\nletting team_dev_type_check_change assign dev->mtu = port_dev->mtu.\nThe conditional is needed because the patch moves the call to\nteam_dev_type_check_change past dev_set_mtu.\n\nTesting:\n  - team device driver in-tree selftests\n  - Add/remove various devices as slaves of team device\n  - syzbot",
   "datePublished": "Dec 23, 2025, 1:58:25 PM",
-  "dateUpdated": "Dec 23, 2025, 1:58:25 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 3:09:43 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
-    "https://nvd.nist.gov/vuln/detail/CVE-2025-68340",
-    "https://git.kernel.org/stable/c/0ae9cfc454ea5ead5f3ddbdfe2e70270d8e2c8ef",
+    "https://git.kernel.org/stable/c/f82d1fb65549de241fe312fcb2bcb8e0ad7b424d",
+    "https://git.kernel.org/stable/c/c8b15b0d2eec3b5c7f585e5a53dfc8d36c818283",
+    "https://git.kernel.org/stable/c/a74ab1b532ecc5f9106621a8f75b4c3d04466b35",
+    "https://git.kernel.org/stable/c/e26235840fd961e4ebe5568f11a2a078cf726663",
     "https://git.kernel.org/stable/c/4040b5e8963982a00aa821300cb746efc9f2947e",
-    "https://git.kernel.org/stable/c/e3eed4f038214494af62c7d2d64749e5108ce6ca"
+    "https://git.kernel.org/stable/c/e3eed4f038214494af62c7d2d64749e5108ce6ca",
+    "https://git.kernel.org/stable/c/0ae9cfc454ea5ead5f3ddbdfe2e70270d8e2c8ef"
   ],
   "aliases": [
-    "CVE-2025-68340",
-    "GHSA-jmpj-vqww-cqc8"
+    "GHSA-jmpj-vqww-cqc8",
+    "CVE-2025-68340"
   ],
   "assigner": "Linux",
-  "epss": 0.02,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "02df1815-5c35-3fd8-b696-d89fb5b24828",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "3.7"
     },
     {
+      "id": "149d6995-8caa-320a-9842-441c93bd07bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.259"
+    },
+    {
       "id": "1e7b0ec9-9252-39bc-8f1e-73c7b9a1ebcb",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "1d76efe1577b4323609b1bcbfafa8b731eda071a <0ae9cfc454ea5ead5f3ddbdfe2e70270d8e2c8ef"
     },
     {
+      "id": "3eb94bbf-6046-3202-a2ed-7cb74b075859",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1d76efe1577b4323609b1bcbfafa8b731eda071a <c8b15b0d2eec3b5c7f585e5a53dfc8d36c818283"
+    },
+    {
+      "id": "5e727579-9a4c-3f39-937a-099170828af3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1d76efe1577b4323609b1bcbfafa8b731eda071a <e26235840fd961e4ebe5568f11a2a078cf726663"
+    },
+    {
       "id": "5ea27b6d-2951-3670-912e-92e7dc8415c0",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.17.11"
     },
     {
+      "id": "61b046ff-97af-3ea1-a856-6e82622c6333",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.162"
+    },
+    {
       "id": "8c5d426e-b5e2-3de7-8b1b-b28dd244bd67",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "1d76efe1577b4323609b1bcbfafa8b731eda071a <e3eed4f038214494af62c7d2d64749e5108ce6ca"
     },
     {
+      "id": "90be710d-dfb3-3a5b-bb5d-fa9c13107a39",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.199"
+    },
+    {
+      "id": "a2d4a70f-7b78-3167-b167-ff5c9b573155",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1d76efe1577b4323609b1bcbfafa8b731eda071a <a74ab1b532ecc5f9106621a8f75b4c3d04466b35"
+    },
+    {
       "id": "a894c692-1bb1-3d23-9afb-50efe0a30309",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.12.61"
     },
     {
+      "id": "b124c776-0977-3fa6-bec9-8dbac8657033",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.123"
+    },
+    {
       "id": "c233254c-b116-3e74-9066-88a7b2f894dc",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 0"
     },
     {
+      "id": "c39323f9-e6a1-35b8-8eb5-804bd96d204e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1d76efe1577b4323609b1bcbfafa8b731eda071a <f82d1fb65549de241fe312fcb2bcb8e0ad7b424d"
+    },
+    {
       "id": "dded6450-cc97-3372-a229-b160353de665",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "1d76efe1577b4323609b1bcbfafa8b731eda071a <4040b5e8963982a00aa821300cb746efc9f2947e"
     },
     {
       "id": "ff0351f8-d389-32a9-a8e1-9b0775e69e22",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.18"
     }

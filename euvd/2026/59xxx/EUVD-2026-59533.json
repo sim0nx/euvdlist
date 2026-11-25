@@ -2,22 +2,23 @@
   "id": "EUVD-2026-59533",
   "enisaUuid": "c27e7f3c-511e-38b0-a9df-9f9b08ed2f54",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnvmet-tcp: fix page fragment cache leak in error path\n\nIn nvmet_tcp_alloc_queue(), when a connection is closed during the\nallocation process (e.g., nvmet_tcp_set_queue_sock() returns -ENOTCONN),\nthe error handling jumps to out_destroy_sq and then to out_ida_remove\nwithout draining the page fragment cache.\n\nAlthough nvmet_tcp_free_cmd() is called in some error paths to release\nindividual page fragments, the underlying page cache reference held by\nqueue->pf_cache is never released. The first allocation using pf_cache\nis the call to nvmet_tcp_alloc_cmd() for queue->connect, which happens\nafter ida_alloc() returns successfully. This results in a page leak each\ntime a connection fails during allocation, which could lead to memory\nexhaustion over time if connections are repeatedly opened and closed.\n\nFix this by calling page_frag_cache_drain() before freeing the queue\nstructure in the out_ida_remove label.",
-  "datePublished": "Aug 15, 2026, 6:32:32 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:32 AM",
+  "datePublished": "Aug 15, 2026, 5:59:01 AM",
+  "dateUpdated": "Oct 30, 2026, 12:29:52 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/aadb8eb9006e192c51b499860f40765de7d55680",
+    "https://git.kernel.org/stable/c/fc11e3f0daaadb6e600a86e54b089d4662d0a464",
     "https://git.kernel.org/stable/c/a43a9abc1ebf663f0aa56a729106f68dd9c77da6",
     "https://git.kernel.org/stable/c/ba3209704b3cd46961e4e081af5c52a780785648",
     "https://git.kernel.org/stable/c/5fbe83a374f09561a0f0c1f4aa021501ffd681eb",
-    "https://git.kernel.org/stable/c/4dae393956093c807212918fd91a8fc70df15338",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-74386"
+    "https://git.kernel.org/stable/c/4dae393956093c807212918fd91a8fc70df15338"
   ],
   "aliases": [
     "CVE-2026-74386",
     "GHSA-3685-2pvg-g2mr"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "04fdf50d-7dde-3ecf-983d-81fc43395adc",
@@ -50,14 +51,24 @@
       "product_version": "872d26a391da92ed8f0c0f5cb5fef428067b7f30 <ba3209704b3cd46961e4e081af5c52a780785648"
     },
     {
-      "id": "61f7679d-7b3e-37a2-92b6-ce8ba909112d",
+      "id": "355ce722-4cf1-3e2f-beed-54a20e968d54",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "872d26a391da92ed8f0c0f5cb5fef428067b7f30 <aadb8eb9006e192c51b499860f40765de7d55680"
+    },
+    {
+      "id": "76a315fb-59c3-342d-a94a-2f929631ed0c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "7bad4309-99e0-34de-89e2-08b754883938",
@@ -68,6 +79,16 @@
         }
       },
       "product_version": "patch: 6.12.97"
+    },
+    {
+      "id": "85fa4120-6810-3873-959f-07547657ffdd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "872d26a391da92ed8f0c0f5cb5fef428067b7f30 <fc11e3f0daaadb6e600a86e54b089d4662d0a464"
     },
     {
       "id": "ad8aabbd-d700-3df5-ac23-764ba798461f",
@@ -98,6 +119,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "c2ae1508-c118-39fb-a9b1-85e8de3f0cd4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "c6d27496-ba2e-35ba-b520-e18cf06d94a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "d2408772-8162-3358-a36a-d47d5a2a5dee",

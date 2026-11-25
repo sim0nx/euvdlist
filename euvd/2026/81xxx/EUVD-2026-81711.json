@@ -3,17 +3,20 @@
   "enisaUuid": "ee880546-3f3c-3b8a-8ed9-c650a5edb629",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nntfs: fix off-by-one page overflow in ntfs_decompress()\n\nThe per-token range check in ntfs_decompress() uses\n\n\tif (cb >= cb_sb_end || dp_addr > dp_sb_end)\n\t\tbreak;\n\nso dp_addr == dp_sb_end falls through to the symbol copy\n`*dp_addr++ = *cb++`, writing one byte past the destination page.  Since\nNTFS_SB_SIZE == PAGE_SIZE the destination is a single page, so the byte\nlands in the adjacent page, and *dest_ofs is left one past the sub-block\nend (the later `*dest_ofs &= ~PAGE_MASK` then yields 1, not 0, so the page\nis never finalized and later sub-blocks keep writing further past it).  A\ncorrupted compressed $DATA attribute thus produces a bounded run of\nout-of-bounds writes when the file is read.\n\nBreak as soon as dp_addr reaches dp_sb_end; a full sub-block still\ncompletes, as its final copy advances dp_addr to exactly dp_sb_end.",
   "datePublished": "Sep 17, 2026, 4:06:23 PM",
-  "dateUpdated": "Sep 17, 2026, 4:06:23 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:58:16 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/b42644e425fed4a5cd6c88372655da5c1b52c666",
     "https://git.kernel.org/stable/c/98716c9fce21f6c8a9d71e08cf53e7504fa562f4"
   ],
   "aliases": [
-    "CVE-2026-90118"
+    "CVE-2026-90118",
+    "GHSA-fvx8-6m5h-cx99"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "15f75b23-1ff3-3790-8bab-33ab8a1f9217",
@@ -26,14 +29,14 @@
       "product_version": "7.1"
     },
     {
-      "id": "53be01cf-fcc2-356f-8a78-4b38b38873cd",
+      "id": "850632f2-e3bb-3282-b0ec-42d7bdb0aa89",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "d186264e-b6e5-3bdd-a827-ac225d475ce5",

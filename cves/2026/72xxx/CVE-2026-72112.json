@@ -2,31 +2,22 @@
   "id": "EUVD-2026-59070",
   "enisaUuid": "54f3a511-2e93-3d9d-b051-c7a41491bf1b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/bpf-ops: reject re-registration of an already-bound ops\n\nio_install_bpf() only rejects a second registration on the ctx side\n(ctx->bpf_ops) and sets the per-map back-pointer ops->priv\nunconditionally. The struct_ops link path never advances a map past\nBPF_STRUCT_OPS_STATE_READY, so the same io_uring_bpf_ops map can be\nregistered more than once, and bpf_io_reg() re-resolves the target ring\nvia fget(ops->ring_fd) on every call. A caller can therefore point the\nsame ring_fd at a different io_ring_ctx between two BPF_LINK_CREATE\ncalls.\n\nThe second registration passes the ctx->bpf_ops check (the new ctx has\nnone) and overwrites ops->priv, orphaning the first ctx. Teardown\n(io_eject_bpf()/bpf_io_unreg()) only reaches a ctx through ops->priv, so\nthe orphaned ctx is never torn down: its ctx->loop_step keeps pointing\ninto the struct_ops trampoline, which is freed once the map is gone. A\nlater io_uring_enter() on the orphaned ring then calls the dangling\nctx->loop_step from io_run_loop() -- a use-after-free of freed\nexecutable memory, reachable by a task with CAP_BPF + CAP_PERFMON.\n\nReject registration when ops->priv is already set, as hid_bpf_reg()\ndoes for its struct_ops.",
-  "datePublished": "Aug 15, 2026, 6:32:12 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:12 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:52:53 AM",
+  "dateUpdated": "Aug 17, 2026, 5:40:26 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/0639ea767fe04c288a8d6cb826100fe3d95d4936",
-    "https://git.kernel.org/stable/c/3afc64c61ce906a04f073ca350b46de10e8302f9",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72112"
+    "https://git.kernel.org/stable/c/3afc64c61ce906a04f073ca350b46de10e8302f9"
   ],
   "aliases": [
     "CVE-2026-72112",
     "GHSA-wgmw-xwr6-63ww"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
-    {
-      "id": "1e51bfa3-34ae-36fc-8728-0ded1e4a7463",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
-    },
     {
       "id": "49d79793-b074-32ae-bc09-4bbeab62483d",
       "product": {
@@ -36,6 +27,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "6dcd0f23-c96e-3dc2-9007-8f0042b6d815",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "836b8463-a6ab-3da5-b091-9d09ccf8e23a",

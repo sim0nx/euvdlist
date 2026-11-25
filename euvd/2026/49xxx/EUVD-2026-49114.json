@@ -3,8 +3,10 @@
   "enisaUuid": "f92e1d3d-92bd-3d62-b3dd-ea86f0004d88",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nstaging: rtl8723bs: fix OOB reads in is_ap_in_tkip() IE loop\n\nThe loop in is_ap_in_tkip() iterates over IEs without verifying that\nenough bytes remain before dereferencing the IE header or its payload:\n\n- pIE->element_id and pIE->length are read without checking that\n  i + sizeof(*pIE) <= ie_length, so a truncated IE at the end of the\n  buffer causes an OOB read.\n\n- For WLAN_EID_VENDOR_SPECIFIC the code compares pIE->data + 12,\n  which requires pIE->length >= 16.  For WLAN_EID_RSN it compares\n  pIE->data + 8, requiring pIE->length >= 12.  Neither requirement\n  is checked.\n\nAdd the missing IE header and payload bounds checks and guard each\ndata access with an explicit pIE->length minimum, matching the\npattern established in update_beacon_info().",
   "datePublished": "Jul 27, 2026, 6:36:04 AM",
-  "dateUpdated": "Jul 27, 2026, 6:36:04 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:48:39 PM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ea3809f7e20bdff282b8cc1e94937d5fb9fb32c7",
     "https://git.kernel.org/stable/c/d2055332297e24c63fffda943ef7a5eefc0a6019",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/3bf39f711ff27c64be8680a8938bcc5001982e81"
   ],
   "aliases": [
-    "CVE-2026-64536"
+    "CVE-2026-64536",
+    "GHSA-rwmp-xmg8-8r93"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.26,
   "enisaIdProduct": [
     {
       "id": "00e769f7-5b71-3834-9263-5471edb30857",
@@ -49,6 +52,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "232bc13f-286f-30f4-baff-eb82aec72c9c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "2b56602c-d121-3dc1-954d-3602a6c1b90d",
@@ -129,16 +142,6 @@
         }
       },
       "product_version": "554c0a3abf216c991c5ebddcdb2c08689ecd290b <4380b3860d887a13555ff024a58dfc05b490dfd6"
-    },
-    {
-      "id": "7cf117fb-ecaa-3279-8323-37f18bb77676",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     },
     {
       "id": "8d638543-e7ff-30c0-a9ee-d53140959fb3",

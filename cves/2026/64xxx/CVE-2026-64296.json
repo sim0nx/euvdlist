@@ -3,8 +3,10 @@
   "enisaUuid": "0d4e219c-dd53-3db7-9e52-c99a21ed49d3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nexfat: bound uniname advance in exfat_find_dir_entry()\n\nIn exfat_find_dir_entry(), each TYPE_EXTEND (file name) entry advances the\noutput pointer by a fixed amount while the loop guard only tracks the\naccumulated name length:\n\n\tif (++order == 2)\n\t\tuniname = p_uniname->name;\n\telse\n\t\tuniname += EXFAT_FILE_NAME_LEN;\n\tlen = exfat_extract_uni_name(ep, entry_uniname);\n\tname_len += len;\n\tunichar = *(uniname+len);\n\t*(uniname+len) = 0x0;\n\nuniname grows by EXFAT_FILE_NAME_LEN (15) per name entry, but name_len\ngrows only by the actual extracted length, which is shorter when a name\nfragment contains an early NUL.  The only guard is\n`name_len >= MAX_NAME_LENGTH`, so a crafted directory with many short\nname fragments lets uniname run far past the\np_uniname->name[MAX_NAME_LENGTH + 3] buffer while name_len stays small,\ncausing an out-of-bounds read and write at *(uniname+len).\n\nThe sibling extractor exfat_get_uniname_from_ext_entry() already stops\non a short fragment (the lockstep `len != EXFAT_FILE_NAME_LEN` guard\nadded in commit d42334578eba (\"exfat: check if filename entries exceeds\nmax filename length\")); exfat_find_dir_entry() never got the\nequivalent.  Track the per-entry write offset as a count and reject a\nfragment once the offset, or the offset plus the extracted length, would\nexceed MAX_NAME_LENGTH, before forming the output pointer.",
   "datePublished": "Jul 25, 2026, 8:49:33 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:33 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:38:22 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/72a2589d82eb001c94b74bcfe6f9a599bd9bef60",
     "https://git.kernel.org/stable/c/fae76a94b35ee8c0e2eb6f64caca01d75c6d34e4",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/3a1230e7b043c62737b05a3e9275ca83a43ad20a"
   ],
   "aliases": [
-    "CVE-2026-64296"
+    "CVE-2026-64296",
+    "GHSA-6f82-hfhw-x2gc"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "1266f6f9-ba27-3ed1-a4f8-01f7d770bfa3",
@@ -122,14 +125,14 @@
       "product_version": "patch: 6.6.145"
     },
     {
-      "id": "bcdc4a3c-c49d-36c8-945c-f9839ae790cc",
+      "id": "bb4a62a8-784f-3255-a159-27d0c2424e84",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "c048b9d9-9588-3039-9692-2c5ac1dedb9b",

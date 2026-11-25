@@ -3,7 +3,7 @@
   "enisaUuid": "4a291ed8-8849-35ac-aa03-e1f99ed6fc0c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndmaengine: fix use-after-free in dma_chan_put() and dma_release_channel()\n\nWhen dma_device_put() drops the last reference on chan->device->ref,\ndma_device_release() runs and may free the dma_device along with its\nchannels.\n\ndma_chan_put() then still reads chan->device->owner via\ndma_chan_to_owner() for the trailing module_put(). KASAN catches it:\n\n\tslab-use-after-free in dma_chan_put+0x3e6/0x4c0\n\tRead of size 8 by task insmod/6319\n\tFreed by task 6319:\n\t  kfree+0x225/0x470\n\t  dma_chan_put+0x395/0x4c0\n\t  dmaengine_put+0xf8/0x160\n\nCache the module owner in dma_chan_put() before the put so the trailing\nmodule_put() does not need chan->device.",
   "datePublished": "Oct 6, 2026, 8:46:33 AM",
-  "dateUpdated": "Oct 6, 2026, 8:46:33 AM",
+  "dateUpdated": "Oct 19, 2026, 9:17:54 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b92c502595336a3cc5bb7a060170891366745a5d",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/e873c74132f0c5f1452816cd9bb26208f0bba1e1"
   ],
   "aliases": [
+    "GHSA-rw66-9h9x-4vjf",
     "CVE-2026-98343"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "00404dc9-fbb9-32a6-b436-91fc08515d0f",
@@ -62,6 +63,16 @@
       "product_version": "patch: 6.1.189"
     },
     {
+      "id": "362350f4-46de-3c00-a87b-257972e5e9fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "40f9ef3e-f4e3-3b4a-b807-b4e052950786",
       "product": {
         "name": "Linux",
@@ -80,16 +91,6 @@
         }
       },
       "product_version": "patch: 6.12.112"
-    },
-    {
-      "id": "5ebbf0e2-5c8e-3b79-b966-d8b53ace302a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "709f2f13-93b5-3aaf-a06a-64e35600a57c",

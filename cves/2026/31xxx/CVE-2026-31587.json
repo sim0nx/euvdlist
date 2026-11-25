@@ -2,78 +2,186 @@
   "id": "EUVD-2026-25480",
   "enisaUuid": "a07e4c17-91fe-317d-9fb7-8cbfecb6192d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nASoC: qcom: q6apm: move component registration to unmanaged version\n\nq6apm component registers dais dynamically from ASoC toplology, which\nare allocated using device managed version apis. Allocating both\ncomponent and dynamic dais using managed version could lead to incorrect\nfree ordering, dai will be freed while component still holding references\nto it.\n\nFix this issue by moving component to unmanged version so\nthat the dai pointers are only freeded after the component is removed.\n\n==================================================================\nBUG: KASAN: slab-use-after-free in snd_soc_del_component_unlocked+0x3d4/0x400 [snd_soc_core]\nRead of size 8 at addr ffff00084493a6e8 by task kworker/u48:0/3426\nTainted: [W]=WARN\nHardware name: LENOVO 21N2ZC5PUS/21N2ZC5PUS, BIOS N42ET57W (1.31 ) 08/08/2024\nWorkqueue: pdr_notifier_wq pdr_notifier_work [pdr_interface]\nCall trace:\n show_stack+0x28/0x7c (C)\n dump_stack_lvl+0x60/0x80\n print_report+0x160/0x4b4\n kasan_report+0xac/0xfc\n __asan_report_load8_noabort+0x20/0x34\n snd_soc_del_component_unlocked+0x3d4/0x400 [snd_soc_core]\n snd_soc_unregister_component_by_driver+0x50/0x88 [snd_soc_core]\n devm_component_release+0x30/0x5c [snd_soc_core]\n devres_release_all+0x13c/0x210\n device_unbind_cleanup+0x20/0x190\n device_release_driver_internal+0x350/0x468\n device_release_driver+0x18/0x30\n bus_remove_device+0x1a0/0x35c\n device_del+0x314/0x7f0\n device_unregister+0x20/0xbc\n apr_remove_device+0x5c/0x7c [apr]\n device_for_each_child+0xd8/0x160\n apr_pd_status+0x7c/0xa8 [apr]\n pdr_notifier_work+0x114/0x240 [pdr_interface]\n process_one_work+0x500/0xb70\n worker_thread+0x630/0xfb0\n kthread+0x370/0x6c0\n ret_from_fork+0x10/0x20\n\nAllocated by task 77:\n kasan_save_stack+0x40/0x68\n kasan_save_track+0x20/0x40\n kasan_save_alloc_info+0x44/0x58\n __kasan_kmalloc+0xbc/0xdc\n __kmalloc_node_track_caller_noprof+0x1f4/0x620\n devm_kmalloc+0x7c/0x1c8\n snd_soc_register_dai+0x50/0x4f0 [snd_soc_core]\n soc_tplg_pcm_elems_load+0x55c/0x1eb8 [snd_soc_core]\n snd_soc_tplg_component_load+0x4f8/0xb60 [snd_soc_core]\n audioreach_tplg_init+0x124/0x1fc [snd_q6apm]\n q6apm_audio_probe+0x10/0x1c [snd_q6apm]\n snd_soc_component_probe+0x5c/0x118 [snd_soc_core]\n soc_probe_component+0x44c/0xaf0 [snd_soc_core]\n snd_soc_bind_card+0xad0/0x2370 [snd_soc_core]\n snd_soc_register_card+0x3b0/0x4c0 [snd_soc_core]\n devm_snd_soc_register_card+0x50/0xc8 [snd_soc_core]\n x1e80100_platform_probe+0x208/0x368 [snd_soc_x1e80100]\n platform_probe+0xc0/0x188\n really_probe+0x188/0x804\n __driver_probe_device+0x158/0x358\n driver_probe_device+0x60/0x190\n __device_attach_driver+0x16c/0x2a8\n bus_for_each_drv+0x100/0x194\n __device_attach+0x174/0x380\n device_initial_probe+0x14/0x20\n bus_probe_device+0x124/0x154\n deferred_probe_work_func+0x140/0x220\n process_one_work+0x500/0xb70\n worker_thread+0x630/0xfb0\n kthread+0x370/0x6c0\n ret_from_fork+0x10/0x20\n\nFreed by task 3426:\n kasan_save_stack+0x40/0x68\n kasan_save_track+0x20/0x40\n __kasan_save_free_info+0x4c/0x80\n __kasan_slab_free+0x78/0xa0\n kfree+0x100/0x4a4\n devres_release_all+0x144/0x210\n device_unbind_cleanup+0x20/0x190\n device_release_driver_internal+0x350/0x468\n device_release_driver+0x18/0x30\n bus_remove_device+0x1a0/0x35c\n device_del+0x314/0x7f0\n device_unregister+0x20/0xbc\n apr_remove_device+0x5c/0x7c [apr]\n device_for_each_child+0xd8/0x160\n apr_pd_status+0x7c/0xa8 [apr]\n pdr_notifier_work+0x114/0x240 [pdr_interface]\n process_one_work+0x500/0xb70\n worker_thread+0x630/0xfb0\n kthread+0x370/0x6c0\n ret_from_fork+0x10/0x20",
-  "datePublished": "Apr 24, 2026, 3:32:34 PM",
-  "dateUpdated": "Apr 24, 2026, 3:32:34 PM",
-  "baseScore": 0.0,
+  "datePublished": "Apr 24, 2026, 2:42:15 PM",
+  "dateUpdated": "Aug 5, 2026, 12:23:38 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/110769a9aa51135ac7ce479a47dfb41924f37664",
+    "https://git.kernel.org/stable/c/887632163b546a8944b46ef465f1d74e838b727a",
     "https://git.kernel.org/stable/c/b7412ed789ffb1e59c8d6f5ab6a6a718963c85e2",
     "https://git.kernel.org/stable/c/30383b7780ffa140bc124de5b66cae7c84133dbb",
     "https://git.kernel.org/stable/c/f7b790531cdad3b2075ab937aa06d7b802403be4",
     "https://git.kernel.org/stable/c/a561a55b79a9c55f0443377f2d4dcf6149d057af",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-31587"
+    "https://git.kernel.org/stable/c/6ec1235fc941dac6c011b30ee01d9220ff87e0cd"
   ],
   "aliases": [
     "GHSA-mp3r-6558-hvg8",
     "CVE-2026-31587"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
+    {
+      "id": "1b73a4a8-0c78-30ec-9809-fdf84def45bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
     {
       "id": "210fc804-c74d-3f3b-aa1a-a8bb49ffdf50",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.12.83"
     },
     {
-      "id": "29b0d668-7f9f-30b1-b34f-66c6608590b9",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a561a55b79a9c55f0443377f2d4dcf6149d057af"
-    },
-    {
-      "id": "43e2baaa-c717-37fa-83f9-289bb15cdea0",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f7b790531cdad3b2075ab937aa06d7b802403be4"
-    },
-    {
       "id": "475f71aa-64ea-372a-a150-459ada46d838",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.19.14"
     },
     {
-      "id": "527f0cbc-3b04-3d98-a543-33dad2911faf",
+      "id": "4ba28b9b-c082-3b6c-a419-98312568b382",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <30383b7780ffa140bc124de5b66cae7c84133dbb"
+      "product_version": "5477518b8a0e8a45239646acd80c9bafc4401522 <6ec1235fc941dac6c011b30ee01d9220ff87e0cd"
+    },
+    {
+      "id": "562dc70c-7161-304e-802b-a786ae662b0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5477518b8a0e8a45239646acd80c9bafc4401522 <887632163b546a8944b46ef465f1d74e838b727a"
+    },
+    {
+      "id": "58d1906a-aad1-326f-b715-6f435d8d6172",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5477518b8a0e8a45239646acd80c9bafc4401522 <110769a9aa51135ac7ce479a47dfb41924f37664"
+    },
+    {
+      "id": "5bc3f444-134e-33fb-9d2e-ed0cdb69f6a8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
+      "id": "72f9aefb-c42b-3fc4-a64d-8941cc99fb32",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5477518b8a0e8a45239646acd80c9bafc4401522 <30383b7780ffa140bc124de5b66cae7c84133dbb"
     },
     {
       "id": "8712926b-75d6-3e2f-8dee-8f0e78137fb0",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.18.24"
     },
     {
-      "id": "f10e02b7-9f0c-3a10-ace8-0b4656c296a5",
+      "id": "9825e7b3-f64b-3a8e-b88d-37ed8571d996",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "patch: 7.0.1"
+      "product_version": "patch: 6.6.136"
     },
     {
-      "id": "fd9258be-3eef-3792-9286-dc90cff95c10",
+      "id": "b47e6057-84d1-3352-baee-4d1fa1de017e",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b7412ed789ffb1e59c8d6f5ab6a6a718963c85e2"
+      "product_version": "5477518b8a0e8a45239646acd80c9bafc4401522 <a561a55b79a9c55f0443377f2d4dcf6149d057af"
+    },
+    {
+      "id": "b7830082-5f25-3bf7-a1f0-a88c52ac9529",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5477518b8a0e8a45239646acd80c9bafc4401522 <b7412ed789ffb1e59c8d6f5ab6a6a718963c85e2"
+    },
+    {
+      "id": "bc87cfc2-e741-3579-85bf-17b44aacd671",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.175"
+    },
+    {
+      "id": "c7f568c2-0aef-3b92-8bc4-110e6abda2ed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.16"
+    },
+    {
+      "id": "ca05b946-1b0b-3274-a4fc-389fa08d8ceb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5477518b8a0e8a45239646acd80c9bafc4401522 <f7b790531cdad3b2075ab937aa06d7b802403be4"
+    },
+    {
+      "id": "f10e02b7-9f0c-3a10-ace8-0b4656c296a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.0.1"
     }
   ],
   "enisaIdVendor": [

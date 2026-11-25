@@ -1,0 +1,181 @@
+{
+  "id": "EUVD-2024-40520",
+  "enisaUuid": "f53503a9-3dd3-365c-822a-5a01488b8f19",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nperf: Fix event leak upon exit\n\nWhen a task is scheduled out, pending sigtrap deliveries are deferred\nto the target task upon resume to userspace via task_work.\n\nHowever failures while adding an event's callback to the task_work\nengine are ignored. And since the last call for events exit happen\nafter task work is eventually closed, there is a small window during\nwhich pending sigtrap can be queued though ignored, leaking the event\nrefcount addition such as in the following scenario:\n\n    TASK A\n    -----\n\n    do_exit()\n       exit_task_work(tsk);\n\n       <IRQ>\n       perf_event_overflow()\n          event->pending_sigtrap = pending_id;\n          irq_work_queue(&event->pending_irq);\n       </IRQ>\n    =========> PREEMPTION: TASK A -> TASK B\n       event_sched_out()\n          event->pending_sigtrap = 0;\n          atomic_long_inc_not_zero(&event->refcount)\n          // FAILS: task work has exited\n          task_work_add(&event->pending_task)\n       [...]\n       <IRQ WORK>\n       perf_pending_irq()\n          // early return: event->oncpu = -1\n       </IRQ WORK>\n       [...]\n    =========> TASK B -> TASK A\n       perf_event_exit_task(tsk)\n          perf_event_exit_event()\n             free_event()\n                WARN(atomic_long_cmpxchg(&event->refcount, 1, 0) != 1)\n                // leak event due to unexpected refcount == 2\n\nAs a result the event is never released while the task exits.\n\nFix this with appropriate task_work_add()'s error handling.",
+  "datePublished": "Aug 21, 2024, 12:06:21 AM",
+  "dateUpdated": "May 23, 2026, 3:53:04 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/67fad724f1b568b356c1065d50df46e6b30eb2f7",
+    "https://git.kernel.org/stable/c/70882d7fa74f0731492a0d493e8515a4f7131831",
+    "https://git.kernel.org/stable/c/05d3fd599594abf79aad4484bccb2b26e1cb0b51",
+    "https://git.kernel.org/stable/c/3d7a63352a93bdb8a1cdf29606bf617d3ac1c22a",
+    "https://git.kernel.org/stable/c/2fd5ad3f310de22836cdacae919dd99d758a1f1b"
+  ],
+  "aliases": [
+    "CVE-2024-43870",
+    "GHSA-24f8-f4wm-56gg"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "16ed156d-e165-3f4e-b8a1-06384c6be345",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8bffa95ac19ff27c8261904f89d36c7fcf215d59 <67fad724f1b568b356c1065d50df46e6b30eb2f7"
+    },
+    {
+      "id": "1aa92900-f602-3daf-b887-630aed53a62a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.44"
+    },
+    {
+      "id": "28f226b8-76bf-355c-a729-3bd77b779e9f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1"
+    },
+    {
+      "id": "38af0ae1-09ca-350b-b8eb-f516bf84f4a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "517e6a301f34613bff24a8e35b5455884f2d83d8 <70882d7fa74f0731492a0d493e8515a4f7131831"
+    },
+    {
+      "id": "4bfd921f-5368-3e58-8e8b-4c4eccf2e5a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "517e6a301f34613bff24a8e35b5455884f2d83d8 <2fd5ad3f310de22836cdacae919dd99d758a1f1b"
+    },
+    {
+      "id": "607b5887-c091-31eb-b55e-f61c075438ca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.103"
+    },
+    {
+      "id": "64aff3b6-602f-3530-a93d-10acca964fb4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.3"
+    },
+    {
+      "id": "72673253-273c-3692-9d29-804484430e5f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.0.14 <6.1"
+    },
+    {
+      "id": "8b5d426a-7ae9-3c2c-82fa-a8fceddcf1f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "78e1317a174edbfd1182599bf76c092a2877672c"
+    },
+    {
+      "id": "a89546b8-88f2-3432-9dc8-08aa08bbeafb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "517e6a301f34613bff24a8e35b5455884f2d83d8 <3d7a63352a93bdb8a1cdf29606bf617d3ac1c22a"
+    },
+    {
+      "id": "af92334f-d900-3ad2-bb4a-ad73ab1edb2a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.84 <5.15.165"
+    },
+    {
+      "id": "b0bf8332-3aea-3625-9d50-feccad3ecb2f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "df19d7ae-f0fe-30ed-b6b7-b6cb005e5b94",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "517e6a301f34613bff24a8e35b5455884f2d83d8 <05d3fd599594abf79aad4484bccb2b26e1cb0b51"
+    },
+    {
+      "id": "e4bec992-8154-3af8-ae95-43b23fafd31d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.165"
+    },
+    {
+      "id": "ebe08a08-be53-3f72-86e6-5637493b18c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3f8d9061-7162-38ba-8542-0185b152e9f1",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

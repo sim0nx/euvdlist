@@ -3,7 +3,7 @@
   "enisaUuid": "08a68293-132d-3f50-ab2f-d6f5a5aa5406",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: act_ct: don't WARN on benign flow_offload_alloc() failure\n\nflow_offload_alloc() returns NULL when the conntrack entry is dying\n(e.g. raced with a conntrack flush) or when the GFP_ATOMIC allocation\nfails; both are expected under load and neither is a kernel bug. This\npath runs from softirq on every committed packet, so with\npanic_on_warn=1 an unprivileged user can panic the box just by racing\na conntrack flush against a `tc ... action ct commit` classifier.\n\nReproduced with a custom repro under QEMU: a small, fixed set of UDP\nflows through `tc filter ... action ct commit` on lo, raced against\nthreads flooding bare ctnetlink CT_DELETE (flush) requests. Hits\nWARNING: net/sched/act_ct.c:437 (tcf_ct_flow_table_add(), inlined\ninto tcf_ct_act() in this build) within ~15s on the unpatched kernel;\nsame setup is clean on the patched kernel. The fix itself is\nbehavior-preserving: both branches already did `goto err_alloc`\nbefore and after, only the WARN is removed.",
   "datePublished": "Oct 18, 2026, 3:19:42 PM",
-  "dateUpdated": "Oct 18, 2026, 3:19:42 PM",
+  "dateUpdated": "Oct 19, 2026, 9:22:50 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/e8fcf3f08834e939b797311742ee72b1e2a08096",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/47abe7a5c4eb53269aca3506446f851572a059a3"
   ],
   "aliases": [
-    "CVE-2026-98622"
+    "CVE-2026-98622",
+    "GHSA-qg6m-cv4g-hx6q"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "16740ca1-1629-371f-9db6-46e1e49e13fc",
@@ -82,6 +83,16 @@
       "product_version": "patch: 6.6.158"
     },
     {
+      "id": "239f10af-344e-39da-b4eb-83c9a12a47f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "59021877-b2d2-334d-a21b-abd656b6a4d1",
       "product": {
         "name": "Linux",
@@ -130,16 +141,6 @@
         }
       },
       "product_version": "64ff70b80fd403110b67dd9f7184a604fdb0da43 <650787233c2fd6e515a7c5f371019a9fa080ccd2"
-    },
-    {
-      "id": "8ceadb83-319e-3aca-877f-f1038ffd6c1f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "90a54420-c716-3211-b069-24432c3cba66",

@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2024-42611",
+  "enisaUuid": "a235914d-2b3f-37dc-a6d4-e4189421ba35",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nf2fs: fix to avoid use-after-free in f2fs_stop_gc_thread()\n\nsyzbot reports a f2fs bug as below:\n\n __dump_stack lib/dump_stack.c:88 [inline]\n dump_stack_lvl+0x241/0x360 lib/dump_stack.c:114\n print_report+0xe8/0x550 mm/kasan/report.c:491\n kasan_report+0x143/0x180 mm/kasan/report.c:601\n kasan_check_range+0x282/0x290 mm/kasan/generic.c:189\n instrument_atomic_read_write include/linux/instrumented.h:96 [inline]\n atomic_fetch_add_relaxed include/linux/atomic/atomic-instrumented.h:252 [inline]\n __refcount_add include/linux/refcount.h:184 [inline]\n __refcount_inc include/linux/refcount.h:241 [inline]\n refcount_inc include/linux/refcount.h:258 [inline]\n get_task_struct include/linux/sched/task.h:118 [inline]\n kthread_stop+0xca/0x630 kernel/kthread.c:704\n f2fs_stop_gc_thread+0x65/0xb0 fs/f2fs/gc.c:210\n f2fs_do_shutdown+0x192/0x540 fs/f2fs/file.c:2283\n f2fs_ioc_shutdown fs/f2fs/file.c:2325 [inline]\n __f2fs_ioctl+0x443a/0xbe60 fs/f2fs/file.c:4325\n vfs_ioctl fs/ioctl.c:51 [inline]\n __do_sys_ioctl fs/ioctl.c:907 [inline]\n __se_sys_ioctl+0xfc/0x170 fs/ioctl.c:893\n do_syscall_x64 arch/x86/entry/common.c:52 [inline]\n do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83\n entry_SYSCALL_64_after_hwframe+0x77/0x7f\n\nThe root cause is below race condition, it may cause use-after-free\nissue in sbi->gc_th pointer.\n\n- remount\n - f2fs_remount\n  - f2fs_stop_gc_thread\n   - kfree(gc_th)\n\t\t\t\t- f2fs_ioc_shutdown\n\t\t\t\t - f2fs_do_shutdown\n\t\t\t\t  - f2fs_stop_gc_thread\n\t\t\t\t   - kthread_stop(gc_th->f2fs_gc_task)\n   : sbi->gc_thread = NULL;\n\nWe will call f2fs_do_shutdown() in two paths:\n- for f2fs_ioc_shutdown() path, we should grab sb->s_umount semaphore\nfor fixing.\n- for f2fs_shutdown() path, it's safe since caller has already grabbed\nsb->s_umount semaphore.",
+  "datePublished": "Oct 21, 2024, 11:53:30 AM",
+  "dateUpdated": "May 11, 2026, 8:38:53 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/fc18e655b62ac6bc9f12f5de0d749b4a3fe1e812",
+    "https://git.kernel.org/stable/c/7c339dee7eb0f8e4cadc317c595f898ef04dae30",
+    "https://git.kernel.org/stable/c/d79343cd66343709e409d96b2abb139a0a55ce34",
+    "https://git.kernel.org/stable/c/c7f114d864ac91515bb07ac271e9824a20f5ed95"
+  ],
+  "aliases": [
+    "CVE-2024-47691",
+    "GHSA-gc96-qrrv-3724"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "6d30d822-9780-397b-a31e-ad82ad239255",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7950e9ac638e84518fbdd5c930939ad46a1068c5 <7c339dee7eb0f8e4cadc317c595f898ef04dae30"
+    },
+    {
+      "id": "8f2eb016-3d96-3c2d-9a1f-1df89ef5d1ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7950e9ac638e84518fbdd5c930939ad46a1068c5 <d79343cd66343709e409d96b2abb139a0a55ce34"
+    },
+    {
+      "id": "9a7c0ed6-ee6e-3773-9eba-26b809cbfebf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7950e9ac638e84518fbdd5c930939ad46a1068c5 <fc18e655b62ac6bc9f12f5de0d749b4a3fe1e812"
+    },
+    {
+      "id": "9b405f50-a9b7-3ac1-9939-030583b6be47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.54"
+    },
+    {
+      "id": "af270e55-3377-3300-8af0-2f1064b27513",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b734378f-3661-3135-a721-8d5ee726f402",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7950e9ac638e84518fbdd5c930939ad46a1068c5 <c7f114d864ac91515bb07ac271e9824a20f5ed95"
+    },
+    {
+      "id": "cb9db8bb-9a0a-397d-8c15-490bd8c9148e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.16"
+    },
+    {
+      "id": "cc88c5a4-8d2c-39ca-9f56-5e3929de8fa0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.2"
+    },
+    {
+      "id": "ea6d45ca-0548-3096-a317-3d697461adf9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "f83c7395-f896-3f78-bb44-89c456373324",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3c29292e-97b8-3348-afb2-0576213e4d84",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

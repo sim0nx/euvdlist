@@ -3,7 +3,7 @@
   "enisaUuid": "ad14e776-9f66-37ce-8d34-1f6ccddc54cd",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: MGMT: reject HCI_CMD_SYNC params_len above 255\n\nmgmt_hci_cmd_sync() checks that the message length agrees with params_len\nbut puts no upper bound on it. params_len is __le16 while the parameter\nlength in the HCI command header is a u8:\n\n\tstruct hci_command_hdr {\n\t\t__le16\topcode;\n\t\t__u8\tplen;\n\t} __packed;\n\nhci_cmd_sync_alloc() assigns one to the other:\n\n\thdr->plen = plen;\n\n\tif (plen)\n\t\tskb_put_data(skb, param, plen);\n\nso a params_len of 256 leaves plen at 0 while all 256 bytes are still\nappended. The frame handed to the driver then declares no parameters and\ncarries 256 of them. On a length framed transport such as H:4 the\ncontroller takes the trailing bytes as the start of the next packet.\n\nThe mgmt socket MTU is HCI_MAX_FRAME_SIZE, so params_len can reach about\n1KB this way. Commit 03f1700b9b4d (\"Bluetooth: MGMT: reject malformed\nHCI_CMD_SYNC commands\") only made params_len agree with the message\nlength, a value that fits the message but not the header field is still\naccepted.\n\nReject params_len that does not fit the header field.",
   "datePublished": "Sep 4, 2026, 3:12:32 PM",
-  "dateUpdated": "Sep 4, 2026, 3:12:32 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:16 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b7d9edcf9fe6e9ec3a2e80ef9e8d44ef9b4f2894",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/5d95286b6d6e8f1d304da7522bfa6860fc017e48"
   ],
   "aliases": [
-    "CVE-2026-80760"
+    "CVE-2026-80760",
+    "GHSA-p6r7-4gcj-hhqq"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "0bd1bc8d-cce2-304b-b571-df4b0ccfdc95",
@@ -98,16 +99,6 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "b46c6b28-2cd2-377b-bb05-f502afa6ecbf",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "c00d2ba3-3b31-39d5-88b6-b05e30867f70",
       "product": {
         "name": "Linux",
@@ -116,6 +107,16 @@
         }
       },
       "product_version": "patch: 7.2.1"
+    },
+    {
+      "id": "e27c9262-b38b-3bbc-bae8-596b71c877ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

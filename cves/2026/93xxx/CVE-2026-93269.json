@@ -3,9 +3,10 @@
   "enisaUuid": "ab9d0a3d-09a8-3939-af5e-37c4173df3da",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\next4: fix circular lock dependency in ext4_ext_migrate\n\nMove iput(tmp_inode) after ext4_writepages_up_write() to avoid a\ncircular lock dependency between s_writepages_rwsem and sb_internal\n(freeze protection).\n\nThe deadlock scenario:\n\n  CPU0 (EXT4_IOC_MIGRATE)        CPU1 (orphan cleanup during mount)\n  ----                           ----\n  ext4_ext_migrate()\n    ext4_writepages_down_write()\n      s_writepages_rwsem (write)\n                                 ext4_evict_inode()\n                                   sb_start_intwrite()   [sb_internal]\n                                   ...\n                                     ext4_writepages()\n                                       s_writepages_rwsem (read) [BLOCKED]\n    iput(tmp_inode)\n      ext4_evict_inode()\n        sb_start_intwrite()         [BLOCKED]\n\nThe tmp_inode is a temporary inode with nlink=0 created solely for\nbuilding the extent tree.  Its eviction does not require\ns_writepages_rwsem protection, so deferring iput() until after\nreleasing the rwsem is safe.",
   "datePublished": "Sep 24, 2026, 3:52:09 PM",
-  "dateUpdated": "Sep 24, 2026, 3:52:09 PM",
+  "dateUpdated": "Oct 30, 2026, 12:36:36 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/f204882d5eaca09f7848f081c9c9b5bbf2234895",
     "https://git.kernel.org/stable/c/452950461241dfed8b1d32e94b227db38c99c5af",
     "https://git.kernel.org/stable/c/ada23457d4748d6e9c36c6f871fc29a6f558c48c",
     "https://git.kernel.org/stable/c/e4223231b6860141813637a6413c2371ae4d6fa8",
@@ -13,10 +14,11 @@
     "https://git.kernel.org/stable/c/a897682793eba5de51ee6f3152760374afa629cf"
   ],
   "aliases": [
+    "GHSA-9p82-h2x3-6rrv",
     "CVE-2026-93269"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "2de6764c-5350-3c29-9e72-5d0e54eb1274",
@@ -99,14 +101,14 @@
       "product_version": "69f8a7991fd93c49096ddd11574db3e7df238b7b"
     },
     {
-      "id": "9b51ea32-c5f8-3064-ad05-7dd1d94aef5e",
+      "id": "a3fb5834-c7c5-3e3a-9d77-99b83f4d8a44",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "a43249c1-5c20-38ed-940e-da9bab30544d",
@@ -127,6 +129,16 @@
         }
       },
       "product_version": "cb85f4d23f794e24127f3e562cb3b54b0803f456 <e4223231b6860141813637a6413c2371ae4d6fa8"
+    },
+    {
+      "id": "a5c7ebba-2cba-3318-aeda-524617c42f77",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cb85f4d23f794e24127f3e562cb3b54b0803f456 <f204882d5eaca09f7848f081c9c9b5bbf2234895"
     },
     {
       "id": "acc29ef6-0e9c-314c-bd66-f1a4047ba3cf",
@@ -167,6 +179,16 @@
         }
       },
       "product_version": "cb85f4d23f794e24127f3e562cb3b54b0803f456 <32f7ab52875ec7f800ca67e7176e5743a84baddf"
+    },
+    {
+      "id": "c8ce7a75-1673-3b57-ac31-e879d5efacf1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "d9b8c75c-fb24-3ca2-ab11-165231860da9",

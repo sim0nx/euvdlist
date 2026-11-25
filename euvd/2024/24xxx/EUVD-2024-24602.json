@@ -1,0 +1,306 @@
+{
+  "id": "EUVD-2024-24602",
+  "enisaUuid": "db4990ed-4afd-3926-8960-56394629a090",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: Fix use-after-free bugs caused by sco_sock_timeout\n\nWhen the sco connection is established and then, the sco socket\nis releasing, timeout_work will be scheduled to judge whether\nthe sco disconnection is timeout. The sock will be deallocated\nlater, but it is dereferenced again in sco_sock_timeout. As a\nresult, the use-after-free bugs will happen. The root cause is\nshown below:\n\n    Cleanup Thread               |      Worker Thread\nsco_sock_release                 |\n  sco_sock_close                 |\n    __sco_sock_close             |\n      sco_sock_set_timer         |\n        schedule_delayed_work    |\n  sco_sock_kill                  |    (wait a time)\n    sock_put(sk) //FREE          |  sco_sock_timeout\n                                 |    sock_hold(sk) //USE\n\nThe KASAN report triggered by POC is shown below:\n\n[   95.890016] ==================================================================\n[   95.890496] BUG: KASAN: slab-use-after-free in sco_sock_timeout+0x5e/0x1c0\n[   95.890755] Write of size 4 at addr ffff88800c388080 by task kworker/0:0/7\n...\n[   95.890755] Workqueue: events sco_sock_timeout\n[   95.890755] Call Trace:\n[   95.890755]  <TASK>\n[   95.890755]  dump_stack_lvl+0x45/0x110\n[   95.890755]  print_address_description+0x78/0x390\n[   95.890755]  print_report+0x11b/0x250\n[   95.890755]  ? __virt_addr_valid+0xbe/0xf0\n[   95.890755]  ? sco_sock_timeout+0x5e/0x1c0\n[   95.890755]  kasan_report+0x139/0x170\n[   95.890755]  ? update_load_avg+0xe5/0x9f0\n[   95.890755]  ? sco_sock_timeout+0x5e/0x1c0\n[   95.890755]  kasan_check_range+0x2c3/0x2e0\n[   95.890755]  sco_sock_timeout+0x5e/0x1c0\n[   95.890755]  process_one_work+0x561/0xc50\n[   95.890755]  worker_thread+0xab2/0x13c0\n[   95.890755]  ? pr_cont_work+0x490/0x490\n[   95.890755]  kthread+0x279/0x300\n[   95.890755]  ? pr_cont_work+0x490/0x490\n[   95.890755]  ? kthread_blkcg+0xa0/0xa0\n[   95.890755]  ret_from_fork+0x34/0x60\n[   95.890755]  ? kthread_blkcg+0xa0/0xa0\n[   95.890755]  ret_from_fork_asm+0x11/0x20\n[   95.890755]  </TASK>\n[   95.890755]\n[   95.890755] Allocated by task 506:\n[   95.890755]  kasan_save_track+0x3f/0x70\n[   95.890755]  __kasan_kmalloc+0x86/0x90\n[   95.890755]  __kmalloc+0x17f/0x360\n[   95.890755]  sk_prot_alloc+0xe1/0x1a0\n[   95.890755]  sk_alloc+0x31/0x4e0\n[   95.890755]  bt_sock_alloc+0x2b/0x2a0\n[   95.890755]  sco_sock_create+0xad/0x320\n[   95.890755]  bt_sock_create+0x145/0x320\n[   95.890755]  __sock_create+0x2e1/0x650\n[   95.890755]  __sys_socket+0xd0/0x280\n[   95.890755]  __x64_sys_socket+0x75/0x80\n[   95.890755]  do_syscall_64+0xc4/0x1b0\n[   95.890755]  entry_SYSCALL_64_after_hwframe+0x67/0x6f\n[   95.890755]\n[   95.890755] Freed by task 506:\n[   95.890755]  kasan_save_track+0x3f/0x70\n[   95.890755]  kasan_save_free_info+0x40/0x50\n[   95.890755]  poison_slab_object+0x118/0x180\n[   95.890755]  __kasan_slab_free+0x12/0x30\n[   95.890755]  kfree+0xb2/0x240\n[   95.890755]  __sk_destruct+0x317/0x410\n[   95.890755]  sco_sock_release+0x232/0x280\n[   95.890755]  sock_close+0xb2/0x210\n[   95.890755]  __fput+0x37f/0x770\n[   95.890755]  task_work_run+0x1ae/0x210\n[   95.890755]  get_signal+0xe17/0xf70\n[   95.890755]  arch_do_signal_or_restart+0x3f/0x520\n[   95.890755]  syscall_exit_to_user_mode+0x55/0x120\n[   95.890755]  do_syscall_64+0xd1/0x1b0\n[   95.890755]  entry_SYSCALL_64_after_hwframe+0x67/0x6f\n[   95.890755]\n[   95.890755] The buggy address belongs to the object at ffff88800c388000\n[   95.890755]  which belongs to the cache kmalloc-1k of size 1024\n[   95.890755] The buggy address is located 128 bytes inside of\n[   95.890755]  freed 1024-byte region [ffff88800c388000, ffff88800c388400)\n[   95.890755]\n[   95.890755] The buggy address belongs to the physical page:\n[   95.890755] page: refcount:1 mapcount:0 mapping:0000000000000000 index:0xffff88800c38a800 pfn:0xc388\n[   95.890755] head: order:3 entire_mapcount:0 nr_pages_mapped:0 pincount:0\n[   95.890755] ano\n---truncated---",
+  "datePublished": "May 13, 2024, 10:22:26 AM",
+  "dateUpdated": "Aug 5, 2026, 11:29:32 AM",
+  "baseScore": 8.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/1b33d55fb7355e27f8c82cd4ecd560f162469249",
+    "https://git.kernel.org/stable/c/3212afd00e3cda790fd0583cb3eaef8f9575a014",
+    "https://git.kernel.org/stable/c/33a6e92161a78c1073d90e27abe28d746feb0a53",
+    "https://git.kernel.org/stable/c/6a18eeb1b3bbc67c20d9609c31dca6a69b4bcde5",
+    "https://git.kernel.org/stable/c/bfab2c1f7940a232cd519e82fff137e308abfd93",
+    "https://git.kernel.org/stable/c/012363cb1bec5f33a7b94629ab2c1086f30280f2",
+    "https://git.kernel.org/stable/c/50c2037fc28df870ef29d9728c770c8955d32178",
+    "https://git.kernel.org/stable/c/483bc08181827fc475643272ffb69c533007e546"
+  ],
+  "aliases": [
+    "CVE-2024-27398",
+    "GHSA-45cm-4v3w-5jpw"
+  ],
+  "assigner": "Linux",
+  "epss": 0.83,
+  "enisaIdProduct": [
+    {
+      "id": "0786fd71-7229-3b87-8230-b4dd29e56640",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "0d4e327a-62d2-3147-9eae-911c3aad76ca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fea63ccd928c01573306983346588b26cffb5572"
+    },
+    {
+      "id": "16a30eec-741b-3414-9972-f3f1e08cb8be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "16c5e71b-bc5d-3662-912c-f304d9d633fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.14.263 <4.15"
+    },
+    {
+      "id": "1801cb39-a553-3913-8ab7-27bbcb0e371e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.13.19 <5.14"
+    },
+    {
+      "id": "1a0f6b7e-e903-37f2-b410-7dd4e86b7d4e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba316be1b6a00db7126ed9a39f9bee434a508043 <012363cb1bec5f33a7b94629ab2c1086f30280f2"
+    },
+    {
+      "id": "23a679e1-d4d1-33f3-9454-478f979e8455",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.4.148 <5.4.276"
+    },
+    {
+      "id": "23d7d6cd-f6ea-3099-8173-6735eed946b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.31"
+    },
+    {
+      "id": "29acd829-788d-3abe-9b51-4bc46375a09a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.91"
+    },
+    {
+      "id": "31d8974b-dfec-3a17-9c27-5a3a3e715b37",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.159"
+    },
+    {
+      "id": "3c2c119c-4519-3dae-90a5-024aba64fef3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.217"
+    },
+    {
+      "id": "42db914a-ad0e-3a9c-b503-4075d9a1bbe2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "37d7ae2b0578f2373674a755402ee722e96edc08 <3212afd00e3cda790fd0583cb3eaef8f9575a014"
+    },
+    {
+      "id": "45a7d187-b31c-341a-ab95-393e85164ac9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "48669c81a65628ef234cbdd91b9395952c7c27fe <1b33d55fb7355e27f8c82cd4ecd560f162469249"
+    },
+    {
+      "id": "50fb33e3-d849-3c9a-8f12-e24414171fff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15"
+    },
+    {
+      "id": "5358dc08-9fa1-3b00-95d9-6ad96b13e6b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.67 <5.10.217"
+    },
+    {
+      "id": "5d2189c4-a6a9-3f1a-b909-9fbdbfdfb0f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.276"
+    },
+    {
+      "id": "61ff48c3-6472-3728-afa3-e4850e0171a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.14.6 <5.15"
+    },
+    {
+      "id": "742b5392-e1e3-3c60-9e8d-87fe37ab031f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba316be1b6a00db7126ed9a39f9bee434a508043 <50c2037fc28df870ef29d9728c770c8955d32178"
+    },
+    {
+      "id": "82a9ca77-a4f3-35b1-b044-7ed7b40589e7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.314"
+    },
+    {
+      "id": "83f86c4e-0c24-3377-b87e-c0c7d7a80f20",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba316be1b6a00db7126ed9a39f9bee434a508043 <6a18eeb1b3bbc67c20d9609c31dca6a69b4bcde5"
+    },
+    {
+      "id": "91b3b704-7f6c-3d4d-a776-eb4e5a69e269",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ec1f74319bb35c1c90c25014ec0f6ea6c3ca2134"
+    },
+    {
+      "id": "a6d4edff-8ebd-37d4-a8fd-26ba539d5db9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba316be1b6a00db7126ed9a39f9bee434a508043 <483bc08181827fc475643272ffb69c533007e546"
+    },
+    {
+      "id": "ced2c047-28b4-3e0f-b314-bc85e02f0aaa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a1073aad497d0d071a71f61b721966a176d50c08 <33a6e92161a78c1073d90e27abe28d746feb0a53"
+    },
+    {
+      "id": "cf14fca5-0f33-35b3-a796-c6f265a4179d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba316be1b6a00db7126ed9a39f9bee434a508043 <bfab2c1f7940a232cd519e82fff137e308abfd93"
+    },
+    {
+      "id": "d7622799-bb70-3efe-a9dd-b3ce8b6fbb36",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.19.207 <4.19.314"
+    },
+    {
+      "id": "e6514838-401a-3621-b690-c1cd46c35df3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.10"
+    },
+    {
+      "id": "f116b76c-4d06-3582-ad95-d9cdf72d5539",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b657bba82ff6a007d84fd076bd73b11131726a2b"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "9710c66d-4ed5-3e7b-9a00-4ec06a99ff40",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

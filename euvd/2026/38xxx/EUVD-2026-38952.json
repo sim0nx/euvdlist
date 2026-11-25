@@ -3,7 +3,7 @@
   "enisaUuid": "3792edbc-21d1-39b8-aec8-9a2a6bd66add",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: return VMA snapshot from task_vma iterator\n\nHolding the per-VMA lock across the BPF program body creates a lock\nordering problem when helpers acquire locks that depend on mmap_lock:\n\n  vm_lock -> i_rwsem -> mmap_lock -> vm_lock\n\nSnapshot the VMA under the per-VMA lock in _next() via memcpy(), then\ndrop the lock before returning. The BPF program accesses only the\nsnapshot.\n\nThe verifier only trusts vm_mm and vm_file pointers (see\nBTF_TYPE_SAFE_TRUSTED_OR_NULL in verifier.c). vm_file is reference-\ncounted with get_file() under the lock and released via fput() on the\nnext iteration or in _destroy(). vm_mm is already correct because\nlock_vma_under_rcu() verifies vma->vm_mm == mm. All other pointers\nare left as-is by memcpy() since the verifier treats them as untrusted.",
   "datePublished": "Jun 24, 2026, 4:30:24 PM",
-  "dateUpdated": "Jun 24, 2026, 4:30:24 PM",
+  "dateUpdated": "Nov 6, 2026, 4:23:58 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/83b8802c034e843b83a3e1ef6f30cdd4e9ec291c",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/4cbee026db54cad39c39db4d356100cb133412b3"
   ],
   "aliases": [
+    "GHSA-cmp2-w8c6-7f92",
     "CVE-2026-53084"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "120c9a8d-a95f-330b-9abf-bbf3c259a65c",

@@ -3,7 +3,7 @@
   "enisaUuid": "8fedfab0-d0eb-3046-bf8c-f5ce2a96c613",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: openvswitch: reallocate update replies for mismatched IDs\n\novs_flow_cmd_new() preallocates the optional reply skb before it takes\novs_mutex and before it knows which existing flow will be updated.\n\nThat is normally fine because the skb is sized from the request flow\nidentifier.  That identifier also becomes the inserted flow's identifier.\nFor updates, however, a request with a UFID may miss the UFID lookup and\nthen fall back to the flow key lookup.  That lookup can legitimately find\nan existing key-identified flow.  UFIDs are optional and the flow key is\nthe primary identifier.\n\nFor echoed replies, ovs_flow_cmd_fill_info() writes the matched flow's\nidentifier, not the request identifier used for the preallocation.  A short\nrequest UFID can therefore leave too little room for the key identifier.\nThe fill can then fail with -EMSGSIZE and hit the BUG_ON(error < 0) in the\nupdate path.\n\nOnce the update target has been resolved, reallocate the reply skb if the\nmatched flow needs a larger reply than the request identifier allowed.  Do\nthis before replacing the actions so the request can still fail cleanly if\nthe rare extra allocation fails.",
   "datePublished": "Aug 22, 2026, 3:32:36 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:36 PM",
+  "dateUpdated": "Nov 6, 2026, 5:05:50 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/bd8ca84d48cd9a4f6fc63df26512c55e1d339927",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/5d1c224dd914579524a183a514c12b95095d12ce"
   ],
   "aliases": [
-    "CVE-2026-74664"
+    "CVE-2026-74664",
+    "GHSA-2jvw-5ch9-j793"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0d1528e8-ca7a-3c05-9239-ee50b7eb213f",

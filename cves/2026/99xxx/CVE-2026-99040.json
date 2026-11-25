@@ -3,9 +3,12 @@
   "enisaUuid": "afefc373-8f2c-3ca8-a9bb-6022a81dcc04",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKEYS: Fix add_key() race with keyring restriction\n\n__key_create_or_update() snapshots keyring->restrict_link before taking\nthe destination keyring's semaphore.  keyring_restrict() installs a\nrestriction while holding that semaphore.\n\nThis allows a writer to observe no restriction, wait for the keyring\nowner to install a reject-all restriction and return successfully, and\nthen link a key using the stale NULL snapshot.  The writer only needs\nwrite permission on the destination keyring.\n\nMove the restrict_link read after __key_link_lock() and\n__key_link_begin().  The read and the subsequent restriction check are\nthen serialized with restriction installation by keyring->sem.\n\nThe race was reproduced on v7.2.8 in 19 executions where restriction\ninstallation returned before the link completed.  All 19 linked the key\ndespite the reject-all restriction.  With this change, 312 executions\nreached the same ordering and every add_key() call failed with -EPERM.\n\nThe issue was found by manual concurrency analysis assisted by AI-based\nanalysis and independently verified with a QEMU reproducer and kernel\ninstrumentation.",
   "datePublished": "Oct 23, 2026, 12:21:59 PM",
-  "dateUpdated": "Oct 23, 2026, 12:21:59 PM",
+  "dateUpdated": "Oct 30, 2026, 12:41:13 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/24806fc9bca28fa1433bf938d1424dcb45d80e50",
+    "https://git.kernel.org/stable/c/9a5c2700336878465a630804a2d21864f22eca9c",
+    "https://git.kernel.org/stable/c/b3e404550dc2b7f3d4bb64b1da8005a1fa9a798d",
     "https://git.kernel.org/stable/c/305f1828b871dd46bf41addeb6f11d2c162dcb25",
     "https://git.kernel.org/stable/c/f99399b48e3edd6851fac34cd329bab9f1f33baf",
     "https://git.kernel.org/stable/c/11516a0c402a6c1fa52254aa70d8d65fb921e59e",
@@ -13,11 +16,22 @@
     "https://git.kernel.org/stable/c/dd3ea3fcba7c75493760cdbccd35f029597e8d5e"
   ],
   "aliases": [
+    "GHSA-xfxp-jqfr-m4g5",
     "CVE-2026-99040"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.23,
   "enisaIdProduct": [
+    {
+      "id": "08918f97-a426-382c-8ff1-d6898e7f1c84",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
     {
       "id": "20058cad-e8d0-3328-8d74-afa6cd56434c",
       "product": {
@@ -49,6 +63,16 @@
       "product_version": "patch: 6.12.113"
     },
     {
+      "id": "50eefe8d-7c18-3473-b090-26944eed2fcd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ac7eace2d00eab5ae0e9fdee63e38aee6001f7c <24806fc9bca28fa1433bf938d1424dcb45d80e50"
+    },
+    {
       "id": "5b331f74-7c3c-35c2-98ef-7e738987bb39",
       "product": {
         "name": "Linux",
@@ -59,6 +83,16 @@
       "product_version": "5ac7eace2d00eab5ae0e9fdee63e38aee6001f7c <f99399b48e3edd6851fac34cd329bab9f1f33baf"
     },
     {
+      "id": "7f5507da-9b33-3a66-bbde-2e316450edf4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ac7eace2d00eab5ae0e9fdee63e38aee6001f7c <b3e404550dc2b7f3d4bb64b1da8005a1fa9a798d"
+    },
+    {
       "id": "84572d8a-5b4a-3ba3-b25b-19c3ade92bda",
       "product": {
         "name": "Linux",
@@ -67,6 +101,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "8eefa96a-2974-3490-814a-7bdfc3cb604e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "a98fe999-5755-3b01-8d5e-ca2c0713bb87",
@@ -89,6 +133,16 @@
       "product_version": "patch: 7.2.11"
     },
     {
+      "id": "be4a4a5d-3771-36f8-bb75-72b39a52b59e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
       "id": "c6443a8f-2ae2-3f79-a1c2-19f22263d0a1",
       "product": {
         "name": "Linux",
@@ -107,6 +161,16 @@
         }
       },
       "product_version": "5ac7eace2d00eab5ae0e9fdee63e38aee6001f7c <305f1828b871dd46bf41addeb6f11d2c162dcb25"
+    },
+    {
+      "id": "cb559113-7666-3da7-8e21-e21741bd43fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ac7eace2d00eab5ae0e9fdee63e38aee6001f7c <9a5c2700336878465a630804a2d21864f22eca9c"
     },
     {
       "id": "f1076888-f243-3b1e-9f41-fe6179808f6c",

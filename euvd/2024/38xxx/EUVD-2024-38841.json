@@ -1,0 +1,153 @@
+{
+  "id": "EUVD-2024-38841",
+  "enisaUuid": "8ddacac6-1bbd-3748-b435-dfbe9b9ee444",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: do not leave a dangling sk pointer, when socket creation fails\n\nIt is possible to trigger a use-after-free by:\n  * attaching an fentry probe to __sock_release() and the probe calling the\n    bpf_get_socket_cookie() helper\n  * running traceroute -I 1.1.1.1 on a freshly booted VM\n\nA KASAN enabled kernel will log something like below (decoded and stripped):\n==================================================================\nBUG: KASAN: slab-use-after-free in __sock_gen_cookie (./arch/x86/include/asm/atomic64_64.h:15 ./include/linux/atomic/atomic-arch-fallback.h:2583 ./include/linux/atomic/atomic-instrumented.h:1611 net/core/sock_diag.c:29)\nRead of size 8 at addr ffff888007110dd8 by task traceroute/299\n\nCPU: 2 PID: 299 Comm: traceroute Tainted: G            E      6.10.0-rc2+ #2\nHardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.16.2-debian-1.16.2-1 04/01/2014\nCall Trace:\n <TASK>\ndump_stack_lvl (lib/dump_stack.c:117 (discriminator 1))\nprint_report (mm/kasan/report.c:378 mm/kasan/report.c:488)\n? __sock_gen_cookie (./arch/x86/include/asm/atomic64_64.h:15 ./include/linux/atomic/atomic-arch-fallback.h:2583 ./include/linux/atomic/atomic-instrumented.h:1611 net/core/sock_diag.c:29)\nkasan_report (mm/kasan/report.c:603)\n? __sock_gen_cookie (./arch/x86/include/asm/atomic64_64.h:15 ./include/linux/atomic/atomic-arch-fallback.h:2583 ./include/linux/atomic/atomic-instrumented.h:1611 net/core/sock_diag.c:29)\nkasan_check_range (mm/kasan/generic.c:183 mm/kasan/generic.c:189)\n__sock_gen_cookie (./arch/x86/include/asm/atomic64_64.h:15 ./include/linux/atomic/atomic-arch-fallback.h:2583 ./include/linux/atomic/atomic-instrumented.h:1611 net/core/sock_diag.c:29)\nbpf_get_socket_ptr_cookie (./arch/x86/include/asm/preempt.h:94 ./include/linux/sock_diag.h:42 net/core/filter.c:5094 net/core/filter.c:5092)\nbpf_prog_875642cf11f1d139___sock_release+0x6e/0x8e\nbpf_trampoline_6442506592+0x47/0xaf\n__sock_release (net/socket.c:652)\n__sock_create (net/socket.c:1601)\n...\nAllocated by task 299 on cpu 2 at 78.328492s:\nkasan_save_stack (mm/kasan/common.c:48)\nkasan_save_track (mm/kasan/common.c:68)\n__kasan_slab_alloc (mm/kasan/common.c:312 mm/kasan/common.c:338)\nkmem_cache_alloc_noprof (mm/slub.c:3941 mm/slub.c:4000 mm/slub.c:4007)\nsk_prot_alloc (net/core/sock.c:2075)\nsk_alloc (net/core/sock.c:2134)\ninet_create (net/ipv4/af_inet.c:327 net/ipv4/af_inet.c:252)\n__sock_create (net/socket.c:1572)\n__sys_socket (net/socket.c:1660 net/socket.c:1644 net/socket.c:1706)\n__x64_sys_socket (net/socket.c:1718)\ndo_syscall_64 (arch/x86/entry/common.c:52 arch/x86/entry/common.c:83)\nentry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:130)\n\nFreed by task 299 on cpu 2 at 78.328502s:\nkasan_save_stack (mm/kasan/common.c:48)\nkasan_save_track (mm/kasan/common.c:68)\nkasan_save_free_info (mm/kasan/generic.c:582)\npoison_slab_object (mm/kasan/common.c:242)\n__kasan_slab_free (mm/kasan/common.c:256)\nkmem_cache_free (mm/slub.c:4437 mm/slub.c:4511)\n__sk_destruct (net/core/sock.c:2117 net/core/sock.c:2208)\ninet_create (net/ipv4/af_inet.c:397 net/ipv4/af_inet.c:252)\n__sock_create (net/socket.c:1572)\n__sys_socket (net/socket.c:1660 net/socket.c:1644 net/socket.c:1706)\n__x64_sys_socket (net/socket.c:1718)\ndo_syscall_64 (arch/x86/entry/common.c:52 arch/x86/entry/common.c:83)\nentry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:130)\n\nFix this by clearing the struct socket reference in sk_common_release() to cover\nall protocol families create functions, which may already attached the\nreference to the sk object with sock_init_data().",
+  "datePublished": "Jul 12, 2024, 12:31:57 PM",
+  "dateUpdated": "Aug 5, 2026, 11:34:13 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/78e4aa528a7b1204219d808310524344f627d069",
+    "https://git.kernel.org/stable/c/893eeba94c40d513cd0fe6539330ebdaea208c0e",
+    "https://git.kernel.org/stable/c/454c454ed645fed051216b79622f7cb69c1638f5",
+    "https://git.kernel.org/stable/c/5dfe2408fd7dc4d2e7ac38a116ff0a37b1cfd3b9",
+    "https://git.kernel.org/stable/c/6cd4a78d962bebbaf8beb7d2ead3f34120e3f7b2"
+  ],
+  "aliases": [
+    "GHSA-68p8-jjxw-w2v4",
+    "CVE-2024-40954"
+  ],
+  "assigner": "Linux",
+  "epss": 0.26,
+  "enisaIdProduct": [
+    {
+      "id": "25dc9010-87cd-37d6-8465-a6d480d5fb61",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.12"
+    },
+    {
+      "id": "26ab3c46-68b3-370e-a755-af9852379596",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c5dbb89fc2ac013afe67b9e4fcb3743c02b567cd <454c454ed645fed051216b79622f7cb69c1638f5"
+    },
+    {
+      "id": "321db398-dcf9-3ea5-ad7c-9a0e949e4384",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "365f4f06-776e-3146-aae9-18920e00dcc1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c5dbb89fc2ac013afe67b9e4fcb3743c02b567cd <6cd4a78d962bebbaf8beb7d2ead3f34120e3f7b2"
+    },
+    {
+      "id": "3a550711-c787-3c23-a1b0-d7e470d4ebec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.7"
+    },
+    {
+      "id": "71c5b5d5-1145-32e9-a0f2-6a91210d6a66",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.36"
+    },
+    {
+      "id": "84df3c47-a62d-3be2-91ff-bbed5bdf2d17",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c5dbb89fc2ac013afe67b9e4fcb3743c02b567cd <893eeba94c40d513cd0fe6539330ebdaea208c0e"
+    },
+    {
+      "id": "8c32de69-462d-3e43-a746-7d094ff2a28f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.96"
+    },
+    {
+      "id": "8ce307f0-d228-3e16-9a9c-7dcc21f5f7a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "bcc58a85-0bff-3a26-8109-ec1f31101327",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.162"
+    },
+    {
+      "id": "d7e5132f-a7cb-3d06-8478-228d4167dbc2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c5dbb89fc2ac013afe67b9e4fcb3743c02b567cd <78e4aa528a7b1204219d808310524344f627d069"
+    },
+    {
+      "id": "f506a51f-1a77-3b7f-8813-9908745e5afc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c5dbb89fc2ac013afe67b9e4fcb3743c02b567cd <5dfe2408fd7dc4d2e7ac38a116ff0a37b1cfd3b9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e0e7ed98-afe8-3f16-9865-9c855083dd1d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

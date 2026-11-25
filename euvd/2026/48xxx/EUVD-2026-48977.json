@@ -3,8 +3,10 @@
   "enisaUuid": "724658a9-d474-3de4-8412-b9ed3cd6a49b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfuse: clear intr_entry in fuse_resend and fuse_remove_pending_req\n\nWhen fuse_resend() moves a request from fpq->processing back to\nfiq->pending, it sets FR_PENDING and clears FR_SENT but does not\nremove the requests intr_entry from fiq->interrupts.  If the\nrequest had FR_INTERRUPTED set from a prior signal, intr_entry\nremains dangling on fiq->interrupts.  When the requesting task\nthen receives a fatal signal, fuse_remove_pending_req() sees\nFR_PENDING=1, removes the request from fiq->pending and frees it\nvia the refcount path, also without cleaning intr_entry.  The\nstale intr_entry causes use-after-free when fuse_read_interrupt()\niterates fiq->interrupts:\n  - list_del_init(&req->intr_entry) -> UAF write on freed slab\n  - req->in.h.unique -> UAF read, data leaked to userspace\n\nRemove intr_entry from fiq->interrupts in fuse_resend() for\ninterrupted requests before they are placed back on fiq->pending.\n\nAdd a WARN_ON if the intr_entry is not empty on request destruction.",
   "datePublished": "Jul 25, 2026, 8:49:14 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:14 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:52:19 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/1d8ecd0cd696a5df0b2f72046a4ccee5d2a8ec2c",
     "https://git.kernel.org/stable/c/7366e6f4d2b4c7002b13fb01219e83679dad4127",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/f8fce75fedf73ac72aa09163deb8f4291fdcaad2"
   ],
   "aliases": [
+    "GHSA-694x-mwh7-5pvf",
     "CVE-2026-64265"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "1a2d0f01-ce0a-34fa-8462-6a9d0117ae39",
@@ -28,6 +31,16 @@
       "product_version": "patch: 7.1.4"
     },
     {
+      "id": "1aebbc56-4368-31c1-a431-88545c952ba4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "3159a58c-9d89-361e-b7d5-afd905369d16",
       "product": {
         "name": "Linux",
@@ -36,16 +49,6 @@
         }
       },
       "product_version": "patch: 6.12.96"
-    },
-    {
-      "id": "3ec622b5-745d-3c1d-9e4d-5ef42e78b810",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "41c33126-b4db-3a62-b50f-23802a7aa27b",

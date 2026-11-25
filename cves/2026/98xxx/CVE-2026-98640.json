@@ -3,7 +3,7 @@
   "enisaUuid": "1ac9fc54-32fd-36e3-992e-d937342d063d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: amd_sfh: Validate PCI BAR size before mapping\n\nThe amd_sfh driver maps PCI BAR 2 using pcim_iomap_regions() and\nsubsequently accesses MMIO registers at offsets up to 0x10958 (e.g.,\nAMD_P2C_MSG3 at 0x1068C). However, the driver never validates that the BAR\nsize is large enough to cover these accesses. If the driver is bound to a\ndevice with a smaller BAR 2, this leads to an out-of-bounds memory access\nand a page fault during the probe function.\n\nFor example, a page fault can occur when reading from privdata->mmio +\nAMD_P2C_MSG3 in mp2_select_ops():\n\n  BUG: unable to handle page fault for address: ffffc9000390368c\n  PGD 100000067 P4D 100000067 PUD 1012c1067 PMD 105b64067 PTE 0\n  Oops: Oops: 0000 [#1] SMP KASAN NOPTI\n  RIP: 0010:readl arch/x86/include/asm/io.h:59 [inline]\n  RIP: 0010:mp2_select_ops drivers/hid/amd-sfh-hid/amd_sfh_pcie.c:282\n  [inline]\n  RIP: 0010:amd_mp2_pci_probe+0x337/0x5f0\n  drivers/hid/amd-sfh-hid/amd_sfh_pcie.c:487\n  Call Trace:\n   <TASK>\n   local_pci_probe drivers/pci/pci-driver.c:332 [inline]\n   pci_call_probe drivers/pci/pci-driver.c:394 [inline]\n   __pci_device_probe drivers/pci/pci-driver.c:455 [inline]\n   pci_device_probe+0x431/0xc90 drivers/pci/pci-driver.c:489\n\nFix this by verifying that the length of BAR 2 is at least 128KB before\nattempting to map it. Since the maximum accessed offset is 0x10958, and PCI\nBAR sizes are powers of 2, any legitimate hardware will have a BAR size of\nat least 128KB.",
   "datePublished": "Oct 18, 2026, 3:20:11 PM",
-  "dateUpdated": "Oct 18, 2026, 3:20:11 PM",
+  "dateUpdated": "Oct 19, 2026, 9:23:09 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/92bf2883da0306ab9d1eb794acd1058fc5088ebc",
@@ -15,10 +15,11 @@
     "https://git.kernel.org/stable/c/65bcc5f89704efe5b9d69d4ea2c1002d90c31382"
   ],
   "aliases": [
+    "GHSA-5m32-w674-2xq4",
     "CVE-2026-98640"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "14ef603f-9017-305a-b0a3-06ad82159eb8",
@@ -29,6 +30,16 @@
         }
       },
       "product_version": "patch: 7.2.9"
+    },
+    {
+      "id": "24f0f51c-165b-3ef9-b55b-dbdd7391859d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "27b6fcda-4dc4-3e74-bc38-cc60ea613f6f",
@@ -109,16 +120,6 @@
         }
       },
       "product_version": "patch: 6.1.189"
-    },
-    {
-      "id": "6efb546b-072b-3e01-a305-41e2f28b61c4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "85ad84c8-68ff-3d98-93ca-d216416cf786",

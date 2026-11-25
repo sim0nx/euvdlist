@@ -1,0 +1,282 @@
+{
+  "id": "EUVD-2023-59599",
+  "enisaUuid": "5bae65d9-3626-307b-bc4f-9002f90f89dc",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nUSB: core: Fix race by not overwriting udev->descriptor in hub_port_init()\n\nSyzbot reported an out-of-bounds read in sysfs.c:read_descriptors():\n\nBUG: KASAN: slab-out-of-bounds in read_descriptors+0x263/0x280 drivers/usb/core/sysfs.c:883\nRead of size 8 at addr ffff88801e78b8c8 by task udevd/5011\n\nCPU: 0 PID: 5011 Comm: udevd Not tainted 6.4.0-rc6-syzkaller-00195-g40f71e7cd3c6 #0\nHardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 05/27/2023\nCall Trace:\n <TASK>\n __dump_stack lib/dump_stack.c:88 [inline]\n dump_stack_lvl+0xd9/0x150 lib/dump_stack.c:106\n print_address_description.constprop.0+0x2c/0x3c0 mm/kasan/report.c:351\n print_report mm/kasan/report.c:462 [inline]\n kasan_report+0x11c/0x130 mm/kasan/report.c:572\n read_descriptors+0x263/0x280 drivers/usb/core/sysfs.c:883\n...\nAllocated by task 758:\n...\n __do_kmalloc_node mm/slab_common.c:966 [inline]\n __kmalloc+0x5e/0x190 mm/slab_common.c:979\n kmalloc include/linux/slab.h:563 [inline]\n kzalloc include/linux/slab.h:680 [inline]\n usb_get_configuration+0x1f7/0x5170 drivers/usb/core/config.c:887\n usb_enumerate_device drivers/usb/core/hub.c:2407 [inline]\n usb_new_device+0x12b0/0x19d0 drivers/usb/core/hub.c:2545\n\nAs analyzed by Khazhy Kumykov, the cause of this bug is a race between\nread_descriptors() and hub_port_init(): The first routine uses a field\nin udev->descriptor, not expecting it to change, while the second\noverwrites it.\n\nPrior to commit 45bf39f8df7f (\"USB: core: Don't hold device lock while\nreading the \"descriptors\" sysfs file\") this race couldn't occur,\nbecause the routines were mutually exclusive thanks to the device\nlocking.  Removing that locking from read_descriptors() exposed it to\nthe race.\n\nThe best way to fix the bug is to keep hub_port_init() from changing\nudev->descriptor once udev has been initialized and registered.\nDrivers expect the descriptors stored in the kernel to be immutable;\nwe should not undermine this expectation.  In fact, this change should\nhave been made long ago.\n\nSo now hub_port_init() will take an additional argument, specifying a\nbuffer in which to store the device descriptor it reads.  (If udev has\nnot yet been initialized, the buffer pointer will be NULL and then\nhub_port_init() will store the device descriptor in udev as before.)\nThis eliminates the data race responsible for the out-of-bounds read.\n\nThe changes to hub_port_init() appear more extensive than they really\nare, because of indentation changes resulting from an attempt to avoid\nwriting to other parts of the usb_device structure after it has been\ninitialized.  Similar changes should be made to the code that reads\nthe BOS descriptor, but that can be handled in a separate patch later\non.  This patch is sufficient to fix the bug found by syzbot.",
+  "datePublished": "Jul 16, 2024, 9:40:58 AM",
+  "dateUpdated": "May 23, 2026, 3:27:29 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/9d241c5d9a9b7ad95c90c6520272fe404d5ac88f",
+    "https://git.kernel.org/stable/c/7fe9d87996062f5eb0ca476ad0257f79bf43aaf5",
+    "https://git.kernel.org/stable/c/8186596a663506b1124bede9fde6f243ef9f37ee",
+    "https://git.kernel.org/stable/c/b4a074b1fb222164ed7d5c0b8c922dc4a0840848",
+    "https://git.kernel.org/stable/c/b9fbfb349eacc0820f91c797d7f0a3ac7a4935b5",
+    "https://git.kernel.org/stable/c/ff33299ec8bb80cdcc073ad9c506bd79bb2ed20b"
+  ],
+  "aliases": [
+    "CVE-2023-52886",
+    "GHSA-xxqc-5rhp-jfq2"
+  ],
+  "assigner": "Linux",
+  "epss": 0.33,
+  "enisaIdProduct": [
+    {
+      "id": "0ff6c8a8-f049-3b5c-ba47-5faac41af34e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c87fb861ec185fdc578b4fdc6a05920b6a843840 <8186596a663506b1124bede9fde6f243ef9f37ee"
+    },
+    {
+      "id": "1317570a-6cd7-3cd3-b041-3eceb4b376e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.2.2 <6.3"
+    },
+    {
+      "id": "1e7fe4bc-15b9-3c34-b066-d7c60dde25dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.5.3"
+    },
+    {
+      "id": "295bc81a-a116-38e4-a6ba-d22e07fffee8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.4.234 <5.5"
+    },
+    {
+      "id": "2c89e5c6-c156-30f5-8d21-9e6ab629e6a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "45bf39f8df7f05efb83b302c65ae3b9bc92b7065 <b9fbfb349eacc0820f91c797d7f0a3ac7a4935b5"
+    },
+    {
+      "id": "35b4f898-b8c7-379f-9f41-047e2c615e6a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.53"
+    },
+    {
+      "id": "36cd74fc-dfe4-38b8-9579-77e4ccedffb4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.15 <6.1.53"
+    },
+    {
+      "id": "4cc5bc93-f411-3049-9e86-da31e3f4d87d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.3"
+    },
+    {
+      "id": "5178d64f-3124-3b3f-b614-c3c5a625447b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "45bf39f8df7f05efb83b302c65ae3b9bc92b7065 <ff33299ec8bb80cdcc073ad9c506bd79bb2ed20b"
+    },
+    {
+      "id": "625a6d8e-ccbe-3b79-a6a1-8e278465a043",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6badaf880edf51a2da7a439699676394dfdef3e5"
+    },
+    {
+      "id": "6f5e3111-c56d-3cf2-b01e-078c19b50bc8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "218925bfd5d1436e337c4f961e9c149fbe32de6d <9d241c5d9a9b7ad95c90c6520272fe404d5ac88f"
+    },
+    {
+      "id": "8f541a5f-c032-3a0d-8f77-7905fbaec068",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "77358093331e9769855140bf94a3f00ecdcf4bb1 <7fe9d87996062f5eb0ca476ad0257f79bf43aaf5"
+    },
+    {
+      "id": "98cea85e-a246-3fa7-8660-400f39c62e7d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "45bf39f8df7f05efb83b302c65ae3b9bc92b7065 <b4a074b1fb222164ed7d5c0b8c922dc4a0840848"
+    },
+    {
+      "id": "98e426cd-e3c4-3cd4-81d8-c33203c7e325",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.4.16"
+    },
+    {
+      "id": "9b23c6d4-1031-3212-a04a-706e626331ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.132"
+    },
+    {
+      "id": "9e6bc89d-7efe-34f5-a9b5-8a283104af5b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.14.308 <4.15"
+    },
+    {
+      "id": "9fe3a6f8-f019-3d85-bf34-04bf15fa97c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6"
+    },
+    {
+      "id": "a0122def-1549-326c-b4ff-59cf2e907485",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.97 <5.15.132"
+    },
+    {
+      "id": "a6e27366-cf20-3dbe-9ca7-5fafe2331300",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.171 <5.10.195"
+    },
+    {
+      "id": "d06c57ed-ee8b-3e5e-8044-dbfc1a150634",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "da84fc9b-1810-3a78-9caf-653996fa5dc7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.195"
+    },
+    {
+      "id": "e4cf62de-235a-3195-b841-f4c39bcbde28",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5f35b5d3bd6914c68f743741443dfd3a64b0e455"
+    },
+    {
+      "id": "e57feb29-a323-3f54-8347-43897fbe5cb4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.19.275 <4.20"
+    },
+    {
+      "id": "ec7b2d11-68d7-3245-b7e1-4973cd646636",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1bcb238c54a9c6dc4bded06b06ba7458a5eefa87"
+    },
+    {
+      "id": "fd5af29d-6fa4-3b6f-8651-e096b702c7c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a1e89c8b29d003a20ed2dae6bdae1598d1f23e42"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e465406e-0318-3b2c-b5f2-6a2497a07741",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

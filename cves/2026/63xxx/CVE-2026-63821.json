@@ -3,7 +3,7 @@
   "enisaUuid": "c4644fd7-fb24-3662-8ec7-e72ac657e64c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: rtw88: usb: fix memory leaks on USB write failures\n\nWhen rtw_usb_write_port() fails to submit a USB Request Block (URB)\n(e.g., due to device disconnect or ENOMEM), the completion callback is\nnever executed.\n\nCurrently, the driver ignores the return value of rtw_usb_write_port()\nin rtw_usb_write_data() and rtw_usb_tx_agg_skb(). Because these\nfunctions rely on the completion callback to free the socket buffers\n(skbs) and the transaction control block (txcb), a submission failure\nresults in:\n1. A memory leak of the allocated skb in rtw_usb_write_data().\n2. A memory leak of the txcb structure and all aggregated skbs in\n   rtw_usb_tx_agg_skb().\n\nFix this by checking the return value of rtw_usb_write_port(). If it\nfails, explicitly free the skb in rtw_usb_write_data(), and properly\npurge the tx_ack_queue and free the txcb in rtw_usb_tx_agg_skb().\n\nThe issue was discovered in practice during device disconnect/reconnect\nscenarios and memory pressure conditions. Tested by verifying normal TX\noperation continues after the fix without regressions.",
   "datePublished": "Jul 19, 2026, 12:02:18 PM",
-  "dateUpdated": "Jul 19, 2026, 12:02:18 PM",
+  "dateUpdated": "Aug 17, 2026, 4:51:28 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2b2060c2075a72bc2de43ce5e1b9347d6c5e27bb",
@@ -17,7 +17,7 @@
     "CVE-2026-63821"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "04f26d23-4ffb-3439-8911-378a2177a1e9",
@@ -28,6 +28,16 @@
         }
       },
       "product_version": "a82dfd33d1237f6c0fb8a7077022189d1fc7ec98 <6b964941bbfe6e0f18b1a5e008486dbb62df440a"
+    },
+    {
+      "id": "14f2dc88-e6c4-3dd8-bd94-d3ee4676609e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "22f543b2-42c0-3de1-8b4c-9338d3df6d73",
@@ -108,16 +118,6 @@
         }
       },
       "product_version": "a82dfd33d1237f6c0fb8a7077022189d1fc7ec98 <8206d173d18ef5a077423119f4e9a93cb3a6f4eb"
-    },
-    {
-      "id": "ad1fee61-5f21-3d46-83ee-d4ca0b08efe4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "c7906464-0c12-39d8-acd3-acc02c25240c",

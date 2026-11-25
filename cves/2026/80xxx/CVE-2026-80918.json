@@ -3,7 +3,7 @@
   "enisaUuid": "e52e0139-2949-3f96-9044-1187a5262da2",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: core: fix number/pointer type confusion on long items\n\nWhen fetch_item() is called by hid_scan_report() on an item with\nHID_ITEM_TAG_LONG, it stores a pointer to the item data in\nitem->data.longdata instead of storing a value directly in\nitem->data.{u8/u16/u32}.\n\nWhen item_udata() or item_sdata() encounters such an item, it incorrectly\nassumes that the item is in short format, and therefore returns the lower\npart of a kernel pointer reinterpreted as a number.\n\nWhen a HID device is connected whose descriptor contains a\nHID_GLOBAL_ITEM_TAG_REPORT_SIZE encoded in long format with size=4, this\ncauses the lower half of a kernel pointer to be printed into dmesg as a\nnumber, like this:\n\n    hid (null): invalid report_size 107953555\n\nTo fix it, let item_udata() and item_sdata() verify that the item is in\nshort format.\n\nNote that this bug only affects hid_scan_report(), while the main parsing\npass hid_parse_collections() will always bail out when encountering a long\nitem.\n\nSidenote: There are currently no users of data.longdata; maybe we should\njust remove any parsing of long-format descriptors as a follow-up.",
   "datePublished": "Sep 9, 2026, 4:13:15 PM",
-  "dateUpdated": "Sep 9, 2026, 4:13:15 PM",
+  "dateUpdated": "Oct 19, 2026, 8:45:02 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/bed7fe3a936b6bdd84671385951397ca673cf6e7",
@@ -17,10 +17,11 @@
     "https://git.kernel.org/stable/c/28abce951343fcec26e397610868efa4e1395c3f"
   ],
   "aliases": [
+    "GHSA-vppq-2m7c-f4xg",
     "CVE-2026-80918"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "011de887-5126-3caf-8258-37f79d3c6937",
@@ -93,6 +94,16 @@
       "product_version": "patch: 6.12.106"
     },
     {
+      "id": "95e4c5e3-974c-30bb-8c96-698d58d9f8b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "97080a26-87aa-3039-aa7b-1aa59f3cccc0",
       "product": {
         "name": "Linux",
@@ -111,16 +122,6 @@
         }
       },
       "product_version": "patch: 6.18.47"
-    },
-    {
-      "id": "b595453d-f116-37ee-8519-9ef14ea82e64",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "bb9b06b1-9c89-3c59-b2b5-2b818e98d1d5",

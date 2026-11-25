@@ -3,8 +3,10 @@
   "enisaUuid": "029a404f-a2fe-308a-84d6-ff3afcf20593",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmmc: atmel-mci: Fix use-after-free in atmci_remove due to race condition\n\nIn atmci_probe, &host->bh_work is bound with atmci_work_func, and\natmci_interrupt, atmci_timeout_timer and atmci_dma_complete can all\nqueue this work on system_bh_wq.\n\nIf we remove the module, atmci_remove makes cleanup and the memory\nallocated for host with devm_kzalloc() is released after the remove\ncallback returns, while the work mentioned above may still be pending\nor running. The sequence of operations that may lead to a UAF bug is\nas follows:\n\nCPU0                                      CPU1\n\n                                          | atmci_interrupt\n                                          | queue_work(system_bh_wq,\n                                          |            &host->bh_work)\natmci_remove                              |\natmci_cleanup_slot(...)                   |\natmci_writel(host, ATMCI_IDR, ~0UL)       |\ntimer_delete_sync(&host->timer)           |\ndma_release_channel(host->dma.chan)       |\nfree_irq(platform_get_irq(pdev, 0), host) |\n                                          | atmci_work_func\n                                          | // use host\n// devm resources released after          |\n// remove returns, host is freed          |\n                                          | // use host (use-after-free)\n\nFix it by canceling the work after all the sources that can schedule\nit (IRQ handler, timeout timer and DMA completion callback) have been\nstopped, and before proceeding with the remaining cleanup in\natmci_remove.",
   "datePublished": "Aug 26, 2026, 2:37:23 PM",
-  "dateUpdated": "Aug 26, 2026, 2:37:23 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 27, 2026, 5:01:44 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/22aecf6c4721727a2f724ca0438bc7d4b609bf3f",
     "https://git.kernel.org/stable/c/b5060ff2f5460795a3e9f7cdf5052aa42f96ff81",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/c125ee35a49a0518521b52b27631eef061b8719a"
   ],
   "aliases": [
+    "GHSA-4ppc-mf9q-3j92",
     "CVE-2026-80556"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "18883792-2446-3a38-a15f-f410d99d7621",

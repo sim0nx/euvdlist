@@ -3,28 +3,19 @@
   "enisaUuid": "20e19fee-1b31-37f5-a66a-50ecca92640b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdgpu/userq: fix indefinite fence wait during GPU reset\n\npre_reset only force-completes fences of MAPPED queues. A queue in any\nother state (e.g. mid-eviction) keeps its last_fence pending; after a\nGPU reset that fence never signals, so the eviction/suspend worker and\nprocess teardown (amdgpu_evf_mgr_flush_suspend) wait on it forever and\nwedge the machine:\n\n  INFO: task kworker/6:28 blocked for more than 120 seconds.\n  Workqueue: events amdgpu_eviction_fence_suspend_worker [amdgpu]\n  Call Trace:\n   dma_fence_wait_timeout+0x7e/0x130\n   amdgpu_userq_evict+0x67/0x140 [amdgpu]\n   amdgpu_eviction_fence_suspend_worker+0xd8/0x160 [amdgpu]\n   process_scheduled_works+0xa6/0x420\n\nForce-complete every queue's fence regardless of state. The unmap and\nmark-hung step stays gated on MAPPED, since unmapping a queue that is\nnot mapped is invalid.\n\n(cherry picked from commit 9102b39fa924dcc3dc75a3137bfa9633c40b88c0)",
   "datePublished": "Aug 10, 2026, 12:01:02 PM",
-  "dateUpdated": "Aug 10, 2026, 12:01:02 PM",
+  "dateUpdated": "Aug 17, 2026, 5:01:26 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/3085ae8695e025b39d208f288c6265edc75abbe8",
     "https://git.kernel.org/stable/c/5d75ec2e5f1736c2f10c7d6f4565bf1bf29f29a7"
   ],
   "aliases": [
-    "CVE-2026-68237"
+    "CVE-2026-68237",
+    "GHSA-p526-pm6j-fr73"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
-    {
-      "id": "29ec3dbc-9c2e-396b-b88b-226c378210d8",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
-    },
     {
       "id": "2aee0d6c-20c1-3a6b-ba00-a964d4c205fb",
       "product": {
@@ -74,6 +65,16 @@
         }
       },
       "product_version": "290f46cf5726509f55fac4c7abe9b9d311aa5a3a <3085ae8695e025b39d208f288c6265edc75abbe8"
+    },
+    {
+      "id": "f53ef391-0c43-363d-84b0-848a64fe152f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

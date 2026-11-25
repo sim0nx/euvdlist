@@ -3,9 +3,12 @@
   "enisaUuid": "30ddc2f8-590c-3c00-96eb-88805aee28d8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndmaengine: dw-edma: Terminate all descriptors without callbacks\n\nThe DMA Engine client documentation says in the \"Terminate APIs\" section\nof Documentation/driver-api/dmaengine/client.rst:\n\n\"No callback functions will be called for any incomplete transfers.\"\n\ndw-edma instead calls vchan_cookie_complete() when a deferred STOP reaches\nthe interrupt handler. This schedules a callback for the active descriptor\nand leaves other issued or submitted descriptors queued. A late callback\nafter dmaengine_terminate_sync() can dereference client state that has\nalready been freed, while leftover descriptors may later restart into\nreused buffers or leak.\n\nMove all issued and submitted descriptors to the terminated list whenever\ntermination completes. For a pending STOP, do this from both the DONE and\nABORT paths. Complete their cookies in order without scheduling callbacks.\n\nA STOP can remain pending until the running transfer raises an\ninterrupt. Make device_synchronize() wait for such a pending STOP to\ncomplete before releasing terminated descriptors. Reuse it from\nfree_chan_resources(), then release the remaining virt-dma resources.\nSleep instead of busy-polling while waiting, and warn if the existing\ntimeout expires.",
   "datePublished": "Sep 17, 2026, 4:10:34 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:34 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:35:46 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/da56839aced48ecb70033962d7ea98f55b0c5656",
     "https://git.kernel.org/stable/c/65e387b95d3855aa894ac729e1778e5bcb9083cb",
     "https://git.kernel.org/stable/c/4793f9099a1cadf4e37f3a03d524af6bce88a0ea",
     "https://git.kernel.org/stable/c/be87d86537de7ea6fd025f41033d2faff880973f",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/99109a51efd28c9a661fbfb9469b023c517b31d1"
   ],
   "aliases": [
+    "GHSA-m4jg-4gfw-gm5r",
     "CVE-2026-93042"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.4,
   "enisaIdProduct": [
     {
       "id": "18fea8d1-2b19-3dc1-aed1-e4db295bcdee",
@@ -49,6 +53,16 @@
       "product_version": "patch: 7.2.6"
     },
     {
+      "id": "68ef89fa-feff-345b-80f4-6bcae6305100",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "71072767-7134-332e-b8a1-6170d8b84ae9",
       "product": {
         "name": "Linux",
@@ -57,6 +71,16 @@
         }
       },
       "product_version": "e63d79d1ffcd2201a2dbff1d7a1184b8f3ec74cf <99109a51efd28c9a661fbfb9469b023c517b31d1"
+    },
+    {
+      "id": "7e31d1dd-8338-391d-a4e4-f54e8e6e7d72",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "9459fe67-ca37-3fa3-b150-fb647674023b",
@@ -109,6 +133,16 @@
       "product_version": "e63d79d1ffcd2201a2dbff1d7a1184b8f3ec74cf <f3ec6702a1d216be61f692cc0a983d6c8fb5ebf7"
     },
     {
+      "id": "dcc6a1c0-9b7b-3ad4-b59a-cd1560136fb2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e63d79d1ffcd2201a2dbff1d7a1184b8f3ec74cf <da56839aced48ecb70033962d7ea98f55b0c5656"
+    },
+    {
       "id": "e441e2b7-6e69-3a0e-8e91-04e40b148b73",
       "product": {
         "name": "Linux",
@@ -117,16 +151,6 @@
         }
       },
       "product_version": "patch: 6.12.110"
-    },
-    {
-      "id": "f465c0f3-9312-30f5-a727-c4c36e16d01c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "ff2d98e8-ac47-3ff7-96c7-3afede8a7293",

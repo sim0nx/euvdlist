@@ -3,7 +3,7 @@
   "enisaUuid": "717950e2-00b6-30dd-bacc-ebaefd0daffc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfc: llcp: bound the connect_sn TLV walk to the skb\n\nCommit 27256cdb290e (\"nfc: llcp: bound SNL TLV parsing to the skb and\nadd length checks\") fixed the unbounded TLV walk in nfc_llcp_recv_snl(),\nand commit d8bd2dedbde5 (\"nfc: llcp: fix OOB read and u8 offset wrap in\nTLV parsers\") subsequently bounded nfc_llcp_parse_gb_tlv() and\nnfc_llcp_parse_connection_tlv(). One sibling parser sharing the same\npattern remains unbounded: nfc_llcp_connect_sn().\n\nnfc_llcp_connect_sn() walks a TLV list, reading a two-byte header\n(type, length) followed by length bytes of value, without checking that\nthe two header bytes or the declared length stay within the buffer. It\nreturns a pointer to a service name of up to 255 bytes that may point\npast the end of the skb; it is subsequently consumed by memcmp() in\nnfc_llcp_sock_from_sn(). In addition tlv_array_len was computed as\n\"skb->len - LLCP_HEADER_SIZE\" in size_t, so a CONNECT/CC frame shorter\nthan the LLCP header underflows to a huge length and the walk runs far\npast the buffer.\n\nnfc_llcp_connect_sn() is reachable from nfc_llcp_recv_connect() and\nnfc_llcp_recv_cc(), i.e. from received CONNECT and CC PDUs. A nearby\nNFC device can reach this without authentication; LLCP link activation\nhappens automatically after NFC-DEP, and the nfc_llcp_rx_skb()\ndispatcher applies no minimum-length guard.\n\nWalk the TLV list by pointer, bounded by skb_tail_pointer(skb), and\nvalidate each declared length before use, matching the approach already\nused for nfc_llcp_recv_snl(). Starting the walk at\n&skb->data[LLCP_HEADER_SIZE] against the tail pointer also removes the\nsize_t underflow for short frames.\n\nFound by 0sec automated security-research tooling (https://0sec.ai).",
   "datePublished": "Sep 4, 2026, 3:13:14 PM",
-  "dateUpdated": "Sep 4, 2026, 3:13:14 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:53 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b2ebdfe3d5b76e91f267a61cbc3f9a0e3f77071e",
@@ -17,10 +17,11 @@
     "https://git.kernel.org/stable/c/55c68ac93e7dacc0f5f608b9c39dd4ff48cf28e8"
   ],
   "aliases": [
-    "CVE-2026-80800"
+    "CVE-2026-80800",
+    "GHSA-8pjc-rhhp-w5xq"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.23,
   "enisaIdProduct": [
     {
       "id": "0410ec0b-0f92-34c3-bae5-f4aca3f576e5",
@@ -43,16 +44,6 @@
       "product_version": "patch: 6.12.106"
     },
     {
-      "id": "1a05998b-ebdb-3003-a913-380cb4c3f4e5",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "1d16268a-579c-3444-b5d1-a2bbba45f650",
       "product": {
         "name": "Linux",
@@ -71,6 +62,16 @@
         }
       },
       "product_version": "patch: 5.10.267"
+    },
+    {
+      "id": "39df2321-7b11-3f41-8c7b-6a2223c5aa6c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "43d52e17-f7f2-3829-b4fc-e5b0f622f815",

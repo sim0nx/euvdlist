@@ -3,8 +3,10 @@
   "enisaUuid": "5795520b-f426-3bf0-bb66-5ab47d2b4ada",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Fix cs84xx use-after-free on host teardown\n\nqla84xx_put_chip() drops the last reference to ha->cs84xx and frees it via\n__qla84xx_chip_release() without clearing ha->cs84xx. During teardown it ran\nbefore scsi_remove_host(), which is what removes the 84xx_fw_version host\nsysfs attribute. A concurrent read of that attribute in the window between\nthe two calls executes qla24xx_84xx_fw_version_show(), which dereferences\nthe freed ha->cs84xx, resulting in a use-after-free.\n\nMove qla84xx_put_chip() to after scsi_remove_host() in both\nqla2x00_remove_one() and qla2x00_disable_board_on_pci_error(). Once\nscsi_remove_host() returns, the sysfs attribute is gone and kernfs has\ndrained any in-flight show(), so no reader can touch cs84xx; the put still\nruns before the host and ha are freed.",
   "datePublished": "Sep 16, 2026, 10:31:27 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:27 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:53:47 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/8c1ebcade6aac58137f2645b579894301febabf3",
     "https://git.kernel.org/stable/c/1d8bbc4344b9367d9d54731475d745fbc9ea28f2",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/33d102102d925357c5fd172dd6672a27d74b3215"
   ],
   "aliases": [
-    "CVE-2026-89854"
+    "CVE-2026-89854",
+    "GHSA-9v3f-qp8w-f486"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "04c69777-e45c-3faa-9ac5-7e7b876e3b50",
@@ -100,16 +103,6 @@
         }
       },
       "product_version": "patch: 5.10.270"
-    },
-    {
-      "id": "7ccb960c-4104-3c51-b0bd-1b829b257752",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "8c860e3d-4a32-35eb-a4df-7649dc8f78d6",
@@ -200,6 +193,16 @@
         }
       },
       "product_version": "fe1b806f4f7172b1eae18ddeebb7d8fb351043f7 <fcf0804dfe05862007189ac9dc4dc2063be36de1"
+    },
+    {
+      "id": "f0ce6adb-35cd-3a73-805c-885c5aee3155",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

@@ -3,9 +3,14 @@
   "enisaUuid": "0901523f-83f5-34dd-9acf-4c04b81379d8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnamespace: unhash a dentry before detaching the mounts on it\n\nunlink(), rmdir() and rename() remove the entry from the filesystem,\ncall detach_mounts() on the entry with the inode locked and then call\nd_delete() once the inode is unlocked.\n\nThe thing is that between detach_mounts() and d_delete() the dentry is\nstill hashed and positive. But after detach_mounts() nothing covers the\ndentry anymore. A lookup that finds this dentry in the dcache can\nuncover what the mounts hid.\n\nThat's a problem when unlinking files or directories that are\nmountpoints in other mount namespaces. Everybody who had the underlying\nentry covered can race the detach_mount() call until d_delete() has run.\n\nThe race window isn't all that small. It encompasses namespace_unlock()\nwith a full synchronize_rcu_expedited() grace period and the\ninode_unlock() of the entry.\n\nIn my experiments three walkers that kept trying read an overmounted\nfile in 11938 of the 16140 unlinks that removed its mountpoint from a\nbind mount of the filesystem within a minute.\n\nFun fact, d_invalidate() has the same ordering problem but gets it\nright. It unhashes the dentry first and detaches the mounts afterwards.\nLet's do the same in __detach_mounts():\n\n- A lookup that hasn't found the dentry yet misses it in the dcache and\n  waits for the directory lock that the caller holds until the name is\n  gone for good.\n\n- A lockless lookup that found it already fails the mount_lock check\n  while the dentry still counts as a mountpoint and the d_seq check once\n  it doesn't, and retries.\n\nThis fixes the lockless path. We still need to fix the reference count\nlookup in a follow-up patch.\n\nSo d_drop() the dentry. The dentry stays positive and held but can't be\nfound anymore. Then proceed with the detach and unlink.\n\nReproducer:\n\nThe reads were counted with the program below, three walkers for 60 s\nin a VM with 4 CPUs. The race window is stretched with the debug patch\npasted here. fs.detach_race_walk_us sleeps in lookup_fast() once it\nfound a mountpoint dentry and before its mounts are crossed.\nfs.detach_race_unlink_us sleeps in vfs_unlink() between detach_mounts()\nand d_delete().\n\n  // SPDX-License-Identifier: GPL-2.0\n  /*\n   * unlink_covered: unlink a file that is a mountpoint in a detached copy of\n   * its mount, against lookups that open it through that copy.\n   *\n   * A is a tmpfs with the file f1 (content SECRET_F) and the plain file\n   * MARK_A. A' is an open_tree(OPEN_TREE_CLONE) copy of A with MARK_A bound\n   * on A'/f1, held through an O_PATH fd on its root once the tree fd is\n   * closed. Walkers open f1 through that fd while the driver unlinks A/f1,\n   * where nothing is mounted on it. A walker may read MARK_A or get ENOENT.\n   * A read of SECRET_F is a hit: the name was found after its mount was\n   * gone. The lockless walks use openat2(RESOLVE_CACHED).\n   *\n   * usage: unlink_covered [-t seconds] [-w walkers]\n   */\n  #ifndef _GNU_SOURCE\n  #define _GNU_SOURCE\n  #endif\n  #include <errno.h>\n  #include <fcntl.h>\n  #include <pthread.h>\n  #include <stdatomic.h>\n  #include <stdio.h>\n  #include <stdlib.h>\n  #include <string.h>\n  #include <unistd.h>\n  #include <sys/mount.h>\n  #include <sys/stat.h>\n  #include <sys/syscall.h>\n  #include <linux/openat2.h>\n\n  #ifndef __NR_open_tree\n  #define __NR_open_tree 428\n  #endif\n  #ifndef __NR_move_mount\n  #define __NR_move_mount 429\n  #endif\n  #ifndef __NR_openat2\n  #define __NR_openat2 437\n  #endif\n  #ifndef OPEN_TREE_CLONE\n  #define OPEN_TREE_CLONE 1\n  #endif\n  #ifndef OPEN_TREE_CLOEXEC\n  #define OPEN_TREE_CLOEXEC O_CLOEXEC\n  #endif\n  #ifndef MOVE_MOUNT_F_EMPTY_PATH\n  #define MOVE_MOUNT_F_EMPTY_PATH 0x00000004\n  #endif\n\n  #define WORK \"/tmp/uc\"\n  #define ADIR WORK \"/A\"\n\n  static int duration = 60, nwalkers = 3;\n  static atomic_int stop, writer_waiting;\n  static pthread_rwlock_t cur_lock = PTHREAD_RWLOCK_INITIALIZER;\n  static int cur_fd = -1;\t\t/* the root of A', -1 wh\n---truncated---",
   "datePublished": "Oct 23, 2026, 12:19:58 PM",
-  "dateUpdated": "Oct 23, 2026, 12:19:58 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:40:41 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/b3fa3811ffffa130586c4ff8f7299b7fc69216d5",
+    "https://git.kernel.org/stable/c/97cc290c57ea04337fd33912d780367add41525c",
+    "https://git.kernel.org/stable/c/bb917ec497f6099c6cb9375596e085a5f6b52ff2",
     "https://git.kernel.org/stable/c/db90eecbde319527aa9480c039d32a0f5fe80574",
     "https://git.kernel.org/stable/c/8d71bfc9b3fc15d7103e82ea9dc5057541866e46",
     "https://git.kernel.org/stable/c/d29cd99db3db74cf3447be74d25740981789d461",
@@ -13,10 +18,11 @@
     "https://git.kernel.org/stable/c/528b383dc35d1e5caf64ddf5d35f983ae543b0d0"
   ],
   "aliases": [
-    "CVE-2026-98981"
+    "CVE-2026-98981",
+    "GHSA-9hg7-cp6v-469m"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "133d7348-f92a-38ae-add5-78ab6eeaad10",
@@ -47,6 +53,16 @@
         }
       },
       "product_version": "3.18"
+    },
+    {
+      "id": "2570d34a-50a5-3c4a-89cb-6a0ee4490a54",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8ed936b5671bfb33d89bc60bdcc7cf0470ba52fe <97cc290c57ea04337fd33912d780367add41525c"
     },
     {
       "id": "27e67dfc-f1e2-39b5-bbd1-06e8bec19349",
@@ -99,6 +115,16 @@
       "product_version": "patch: 6.12.114"
     },
     {
+      "id": "9a321bd8-dd7d-3e30-9361-a1d46075819e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8ed936b5671bfb33d89bc60bdcc7cf0470ba52fe <b3fa3811ffffa130586c4ff8f7299b7fc69216d5"
+    },
+    {
       "id": "a143032c-16b1-39a3-bf93-10bef5d957ec",
       "product": {
         "name": "Linux",
@@ -107,6 +133,26 @@
         }
       },
       "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "cdd27d47-4e7a-3a5c-a617-aae638992e09",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "d0845cb5-87a2-364b-bc1d-23c129c86007",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8ed936b5671bfb33d89bc60bdcc7cf0470ba52fe <bb917ec497f6099c6cb9375596e085a5f6b52ff2"
     },
     {
       "id": "d1f54c37-a0e4-3cb3-9745-95dae286288d",
@@ -137,6 +183,26 @@
         }
       },
       "product_version": "patch: 6.18.57"
+    },
+    {
+      "id": "e5d992f2-bee0-3b12-ac24-9eabccad1d10",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "e9bfa3ab-a601-3ff4-8a2a-154d94b9f73d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
     }
   ],
   "enisaIdVendor": [

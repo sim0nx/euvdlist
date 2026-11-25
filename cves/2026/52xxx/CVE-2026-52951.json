@@ -3,8 +3,10 @@
   "enisaUuid": "aab71044-dce1-308c-a7ee-ee81751bae7d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/xe/dma-buf: handle empty bo and UAF races\n\nThere look to be some nasty races here when triggering the\ninvalidate_mappings hook:\n\n1) We do xe_bo_alloc() followed by the attach, before the actual full bo\n   init step in xe_dma_buf_init_obj(). However the bo is visible on the\n   attachments list after the attach.  This is bad since exporter driver,\n   say amdgpu, can at any time call back into our invalidate_mappings hook,\n   with an empty/bogus bo, leading to potential bugs/crashes.\n\n2) Similar to 1) but here we get a UAF, when the invalidate_mappings\n   hook is triggered. For example, we get as far as xe_bo_init_locked()\n   but this fails in some way. But here the bo will be freed on error, but\n   we still have it attached from dma-buf pov, so if the\n   invalidate_mappings is now triggered then the bo we access is gone and\n   we trigger UAF and more bugs/crashes.\n\nTo fix this, move the attach step until after we actually have a fully\nset up buffer object. Note that the bo is not published to userspace\nuntil later, so not sure what the comment \"Don't publish the bo\nuntil we have a valid attachment\", is referring to.\n\nWe have at least two different customers reporting hitting a NULL ptr\nderef in evict_flags when importing something from amdgpu, followed by\ntriggering the evict flow. Hit rate is also pretty low, which would\nhint at some kind of race, so something like 1) or 2) might explain\nthis.\n\nv2:\n  - Shuffle the order of the ops slightly (no functional change)\n  - Improve the comment to better explain the ordering (Matt B)\n\n(cherry picked from commit af1f2ad0c59fe4e2f924c526f66e968289d77971)",
   "datePublished": "Jun 24, 2026, 4:28:34 PM",
-  "dateUpdated": "Jun 24, 2026, 4:28:34 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:47:09 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/9894731e513019df22a29e5c52f1c98890355ff1",
     "https://git.kernel.org/stable/c/20a99ea1e2fd720856d6ba497ff26b82c604751f",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/981bedbbe61364fcc3a3b87ebaf648a66cd07108"
   ],
   "aliases": [
-    "CVE-2026-52951"
+    "CVE-2026-52951",
+    "GHSA-pq4c-fm9x-v9hj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "33f51679-39ec-3e0d-a0ce-119ac6b4abdc",

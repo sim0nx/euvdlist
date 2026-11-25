@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2021-34609",
+  "enisaUuid": "fc140875-04dc-315e-aa7e-89f9940cec24",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix kernel address leakage in atomic cmpxchg's r0 aux reg\n\nThe implementation of BPF_CMPXCHG on a high level has the following parameters:\n\n  .-[old-val]                                          .-[new-val]\n  BPF_R0 = cmpxchg{32,64}(DST_REG + insn->off, BPF_R0, SRC_REG)\n                          `-[mem-loc]          `-[old-val]\n\nGiven a BPF insn can only have two registers (dst, src), the R0 is fixed and\nused as an auxilliary register for input (old value) as well as output (returning\nold value from memory location). While the verifier performs a number of safety\nchecks, it misses to reject unprivileged programs where R0 contains a pointer as\nold value.\n\nThrough brute-forcing it takes about ~16sec on my machine to leak a kernel pointer\nwith BPF_CMPXCHG. The PoC is basically probing for kernel addresses by storing the\nguessed address into the map slot as a scalar, and using the map value pointer as\nR0 while SRC_REG has a canary value to detect a matching address.\n\nFix it by checking R0 for pointers, and reject if that's the case for unprivileged\nprograms.",
+  "datePublished": "Jun 19, 2024, 2:54:05 PM",
+  "dateUpdated": "May 11, 2026, 1:57:48 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/f87a6c160ecc8c7b417d25f508d3f076fe346136",
+    "https://git.kernel.org/stable/c/a82fe085f344ef20b452cd5f481010ff96b5c4cd"
+  ],
+  "aliases": [
+    "GHSA-fp67-w4xm-4hj6",
+    "CVE-2021-47607"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "244f08c5-48da-3730-85c5-fd69929bbf1d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.12"
+    },
+    {
+      "id": "29aaedf6-aa06-3939-8a1d-701b8d540a17",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16"
+    },
+    {
+      "id": "386c7483-5f27-35a6-acbe-4a28fa414b9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ffa25502b5ab3d639829a2d1e316cff7f59a41e <a82fe085f344ef20b452cd5f481010ff96b5c4cd"
+    },
+    {
+      "id": "42c84418-a281-3e81-a464-38ae6cecad71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.11"
+    },
+    {
+      "id": "a277287a-dad1-3e58-99af-99cbed8bac3d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5ffa25502b5ab3d639829a2d1e316cff7f59a41e <f87a6c160ecc8c7b417d25f508d3f076fe346136"
+    },
+    {
+      "id": "a8ce89e0-d455-344d-8a69-341ca7b10d88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6409d34c-58ff-31d5-b315-a473f280c734",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

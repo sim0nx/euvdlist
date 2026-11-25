@@ -3,28 +3,43 @@
   "enisaUuid": "cdb36aad-f574-3615-8371-6f1efd121d53",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: reject repeated SMB2 NEGOTIATE requests\n\nUnauthenticated client can send multiple successful SMB2 NEGOTIATE\nrequests on one connection before SESSION_SETUP. While the connection is\nin KSMBD_SESS_NEED_SETUP, smb2_handle_negotiate() accepts another\nSMB3.1.1 NEGOTIATE and overwrites conn->preauth_info with a new allocation.\nOnly the final allocation is freed when the connection is released, leaking\none object for every additional successful request.\n\nA repeated SMB2 NEGOTIATE after a dialect has been selected is a protocol\nviolation. MS-SMB2 section 3.3.5.4 requires the server to disconnect\nwithout replying in this case. Set the connection exiting when rejecting\nthe request, in addition to suppressing the response.\n\nReject SMB2 NEGOTIATE unless the connection is new or is waiting for the\nSMB2 NEGOTIATE that follows an SMB1 multi-protocol negotiate. Serialize\nboth SMB1 and SMB2 negotiation paths under conn->srv_mutex, since they\nupdate connection-wide dialect and negotiation state.\n\nMove the locking contract to ksmbd_smb_negotiate_common(), where the state\nand dialect are selected, and add ksmbd_conn_new() for consistent state\naccess.",
   "datePublished": "Aug 15, 2026, 12:27:22 PM",
-  "dateUpdated": "Aug 15, 2026, 12:27:22 PM",
+  "dateUpdated": "Aug 23, 2026, 12:47:27 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/0b1390cf2b6b91723b37c0909dd123f7a5eba1a7",
+    "https://git.kernel.org/stable/c/fd6a6c43f96b40a08a22ff62f08d194a49741c8a",
+    "https://git.kernel.org/stable/c/81e21cb7bd1479bb5238e0004a7e0110452c610b",
+    "https://git.kernel.org/stable/c/7fb8dbeb3f2868ae836ca12311d89aed16fc2927",
     "https://git.kernel.org/stable/c/a60b5da05e318d9a364dbac38c347c7f24e625e7",
     "https://git.kernel.org/stable/c/7e02cb30e8a1f5fc78cb10b220b06020e36d0bbe",
     "https://git.kernel.org/stable/c/cb469993b3a61a72653770856d37af616d72d05f"
   ],
   "aliases": [
-    "CVE-2026-74494"
+    "CVE-2026-74494",
+    "GHSA-fjvw-6pq5-f9hh"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
-      "id": "00cb2e2e-11da-3912-b66b-5cdb0f7c6b7b",
+      "id": "06a24306-d6ef-38cb-b410-d5f7b3f2e301",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc6"
+      "product_version": "patch: 6.6.153"
+    },
+    {
+      "id": "0fa03e07-d83a-38b4-a0a8-1b0548b9547e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <fd6a6c43f96b40a08a22ff62f08d194a49741c8a"
     },
     {
       "id": "1104de70-b100-3b8e-815b-32477259b95c",
@@ -37,6 +52,16 @@
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <7e02cb30e8a1f5fc78cb10b220b06020e36d0bbe"
     },
     {
+      "id": "18f30fe6-31b6-3363-8e5e-b01e231a2384",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "3365dc66-ac60-3053-b37c-217a5ec74084",
       "product": {
         "name": "Linux",
@@ -45,6 +70,16 @@
         }
       },
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <a60b5da05e318d9a364dbac38c347c7f24e625e7"
+    },
+    {
+      "id": "51cf6785-8c77-31ae-b2b3-428f11a24dbc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <7fb8dbeb3f2868ae836ca12311d89aed16fc2927"
     },
     {
       "id": "5e394399-a6d0-3a46-b2d4-47eddcd71d77",
@@ -77,6 +112,36 @@
       "product_version": "patch: 6.18.44"
     },
     {
+      "id": "672836de-5feb-3f6c-9527-de0647b209b1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <81e21cb7bd1479bb5238e0004a7e0110452c610b"
+    },
+    {
+      "id": "835295d2-c861-35ad-877b-dca0386aa688",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.217"
+    },
+    {
+      "id": "9e48775f-4990-3797-a885-1c8476484f81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <0b1390cf2b6b91723b37c0909dd123f7a5eba1a7"
+    },
+    {
       "id": "b5c34f57-0601-30df-9611-d29313c340ed",
       "product": {
         "name": "Linux",
@@ -87,6 +152,16 @@
       "product_version": "5.15"
     },
     {
+      "id": "ce7ef82d-7119-3935-afe6-8c7132291c6c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.105"
+    },
+    {
       "id": "e8c13127-aff1-37f6-8b8d-db5fd310aa17",
       "product": {
         "name": "Linux",
@@ -95,6 +170,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "fc54f3d3-8567-3993-a580-9cb0cb69aa88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.184"
     }
   ],
   "enisaIdVendor": [

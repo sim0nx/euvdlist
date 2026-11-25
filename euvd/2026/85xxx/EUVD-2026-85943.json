@@ -3,7 +3,7 @@
   "enisaUuid": "f807a317-ed8f-34eb-b029-c2e35a208c48",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: f_tcm: fix deadlock in usbg_make_tpg()\n\nusbg_make_tpg() held dep_lock while calling\nconfigfs_depend_item_unlocked(), which acquires the configfs root\ninode lock when operating across subsystems. This creates a circular\nlock dependency with configfs_rmdir():\n\n  dep_lock -> configfs root inode lock -> su_mutex -> dep_lock\n\nIn usbg_make_tpg(), dep_lock only serialized the read of opts->ready,\nwhich is a monotonic flag that transitions from false to true exactly\nonce (in tcm_set_name()) and never reverts. Remove dep_lock from\nusbg_make_tpg() entirely and use READ_ONCE/WRITE_ONCE to access\nopts->ready locklessly instead.",
   "datePublished": "Sep 24, 2026, 3:10:36 PM",
-  "dateUpdated": "Sep 24, 2026, 3:10:36 PM",
+  "dateUpdated": "Oct 19, 2026, 9:07:26 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/abad5daa41cf5d0a0a9cba0397d3a0e7f11e0277",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/9dbf74f4022f80f7669d2b3c22c5deb46c1b5674"
   ],
   "aliases": [
-    "CVE-2026-93214"
+    "CVE-2026-93214",
+    "GHSA-wwm2-chq9-c6mx"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "03831f3d-faeb-3dd5-86e1-aee0bfc3a1d3",
@@ -62,14 +63,14 @@
       "product_version": "patch: 6.18.50"
     },
     {
-      "id": "77cdecc5-b6ac-312b-9175-665ec5d6941c",
+      "id": "4cd5f434-1239-3fa7-bb3a-3ab5a6738ccb",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "78d64695-0b81-387c-a10b-45e47d43963c",

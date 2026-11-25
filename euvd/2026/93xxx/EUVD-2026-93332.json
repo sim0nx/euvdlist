@@ -3,7 +3,7 @@
   "enisaUuid": "5572ed02-947e-32ea-afe7-b83eb020a00a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nIB/IPoIB: Avoid restoring OPER_UP after multicast flush\n\nipoib_ib_dev_flush_light() temporarily clears IPOIB_FLAG_OPER_UP to\nprevent multicast joins while ipoib_mcast_dev_flush() is running, and\nrestores the flag afterwards if it was previously set.\n\nThis restore races with ipoib_ib_dev_down(). If the interface is brought\ndown while the flush is in progress, ipoib_ib_dev_down() clears\nIPOIB_FLAG_OPER_UP, but the flush path may set it again after the device\nhas already gone down.\n\nSince commit 894021a75291 (\"IB/ipoib: Make the carrier_on_task race\naware\"), ipoib_mcast_carrier_on_task() relies on IPOIB_FLAG_OPER_UP\nbeing cleared to terminate its rtnl_trylock() retry loop. If the flag is\nleft set after shutdown, the workqueue retries forever, causing teardown\nto deadlock when ipoib_ndo_uninit() waits in destroy_workqueue() while\nholding RTNL.\n\nInstead of overloading IPOIB_FLAG_OPER_UP to block multicast joins\nduring a light flush, introduce a dedicated IPOIB_FLAG_MCAST_FLUSH flag.\nUse it together with IPOIB_FLAG_OPER_UP to determine whether multicast\njoins are allowed, avoiding the race with device shutdown.",
   "datePublished": "Oct 6, 2026, 8:46:36 AM",
-  "dateUpdated": "Oct 6, 2026, 8:46:36 AM",
+  "dateUpdated": "Oct 19, 2026, 9:17:58 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/f973769fb7cb33ba0d4a64b7dcfee0cabaead938",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/9a141d3dc869d18b2eab35e999f4790a9b84e40f"
   ],
   "aliases": [
+    "GHSA-8j4r-887v-cjjx",
     "CVE-2026-98347"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "06fe45d4-ed43-3292-8f65-0adf2c808879",
@@ -192,6 +193,16 @@
       "product_version": "344bacca8cd811809fc33a249f2738ab757d327f <5ad925d45f28464a5e043c9620880bb6a030da89"
     },
     {
+      "id": "809e91ec-94ae-3025-9aed-9a019f06d34e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "973640ef-e1a5-3ee3-bfcb-bc3dd8300d86",
       "product": {
         "name": "Linux",
@@ -220,16 +231,6 @@
         }
       },
       "product_version": "344bacca8cd811809fc33a249f2738ab757d327f <326f7d34bd7e64de535566b65c0533b640df5a81"
-    },
-    {
-      "id": "b4582227-28b5-38cf-a648-59aa05892334",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "be463d6d-d4ec-3aae-89a2-16f0d4a1b5d2",

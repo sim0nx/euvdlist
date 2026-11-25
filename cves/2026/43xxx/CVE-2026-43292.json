@@ -3,7 +3,7 @@
   "enisaUuid": "5e4c9942-cc34-36f9-8957-b5a7ccc7261c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/vmalloc: prevent RCU stalls in kasan_release_vmalloc_node\n\nWhen CONFIG_PAGE_OWNER is enabled, freeing KASAN shadow pages during\nvmalloc cleanup triggers expensive stack unwinding that acquires RCU read\nlocks.  Processing a large purge_list without rescheduling can cause the\ntask to hold CPU for extended periods (10+ seconds), leading to RCU stalls\nand potential OOM conditions.\n\nThe issue manifests in purge_vmap_node() -> kasan_release_vmalloc_node()\nwhere iterating through hundreds or thousands of vmap_area entries and\nfreeing their associated shadow pages causes:\n\n  rcu: INFO: rcu_preempt detected stalls on CPUs/tasks:\n  rcu: Tasks blocked on level-0 rcu_node (CPUs 0-1): P6229/1:b..l\n  ...\n  task:kworker/0:17 state:R running task stack:28840 pid:6229\n  ...\n  kasan_release_vmalloc_node+0x1ba/0xad0 mm/vmalloc.c:2299\n  purge_vmap_node+0x1ba/0xad0 mm/vmalloc.c:2299\n\nEach call to kasan_release_vmalloc() can free many pages, and with\npage_owner tracking, each free triggers save_stack() which performs stack\nunwinding under RCU read lock.  Without yielding, this creates an\nunbounded RCU critical section.\n\nAdd periodic cond_resched() calls within the loop to allow:\n- RCU grace periods to complete\n- Other tasks to run\n- Scheduler to preempt when needed\n\nThe fix uses need_resched() for immediate response under load, with a\nbatch count of 32 as a guaranteed upper bound to prevent worst-case stalls\neven under light load.",
   "datePublished": "May 8, 2026, 1:11:16 PM",
-  "dateUpdated": "May 8, 2026, 1:11:16 PM",
+  "dateUpdated": "Nov 6, 2026, 3:42:47 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2efa9c02c9b4c0d6866aa445f11056809b25ca28",
@@ -12,64 +12,109 @@
     "https://git.kernel.org/stable/c/5747435e0fd474c24530ef1a6822f47e7d264b27"
   ],
   "aliases": [
+    "GHSA-w6qp-j494-g32c",
     "CVE-2026-43292"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
+    {
+      "id": "007ac96d-5c1f-3d08-992a-a8f78a085e77",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "3061672d-aa17-309f-97b1-31cdf3569f13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "282631cb2447318e2a55b41a665dbe8571c46d70 <b351fbe71091f7c8676c8ba597653d08b6719447"
+    },
     {
       "id": "80677264-bd32-399b-ac6a-007d224567e0",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 7.0"
     },
     {
-      "id": "8db57196-baf8-38d7-861c-9ab6df415375",
+      "id": "8d30ed97-2951-334b-a771-7bce1c944094",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2efa9c02c9b4c0d6866aa445f11056809b25ca28"
+      "product_version": "6.9"
     },
     {
-      "id": "b9485178-7376-369c-bd32-b65dd9d36e64",
+      "id": "934c40eb-984b-39d7-bd13-5ab3535c3daf",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <1afe45f89d54b7183768ebbbbf14238ec187ab5c"
+      "product_version": "282631cb2447318e2a55b41a665dbe8571c46d70 <2efa9c02c9b4c0d6866aa445f11056809b25ca28"
+    },
+    {
+      "id": "a2da83f1-0861-3d6e-8d73-56d33943c5ca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "282631cb2447318e2a55b41a665dbe8571c46d70 <1afe45f89d54b7183768ebbbbf14238ec187ab5c"
     },
     {
       "id": "c9fd279e-f241-3f76-bd5b-a67296a5026f",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.12.75"
     },
     {
       "id": "cd71934b-1737-3bbd-b7f2-7b2203dcdbec",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.19.6"
     },
     {
-      "id": "e06f16d9-6d0c-3b03-8255-cce7cbe4a209",
+      "id": "d9641953-a6ad-3d49-bd03-675ca5bab680",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <5747435e0fd474c24530ef1a6822f47e7d264b27"
-    },
-    {
-      "id": "fbb4605a-70d5-38ab-805c-fe5518cb21c1",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b351fbe71091f7c8676c8ba597653d08b6719447"
+      "product_version": "282631cb2447318e2a55b41a665dbe8571c46d70 <5747435e0fd474c24530ef1a6822f47e7d264b27"
     },
     {
       "id": "fc5a0d8d-f619-397f-9fa5-916fbaaab9d2",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.18.16"
     }

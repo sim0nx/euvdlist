@@ -3,9 +3,14 @@
   "enisaUuid": "2454619a-bdf2-30c7-93c4-f63c635a4985",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: msi2500: Return queued buffers on start_streaming() failure\n\nThe vb2 framework hands buffers to the driver via buf_queue() before\ncalling start_streaming().  If start_streaming() returns an error\nwithout first returning those buffers via vb2_buffer_done(),\nvb2_start_streaming() fires WARN_ON(owned_by_drv_count) and the queued\nbuffers leak.\n\nmsi2500_start_streaming() had five error paths that all hit this trap\nand were further tangled by ret-overwriting between calls:\n\n  - -ENODEV when the USB device was already disconnected\n  - -ERESTARTSYS when mutex_lock_interruptible() was interrupted\n  - msi2500_set_usb_adc() failure: ret was silently overwritten by\n    the next call (msi2500_isoc_init), so the error was lost entirely\n  - msi2500_isoc_init() failure: cleanup_queued_bufs was called, but\n    the function then fell through to msi2500_ctrl_msg() and again\n    masked the original error by overwriting ret\n  - msi2500_ctrl_msg(CMD_START_STREAMING) failure: no cleanup at all,\n    leaving isoc URBs submitted with no way for the driver to consume\n    them\n\nConsolidate the error paths into a small goto chain.  Every failure\nnow stops the function, drains the queued-buffer list, and returns\nthe real error code.  The ctrl_msg failure path also rolls back the\npreceding msi2500_isoc_init() via msi2500_isoc_cleanup() before\nunlocking and draining.\n\nThe cleanup helper takes a vb2_buffer_state argument so that the\nstart_streaming error paths can pass VB2_BUF_STATE_QUEUED (as\nexpected by userspace on start_streaming failure) while stop_streaming\nkeeps its existing VB2_BUF_STATE_ERROR semantics.\n\nThis mirrors the uvcvideo fix in commit 4cf3b6fd54eb (\"media: uvcvideo:\nReturn queued buffers on start_streaming() failure\").",
   "datePublished": "Aug 10, 2026, 12:00:42 PM",
-  "dateUpdated": "Aug 10, 2026, 12:00:42 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 19, 2026, 4:31:51 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/c74b680704baecea4620c0774de473069e0bc4e8",
+    "https://git.kernel.org/stable/c/2d10eedb786a13f91d76e11320fabb0bf712519f",
+    "https://git.kernel.org/stable/c/2de14ddb4fea04ca616403a6ba81c5e8099e9b9e",
     "https://git.kernel.org/stable/c/1d58229b330b7f67fbfa07e0f2a8a51fbeafaa9a",
     "https://git.kernel.org/stable/c/bab9d5a67d4db96ae8c187b92b37979911302a10",
     "https://git.kernel.org/stable/c/264b5380c4f8aa92dbc2983ecd2b627f1d5e0061",
@@ -13,10 +18,11 @@
     "https://git.kernel.org/stable/c/7201c17786a498497bca57752883b90914d405ac"
   ],
   "aliases": [
-    "CVE-2026-68222"
+    "CVE-2026-68222",
+    "GHSA-c87f-75wq-m23q"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "36d8c9ec-9f7d-3cae-9148-2a6acee61601",
@@ -37,6 +43,16 @@
         }
       },
       "product_version": "3.12"
+    },
+    {
+      "id": "507d5ed2-1050-30bd-beb6-7cea40674311",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "5d00496e-6b67-3055-8fa1-b50dbfb9fac4",
@@ -99,6 +115,16 @@
       "product_version": "patch: 6.18.42"
     },
     {
+      "id": "a1038cce-4d62-35ca-9218-48ad198b8447",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "977e444f59ad16eedf66acae4f357011c74da291 <2d10eedb786a13f91d76e11320fabb0bf712519f"
+    },
+    {
       "id": "a27e617e-a6f5-3809-907d-6515c6a612f7",
       "product": {
         "name": "Linux",
@@ -109,14 +135,34 @@
       "product_version": "977e444f59ad16eedf66acae4f357011c74da291 <264b5380c4f8aa92dbc2983ecd2b627f1d5e0061"
     },
     {
-      "id": "b19e356f-927a-3fec-85ce-dfa6badbb133",
+      "id": "a48741d5-f1c3-3624-89c3-39340b8ef8f1",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "977e444f59ad16eedf66acae4f357011c74da291 <c74b680704baecea4620c0774de473069e0bc4e8"
+    },
+    {
+      "id": "a68583d3-8495-3ab9-a365-f6d2341d9176",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "977e444f59ad16eedf66acae4f357011c74da291 <2de14ddb4fea04ca616403a6ba81c5e8099e9b9e"
+    },
+    {
+      "id": "c0f4798f-7da9-34b0-80e3-4985d5e18497",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "cdaba4c6-c485-31c5-a226-3015607b9fcb",
@@ -129,6 +175,16 @@
       "product_version": "977e444f59ad16eedf66acae4f357011c74da291 <7201c17786a498497bca57752883b90914d405ac"
     },
     {
+      "id": "d58c82dc-38cc-3053-9893-02c1ad75d3df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
       "id": "ec38d8e5-eba2-3df5-99e7-65e7fa7a6629",
       "product": {
         "name": "Linux",
@@ -137,6 +193,16 @@
         }
       },
       "product_version": "977e444f59ad16eedf66acae4f357011c74da291 <1d58229b330b7f67fbfa07e0f2a8a51fbeafaa9a"
+    },
+    {
+      "id": "ee34cef5-4f02-36ab-95db-0b5336bd5dde",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
     }
   ],
   "enisaIdVendor": [

@@ -3,28 +3,21 @@
   "enisaUuid": "c1578321-62e0-3f5b-911b-de5c2d06746c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: mctp: hold a reference to the route device in mctp_route_lookup()\n\nmctp_route_lookup() uses rt->dev without holding a reference on it.\nmctp_route_lookup_single() returns the route under RCU only, so the\nroute's device can be torn down concurrently: mctp_dev_put() drops the\nlast reference and synchronously kfree()s mdev->addrs.  mctp_dev_saddr()\nthen reads rt->dev->addrs[0], giving a use-after-free reachable by an\nunprivileged local AF_MCTP user on the receive/forwarding path (no\nCAP_NET_RAW required):\n\n  BUG: KASAN: slab-use-after-free in mctp_route_lookup\n  Read of size 1 at addr ... by task mctp_uaf/...\n   mctp_route_lookup\n   mctp_pkttype_receive\n  Freed by task ...:\n   kfree\n   mctp_dev_put\n   mctp_dev_notify\n\nIn the same window mctp_dst_from_route() -> mctp_dev_hold() also\nincrements a refcount that has already reached zero\n(\"refcount_t: addition on 0 ... mctp_dev_hold\").\n\nThis reintroduces the use-after-free class of CVE-2023-3439: the source\naddress lookup was moved ahead of the point where the destination takes\nits device reference.\n\nTake a reference with refcount_inc_not_zero() before touching rt->dev,\nskip a device that is already dead, and drop the reference once the\ndestination has taken its own.",
   "datePublished": "Sep 11, 2026, 7:42:50 PM",
-  "dateUpdated": "Sep 11, 2026, 7:42:50 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:46:19 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/cc561f8af25586300c2f9d285babb163b866b293",
     "https://git.kernel.org/stable/c/408da1df18116c971c3392e21e50586688cd3fbf"
   ],
   "aliases": [
+    "GHSA-cvpj-275p-crg4",
     "CVE-2026-80995"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
-    {
-      "id": "419c4ce2-c0ab-353c-9841-82868cd3049c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
     {
       "id": "6f676e41-f633-3514-8ddb-075b38b16fdb",
       "product": {
@@ -74,6 +67,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "ecb7b8c9-d1ad-3cc0-ba71-44b16e2a4eea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

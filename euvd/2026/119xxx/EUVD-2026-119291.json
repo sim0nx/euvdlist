@@ -3,18 +3,24 @@
   "enisaUuid": "be840bcd-8ed4-3851-bcd8-e71aa1db7bcc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: line6: Clear prev_fbuf on capture buffer release\n\nA KASAN slab-use-after-free read was reported in submit_audio_out_urb()\nwhen generating an impulse test signal:\n\n  BUG: KASAN: slab-use-after-free in create_impulse_test_signal sound/usb/line6/playback.c:76 [inline]\n  BUG: KASAN: slab-use-after-free in submit_audio_out_urb+0x1848/0x1b20 sound/usb/line6/playback.c:249\n  Read of size 2 at addr ffff888008d74870 by task syz.2.3214/7785\n\n  Allocated by task 11:\n   kmem_cache_alloc_noprof+0x2f0/0x390 mm/slub.c:4144\n   line6_buffer_acquire+0x1a1/0x220 sound/usb/line6/pcm.c:158\n   line6_pcm_acquire+0xb6/0x230 sound/usb/line6/pcm.c:329\n   line6_startup_work+0x3c/0x50 sound/usb/line6/driver.c:728\n\n  Freed by task 7785:\n   kfree+0xf8/0x390 mm/slub.c:6566\n   line6_buffer_release sound/usb/line6/pcm.c:176 [inline]\n   line6_buffer_release+0xa5/0xf0 sound/usb/line6/pcm.c:170\n   __line6_pcm_release sound/usb/line6/pcm.c:305 [inline]\n   line6_pcm_release+0x5a/0x80 sound/usb/line6/pcm.c:313\n   snd_toneport_monitor_put+0x11b/0x190 sound/usb/line6/toneport.c:183\n\nline6pcm->prev_fbuf points into the capture PCM stream buffer\n(line6pcm->in.buffer), which is updated during audio_in_callback() to\nfeed rate synchronization, software monitoring, and impulse test signal\ngeneration on playback side.\n\nWhen all capture streams are closed, line6_buffer_release() frees\npstr->buffer with kfree().  However, it does not clear line6pcm->prev_fbuf.\nIf playback is subsequently started (e.g. via impulse test signal\nvolume control snd_line6_impulse_volume_put()), submit_audio_out_urb()\ndereferences the stale pointer line6pcm->prev_fbuf under in.lock,\nresulting in a slab-use-after-free read.\n\nClear prev_fbuf and prev_fsize in line6_buffer_release() when releasing\nthe capture stream buffer under in.lock, ensuring that no stale buffer\npointer can be accessed by submit_audio_out_urb().",
   "datePublished": "Nov 7, 2026, 2:08:45 PM",
-  "dateUpdated": "Nov 7, 2026, 2:08:45 PM",
+  "dateUpdated": "Nov 23, 2026, 8:00:45 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/4bdaa0a9269c09dbed21e3e66bbe566d4f354512",
+    "https://git.kernel.org/stable/c/72cb60d5b535a6a8a2693e0e446fae1cfc16ce50",
+    "https://git.kernel.org/stable/c/20a1465ee42601f299781c0d24b6d1b30feb74d3",
+    "https://git.kernel.org/stable/c/beb5b8043a42dcac47421be48ca47597389bd2e4",
+    "https://git.kernel.org/stable/c/d063975ed22cdc2cb609a9828e5f658448193606",
     "https://git.kernel.org/stable/c/862d9268f40a6e10cef24eb226e738fb69ce8aa7",
     "https://git.kernel.org/stable/c/22c82f33ff0b68d37041adf1dea5533a5863cd31",
     "https://git.kernel.org/stable/c/aa118c8f61d59387961d58ffae831c5259a9f222"
   ],
   "aliases": [
+    "GHSA-m889-vhr2-v9vx",
     "CVE-2026-99271"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "0337b38c-9d0d-3514-aee2-4cb940eaa031",
@@ -25,6 +31,26 @@
         }
       },
       "product_version": "63e20df1e5b2ef8d871ecbdb6c038d554ed1ca74 <862d9268f40a6e10cef24eb226e738fb69ce8aa7"
+    },
+    {
+      "id": "095f2234-0e53-36bd-a27f-ddcb6837ec02",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
+    },
+    {
+      "id": "12f48910-0292-3125-afba-050b2c246e02",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63e20df1e5b2ef8d871ecbdb6c038d554ed1ca74 <4bdaa0a9269c09dbed21e3e66bbe566d4f354512"
     },
     {
       "id": "173f0106-95b6-3567-b8b4-9ace9028e58a",
@@ -47,6 +73,36 @@
       "product_version": "patch: 7.4-rc1"
     },
     {
+      "id": "25772c16-e2a4-340b-a4af-0d5a70d479f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "29b3496b-e8eb-33e5-9739-8f65f22f7636",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "2cef3f75-ef3f-3cb7-a581-6c50baace615",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63e20df1e5b2ef8d871ecbdb6c038d554ed1ca74 <beb5b8043a42dcac47421be48ca47597389bd2e4"
+    },
+    {
       "id": "3f1d1cd1-b641-3a4f-b554-ecc8e078cd41",
       "product": {
         "name": "Linux",
@@ -55,6 +111,16 @@
         }
       },
       "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "4348065f-b368-3415-9d75-b755e53b15a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63e20df1e5b2ef8d871ecbdb6c038d554ed1ca74 <d063975ed22cdc2cb609a9828e5f658448193606"
     },
     {
       "id": "46a8fa02-6f5d-3d13-94c2-d613f00faf96",
@@ -67,6 +133,16 @@
       "product_version": "4.0"
     },
     {
+      "id": "6441d0f1-8a0e-3c2d-829d-6bd723a61ebc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "91bb7014-dde7-3725-97b3-5cf474cc5941",
       "product": {
         "name": "Linux",
@@ -75,6 +151,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "96b684a3-dbba-3167-86a1-60a16128848c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63e20df1e5b2ef8d871ecbdb6c038d554ed1ca74 <72cb60d5b535a6a8a2693e0e446fae1cfc16ce50"
+    },
+    {
+      "id": "b0b805bc-8846-30b7-a6ac-d849d07dd0cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63e20df1e5b2ef8d871ecbdb6c038d554ed1ca74 <20a1465ee42601f299781c0d24b6d1b30feb74d3"
     },
     {
       "id": "b3123e20-f70c-3dde-846b-e70be5b7dc59",
@@ -95,6 +191,16 @@
         }
       },
       "product_version": "63e20df1e5b2ef8d871ecbdb6c038d554ed1ca74 <aa118c8f61d59387961d58ffae831c5259a9f222"
+    },
+    {
+      "id": "f23a9e3c-685e-3fce-9f99-a35dcb455b85",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
     }
   ],
   "enisaIdVendor": [

@@ -3,8 +3,10 @@
   "enisaUuid": "af8a97ab-f331-3f39-b819-90c3a68e0e43",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnvme-tcp: check the data direction of a C2HData PDU\n\nnvme_tcp_handle_c2h_data() finds the request by command id and checks\nthat it has a payload, but it does not check that the command asked for\ndata to be read.  A controller that answers a write command with C2HData\ntherefore reaches nvme_tcp_recv_data(), where _copy_to_iter() hits\nWARN_ON_ONCE(i->data_source) and returns 0.  The receive path turns that\ninto -EFAULT and resets the controller.\n\nNo data is copied, so this is not memory corruption.  What a controller\ngets is a kernel warning it can raise at will, which is fatal on a host\nbooted with panic_on_warn.\n\nThe send path already knows the direction - it consults rq_data_dir()\nwhen it builds a command - and nvme_tcp_handle_r2t() checks the length\nand the offset of the request it names.  The C2HData path does not check\nthe direction at all.\n\nReject a C2HData PDU whose command is not a read.  Rejecting it fails\nthe command and resets the controller, as the neighbouring check in this\nfunction does; what goes away is the warning.\n\n  [    6.885580] ------------[ cut here ]------------\n  [    6.886457] WARNING: lib/iov_iter.c:193 at _copy_to_iter+0x289/0x1330, CPU#0: kworker/0:1H/71\n  [    6.888137] CPU: 0 UID: 0 PID: 71 Comm: kworker/0:1H Not tainted 7.2.0-rc5-NVMETCP-gf5098b6bae76 #1 PREEMPT(lazy)\n  [    6.891165] Workqueue: nvme_tcp_wq nvme_tcp_io_work\n  [    6.891875] RIP: 0010:_copy_to_iter+0x289/0x1330\n  [    6.903739] Call Trace:\n  [    6.904085]  <TASK>\n  [    6.909254]  __skb_datagram_iter+0x433/0x820\n  [    6.911026]  skb_copy_datagram_iter+0x37/0x120\n  [    6.911622]  nvme_tcp_recv_skb+0xa07/0x4320\n  [    6.913378]  __tcp_read_sock+0x1ab/0x810\n  [    6.915788]  nvme_tcp_try_recv+0x152/0x1e0\n  [    6.918222]  nvme_tcp_io_work+0x1e4/0x6c0\n  [    6.926906]  </TASK>\n  [    6.927226] ---[ end trace 0000000000000000 ]---\n  [    6.927878] nvme nvme0: queue 1 failed to copy request 0x71 data\n  [    6.928709] nvme nvme0: receive failed:  -14",
   "datePublished": "Sep 16, 2026, 10:32:52 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:52 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:55:48 AM",
+  "baseScore": 8.2,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/df74950ba6008655d4a977d17df7faf4b6e52b74",
     "https://git.kernel.org/stable/c/980d990f3c0560d7dfbfbf14699651fdf02f26ee",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/f83af377c148f6ad94b41c0e8313f12adf45e1c1"
   ],
   "aliases": [
+    "GHSA-9393-xpw8-3983",
     "CVE-2026-89973"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.62,
   "enisaIdProduct": [
     {
       "id": "2bfda9db-fae0-365f-9789-40be9862d549",
@@ -40,6 +43,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "2e564bfe-4851-308f-a219-6bbc7fc96956",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "30e02948-acf1-3db7-9779-2ea67fd75e0d",
@@ -90,16 +103,6 @@
         }
       },
       "product_version": "3f2304f8c6d6ed97849057bd16fee99e434ca796 <a0c389b8a495bda1eb719d2503853c924b7a8355"
-    },
-    {
-      "id": "5531163d-e376-32a0-be45-6d4ee25e5c92",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc2"
     },
     {
       "id": "559521f2-60e1-3b69-a053-cf2a8a270aa3",

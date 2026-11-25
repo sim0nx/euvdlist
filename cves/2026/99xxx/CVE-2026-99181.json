@@ -3,18 +3,24 @@
   "enisaUuid": "23ea683c-bc51-3b08-becc-134c98f1aca3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nautofs: ignore notification errors from a replaced pipe\n\nautofs_notify_daemon() takes a reference to the current notification\npipe under wq_mutex, then drops the mutex before writing the request. The\nwrite can block while the daemon enters catatonic mode and installs a\nreplacement pipe.\n\nIf the old pipe's reader is then closed, the delayed write returns -EPIPE\nand the generic error path enters catatonic mode again. That transition\nacts on the current superblock state, closes the replacement pipe, and\nreleases the new daemon generation's wait queues.\n\nOnly enter catatonic mode when the pipe which failed is still the current\npipe. Factor the already-locked transition so the identity check and state\nchange are atomic with respect to another replacement.\n\nThis was reproduced on v7.3-rc5-337-gff47652a4b66c in a local QEMU guest.\nAn unprivileged UID 65534 lookup filled the old packet pipe before a\nnormal CATATONIC/SETPIPEFD restart. On the unmodified kernel, the new pipe\nreceived HUP and both a pending victim lookup and a later lookup failed\nwith ENOENT in two out of two fresh-mount runs.\n\nWith this change, the new pipe remained active, received an intact\n304-byte request, and both victim lookups completed in two out of two\nruns. Normal lookup and restart-without-a-blocked-writer controls passed.\nNo KASAN, oops, refcount, or lock diagnostic was observed. A source\nreproducer and complete local logs are available privately on request.\n\nThe demonstrated impact is limited to denial of a shared autofs service\nduring a legitimate daemon restart. No memory corruption, information leak,\nprivilege escalation, or code execution primitive was observed.",
   "datePublished": "Oct 28, 2026, 10:35:34 AM",
-  "dateUpdated": "Oct 28, 2026, 10:35:34 AM",
+  "dateUpdated": "Oct 30, 2026, 12:42:44 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/95ba5de229c1875e836f10646c4e6c454d560060",
+    "https://git.kernel.org/stable/c/d3477ebdce74dc3bae404048258e70d7046c208a",
+    "https://git.kernel.org/stable/c/6d2b8ad36e09e07993addd4ce92b578d3b13c8f8",
+    "https://git.kernel.org/stable/c/35c2c4f3cf1403b058237c44000199a6c9a59273",
+    "https://git.kernel.org/stable/c/8c8386ffc582155451f074f25759f665e626a850",
     "https://git.kernel.org/stable/c/1a177064f501ed4b67873a43aae5d5bdb18b3704",
     "https://git.kernel.org/stable/c/fb296391f685d82dbb93621a970fb234cea45280",
     "https://git.kernel.org/stable/c/65676cd4203c0e41a94caf54080a7f0a95434bda"
   ],
   "aliases": [
+    "GHSA-q48x-cfgc-jf7c",
     "CVE-2026-99181"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.24,
   "enisaIdProduct": [
     {
       "id": "07994a20-a35c-3f5f-956a-f335dcf266fc",
@@ -47,6 +53,16 @@
       "product_version": "8d7b48e0bc5fa01a818eac713d4cb0763090cd0e <1a177064f501ed4b67873a43aae5d5bdb18b3704"
     },
     {
+      "id": "207f3675-0407-3a70-9129-a8c52b26e356",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8d7b48e0bc5fa01a818eac713d4cb0763090cd0e <8c8386ffc582155451f074f25759f665e626a850"
+    },
+    {
       "id": "2b4322f9-1ec9-3d82-b0f5-7c4dc6b33ebf",
       "product": {
         "name": "Linux",
@@ -57,6 +73,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "2db4e86c-a8f5-3f87-977f-c1a69460a523",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8d7b48e0bc5fa01a818eac713d4cb0763090cd0e <d3477ebdce74dc3bae404048258e70d7046c208a"
+    },
+    {
+      "id": "3ef88a71-30a9-33a2-9486-24fafc0f6428",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "4c2aa18a-f7bd-32fa-9c82-f4a582aa62e9",
       "product": {
         "name": "Linux",
@@ -65,6 +101,66 @@
         }
       },
       "product_version": "8d7b48e0bc5fa01a818eac713d4cb0763090cd0e <65676cd4203c0e41a94caf54080a7f0a95434bda"
+    },
+    {
+      "id": "5b7902a5-5664-30a6-abab-1f5336fb5a60",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
+    },
+    {
+      "id": "695630da-b53b-30ec-bb0e-2be5715de3ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8d7b48e0bc5fa01a818eac713d4cb0763090cd0e <95ba5de229c1875e836f10646c4e6c454d560060"
+    },
+    {
+      "id": "6e8703a0-b370-3708-a205-732646a18c9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "82a914e8-289b-3b69-9da1-962b213795fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8d7b48e0bc5fa01a818eac713d4cb0763090cd0e <35c2c4f3cf1403b058237c44000199a6c9a59273"
+    },
+    {
+      "id": "a2958ab2-2de4-34f5-8c41-fec5e8c96f46",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "d2d28faa-bc29-387e-809f-6c20c8d5d760",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8d7b48e0bc5fa01a818eac713d4cb0763090cd0e <6d2b8ad36e09e07993addd4ce92b578d3b13c8f8"
     },
     {
       "id": "d3834bdd-bdca-3a54-ab37-664ea8ec924e",
@@ -85,6 +181,16 @@
         }
       },
       "product_version": "2.6.28"
+    },
+    {
+      "id": "ece46cd4-d219-369f-8e6b-159d6f97bc08",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.161"
     },
     {
       "id": "f9e31d5e-816c-38b6-8151-8857e397c2da",

@@ -3,9 +3,10 @@
   "enisaUuid": "4d9c6674-a7db-3c1e-9fb4-1c522ed50ba6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntest_kprobes: clear kprobes between test runs\n\nRunning the kprobes sanity tests twice makes all tests fail and\neventually crashes the kernel.\n\n[root@martin-riscv-1 ~]# echo 1 > /sys/kernel/debug/kunit/kprobes_test/run\n...\n   # Totals: pass:5 fail:0 skip:0 total:5\n   ok 1 kprobes_test\n[root@martin-riscv-1 ~]# echo 1 > /sys/kernel/debug/kunit/kprobes_test/run\n...\n  # test_kprobe: EXPECTATION FAILED at lib/tests/test_kprobes.c:64\n  Expected 0 == register_kprobe(&kp), but\n      register_kprobe(&kp) == -22 (0xffffffffffffffea)\n...\n  Unable to handle kernel paging request ...\n\nThe testsuite defines several kprobes and kretprobes as static variables\nthat are preserved across test runs.\n\nAfter register_kprobe and unregister_kprobe, a kprobe contains some\nleftover data that must be cleared before the kprobe can be registered\nagain. The tests are setting symbol_name to define the probe location.\nAddress and flags must be cleared.\n\nThe existing code clears some of the probes between subsequent tests, but\nnot between two test runs. The leftover data from a previous test run\nmakes the registrations fail in the next run.\n\nMove the cleanups for all kprobes into kprobes_test_init, this function\nis called before each single test (including the first test of a test\nrun).",
   "datePublished": "Jul 19, 2026, 3:40:49 PM",
-  "dateUpdated": "Jul 19, 2026, 3:40:49 PM",
+  "dateUpdated": "Oct 30, 2026, 12:27:39 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/29ec976006dfab171a7e007976e38af56ce286e4",
     "https://git.kernel.org/stable/c/08d355936fcf70c81c94f9fe7310450b65c53399",
     "https://git.kernel.org/stable/c/accc0004c501a9918313142282b094d408af06fb",
     "https://git.kernel.org/stable/c/1c24cf1fd67f6702c719ab73499392cb7af956ae",
@@ -13,10 +14,11 @@
     "https://git.kernel.org/stable/c/ef5581bb30efb939cc2bf093475c6cc85258e5cd"
   ],
   "aliases": [
+    "GHSA-9292-g249-69fp",
     "CVE-2026-64163"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "04a08093-a459-3696-b389-6518d7e19c03",
@@ -47,6 +49,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "51285dad-62f4-3956-ba4f-e842b53b656e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e44e81c5b90f698025eadceb7eef8661eda117d5 <29ec976006dfab171a7e007976e38af56ce286e4"
+    },
+    {
+      "id": "6a509d8e-5f1d-3861-a1f8-1e9d08ce8429",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "81ebe47f-b6ae-3943-9ea7-4f9f504a1f49",

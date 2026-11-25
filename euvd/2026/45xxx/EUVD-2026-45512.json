@@ -3,9 +3,12 @@
   "enisaUuid": "638973a3-c604-3562-92c9-0602bf958fa8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: fix out-of-bounds read in smb_check_perm_dacl()\n\nThe permission-check ACE walk in smb_check_perm_dacl() validates the ACE\nheader size and caps sid.num_subauth at SID_MAX_SUB_AUTHORITIES, but it\nnever checks that ace->size is actually large enough to contain\nnum_subauth sub-authorities before compare_sids() dereferences them.\n\nCIFS_SID_BASE_SIZE covers the SID header up to but excluding the\nsub_auth[] array, and offsetof(struct smb_ace, sid) is the ACE header,\nso the existing guards only guarantee the 8-byte SID base, i.e. zero\nsub-authorities. compare_sids() then reads ace->sid.sub_auth[i] for\ni < min(local_sid->num_subauth, ace->sid.num_subauth). The local\ncomparison SIDs (sid_everyone, sid_unix_NFS_mode, and the id_to_sid()\nresult) always have at least one sub-authority, and an attacker controls\nthe ACE revision and authority bytes (which lie within the in-bounds SID\nbase), so they can match one of those SIDs and force the sub_auth read.\n\nA crafted ACE with size == 16 and num_subauth >= 1 placed at the tail of\nthe security descriptor therefore causes a heap out-of-bounds read of up\nto SID_MAX_SUB_AUTHORITIES * sizeof(__le32) bytes past the pntsd\nallocation. The security descriptor is loaded by ksmbd_vfs_get_sd_xattr()\ninto a buffer sized exactly to the on-disk data (kzalloc(sd_size) in\nndr_decode_v4_ntacl()), so the read lands past the allocation. The\nmalformed descriptor can be stored verbatim via SMB2_SET_INFO (the DACL\nis not normalised before being written to the security.NTACL xattr) and\nthe read fires on a subsequent SMB2_CREATE access check, making this\nreachable by an authenticated client on a share that uses ACL xattrs.\n\nAdd the missing num_subauth-versus-ace_size check, mirroring the\nidentical guards already present in the sibling parsers parse_dacl() and\nsmb_inherit_dacl().",
   "datePublished": "Jul 19, 2026, 12:01:54 PM",
-  "dateUpdated": "Jul 19, 2026, 12:01:54 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:50:41 AM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/c7488c85fd822959e9b5c22fbd9e7c8a21caf5e0",
     "https://git.kernel.org/stable/c/988c93d3bba066d8669143e6ec30bb2be9608d53",
     "https://git.kernel.org/stable/c/36599894fa8536fefdf1e296c0af71b8b7226859",
     "https://git.kernel.org/stable/c/d5c81a095c86fe507c032d08f3a8cfc518444927",
@@ -18,7 +21,7 @@
     "CVE-2026-53390"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.47,
   "enisaIdProduct": [
     {
       "id": "004b7aeb-d41d-32bc-af22-a56dcb8c3b4b",
@@ -29,6 +32,16 @@
         }
       },
       "product_version": "6.12.84 <6.12.95"
+    },
+    {
+      "id": "006bda02-1693-3b6e-a6a8-b65ae6f45ef8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.210 <5.15.212"
     },
     {
       "id": "07f34486-53e0-3f1a-94f7-96d96ba68705",
@@ -69,6 +82,16 @@
         }
       },
       "product_version": "patch: 6.18.38"
+    },
+    {
+      "id": "288d6fec-d400-3df3-9b97-1e918339e6a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "2d85083b-c795-3221-9f81-5c965ea5bbdc",
@@ -131,6 +154,16 @@
       "product_version": "f20adc4ef7428bc485ee83fd1a592252fb87718b <988c93d3bba066d8669143e6ec30bb2be9608d53"
     },
     {
+      "id": "94db027e-4d71-3816-bedc-0c5c5cc2f4ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "282cbbb476b9f35793452bc461934af4c7eca169 <c7488c85fd822959e9b5c22fbd9e7c8a21caf5e0"
+    },
+    {
       "id": "b93b2f5c-80e7-3c0d-b488-f2e52cf7c7d2",
       "product": {
         "name": "Linux",
@@ -159,16 +192,6 @@
         }
       },
       "product_version": "6.18.25 <6.18.38"
-    },
-    {
-      "id": "c6de02b6-80ef-3c3e-8fce-8b2bf10457dd",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "282cbbb476b9f35793452bc461934af4c7eca169"
     },
     {
       "id": "c70fcbe5-8b17-3b65-b73c-dd80235366a8",
@@ -211,26 +234,6 @@
       "product_version": "7.1"
     },
     {
-      "id": "cf5a407d-1e43-36a8-9a31-07a231cb7aba",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5.15.210 <5.16"
-    },
-    {
-      "id": "d15b8899-ca07-3a95-b408-3d306102b933",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
-    {
       "id": "db3a2e1b-2cce-3b8e-9179-557e5f081d5e",
       "product": {
         "name": "Linux",
@@ -239,6 +242,16 @@
         }
       },
       "product_version": "patch: 6.6.144"
+    },
+    {
+      "id": "dba460da-abf2-31cd-b38c-216d6c9f6c48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.212"
     }
   ],
   "enisaIdVendor": [

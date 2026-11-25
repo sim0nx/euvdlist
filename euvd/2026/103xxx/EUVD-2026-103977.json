@@ -3,7 +3,7 @@
   "enisaUuid": "8703fe2a-90ec-3604-97a9-e49ce8922f57",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnvmet: copy the hostid into the ctrl before creating PR pc_refs\n\nCommit 6202783184bf (\"nvmet: Improve nvmet_alloc_ctrl() interface and\nimplementation\") added a second uuid_copy() of args->hostid near the end\nof nvmet_alloc_ctrl(), and commit 7b658153f1b8 (\"nvmet: Remove duplicate\nuuid_copy\") removed the original copy that sat before\nnvmet_ctrl_init_pr() instead of the new one.\n\nSince then nvmet_ctrl_init_pr() snapshots ctrl->hostid into the\nper-controller per-namespace reservation refs while the uuid_copy()\nfrom the connect data runs later, after the controller is published.\nThe ctrl is allocated with kzalloc(), so every pc_ref created on this\npath stores the nil UUID.\n\npc_ref->hostid has a single consumer: nvmet_pr_set_ctrl_to_abort()\nmatches it against the preempted registrant's hostid to kill and drain\nthe victim's in-flight I/O for Preempt and Abort.  The match can never\nhit with the nil UUID, so whenever a namespace with reservations\nenabled exists before a host connects, which includes every reconnect,\nPreempt and Abort silently degrades into a plain Preempt: the\npreempting host sees success while the victim's in-flight I/O is still\nin the air.\n\nCopy the hostid where the rest of the connect data is consumed, before\nthe controller is published and before nvmet_ctrl_init_pr() takes its\nsnapshot.",
   "datePublished": "Oct 18, 2026, 3:46:59 PM",
-  "dateUpdated": "Oct 18, 2026, 3:46:59 PM",
+  "dateUpdated": "Oct 19, 2026, 9:24:33 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/d3d6d7efdacc08616d23b3ac42272a494951dc0f",
@@ -11,21 +11,12 @@
     "https://git.kernel.org/stable/c/5211fed41d7ec90e9ab7239dc4bffffe4d0b2b62"
   ],
   "aliases": [
-    "CVE-2026-98723"
+    "CVE-2026-98723",
+    "GHSA-hpxm-6496-49xp"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
-    {
-      "id": "0b4beb43-451d-3a9d-b4e4-e4b9e3153007",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc6"
-    },
     {
       "id": "0bafe4a0-5a1d-36d5-9ab2-99642236bfdf",
       "product": {
@@ -55,6 +46,16 @@
         }
       },
       "product_version": "7b658153f1b8a79ed98980f2fef7b92a66aeb9cd <d3d6d7efdacc08616d23b3ac42272a494951dc0f"
+    },
+    {
+      "id": "5ef51bfe-91a3-375b-aaa2-0baf6c0b7d25",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "67f1ac3c-00cf-30a3-bfd6-e4728c222469",

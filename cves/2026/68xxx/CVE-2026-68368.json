@@ -3,9 +3,12 @@
   "enisaUuid": "b78e602a-9d4c-3b8f-8d69-e91cae02a25f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: gadget: f_ncm: validate datagram bounds in ncm_unwrap_ntb()\n\nWhen unpacking host-supplied NTBs, ncm_unwrap_ntb() checks datagram length\nagainst frame_max but does not verify that the datagram fits within the\ndeclared block length. Additionally, when decoding multiple NTBs from a\nsingle socket buffer, subsequent block lengths are not checked against the\nactual remaining buffer data.\n\nWith these checks missing, a malicious USB host can specify datagram\noffsets and lengths that point beyond the block, or supply secondary NTB\nheaders declaring lengths larger than the buffer. skb_put_data() then\ncopies adjacent kernel memory from skb_shared_info into the network skb.\n\nFix this by verifying that sufficient buffer space remains for the NTB\nheader before parsing, handling zero-length block declarations, ensuring\nthat block lengths never exceed the remaining buffer space, and verifying\nthat each datagram payload stays strictly within the block boundary.",
   "datePublished": "Aug 10, 2026, 12:03:45 PM",
-  "dateUpdated": "Aug 10, 2026, 12:03:45 PM",
+  "dateUpdated": "Nov 6, 2026, 4:55:14 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/35d15bbaec0557330e774ec31412ef508de6e0e0",
+    "https://git.kernel.org/stable/c/6b2be489eaa6293e60549005d91f15ceb150510f",
+    "https://git.kernel.org/stable/c/f87ed889f0f7417b8938c98d8833f559b755373c",
     "https://git.kernel.org/stable/c/e07751d0527ccc2a1c32eb0b0b7da3b4b9b5381f",
     "https://git.kernel.org/stable/c/fff1059d139ef798bab917990524faaf25854ca8",
     "https://git.kernel.org/stable/c/40c706a0224bde194667e3378c689b542fec4b44",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/1febec7e47cdcd01f43fb0211094e3010474666e"
   ],
   "aliases": [
+    "GHSA-jmw8-f562-3f2g",
     "CVE-2026-68368"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "00f46b41-d8a6-352f-8a4d-5f1a90acfd3d",
@@ -37,6 +41,16 @@
         }
       },
       "product_version": "e7ca00f35d8a17af1ae19d529193ebc21bfda164"
+    },
+    {
+      "id": "0a5c1d1b-fdcc-37bb-8e46-d61cc9dd61ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
     },
     {
       "id": "0c1f4ca5-159f-3536-998e-ba517738ac57",
@@ -79,6 +93,16 @@
       "product_version": "4.14.328 <4.15"
     },
     {
+      "id": "39fb78be-30cb-329b-bf25-31593ecf879c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
       "id": "46ac3f04-fffc-3f44-8d83-7f60e38e9c87",
       "product": {
         "name": "Linux",
@@ -107,6 +131,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "61ee5d63-0bd7-3dae-a3c6-74db4c070ad3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2b74b0a04d3e9f9f08ff026e5663dce88ff94e52 <f87ed889f0f7417b8938c98d8833f559b755373c"
     },
     {
       "id": "6582235b-b2cb-35e7-a60c-c70001df980e",
@@ -189,6 +223,16 @@
       "product_version": "ae6a5394d9fbe118bc95cfe376d6a9d91d7547e8"
     },
     {
+      "id": "991d3be1-6bd8-3ab7-a7ff-27811962badf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "a82dbfa8-c90a-306a-a680-89973a8dee65",
       "product": {
         "name": "Linux",
@@ -197,6 +241,16 @@
         }
       },
       "product_version": "2b74b0a04d3e9f9f08ff026e5663dce88ff94e52 <1febec7e47cdcd01f43fb0211094e3010474666e"
+    },
+    {
+      "id": "a8e720f5-6aa9-32a7-b1b7-b3ed637b5863",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
     },
     {
       "id": "b313b08a-3f78-313f-a34c-d448f14e9653",
@@ -239,16 +293,6 @@
       "product_version": "4.14.196 <4.15"
     },
     {
-      "id": "c4ab683a-0a55-32d6-abcc-8d40941058ef",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
-    },
-    {
       "id": "ddef5d92-32ac-3f2c-bfd5-8107020da5b7",
       "product": {
         "name": "Linux",
@@ -287,6 +331,26 @@
         }
       },
       "product_version": "2b74b0a04d3e9f9f08ff026e5663dce88ff94e52 <40c706a0224bde194667e3378c689b542fec4b44"
+    },
+    {
+      "id": "ebdb107c-e58b-3454-aac8-3654bfe577bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2b74b0a04d3e9f9f08ff026e5663dce88ff94e52 <6b2be489eaa6293e60549005d91f15ceb150510f"
+    },
+    {
+      "id": "f673c9ce-ea36-3721-a3ed-f29a27d0e0be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2b74b0a04d3e9f9f08ff026e5663dce88ff94e52 <35d15bbaec0557330e774ec31412ef508de6e0e0"
     },
     {
       "id": "f83bbff8-963c-3bd0-bba6-2eb547507940",

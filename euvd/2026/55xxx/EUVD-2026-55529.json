@@ -3,19 +3,23 @@
   "enisaUuid": "209de516-7fb2-3b3c-8e29-b48695f571a0",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niomap: fix out-of-bounds bitmap_set() with zero-length range\n\nifs_set_range_dirty() and ifs_set_range_uptodate() compute last_blk\nas (off + len - 1) >> i_blkbits.  When off is 0 and len is 0, the\nunsigned subtraction underflows to SIZE_MAX, producing a huge\nlast_blk and nr_blks value that causes bitmap_set() to write far\nbeyond the ifs->state allocation.\n\nRegarding ifs_set_range_uptodate(), it is temporarily safe because len\ncannot be passed in as 0. However, for ifs_set_range_dirty() this is\nreachable from __iomap_write_end(): when copy_folio_from_iter_atomic()\nreturns 0 (e.g. user buffer fault) and the folio is already uptodate,\nthe guard at the top of __iomap_write_end() does not trigger because\n!folio_test_uptodate() is false, and iomap_set_range_dirty() is called\nwith copied == 0.\n\nAdd a !len guard to both functions before the computation, so that a\nzero-length range is a no-op.",
   "datePublished": "Aug 10, 2026, 11:59:09 AM",
-  "dateUpdated": "Aug 10, 2026, 11:59:09 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:58:53 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/48829622212f6b8f49155889aecc818ba28ba680",
     "https://git.kernel.org/stable/c/fb4fad9105c88b1d82f1b3c39e3b6abea8249af6",
     "https://git.kernel.org/stable/c/7037e7bdcd26f46c080b8ce307dee5cb471c4b7c",
     "https://git.kernel.org/stable/c/c5b6a48a8a716a7730e39af1cad083dc4ec955ce",
     "https://git.kernel.org/stable/c/9c7d8f7c8994c790fca501dc45ce66e7356cbe05"
   ],
   "aliases": [
-    "CVE-2026-68145"
+    "CVE-2026-68145",
+    "GHSA-gr2w-phmc-qw83"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "09844724-0fcc-3632-aab6-8ca56a601c4a",
@@ -26,6 +30,16 @@
         }
       },
       "product_version": "4ce02c67972211be488408c275c8fbf19faf29b3 <7037e7bdcd26f46c080b8ce307dee5cb471c4b7c"
+    },
+    {
+      "id": "0f2586db-1690-3fb1-9a75-4573573308f2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4ce02c67972211be488408c275c8fbf19faf29b3 <48829622212f6b8f49155889aecc818ba28ba680"
     },
     {
       "id": "129c2c2f-49ea-3161-8e89-81c9eac61f98",
@@ -48,14 +62,14 @@
       "product_version": "4ce02c67972211be488408c275c8fbf19faf29b3 <fb4fad9105c88b1d82f1b3c39e3b6abea8249af6"
     },
     {
-      "id": "49399470-d9d2-36f2-b824-5425ffc66eed",
+      "id": "32334741-3d04-3829-9dae-2a9fbc21de23",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc5"
+      "product_version": "patch: 6.6.153"
     },
     {
       "id": "6554af68-ba7c-3ff5-9e01-87ce4983e752",
@@ -76,6 +90,16 @@
         }
       },
       "product_version": "4ce02c67972211be488408c275c8fbf19faf29b3 <9c7d8f7c8994c790fca501dc45ce66e7356cbe05"
+    },
+    {
+      "id": "a4697957-e83e-32ee-9f91-3b00c15e2481",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "c90ceb03-bf06-3b7c-8064-16844d1b7d1f",

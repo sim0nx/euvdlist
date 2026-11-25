@@ -3,7 +3,7 @@
   "enisaUuid": "f53dc5db-2115-3fae-b13c-ad69495ac1b1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nUSB: misc: uss720: unregister parport on probe failure\n\nuss720_probe() registers a parport before reading the 1284 register used\nto detect unsupported Belkin F5U002 adapters. If get_1284_register()\nfails, the error path drops the driver private data and the USB device\nreference, but leaves the parport device registered.\n\nLeaving the port registered is more than a private allocation leak:\nparport_register_port() has already reserved a parport number and\nregistered the parport bus device, while pp->private_data still points at\nthe private data that the common error path is about to release.\n\nUndo the pre-announce registration in the get_1284_register() failure\nbranch before jumping to the common private-data cleanup path. Clear\npriv->pp first, matching the disconnect path and avoiding a stale pointer\nin the private data.\n\nThis issue was identified during our ongoing static-analysis research while\nreviewing kernel code.",
   "datePublished": "Jul 25, 2026, 8:50:02 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:02 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:46 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/6bbb98bec71b577fda4f4b48f7aea5874b04a576",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/b4ecbdc4f8830f5586c4a5cfc384c00f20f8f8b3"
   ],
   "aliases": [
-    "CVE-2026-64338"
+    "CVE-2026-64338",
+    "GHSA-pghr-8xhx-xv5x"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "04ac0fb3-411c-364a-84cc-ca70b8b714ad",
@@ -252,16 +253,6 @@
       "product_version": "5.15.162 <5.15.212"
     },
     {
-      "id": "d232cf17-a1a4-36ab-8085-557b3a5b5d69",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
-    },
-    {
       "id": "ddb4201e-15fb-312a-a657-be183ebbeaa2",
       "product": {
         "name": "Linux",
@@ -300,6 +291,16 @@
         }
       },
       "product_version": "04736c1bc32197f7d859e01a96ae80a16659931d <6bbb98bec71b577fda4f4b48f7aea5874b04a576"
+    },
+    {
+      "id": "f6a95b59-a0cf-3800-a831-a5eda7890b9c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

@@ -3,7 +3,7 @@
   "enisaUuid": "31983f03-4388-3b00-934a-5627d7a2772b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npds_core: fix deadlock between reset thread and remove\n\npci_reset_function() acquires device_lock before performing the reset.\npdsc_remove() is called by the PCI core with device_lock already held.\nIf pdsc_pci_reset_thread() is running when pdsc_remove() is called,\ndestroy_workqueue() will block waiting for the work to complete, while\nthe work is blocked waiting for device_lock - deadlock.\n\nUse pci_try_reset_function() which uses pci_dev_trylock() internally.\nThis acquires both the device lock and the PCI config access lock\nwithout blocking - if either lock is contended, it returns -EAGAIN\nimmediately. This avoids the deadlock while also ensuring proper\nconfig space access serialization during the reset.\n\nThe pci_dev_get/put calls are also removed as they were unnecessary -\nthe driver-owned workqueue is destroyed in pdsc_remove(), guaranteeing\nthe work completes before remove returns. The PCI core holds its\nreference to pci_dev throughout the entire unbind sequence.",
   "datePublished": "Aug 10, 2026, 12:02:54 PM",
-  "dateUpdated": "Aug 10, 2026, 12:02:54 PM",
+  "dateUpdated": "Aug 17, 2026, 5:03:16 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/90d9f3ef28843e6c35149324b8eefb427a7435c2",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/ab0eec0ff0a421737a37f510ceab5c6ea59cd05a"
   ],
   "aliases": [
+    "GHSA-mf5x-243c-mv86",
     "CVE-2026-68319"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0b704bf8-fc11-38a8-a884-2ca4daa3e032",
@@ -46,16 +47,6 @@
         }
       },
       "product_version": "patch: 6.12.101"
-    },
-    {
-      "id": "2dc843e0-f66e-3b54-9dc9-6bb780cd761c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
     },
     {
       "id": "3f93a56e-35f1-39f6-8522-fd405ac8d27e",
@@ -106,6 +97,16 @@
         }
       },
       "product_version": "6.8.7 <6.9"
+    },
+    {
+      "id": "7bec204e-4f5d-3df8-b29d-e90efb83dc47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "82e264e7-79a1-3b2f-a3a9-768bd94f14ec",

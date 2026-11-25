@@ -3,7 +3,7 @@
   "enisaUuid": "1d86dd6b-24d8-363d-8a95-0ad80b473b9a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: usb-audio: fix OOB write in snd_usbmidi_novation_output()\n\nsnd_usbmidi_novation_output() lays out a two-byte header at\ntransfer_buffer[0..1] and passes &transfer_buffer[2] together with a\nlength of ep->max_transfer - 2 to snd_rawmidi_transmit():\n\n\tcount = snd_rawmidi_transmit(ep->ports[0].substream,\n\t\t\t\t     &transfer_buffer[2],\n\t\t\t\t     ep->max_transfer - 2);\n\nep->max_transfer comes from the output endpoint's wMaxPacketSize via\nusb_maxpacket(). A malformed or malicious device can advertise a bulk\nOUT endpoint with a wMaxPacketSize of 1 - the USB core only clamps this\nvalue downwards - so ep->max_transfer becomes 1 and the count argument\nbecomes -1.\n\nsnd_rawmidi_transmit() passes the negative count on to\n__snd_rawmidi_transmit_peek(), where \"if (count1 > count) count1 = count\"\nleaves count1 negative; get_aligned_size() keeps it negative for a\nbyte-stream substream, so the following memcpy(buffer, ..., count1) runs\nwith a (size_t)-1 length and writes far past the transfer buffer, which\nwas allocated with usb_alloc_coherent(ep->max_transfer).\n\nThis is the same class of bug that was fixed for snd_usbmidi_akai_output()\nin commit 0970274613fb (\"ALSA: usb-audio: fix OOB write in\nsnd_usbmidi_akai_output()\"); the novation output routine was left\nunguarded. Bail out when the endpoint cannot hold the two-byte header\nplus at least one payload byte.",
   "datePublished": "Sep 4, 2026, 3:54:33 PM",
-  "dateUpdated": "Sep 4, 2026, 3:54:33 PM",
+  "dateUpdated": "Oct 19, 2026, 8:44:21 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/558fc4485ecc704edfe7876d6cebae4738ff7ef8",
@@ -17,10 +17,11 @@
     "https://git.kernel.org/stable/c/1035a8f63bae28e498b0e7b5ac91d749844a7158"
   ],
   "aliases": [
+    "GHSA-vx4g-2353-jv9w",
     "CVE-2026-80829"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "057138bd-13f3-38d5-99c1-61cedf4672ba",
@@ -71,6 +72,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <91919b3b99ab7ce3d7dbb39fcf7c6c742a663c0c"
+    },
+    {
+      "id": "3eab35d6-816f-3845-bfa7-f59df934b802",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "490b78ee-19b0-3528-be5c-ecde74aeb9df",
@@ -141,16 +152,6 @@
         }
       },
       "product_version": "patch: 5.10.269"
-    },
-    {
-      "id": "95e7c732-48f5-3e7c-bd15-1a8bba9a0fad",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "b3a3f2ab-1bac-3aec-bf64-16e19a16bd48",

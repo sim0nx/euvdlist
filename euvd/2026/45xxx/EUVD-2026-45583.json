@@ -3,8 +3,10 @@
   "enisaUuid": "db084de3-1622-3fbd-842d-c9c5e24b766c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfc: llcp: Fix use-after-free race in nfc_llcp_recv_cc()\n\nA race condition exists in the NFC LLCP connection state machine where\nthe connection acceptance packet (CC) can be processed concurrently with\nsocket release.  This can lead to a use-after-free of the socket object.\n\nWhen nfc_llcp_recv_cc() moves the socket from the connecting_sockets\nlist to the sockets list, it does so without holding the socket lock.\nIf llcp_sock_release() is executing concurrently, it might have already\nunlinked the socket and dropped its references, which can result in\nnfc_llcp_recv_cc() linking a freed socket into the live list.\n\nFix this by holding lock_sock() during the state transition and list\nmovement in nfc_llcp_recv_cc().  After acquiring the lock, check if\nthe socket is still hashed to ensure it hasn't already been unlinked\nand marked for destruction by the release path.  This aligns the locking\npattern with recv_hdlc() and recv_disc().",
   "datePublished": "Jul 19, 2026, 2:56:25 PM",
-  "dateUpdated": "Jul 19, 2026, 2:56:25 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:38:10 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/dce85215a6c7b0fd753f577a4c487f647119884c",
     "https://git.kernel.org/stable/c/bd08bb7443c501d2f2a71d529e4afcf11c9b07d2",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/b493ea2765cc17cb8aa7e7544a4b6dcb05b6ed77"
   ],
   "aliases": [
-    "CVE-2026-64010"
+    "CVE-2026-64010",
+    "GHSA-6r5q-vq2q-562c"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "129c2215-f3f5-3f59-92c4-8dad79a0d48f",

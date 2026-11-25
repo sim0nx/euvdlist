@@ -3,8 +3,10 @@
   "enisaUuid": "b58ff580-c267-3452-9b2a-74f60af5d6ec",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Avoid double completion in async IOCB timeout\n\nqla2x00_async_iocb_timeout() tries to abort a timed-out async IOCB. When\nqla24xx_async_abort_cmd() fails, both the SRB_LOGIN_CMD path and the\nSRB_CTRL_VP/default path scan outstanding_cmds[] for the SRB and then\ncall sp->done(sp, QLA_FUNCTION_TIMEOUT) unconditionally, without checking\nwhether the SRB was actually found and removed.\n\nIf the response ISR completes the same handle first, it removes the SRB\nunder qp_lock_ptr and runs sp->done() -> complete(sp->comp). The\nsubmitter qla24xx_control_vp() wakes from wait_for_completion(), clears\nsp->comp, drops its reference and returns, reclaiming the on-stack\ncompletion. The timer reference keeps the SRB alive across the timeout\nhandler, but not the submitter's stack. The timeout then issues a second\nsp->done() -> qla_ctrlvp_sp_done(), which evaluates \"if (sp->comp)\ncomplete(sp->comp)\"; with the pointer loaded before the submitter's NULL\nstore, complete() writes into the freed stack frame, a use-after-free.\n\nTrack whether this path removed the SRB from outstanding_cmds and only\ncall sp->done() when it did, so the command is completed exactly once by\nwhichever path owns it. This mirrors the sp_found guard already used in\nqla24xx_abort_iocb_timeout().",
   "datePublished": "Sep 16, 2026, 10:31:21 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:21 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:53:40 AM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/71a7b6e3c7f121439f51a058e53d4a8e05b63dec",
     "https://git.kernel.org/stable/c/7257b5e1fb6c9387714f66e01b79ec82b717eede",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/bb45bc4bd53c95a7bf6f782577b5ede94c0f8aa8"
   ],
   "aliases": [
+    "GHSA-6f8q-4cvp-fr9q",
     "CVE-2026-89847"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.69,
   "enisaIdProduct": [
     {
       "id": "14c0baec-cc5d-39a3-892d-05e5c1ac8383",
@@ -112,16 +115,6 @@
       "product_version": "patch: 6.6.157"
     },
     {
-      "id": "be43532f-f78e-38f1-a1c6-c9bbf1ef00d1",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "bf6c876a-6373-3c0f-a547-dfe16f6dc7b1",
       "product": {
         "name": "Linux",
@@ -190,6 +183,16 @@
         }
       },
       "product_version": "patch: 5.10.270"
+    },
+    {
+      "id": "fd22e0b8-95cb-3ffc-8b29-de5bf21bef1d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "fe1de157-a3bb-3405-be2b-e3539eff936e",

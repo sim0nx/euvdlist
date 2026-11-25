@@ -3,9 +3,10 @@
   "enisaUuid": "966ee6a6-29c5-3306-b359-eb34fd44b4a3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfutex: Prevent lockup in requeue-PI during signal/ timeout wakeup\n\nDuring wait-requeue-pi (task A) and requeue-PI (task B) the following\nrace can happen:\n\n     Task A                             Task B\n  futex_wait_requeue_pi()\n    futex_setup_timer()\n    futex_do_wait()\n                                   futex_requeue()\n                                        CLASS(hb, hb1)(&key1);\n                                        CLASS(hb, hb2)(&key2);\n        *timeout*\n    futex_requeue_pi_wakeup_sync()\n        requeue_state = Q_REQUEUE_PI_IGNORE\n\n    *blocks on hb->lock*\n\n                                        futex_proxy_trylock_atomic()\n                                          futex_requeue_pi_prepare()\n                                            Q_REQUEUE_PI_IGNORE => -EAGAIN\n                                        double_unlock_hb(hb1, hb2)\n                                         *retry*\n\nTask B acquires both hb locks and attempts to acquire the PI-lock of the\ntop most waiter (task B). Task A is leaving early due to a signal/\ntimeout and started removing itself from the queue. It updates its\nrequeue_state but can not remove it from the list because this requires\nthe hb lock which is owned by task B.\n\nUsually task A is able to swoop the lock after task B unlocked it.\nHowever if task B is of higher priority then task A may not be able to\nwake up in time and acquire the lock before task B gets it again.\nEspecially on a UP system where A is never scheduled.\n\nAs a result task A blocks on the lock and task B busy loops, trying to\nmake progress but live locks the system instead. Tragic.\n\nThis can be fixed by removing the top most waiter from the list in this\ncase. This allows task B to grab the next top waiter (if any) in the\nnext iteration and make progress.\n\nRemove the top most waiter if futex_requeue_pi_prepare() fails.\nLet the waiter conditionally remove itself from the list in\nhandle_early_requeue_pi_wakeup().",
   "datePublished": "Jun 24, 2026, 4:28:53 PM",
-  "dateUpdated": "Jun 24, 2026, 4:28:53 PM",
+  "dateUpdated": "Nov 6, 2026, 4:23:52 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/e5dbae3572757cecc3d3ec7cf96cbcc9cd9f016c",
     "https://git.kernel.org/stable/c/4e0ed44e51727d56244a822ab941efe507c47966",
     "https://git.kernel.org/stable/c/e3f95b1ba242e37093305812df7fdbe7288a43ac",
     "https://git.kernel.org/stable/c/0aacb6d18f76552e3e0ee25d9f40d21b3486f4cf",
@@ -14,11 +15,22 @@
     "https://git.kernel.org/stable/c/bc7304f3ae20972d11db6e0b1b541c63feda5f05"
   ],
   "aliases": [
-    "CVE-2026-52977"
+    "CVE-2026-52977",
+    "GHSA-f389-gw66-p7gf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
+    {
+      "id": "1d6bd107-fbf8-32a4-94af-e96fcf9374f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
     {
       "id": "1fb2fe4e-cbbb-31aa-8064-450eb2219324",
       "product": {
@@ -68,6 +80,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "a635f9e1-4785-370a-bb2c-a22837b6bf92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "07d91ef510fb16a2e0ca7453222105835b7ba3b8 <e5dbae3572757cecc3d3ec7cf96cbcc9cd9f016c"
     },
     {
       "id": "c143b67a-3d9f-33f9-a3aa-20bb9d32ddb3",

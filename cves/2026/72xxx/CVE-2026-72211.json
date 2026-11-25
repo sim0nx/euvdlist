@@ -2,21 +2,42 @@
   "id": "EUVD-2026-58969",
   "enisaUuid": "94974fa7-6718-385c-8104-3946eb5fc8ff",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nntfs: grow index root value before reparent header update\n\nntfs_ir_reparent() moves the resident index root entries into an index\nblock and leaves a small root stub containing the child VCN. That root\nstub can be larger than the existing resident value. For example, an\nempty root with value_length 48 has an index area of 32 bytes, while the\nlarge-index root stub needs index_length and allocated_size of 40 bytes.\n\nThe current code publishes the larger index.index_length and\nindex.allocated_size before resizing the resident value. If the resize\nreturns -ENOSPC, the recovery path can call ntfs_inode_add_attrlist(),\nwhich looks attributes up again while the root header says\nallocated_size 40 but the resident value still only provides 32 bytes of\nindex area. Lookup-time $INDEX_ROOT validation then correctly rejects\nthat transient layout as corrupt.\n\nThis reproduces as a generic/013 failure under qemu. In the failing run,\nthe transient root had value_len=48, index_size=32, index_length=40, and\nallocated_size=40, and ntfsprogs-plus ntfsck reported \"Corrupt index\nroot in MFT record 1177\".\n\nWhen the root stub grows, resize the resident value before publishing the\nlarger root header. If the resize fails, the old root remains valid for\nrecovery lookups. Keep the existing header-before-resize ordering for\nshrink or same-size cases so the resident value never temporarily\nexposes an allocated_size beyond its bounds.",
-  "datePublished": "Aug 15, 2026, 6:32:16 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:16 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:54:06 AM",
+  "dateUpdated": "Aug 18, 2026, 6:56:30 AM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/38d444271604afc6381ddb5a181e391915c35fae",
-    "https://git.kernel.org/stable/c/0bb508fb3b97e4802ec727fd2af4d608f65dd190",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72211"
+    "https://git.kernel.org/stable/c/0bb508fb3b97e4802ec727fd2af4d608f65dd190"
   ],
   "aliases": [
     "GHSA-mw2v-m8cx-mx72",
     "CVE-2026-72211"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.55,
   "enisaIdProduct": [
+    {
+      "id": "11fd559b-c015-3525-b9f9-74ab6dfc9521",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "33b0d123-cd8f-353d-a6a8-8eac178b33c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7.1"
+    },
     {
       "id": "42d4ea5c-d83c-3f3d-ad44-65d70158b642",
       "product": {
@@ -28,44 +49,34 @@
       "product_version": "patch: 7.1.5"
     },
     {
-      "id": "68d0082e-133c-3510-b200-b6c01d5a4ec6",
+      "id": "8836ead4-c829-3d96-8c40-e9e037970bd8",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.1.5"
+      "product_version": "0a8ac0c1fa0b99a5b29002bc7f232ed7eafddef0 <38d444271604afc6381ddb5a181e391915c35fae"
     },
     {
-      "id": "9ae41c9b-18d5-396f-95d0-fc9320f33ef8",
+      "id": "de0b8fe5-a6cd-3ee9-8e5d-a52e22e8680a",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "0a8ac0c1fa0b99a5b29002bc7f232ed7eafddef0 <0bb508fb3b97e4802ec727fd2af4d608f65dd190"
     },
     {
-      "id": "a30010d6-634e-3af7-a3c0-434f2643afc6",
+      "id": "f70b3e6c-9843-36a1-80be-7db3a11a5fbf",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0bb508fb3b97e4802ec727fd2af4d608f65dd190"
-    },
-    {
-      "id": "ca47c7ff-22b7-333a-99da-ba6dbd082ed6",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <38d444271604afc6381ddb5a181e391915c35fae"
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

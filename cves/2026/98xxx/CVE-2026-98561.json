@@ -3,7 +3,7 @@
   "enisaUuid": "f4ece271-dbe3-39f1-8f17-7fa80b4e17b6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfp: hold IPsec RX state under the XArray lock\n\nnfp_net_ipsec_rx() drops the XArray lock before taking a reference to the\nxfrm_state it found. The delete path can erase the entry and drop the last\nstate reference in that interval. RX can then try to increment a zero\nrefcount after the state has been queued for destruction.\n\nThe driver queues firmware invalidation asynchronously; the delete path\ndoes not wait for the command to complete or drain pending RX processing.\n\nThe XFRM garbage collector waits for an RCU grace period before freeing\nthe state. That delays reclamation but does not make acquiring a reference\nfrom zero valid.\n\nTake the xfrm_state reference before releasing the XArray lock so\nxa_erase() cannot run between lookup and reference acquisition.",
   "datePublished": "Oct 18, 2026, 3:18:28 PM",
-  "dateUpdated": "Oct 18, 2026, 3:18:28 PM",
+  "dateUpdated": "Oct 19, 2026, 9:21:45 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/c1b1639fb138db52fcfbd1747e92f2454076c6d5",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/1a983a4e14c635c40354be110cd9a1a5c94e01e6"
   ],
   "aliases": [
-    "CVE-2026-98561"
+    "CVE-2026-98561",
+    "GHSA-6wr4-6g5h-j9qm"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "2ff1b0a1-3ff5-3ba8-895f-562f6ed101ad",
@@ -47,6 +48,16 @@
         }
       },
       "product_version": "57f273adbcd44172cbe0bd10b8b7408dd255699f <1a983a4e14c635c40354be110cd9a1a5c94e01e6"
+    },
+    {
+      "id": "461285bc-a0f9-3ff3-acda-4fe350efd747",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "64744cc5-fded-3cfd-829f-85d653bff646",
@@ -117,16 +128,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "e0798798-f5a7-3645-ac02-bd9b60d074bb",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "feeda58a-5ee0-3ecd-a18c-4b1ced641734",

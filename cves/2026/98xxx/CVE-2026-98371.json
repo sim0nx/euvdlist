@@ -3,7 +3,7 @@
   "enisaUuid": "c018bc50-5c5f-3b99-be3f-dc1e16a6cf60",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: iptfs: fix runt reassembly panic from short inner tot_len\n\nWhen the start of an inner packet is split across two outer packets\nsuch that fewer than 4 bytes land at the end of the first one,\n__input_process_payload() saves those bytes as a runt and skips the\niplen/iphlen validation performed for in-place packets. When the\ncontinuation packet arrives, iptfs_reassem_cont() only requires the\ndeclared inner length to be >= sizeof(ra_runt) (6) before allocating\nthe reassembly skb with that attacker-controlled length.\n\nHowever, __iptfs_iphlen() always returns the fixed minimum IP header\nsize (20 for IPv4, 40 for IPv6), so for an inner IPv4 tot_len in\n[6, 19] the header-completion copy writes past the declared packet\nlength, and the subsequent \"ipremain -= copylen\" underflows to ~4GB,\nleaving the payload copy length bounded only by blkoff (up to 64KB).\nAt runtime the skb_put() tailroom check turns this into\nskb_over_panic(), i.e. an unprivileged kernel panic (DoS), reachable\nlocally via userns+netns IPTFS SAs and remotely against IPTFS VPN\ngateways when the decrypted outer skb is linear (e.g. AF_PACKET taps,\ntun/tap delivery).\n\nAlign the runt path with the normal path by requiring the declared\ninner length to cover at least the IP header size. This also subsumes\nthe previous >= sizeof(ra_runt) check, since the minimum IP header\nis always larger than the runt buffer.\n\nThis issue was found by the autokbug dynamic kernel fuzzer at\nTencent Yunding Lab.",
   "datePublished": "Oct 6, 2026, 8:46:55 AM",
-  "dateUpdated": "Oct 6, 2026, 8:46:55 AM",
+  "dateUpdated": "Oct 19, 2026, 9:18:23 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/a7018ee0ea8622ed59edc064be4e0f2c26464f53",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/dc33262be1fe43d0eb0b84fb58c6ed42e2f64a8c"
   ],
   "aliases": [
+    "GHSA-jfv3-vhc3-4xwh",
     "CVE-2026-98371"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "3cea035b-22e6-3e94-b74f-1f0f06275711",
@@ -57,16 +58,6 @@
       "product_version": "patch: 6.18.54"
     },
     {
-      "id": "8b1fe904-1c14-389f-999a-b025e87ea4f3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
-    {
       "id": "abac4197-dba2-3c1d-96bb-fb5206e83f88",
       "product": {
         "name": "Linux",
@@ -95,6 +86,16 @@
         }
       },
       "product_version": "6.14"
+    },
+    {
+      "id": "fc7372b5-f85d-32a3-92f5-cfca3e0b114c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

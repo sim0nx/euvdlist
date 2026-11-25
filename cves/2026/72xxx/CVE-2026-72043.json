@@ -2,24 +2,25 @@
   "id": "EUVD-2026-59001",
   "enisaUuid": "93c9eb85-750e-3eee-bd00-2a84176fb16f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nLoongArch: Fix missing dirty page tracking in {pte,pmd}_wrprotect()\n\nWhen hardware page table walker (PTW) is enabled on LoongArch, the CPU\nmay set _PAGE_DIRTY directly in the page table entry during a write TLB\nmiss, without going through the software TLB store handler. The software\nTLB store handler (tlbex.S:254) sets both _PAGE_DIRTY and_PAGE_MODIFIED\ntogether:\n\n    ori t0, t0, (_PAGE_VALID | _PAGE_DIRTY | _PAGE_MODIFIED)\n\nSince hardware PTW only sets _PAGE_DIRTY, the software-only bit, i.e.\n_PAGE_MODIFIED is left unchanged. This creates a window where a PTE has\n_PAGE_DIRTY set (hardware knows the page is dirty) but _PAGE_MODIFIED\nclear (software is unaware).\n\nWhen fork()/clone() triggers copy-on-write, __copy_present_ptes() calls\npte_wrprotect(), which unconditionally clears both the _PAGE_WRITE and\n_PAGE_DIRTY bits:\n\n    pte_val(pte) &= ~(_PAGE_WRITE | _PAGE_DIRTY);\n\nSince _PAGE_MODIFIED was never set, the dirtiness information is lost\ncompletely. Subsequently, when memory pressure triggers page reclaim,\npage_mkclean() / try_to_unmap() sees the page as clean (i.e. pte_dirty()\nreturns false) and the page may be freed without writeback, causing data\ncorruption.\n\nFix this by propagating the _PAGE_DIRTY bit to the _PAGE_MODIFIED bit in\nboth pte_wrprotect() and pmd_wrprotect() before clearing writeable bits:\n\n    if (pte_val(pte) & _PAGE_DIRTY)\n        pte_val(pte) |= _PAGE_MODIFIED;\n\nThe pmd_wrprotect() fix handles the CONFIG_TRANSPARENT_HUGEPAGE case,\nwhere pmd entries need the same treatment.\n\nThis ensures the software dirty tracking bit (checked by pte_dirty() and\npmd_dirty(), which read both the _PAGE_DIRTY and _PAGE_MODIFIED bits) is\npreserved across fork COW write-protection.\n\nThe issue was found by the LTP madvise09 test case, which exercises page\nreclaim after \"madvise(MADV_FREE), write and fork\" operation sequence on\nprivate anonymous mappings.",
-  "datePublished": "Aug 15, 2026, 6:32:10 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:10 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:52:02 AM",
+  "dateUpdated": "Aug 17, 2026, 5:39:42 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
   "references": [
     "https://git.kernel.org/stable/c/76f88650763a35cbf1384c65d66d096fa31cc58d",
     "https://git.kernel.org/stable/c/e8a916579e427af32f2de8213dfa23c5df6e6664",
     "https://git.kernel.org/stable/c/39bb21a4bff0d70058bf752d7b5aa2e2ccc864a9",
     "https://git.kernel.org/stable/c/a65f49b6f7ece756394f8f0e85570020e7fd0e35",
     "https://git.kernel.org/stable/c/e483da960892c41fa7f0cf0d2fc2410d65a483d6",
-    "https://git.kernel.org/stable/c/018e9828eb523c638fa3d9bdf0fd4956b74555b2",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72043"
+    "https://git.kernel.org/stable/c/018e9828eb523c638fa3d9bdf0fd4956b74555b2"
   ],
   "aliases": [
     "GHSA-f7xg-fgxp-p6w3",
     "CVE-2026-72043"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "06b4e281-161a-371e-80dc-34a6ca2baac6",
@@ -30,16 +31,6 @@
         }
       },
       "product_version": "patch: 6.1.178"
-    },
-    {
-      "id": "0ad3622f-c7cf-3b6e-922d-882a291bef63",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "0e491784-64fa-3cfc-bd33-d891b85e4ab1",
@@ -100,6 +91,16 @@
         }
       },
       "product_version": "5.19"
+    },
+    {
+      "id": "65441abb-fee1-3d16-9bd6-bc5d58bc0438",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "765539d1-5b8d-30bc-a5e4-84f1893dff99",

@@ -3,7 +3,7 @@
   "enisaUuid": "620c3f29-dc0a-36b5-8180-9175b0ee7d3d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: usb: catc: bound the RX packet length in catc_rx_done()\n\ncatc_rx_done() walks a multi-packet URB, reading a two-byte length from\neach packet header. Its bound, pkt_len > urb->actual_length, ignores the\nheader offset and compares against the whole transfer rather than the\nbytes left from pkt_start, so a crafted packet header makes\nskb_copy_to_linear_data() read past the buffer.\n\nA length below ETH_HLEN is also accepted, including zero, and\neth_type_trans() then reads a MAC header from the uninitialised tailroom\nof a shorter skb. The is_f5u011 branch takes its length straight from\nthe transfer, so a zero-length URB reaches the same path.\n\nTrack the bytes remaining from the current packet, and reject a header\nthat does not fit, a length past what is left, and a length below an\nEthernet header.\n\nA transfer shorter than an Ethernet header, including a zero-length one,\npreviously became a runt skb passed to netif_rx() and counted as\nreceived; it is now counted in rx_length_errors and ends the walk.",
   "datePublished": "Oct 18, 2026, 3:19:32 PM",
-  "dateUpdated": "Oct 18, 2026, 3:19:32 PM",
+  "dateUpdated": "Oct 19, 2026, 9:22:40 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/3942557938f846e7481f6ccb2b41ccbdee61baa1",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/9d565b6b72fe3f41fd43636e143072848105189f"
   ],
   "aliases": [
+    "GHSA-xhrr-qp73-mj8c",
     "CVE-2026-98612"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
     {
       "id": "08b8208a-3c7c-3558-8af5-3852f8cd6bba",
@@ -40,6 +41,16 @@
         }
       },
       "product_version": "patch: 5.10.271"
+    },
+    {
+      "id": "25632d67-b8c2-3bbb-a5ec-0ce5bb07633c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "380f3083-382b-3989-b754-5f1102f4f09e",
@@ -100,16 +111,6 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <21e206dd88b3de6e36bb607dec3797c59bc3007b"
-    },
-    {
-      "id": "70020e99-8d25-3358-82aa-80336584a5b3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "830d4f51-5e62-3f24-8dc4-453ad582b4d0",

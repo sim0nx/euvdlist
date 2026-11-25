@@ -3,9 +3,14 @@
   "enisaUuid": "08d4f84c-e4a2-341b-bf22-a00974b4debb",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/x25: fix use-after-free in x25_kill_by_neigh()\n\nx25_kill_by_neigh() walks the global X.25 socket list looking for sockets\nattached to a terminating neighbour. x25_list_lock protects list membership\nwhile the lookup is in progress, but it does not pin a socket's lifetime\nafter the lock is dropped.\n\nThe function currently drops x25_list_lock before calling lock_sock(s). A\nconcurrent close can run x25_release(), remove the same socket from\nx25_list, and drop the last socket reference in that window. The neighbour\nteardown path can then lock or inspect a freed struct sock/struct x25_sock.\n\nTake sock_hold(s) while x25_list_lock still proves that the list entry is\nlive, then drop the temporary reference after the socket has been locked,\nrechecked, and released. Recheck x25_sk(s)->neighbour after lock_sock(),\nbecause another path may have disconnected the socket before this path\nacquired the socket lock. Restart the list walk after each disconnect\nbecause the list lock was dropped and the previous iterator state may no\nlonger be valid.\n\nA QEMU/KASAN run against origin/master reproduced a slab-use-after-free in\nx25_kill_by_neigh().",
   "datePublished": "Aug 10, 2026, 11:59:00 AM",
-  "dateUpdated": "Aug 10, 2026, 11:59:00 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 19, 2026, 4:29:54 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/db6b04f6d65549bb1c7bc8e64a92e7b7d03be676",
+    "https://git.kernel.org/stable/c/5e8a754ac2009a88a7b99ab61eab6296eed360f3",
+    "https://git.kernel.org/stable/c/c98a454d1a9e1bd09d5fd55a7aa589b199340b88",
     "https://git.kernel.org/stable/c/3f4fe26c20c30bd5a2e2583e80685def0b27858c",
     "https://git.kernel.org/stable/c/610678d4be94b619c751572e8a58de705592cd07",
     "https://git.kernel.org/stable/c/ec6d91a1bf2ebd767d3d43f6d249ee0ed3f4558a",
@@ -13,11 +18,22 @@
     "https://git.kernel.org/stable/c/5499e0602d2faafd42c580d25f615903c3fbe11b"
   ],
   "aliases": [
-    "CVE-2026-68137"
+    "CVE-2026-68137",
+    "GHSA-8pjr-r8qw-rq6v"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.54,
   "enisaIdProduct": [
+    {
+      "id": "0751c268-78de-3a0f-8701-4061ea2f3510",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "0cac1d6f-312c-3276-aa11-fe4537bf9c7c",
       "product": {
@@ -57,16 +73,6 @@
         }
       },
       "product_version": "patch: 6.6.148"
-    },
-    {
-      "id": "2c1b9f0b-5f5d-3157-9f8b-c4dbb1610ccc",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5.15.33 <5.16"
     },
     {
       "id": "2f2d92b8-6aa1-362c-ad2d-7ec7e446b038",
@@ -109,6 +115,26 @@
       "product_version": "patch: 6.12.101"
     },
     {
+      "id": "5a8dcff8-183f-3ae1-97d3-d4fe664f865a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "409570a619c1cda2e0fde6018a256b9e3d3ba0ee <5e8a754ac2009a88a7b99ab61eab6296eed360f3"
+    },
+    {
+      "id": "5d90a822-b6e9-33c7-b894-20582e45863b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5c94b6205e87411dbe9dc1ca088eb36b8837fb47 <db6b04f6d65549bb1c7bc8e64a92e7b7d03be676"
+    },
+    {
       "id": "61c5be0b-ae65-397a-92dc-444fe117638d",
       "product": {
         "name": "Linux",
@@ -117,6 +143,26 @@
         }
       },
       "product_version": "4.9.311 <4.10"
+    },
+    {
+      "id": "672df7b3-ec82-36c2-be49-df05c167db2e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.110 <5.10.265"
+    },
+    {
+      "id": "774c57d7-0775-32c6-8e06-558b29de0cee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7781607938c8371d4c2b243527430241c62e39c2 <c98a454d1a9e1bd09d5fd55a7aa589b199340b88"
     },
     {
       "id": "77f56e11-f0e3-355d-83af-3812252d9fa5",
@@ -137,16 +183,6 @@
         }
       },
       "product_version": "4.19.238 <4.20"
-    },
-    {
-      "id": "84cb7480-422b-3bca-895f-96a2d53a6e6b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
     },
     {
       "id": "88153d2a-5750-3b2d-bc24-261cc11b6945",
@@ -179,14 +215,14 @@
       "product_version": "5.17.2 <5.18"
     },
     {
-      "id": "a3f4da2e-8430-336a-9f00-12df34c211ff",
+      "id": "b5242cd5-8854-3e1f-94b6-0ddf356e0b05",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "5c94b6205e87411dbe9dc1ca088eb36b8837fb47"
+      "product_version": "patch: 5.10.265"
     },
     {
       "id": "b758f2f4-fb8d-3112-aef9-b843d1a0a677",
@@ -199,6 +235,16 @@
       "product_version": "dffc859d1d9560da594e4282091781b8d2715f00"
     },
     {
+      "id": "bfabbd35-206c-39f1-8b47-81dfa301580c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
+    {
       "id": "cb98f6c5-3bb9-3ada-b8b5-431ae7bc29eb",
       "product": {
         "name": "Linux",
@@ -209,14 +255,14 @@
       "product_version": "9acf05b4e7b55fdb712ef7b331dbce5bcd391d0f"
     },
     {
-      "id": "d4cc57ba-1bf4-307a-b6b9-f472a82719f2",
+      "id": "d29f7250-9711-3816-b508-69a828acf469",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "5.10.110 <5.11"
+      "product_version": "5.15.33 <5.15.216"
     },
     {
       "id": "d5fd2c08-e013-3e30-a28b-9dd469bce1b7",
@@ -239,14 +285,14 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "e28cdd29-25c4-339d-955f-4df8956ccae8",
+      "id": "e819a674-70bf-3fc7-ad81-c6a6edc875af",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "409570a619c1cda2e0fde6018a256b9e3d3ba0ee"
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "eb6ffcb0-ba11-34a8-a0fa-5c39040a3c46",

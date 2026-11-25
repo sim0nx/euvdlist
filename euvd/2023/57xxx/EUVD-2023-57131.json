@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2023-57131",
+  "enisaUuid": "0eb7e56b-06d8-38cf-b19c-04df554a3c6e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nLoongArch: Set all reserved memblocks on Node#0 at initialization\n\nAfter commit 61167ad5fecdea (\"mm: pass nid to reserve_bootmem_region()\")\nwe get a panic if DEFERRED_STRUCT_PAGE_INIT is enabled:\n\n[    0.000000] CPU 0 Unable to handle kernel paging request at virtual address 0000000000002b82, era == 90000000040e3f28, ra == 90000000040e3f18\n[    0.000000] Oops[#1]:\n[    0.000000] CPU: 0 PID: 0 Comm: swapper Not tainted 6.5.0+ #733\n[    0.000000] pc 90000000040e3f28 ra 90000000040e3f18 tp 90000000046f4000 sp 90000000046f7c90\n[    0.000000] a0 0000000000000001 a1 0000000000200000 a2 0000000000000040 a3 90000000046f7ca0\n[    0.000000] a4 90000000046f7ca4 a5 0000000000000000 a6 90000000046f7c38 a7 0000000000000000\n[    0.000000] t0 0000000000000002 t1 9000000004b00ac8 t2 90000000040e3f18 t3 90000000040f0800\n[    0.000000] t4 00000000000f0000 t5 80000000ffffe07e t6 0000000000000003 t7 900000047fff5e20\n[    0.000000] t8 aaaaaaaaaaaaaaab u0 0000000000000018 s9 0000000000000000 s0 fffffefffe000000\n[    0.000000] s1 0000000000000000 s2 0000000000000080 s3 0000000000000040 s4 0000000000000000\n[    0.000000] s5 0000000000000000 s6 fffffefffe000000 s7 900000000470b740 s8 9000000004ad4000\n[    0.000000]    ra: 90000000040e3f18 reserve_bootmem_region+0xec/0x21c\n[    0.000000]   ERA: 90000000040e3f28 reserve_bootmem_region+0xfc/0x21c\n[    0.000000]  CRMD: 000000b0 (PLV0 -IE -DA +PG DACF=CC DACM=CC -WE)\n[    0.000000]  PRMD: 00000000 (PPLV0 -PIE -PWE)\n[    0.000000]  EUEN: 00000000 (-FPE -SXE -ASXE -BTE)\n[    0.000000]  ECFG: 00070800 (LIE=11 VS=7)\n[    0.000000] ESTAT: 00010800 [PIL] (IS=11 ECode=1 EsubCode=0)\n[    0.000000]  BADV: 0000000000002b82\n[    0.000000]  PRID: 0014d000 (Loongson-64bit, Loongson-3A6000)\n[    0.000000] Modules linked in:\n[    0.000000] Process swapper (pid: 0, threadinfo=(____ptrval____), task=(____ptrval____))\n[    0.000000] Stack : 0000000000000000 9000000002eb5430 0000003a00000020 90000000045ccd00\n[    0.000000]         900000000470e000 90000000002c1918 0000000000000000 9000000004110780\n[    0.000000]         00000000fe6c0000 0000000480000000 9000000004b4e368 9000000004110748\n[    0.000000]         0000000000000000 900000000421ca84 9000000004620000 9000000004564970\n[    0.000000]         90000000046f7d78 9000000002cc9f70 90000000002c1918 900000000470e000\n[    0.000000]         9000000004564970 90000000040bc0e0 90000000046f7d78 0000000000000000\n[    0.000000]         0000000000004000 90000000045ccd00 0000000000000000 90000000002c1918\n[    0.000000]         90000000002c1900 900000000470b700 9000000004b4df78 9000000004620000\n[    0.000000]         90000000046200a8 90000000046200a8 0000000000000000 9000000004218b2c\n[    0.000000]         9000000004270008 0000000000000001 0000000000000000 90000000045ccd00\n[    0.000000]         ...\n[    0.000000] Call Trace:\n[    0.000000] [<90000000040e3f28>] reserve_bootmem_region+0xfc/0x21c\n[    0.000000] [<900000000421ca84>] memblock_free_all+0x114/0x350\n[    0.000000] [<9000000004218b2c>] mm_core_init+0x138/0x3cc\n[    0.000000] [<9000000004200e38>] start_kernel+0x488/0x7a4\n[    0.000000] [<90000000040df0d8>] kernel_entry+0xd8/0xdc\n[    0.000000]\n[    0.000000] Code: 02eb21ad  00410f4c  380c31ac <262b818d> 6800b70d  02c1c196  0015001c  57fe4bb1  260002cd\n\nThe reason is early memblock_reserve() in memblock_init() set node id to\nMAX_NUMNODES, making NODE_DATA(nid) a NULL dereference in the call chain\nreserve_bootmem_region() -> init_reserved_page(). After memblock_init(),\nthose late calls of memblock_reserve() operate on subregions of memblock\n.memory regions. As a result, these reserved regions will be set to the\ncorrect node at the first iteration of memmap_init_reserved_pages().\n\nSo set all reserved memblocks on Node#0 at initialization can avoid this\npanic.",
+  "datePublished": "Mar 2, 2024, 9:52:20 PM",
+  "dateUpdated": "Aug 15, 2026, 12:23:53 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/19878758accf6b2788091a771d9f9fee7bab11ab",
+    "https://git.kernel.org/stable/c/b795fb9f5861ee256070d59e33130980a01fadd7"
+  ],
+  "aliases": [
+    "GHSA-98gp-w8mx-vgw9",
+    "CVE-2023-52506"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "02c02497-6a82-34bd-84a4-0ff66829b14a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.5.6"
+    },
+    {
+      "id": "195ed686-ea3b-3c14-862c-73a056fc4df8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "1f3590a8-2f63-3cef-ab2a-c5d46c8f439b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.5"
+    },
+    {
+      "id": "7c9579a7-8c47-3a56-b98a-0214981afc13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "61167ad5fecdeaa037f3df1ba354dddd5f66a1ed <19878758accf6b2788091a771d9f9fee7bab11ab"
+    },
+    {
+      "id": "90154e74-f76e-3f4d-a39d-f9a265d22fdf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "61167ad5fecdeaa037f3df1ba354dddd5f66a1ed <b795fb9f5861ee256070d59e33130980a01fadd7"
+    },
+    {
+      "id": "a78f42b1-cfb6-320d-93da-702924cbd05b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "904621b1-b380-3a67-8dae-c63fbb2c2ba7",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

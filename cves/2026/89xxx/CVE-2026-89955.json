@@ -3,9 +3,10 @@
   "enisaUuid": "70be8ea6-61ed-33ba-8af6-836c8c13191f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ns390/vfio-ap: Fix NULL deref in status_show() during queue probe\n\nWhen vfio_ap_mdev_probe_queue() creates the sysfs attribute group,\nthe queue's driver data has not yet been set. A concurrent read of\nthe 'status' attribute can therefore call dev_get_drvdata() and\nget NULL, which is then passed directly to\nvfio_ap_mdev_for_queue() where q->apqn is unconditionally\ndereferenced, causing a NULL pointer dereference.\n\nFix this by acquiring the update locks before calling\nsysfs_create_group(). The status_show() function acquires\nguests_lock before reading the driver data, so any concurrent\nread will block until after dev_set_drvdata() has been called\nand the update locks are released.\n\nAs a bonus, the APQN no longer needs to be read from the queue\nstruct after allocation \u2014 it can be read directly from apdev\nbefore allocation and stored in a local variable, which is then\nassigned to q->apqn once the allocation succeeds.",
   "datePublished": "Sep 16, 2026, 10:32:39 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:39 AM",
+  "dateUpdated": "Oct 30, 2026, 12:33:33 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/10606c9af18baed75cd180b96ee695441aa15134",
     "https://git.kernel.org/stable/c/31fa0a8a3c337ed2d200166d6926ab23c14f8b2e",
     "https://git.kernel.org/stable/c/e102ce0f4af99dff769a4b1b4daa4cc6bd5ad2d9",
     "https://git.kernel.org/stable/c/69632952aca04caa71e49953b6949fc04e788e67",
@@ -13,11 +14,22 @@
     "https://git.kernel.org/stable/c/dd6f4ef6f8a37412909ad787c837332fb070159c"
   ],
   "aliases": [
-    "CVE-2026-89955"
+    "CVE-2026-89955",
+    "GHSA-6vjc-f3pw-3x6w"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "00c0ed26-94c3-39d7-b21b-b6a51af1f531",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "063c292d-30a2-378d-bf6b-0d2424246d2b",
       "product": {
@@ -37,16 +49,6 @@
         }
       },
       "product_version": "260f3ea141382386e97611e7c2029bc013088ab1 <31fa0a8a3c337ed2d200166d6926ab23c14f8b2e"
-    },
-    {
-      "id": "2598fe39-52e4-3684-8b92-a03765ab87fa",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "2e2f53b0-211a-3a67-a1ce-84dc5b7a61fc",
@@ -77,6 +79,16 @@
         }
       },
       "product_version": "patch: 6.6.157"
+    },
+    {
+      "id": "548a0684-a1c8-33b2-b305-2187d58930de",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "260f3ea141382386e97611e7c2029bc013088ab1 <10606c9af18baed75cd180b96ee695441aa15134"
     },
     {
       "id": "69474e71-dac2-331a-8545-8dd6c97a3777",
@@ -127,6 +139,16 @@
         }
       },
       "product_version": "260f3ea141382386e97611e7c2029bc013088ab1 <69632952aca04caa71e49953b6949fc04e788e67"
+    },
+    {
+      "id": "ec0dee38-d6f9-3966-b17a-ef4cb2a82dba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "efd371b9-8038-34e1-a65c-4e3aae5dac9a",

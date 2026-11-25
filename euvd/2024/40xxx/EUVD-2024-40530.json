@@ -1,0 +1,195 @@
+{
+  "id": "EUVD-2024-40530",
+  "enisaUuid": "947208bf-de43-37c7-a582-adf94562bb34",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmlxsw: spectrum_acl_erp: Fix object nesting warning\n\nACLs in Spectrum-2 and newer ASICs can reside in the algorithmic TCAM\n(A-TCAM) or in the ordinary circuit TCAM (C-TCAM). The former can\ncontain more ACLs (i.e., tc filters), but the number of masks in each\nregion (i.e., tc chain) is limited.\n\nIn order to mitigate the effects of the above limitation, the device\nallows filters to share a single mask if their masks only differ in up\nto 8 consecutive bits. For example, dst_ip/25 can be represented using\ndst_ip/24 with a delta of 1 bit. The C-TCAM does not have a limit on the\nnumber of masks being used (and therefore does not support mask\naggregation), but can contain a limited number of filters.\n\nThe driver uses the \"objagg\" library to perform the mask aggregation by\npassing it objects that consist of the filter's mask and whether the\nfilter is to be inserted into the A-TCAM or the C-TCAM since filters in\ndifferent TCAMs cannot share a mask.\n\nThe set of created objects is dependent on the insertion order of the\nfilters and is not necessarily optimal. Therefore, the driver will\nperiodically ask the library to compute a more optimal set (\"hints\") by\nlooking at all the existing objects.\n\nWhen the library asks the driver whether two objects can be aggregated\nthe driver only compares the provided masks and ignores the A-TCAM /\nC-TCAM indication. This is the right thing to do since the goal is to\nmove as many filters as possible to the A-TCAM. The driver also forbids\ntwo identical masks from being aggregated since this can only happen if\none was intentionally put in the C-TCAM to avoid a conflict in the\nA-TCAM.\n\nThe above can result in the following set of hints:\n\nH1: {mask X, A-TCAM} -> H2: {mask Y, A-TCAM} // X is Y + delta\nH3: {mask Y, C-TCAM} -> H4: {mask Z, A-TCAM} // Y is Z + delta\n\nAfter getting the hints from the library the driver will start migrating\nfilters from one region to another while consulting the computed hints\nand instructing the device to perform a lookup in both regions during\nthe transition.\n\nAssuming a filter with mask X is being migrated into the A-TCAM in the\nnew region, the hints lookup will return H1. Since H2 is the parent of\nH1, the library will try to find the object associated with it and\ncreate it if necessary in which case another hints lookup (recursive)\nwill be performed. This hints lookup for {mask Y, A-TCAM} will either\nreturn H2 or H3 since the driver passes the library an object comparison\nfunction that ignores the A-TCAM / C-TCAM indication.\n\nThis can eventually lead to nested objects which are not supported by\nthe library [1].\n\nFix by removing the object comparison function from both the driver and\nthe library as the driver was the only user. That way the lookup will\nonly return exact matches.\n\nI do not have a reliable reproducer that can reproduce the issue in a\ntimely manner, but before the fix the issue would reproduce in several\nminutes and with the fix it does not reproduce in over an hour.\n\nNote that the current usefulness of the hints is limited because they\ninclude the C-TCAM indication and represent aggregation that cannot\nactually happen. This will be addressed in net-next.\n\n[1]\nWARNING: CPU: 0 PID: 153 at lib/objagg.c:170 objagg_obj_parent_assign+0xb5/0xd0\nModules linked in:\nCPU: 0 PID: 153 Comm: kworker/0:18 Not tainted 6.9.0-rc6-custom-g70fbc2c1c38b #42\nHardware name: Mellanox Technologies Ltd. MSN3700C/VMOD0008, BIOS 5.11 10/10/2018\nWorkqueue: mlxsw_core mlxsw_sp_acl_tcam_vregion_rehash_work\nRIP: 0010:objagg_obj_parent_assign+0xb5/0xd0\n[...]\nCall Trace:\n <TASK>\n __objagg_obj_get+0x2bb/0x580\n objagg_obj_get+0xe/0x80\n mlxsw_sp_acl_erp_mask_get+0xb5/0xf0\n mlxsw_sp_acl_atcam_entry_add+0xe8/0x3c0\n mlxsw_sp_acl_tcam_entry_create+0x5e/0xa0\n mlxsw_sp_acl_tcam_vchunk_migrate_one+0x16b/0x270\n mlxsw_sp_acl_tcam_vregion_rehash_work+0xbe/0x510\n process_one_work+0x151/0x370",
+  "datePublished": "Aug 21, 2024, 12:06:32 AM",
+  "dateUpdated": "Aug 5, 2026, 11:36:55 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/4dc09f6f260db3c4565a4ec52ba369393598f2fb",
+    "https://git.kernel.org/stable/c/36a9996e020dd5aa325e0ecc55eb2328288ea6bb",
+    "https://git.kernel.org/stable/c/9a5261a984bba4f583d966c550fa72c33ff3714e",
+    "https://git.kernel.org/stable/c/25c6fd9648ad05da493a5d30881896a78a08b624",
+    "https://git.kernel.org/stable/c/0e59c2d22853266704e127915653598f7f104037",
+    "https://git.kernel.org/stable/c/fb5d4fc578e655d113f09565f6f047e15f7ab578",
+    "https://git.kernel.org/stable/c/97d833ceb27dc19f8777d63f90be4a27b5daeedf"
+  ],
+  "aliases": [
+    "CVE-2024-43880",
+    "GHSA-ww6f-c2qm-6v83"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "12072b1f-a32d-3c5c-9324-41f0cc83a266",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9069a3817d82b01b3a55da382c774e3575946130 <fb5d4fc578e655d113f09565f6f047e15f7ab578"
+    },
+    {
+      "id": "36c28358-d5dc-32a2-8868-dad4e57183df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "38e9e8da-a86b-327b-9a0f-5ac19c5edc8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.1"
+    },
+    {
+      "id": "3f98cb5d-4528-385b-ba9e-a3073a30a474",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9069a3817d82b01b3a55da382c774e3575946130 <25c6fd9648ad05da493a5d30881896a78a08b624"
+    },
+    {
+      "id": "4cc84c27-9766-34d9-89d4-889ec7708a7e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.103"
+    },
+    {
+      "id": "594b73f5-4bec-36d3-a3fe-c6d074ea7ee2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.165"
+    },
+    {
+      "id": "6a6af99a-74dc-3b5a-87e8-a864564221e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9069a3817d82b01b3a55da382c774e3575946130 <0e59c2d22853266704e127915653598f7f104037"
+    },
+    {
+      "id": "74ea9421-aec5-383d-9081-fdb3fa7f30fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9069a3817d82b01b3a55da382c774e3575946130 <36a9996e020dd5aa325e0ecc55eb2328288ea6bb"
+    },
+    {
+      "id": "767d46a3-ac33-3181-b643-2482a8dff895",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.224"
+    },
+    {
+      "id": "a36299c3-8c5d-3ee8-a516-b77ca3eb8b3c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.44"
+    },
+    {
+      "id": "ca6aafce-1aba-36af-ab05-8d22dac7b3f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9069a3817d82b01b3a55da382c774e3575946130 <4dc09f6f260db3c4565a4ec52ba369393598f2fb"
+    },
+    {
+      "id": "d99fa43d-438f-33b8-b41a-a4b84b195793",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.282"
+    },
+    {
+      "id": "de6d41cc-3468-39da-b871-1fcb2a484875",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.3"
+    },
+    {
+      "id": "e26b1a7c-633e-3da9-901f-72bbb3e9bca2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9069a3817d82b01b3a55da382c774e3575946130 <9a5261a984bba4f583d966c550fa72c33ff3714e"
+    },
+    {
+      "id": "e41abdb8-8468-3a22-8f33-341bf1431e12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "f517f014-8e0d-392c-92aa-4aa8c6bc30af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9069a3817d82b01b3a55da382c774e3575946130 <97d833ceb27dc19f8777d63f90be4a27b5daeedf"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c5a2d5f1-ecc4-3447-ab5d-636bea7ef17d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

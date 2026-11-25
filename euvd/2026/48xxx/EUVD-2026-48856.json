@@ -3,7 +3,7 @@
   "enisaUuid": "fc21eaa3-3d07-3da2-b74c-a4fa2ce4a210",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nACPI: CPPC: Suppress UBSAN warning caused by field misuse\n\nThe definition of reg->access_width changes depending on the\nreg->space_id type.  Type ACPI_ADR_SPACE_PLATFORM_COMM uses\naccess_width to indicate the PCC region, which can result in a UBSAN\nif the value is greater than 4.\n\nFor example:\n\n UBSAN: shift-out-of-bounds in drivers/acpi/cppc_acpi.c:1090:9\n shift exponent 32 is too large for 32-bit type 'int'\n CPU: 61 UID: 0 PID: 1220 Comm: (udev-worker) Not tainted 7.0.10-201.fc44.aarch64 #1 PREEMPT(lazy)\n Hardware name: To be filled by O.E.M.\n Call trace:\n  ...(trimming)\n  ubsan_epilogue+0x10/0x48\n  __ubsan_handle_shift_out_of_bounds+0xdc/0x1e0\n  cpc_write+0x4d0/0x670\n  cppc_set_perf+0x18c/0x490\n  cppc_cpufreq_cpu_init+0x1c8/0x380 [cppc_cpufreq]\n  ... (trimming)\n\nLets fix this by validating the region type, as well as whether\naccess_width has a value. Then since we are returning bit_width\ndirectly for ACPI_ADR_SPACE_PLATFORM_COMM, drop the code correcting\nthe size.",
   "datePublished": "Jul 25, 2026, 8:52:04 AM",
-  "dateUpdated": "Jul 25, 2026, 8:52:04 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:56 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b54c4632946ae42f2b39ed38abd909bbf78cbcc2",
@@ -15,10 +15,11 @@
     "https://git.kernel.org/stable/c/1b1acf2dada0cc3931bb2cb9ff8832edfbee46a1"
   ],
   "aliases": [
-    "CVE-2026-64512"
+    "CVE-2026-64512",
+    "GHSA-gqx5-8446-4x25"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "0142e4f1-7c3d-300f-9318-17c10ce4f0f4",
@@ -141,6 +142,16 @@
       "product_version": "patch: 6.18.39"
     },
     {
+      "id": "8e2a2195-a62e-3517-862e-a607ba87d39a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "a48a3578-042b-39e4-86f0-8ec9e6d4ae0f",
       "product": {
         "name": "Linux",
@@ -189,16 +200,6 @@
         }
       },
       "product_version": "2f4a4d63a193be6fd530d180bb13c3592052904c <dc066bd13c860bb27d6ace511210e18b8064c1d9"
-    },
-    {
-      "id": "e5bf805e-f14c-399e-bdd1-eddc3b253595",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "e6e3955c-44ea-38c7-9856-c1897ce703bd",

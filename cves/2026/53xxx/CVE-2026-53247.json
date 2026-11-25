@@ -3,8 +3,10 @@
   "enisaUuid": "1e82c7f8-11b0-367b-8106-78db1c3c1144",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: ethernet: mtk_eth_soc: Fix use-after-free in metadata dst teardown\n\nmtk_free_dev() calls metadata_dst_free() which frees the metadata_dst\nwith kfree() immediately, bypassing the RCU grace period.\nIn the RX path, skb_dst_set_noref() sets a non-refcounted pointer from\nthe skb to the metadata_dst. This function requires RCU read-side\nprotection and the dst must remain valid until all RCU readers complete.\nSince metadata_dst_free() calls kfree() directly, a use-after-free can\noccur if any skb still holds a noref pointer to the dst when the driver\ntears it down.\nReplace metadata_dst_free() with dst_release() which properly goes\nthrough the refcount path: when the refcount drops to zero, it schedules\nthe actual free via call_rcu_hurry(), ensuring all RCU readers have\ncompleted before the memory is freed.",
   "datePublished": "Jun 25, 2026, 8:39:40 AM",
-  "dateUpdated": "Jun 25, 2026, 8:39:40 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:34:31 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/72775977e89c25c99ee84d2c5baa3f86a8ba5cb4",
     "https://git.kernel.org/stable/c/459c6f35c58cf0fd5247e55d73ddaa29571d9b7e",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/80df409e1a483676826a6c66e693dba6ac507751"
   ],
   "aliases": [
-    "CVE-2026-53247"
+    "CVE-2026-53247",
+    "GHSA-mm4j-fwqr-3cf4"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.69,
   "enisaIdProduct": [
     {
       "id": "02a4da89-e087-3d02-88a2-70b2ac885606",

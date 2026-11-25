@@ -3,7 +3,7 @@
   "enisaUuid": "91d93fb8-1c73-347e-bdd4-b1c77926b20e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfs: fix exchange-range reflink flag clearing issue with INO1_WRITTEN\n\nWhen exchanging two full-file ranges, xmi_can_exchange_reflink_flags()\ncan move the reflink inode flag from the file that currently has it to\nthe other file, as long as exactly one side is marked.  This assumes\nthat the file contents, and therefore all shared extents, are exchanged.\n\nThat assumption is not true when XFS_EXCHMAPS_INO1_WRITTEN is set.\nxfs_exchmaps_can_skip_mapping() can skip hole and unwritten mappings\nfrom file1, so an exchange can complete without moving every mapping\nthat the earlier flag-swap decision accounted for.  In that case the\npost-operation cleanup can clear the reflink flag from an inode that\nstill owns shared written extents.  Later writes then take the\nnon-reflink write path and may update blocks that should still have\nbeen protected by CoW, which shows up as data corruption between\nreflink-related files.\n\nFix this by disabling the reflink flag exchange whenever\nXFS_EXCHMAPS_INO1_WRITTEN is requested.  The contents exchange can still\nproceed; the conservative outcome is that both inodes keep the reflink\nflag.  The regular reflink flag cleanup path can drop the extra flag\nlater once the inode no longer has shared extents.",
   "datePublished": "Sep 25, 2026, 10:21:41 AM",
-  "dateUpdated": "Sep 25, 2026, 10:21:41 AM",
+  "dateUpdated": "Oct 19, 2026, 9:09:10 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/56f87ac2b9543be2be529b831666682e6df4bc40",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/a23eca88448e52eb1a81549862df7adce794fafb"
   ],
   "aliases": [
+    "GHSA-cpgc-625w-fgr3",
     "CVE-2026-97547"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "323535cb-ff86-3f2f-847b-ff0e61c8f6b9",
@@ -46,6 +47,16 @@
         }
       },
       "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "63cff667-1b67-32ca-9556-08f01e92d6a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "817b9d7c-fbe3-3586-81e7-9dddd817e940",
@@ -106,16 +117,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "ee47f6a7-e0a8-39bb-86e5-a3305077f4ec",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc3"
     }
   ],
   "enisaIdVendor": [

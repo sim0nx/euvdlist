@@ -3,19 +3,22 @@
   "enisaUuid": "6ac337e0-a7f3-3924-8cbc-2d0ac9c077c5",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfsnotify: fix inode reference leak in fsnotify_recalc_mask()\n\nfsnotify_recalc_mask() fails to handle the return value of\n__fsnotify_recalc_mask(), which may return an inode pointer that needs\nto be released via fsnotify_drop_object() when the connector's HAS_IREF\nflag transitions from set to cleared.\n\nThis manifests as a hung task with the following call trace:\n\n  INFO: task umount:1234 blocked for more than 120 seconds.\n  Call Trace:\n   __schedule\n   schedule\n   fsnotify_sb_delete\n   generic_shutdown_super\n   kill_anon_super\n   cleanup_mnt\n   task_work_run\n   do_exit\n   do_group_exit\n\nThe race window that triggers the iref leak:\n\n  Thread A (adding mark)              Thread B (removing mark)\n  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500              \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  fsnotify_add_mark_locked():\n    fsnotify_add_mark_list():\n      spin_lock(conn->lock)\n      add mark_B(evictable) to list\n      spin_unlock(conn->lock)\n    return\n\n    /* ---- gap: no lock held ---- */\n\n                                      fsnotify_detach_mark(mark_A):\n                                        spin_lock(mark_A->lock)\n                                        clear ATTACHED flag on mark_A\n                                        spin_unlock(mark_A->lock)\n                                        fsnotify_put_mark(mark_A)\n\n    fsnotify_recalc_mask():\n      spin_lock(conn->lock)\n      __fsnotify_recalc_mask():\n        /* mark_A skipped: ATTACHED cleared */\n        /* only mark_B(evictable) remains */\n        want_iref = false\n        has_iref = true  /* not yet cleared */\n        -> HAS_IREF transitions true -> false\n        -> returns inode pointer\n      spin_unlock(conn->lock)\n      /* BUG: return value discarded!\n       * iput() and fsnotify_put_sb_watched_objects()\n       * are never called */\n\nFix this by deferring the transition true -> false of HAS_IREF flag from\nfsnotify_recalc_mask() (Thread A) to fsnotify_put_mark() (thread B).",
   "datePublished": "Jun 24, 2026, 4:29:04 PM",
-  "dateUpdated": "Jun 24, 2026, 4:29:04 PM",
+  "dateUpdated": "Nov 6, 2026, 4:23:52 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/ba4d88bfd58739698a9bd2309659c9cc26acf7f7",
+    "https://git.kernel.org/stable/c/926ec3937b28d30c08427053c8d8af7f9e086d82",
     "https://git.kernel.org/stable/c/8c8afa6444e6bdc145d2bf2f3aeeca6da3e36b42",
     "https://git.kernel.org/stable/c/b740cc86816bbc87902ae9db74cd21abde3c8d63",
     "https://git.kernel.org/stable/c/5c80289503da3658e3df80280598c68d181eadbd",
     "https://git.kernel.org/stable/c/4aca914ac152f5d055ddcb36704d1e539ac08977"
   ],
   "aliases": [
-    "CVE-2026-52990"
+    "CVE-2026-52990",
+    "GHSA-mrgj-88f9-5g2f"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "03ecdc7c-8ea4-30a1-abe6-33b612aa89e7",
@@ -68,6 +71,16 @@
       "product_version": "c3638b5b13740fa31762d414bbce8b7a694e582a <4aca914ac152f5d055ddcb36704d1e539ac08977"
     },
     {
+      "id": "1ca28e81-76b4-37e8-8154-6ce4d875987a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
       "id": "2f05def6-0c03-3dde-8e99-f83f0ec2f730",
       "product": {
         "name": "Linux",
@@ -108,6 +121,16 @@
       "product_version": "ff34ebaa6f6dc1eebce6a8d6f12a1566f33d00fe"
     },
     {
+      "id": "671cbfd8-525c-37ae-b6f3-322351014d27",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "6df4da33-66d8-3fba-a976-a3b35c0d5484",
       "product": {
         "name": "Linux",
@@ -146,6 +169,26 @@
         }
       },
       "product_version": "c3638b5b13740fa31762d414bbce8b7a694e582a <5c80289503da3658e3df80280598c68d181eadbd"
+    },
+    {
+      "id": "b410a948-0523-34c2-a2dc-3acef1a73aa5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c3638b5b13740fa31762d414bbce8b7a694e582a <ba4d88bfd58739698a9bd2309659c9cc26acf7f7"
+    },
+    {
+      "id": "c9b28e73-4900-3972-a5b0-5bf1a167188d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c3638b5b13740fa31762d414bbce8b7a694e582a <926ec3937b28d30c08427053c8d8af7f9e086d82"
     },
     {
       "id": "f2d42a2f-5e6c-3350-9484-611ca8061d56",

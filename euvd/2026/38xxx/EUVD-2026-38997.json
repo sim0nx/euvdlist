@@ -3,19 +3,22 @@
   "enisaUuid": "851073fc-61ec-30fc-8f80-41b73a803bc6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfs/mbcache: cancel shrink work before destroying the cache\n\nmb_cache_destroy() calls shrinker_free() and then frees all cache\nentries and the cache itself, but it does not cancel the pending\nc_shrink_work work item first.\n\nIf mb_cache_entry_create() schedules c_shrink_work via schedule_work()\nand the work item is still pending or running when mb_cache_destroy()\nruns, mb_cache_shrink_worker() will access the cache after its memory\nhas been freed, causing a use-after-free.\n\nThis is only reachable by a privileged user (root or CAP_SYS_ADMIN)\nwho can trigger the last put of a mounted ext2/ext4/ocfs2 filesystem.\n\nCancel the work item with cancel_work_sync() before calling\nshrinker_free(), ensuring the worker has finished and will not be\nrescheduled before the cache is torn down.",
   "datePublished": "Jun 24, 2026, 4:30:56 PM",
-  "dateUpdated": "Jun 24, 2026, 4:30:56 PM",
+  "dateUpdated": "Nov 6, 2026, 4:24:03 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/40148c615687c1692712e50a6de53d62dfbfc20f",
+    "https://git.kernel.org/stable/c/cbdd6f0fb19a0ce8a013acd80ac87a62f57fa20d",
     "https://git.kernel.org/stable/c/a88d39a74a208e197c03bffaa2df34de732af19f",
     "https://git.kernel.org/stable/c/0e4eff315d799f5842b95872199b0f0fb8ef5f51",
     "https://git.kernel.org/stable/c/b25fd3523bef88fb7ffd4c5b63bbe9c08f73bb4c",
     "https://git.kernel.org/stable/c/d227786ab1119669df4dc333a61510c52047cce4"
   ],
   "aliases": [
+    "GHSA-76p3-3v32-9xxh",
     "CVE-2026-53129"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "12d13a46-96c6-3b19-ba0e-cf6efe8c0ea8",
@@ -26,6 +29,16 @@
         }
       },
       "product_version": "patch: 7.1"
+    },
+    {
+      "id": "376ac96b-137e-3ae5-a2ba-9b0f81159f67",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c2f3140fe2eceb3a6c1615b2648b9471544881c6 <cbdd6f0fb19a0ce8a013acd80ac87a62f57fa20d"
     },
     {
       "id": "54b0d706-95be-39a2-8900-6b890275b43c",
@@ -78,6 +91,16 @@
       "product_version": "c2f3140fe2eceb3a6c1615b2648b9471544881c6 <a88d39a74a208e197c03bffaa2df34de732af19f"
     },
     {
+      "id": "ac1a6f9a-6180-393b-a0e1-606047b5afd3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c2f3140fe2eceb3a6c1615b2648b9471544881c6 <40148c615687c1692712e50a6de53d62dfbfc20f"
+    },
+    {
       "id": "d1ec21e5-64c1-33bc-81a9-5b13101ea254",
       "product": {
         "name": "Linux",
@@ -116,6 +139,26 @@
         }
       },
       "product_version": "c2f3140fe2eceb3a6c1615b2648b9471544881c6 <d227786ab1119669df4dc333a61510c52047cce4"
+    },
+    {
+      "id": "dff91733-a9b4-31f3-822c-9d4a8a319da9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "ee6f37a0-aec2-3fd8-b01a-7dc7c5cba688",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     }
   ],
   "enisaIdVendor": [

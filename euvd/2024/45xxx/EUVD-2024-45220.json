@@ -1,0 +1,172 @@
+{
+  "id": "EUVD-2024-45220",
+  "enisaUuid": "e48a0091-e20b-3564-8507-b010f5f26b2b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nstatic_call: Handle module init failure correctly in static_call_del_module()\n\nModule insertion invokes static_call_add_module() to initialize the static\ncalls in a module. static_call_add_module() invokes __static_call_init(),\nwhich allocates a struct static_call_mod to either encapsulate the built-in\nstatic call sites of the associated key into it so further modules can be\nadded or to append the module to the module chain.\n\nIf that allocation fails the function returns with an error code and the\nmodule core invokes static_call_del_module() to clean up eventually added\nstatic_call_mod entries.\n\nThis works correctly, when all keys used by the module were converted over\nto a module chain before the failure. If not then static_call_del_module()\ncauses a #GP as it blindly assumes that key::mods points to a valid struct\nstatic_call_mod.\n\nThe problem is that key::mods is not a individual struct member of struct\nstatic_call_key, it's part of a union to save space:\n\n        union {\n                /* bit 0: 0 = mods, 1 = sites */\n                unsigned long type;\n                struct static_call_mod *mods;\n                struct static_call_site *sites;\n\t};\n\nkey::sites is a pointer to the list of built-in usage sites of the static\ncall. The type of the pointer is differentiated by bit 0. A mods pointer\nhas the bit clear, the sites pointer has the bit set.\n\nAs static_call_del_module() blidly assumes that the pointer is a valid\nstatic_call_mod type, it fails to check for this failure case and\ndereferences the pointer to the list of built-in call sites, which is\nobviously bogus.\n\nCure it by checking whether the key has a sites or a mods pointer.\n\nIf it's a sites pointer then the key is not to be touched. As the sites are\nwalked in the same order as in __static_call_init() the site walk can be\nterminated because all subsequent sites have not been touched by the init\ncode due to the error exit.\n\nIf it was converted before the allocation fail, then the inner loop which\nsearches for a module match will find nothing.\n\nA fail in the second allocation in __static_call_init() is harmless and\ndoes not require special treatment. The first allocation succeeded and\nconverted the key to a module chain. That first entry has mod::mod == NULL\nand mod::next == NULL, so the inner loop of static_call_del_module() will\nneither find a module match nor a module chain. The next site in the walk\nwas either already converted, but can't match the module, or it will exit\nthe outer loop because it has a static_call_site pointer and not a\nstatic_call_mod pointer.",
+  "datePublished": "Oct 21, 2024, 6:02:40 PM",
+  "dateUpdated": "May 11, 2026, 8:43:38 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/ed4c8ce0f307f2ab8778aeb40a8866d171e8f128",
+    "https://git.kernel.org/stable/c/b566c7d8a2de403ccc9d8a06195e19bbb386d0e4",
+    "https://git.kernel.org/stable/c/c0abbbe8c98c077292221ec7e2baa667c9f0974c",
+    "https://git.kernel.org/stable/c/2b494471797bff3d257e99dc0a7abb0c5ff3b4cd",
+    "https://git.kernel.org/stable/c/9c48c2b53191bf991361998f5bb97b8f2fc5a89c",
+    "https://git.kernel.org/stable/c/4b30051c4864234ec57290c3d142db7c88f10d8a"
+  ],
+  "aliases": [
+    "GHSA-cxw3-2f59-5p7f",
+    "CVE-2024-50002"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "2bca684c-0257-3655-9386-53158b2a4b18",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.14"
+    },
+    {
+      "id": "36b59747-d2de-3295-b737-4296fa7ad179",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9183c3f9ed710a8edf1a61e8a96d497258d26e08 <c0abbbe8c98c077292221ec7e2baa667c9f0974c"
+    },
+    {
+      "id": "437d75d5-958d-32c4-8e38-cd87915f2a9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9183c3f9ed710a8edf1a61e8a96d497258d26e08 <2b494471797bff3d257e99dc0a7abb0c5ff3b4cd"
+    },
+    {
+      "id": "561ea912-36b0-398e-9bde-b5cbb1b648d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.168"
+    },
+    {
+      "id": "9be371ce-a021-3cdf-8583-9ce90ffd0ed3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9183c3f9ed710a8edf1a61e8a96d497258d26e08 <4b30051c4864234ec57290c3d142db7c88f10d8a"
+    },
+    {
+      "id": "9ec4bc73-cc41-33c7-8c25-ff166d913a2d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a3afc6a0-2aae-34ee-b9ea-45c01cef904a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.113"
+    },
+    {
+      "id": "bbc79062-3fdc-3545-9532-2523c7e0c258",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10"
+    },
+    {
+      "id": "bc32c72c-8472-3712-87cc-1d3d9f09d1a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.55"
+    },
+    {
+      "id": "c28565b0-9c4c-3215-a2d5-4dde03e456cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "c63445ad-773a-3efd-a361-280a0a2af49c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9183c3f9ed710a8edf1a61e8a96d497258d26e08 <ed4c8ce0f307f2ab8778aeb40a8866d171e8f128"
+    },
+    {
+      "id": "c7db7d4a-6461-3208-b0b3-24411761dd20",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9183c3f9ed710a8edf1a61e8a96d497258d26e08 <9c48c2b53191bf991361998f5bb97b8f2fc5a89c"
+    },
+    {
+      "id": "d360d9b4-c54b-30f3-81cf-a7d0f3c0e799",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.3"
+    },
+    {
+      "id": "e937485d-7766-3588-9e00-353fdb2d1989",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9183c3f9ed710a8edf1a61e8a96d497258d26e08 <b566c7d8a2de403ccc9d8a06195e19bbb386d0e4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6d98ed32-c680-3ae5-9376-1b650fae2b21",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

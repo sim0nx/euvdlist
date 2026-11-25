@@ -3,7 +3,7 @@
   "enisaUuid": "dc871813-2635-3c9e-9e11-8d2ad00e0d48",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnilfs2: fix infinite loop in nilfs_clean_segments()\n\nsyzbot reported a hung task in nilfs_transaction_begin(). This occurs\nbecause the cleaner ioctl falls into an infinite loop if\nnilfs_segctor_construct() repeatedly returns -EROFS (e.g. the device\nis remounted as read-only after an I/O error).\n\nCurrently in nilfs_clean_segments(), if err is non-zero, it logs the\nerror and sleeps but doesn't abort when it encounters a terminal error\nlike -EROFS. This causes the thread to loop forever.\n\nFix this by breaking out of the loop if nilfs_segctor_construct()\nreturns -EROFS. This matches the behaviour in\nnilfs_segctor_write_out(), which also handles -EROFS.",
   "datePublished": "Sep 17, 2026, 4:09:44 PM",
-  "dateUpdated": "Sep 17, 2026, 4:09:44 PM",
+  "dateUpdated": "Oct 19, 2026, 9:03:24 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/e3e9367dae1a6392cbb14ab0b2ab5edbf39735c3",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/ce5a5ad1a8330a2fcfdd9ec2ab341be739e89a18"
   ],
   "aliases": [
-    "CVE-2026-90420"
+    "CVE-2026-90420",
+    "GHSA-fc9x-c3wj-jf8g"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "01a483eb-cbdd-3f78-985f-690b644fe441",
@@ -70,16 +71,6 @@
         }
       },
       "product_version": "9ff05123e3bfbb1d2b68ba1d9bf1f7d1dffc1453 <c07e5ad6539e7e9350d5c65cbf8adb69d1711b15"
-    },
-    {
-      "id": "3db9521d-0ac6-3a89-85d2-32463e6d7cf1",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "404fe8a3-a32c-3ea2-87ad-0deb194f205d",
@@ -140,6 +131,16 @@
         }
       },
       "product_version": "patch: 7.2.6"
+    },
+    {
+      "id": "8d7f726d-eac2-308f-8971-61d4d352ce54",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "9f390aa2-2d50-3cb0-beea-447bb9d30814",

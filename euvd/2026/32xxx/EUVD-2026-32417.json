@@ -3,8 +3,10 @@
   "enisaUuid": "ce2762cf-1a70-34ab-875b-c317fa7828ab",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvfio/cdx: Serialize VFIO_DEVICE_SET_IRQS with a per-device mutex\n\nvfio_cdx_set_msi_trigger() reads vdev->config_msi and operates on the\nvdev->cdx_irqs array based on its value, but provides no serialization\nagainst concurrent VFIO_DEVICE_SET_IRQS ioctls.  Two callers can race\nsuch that one observes config_msi as set while another clears it and\nfrees cdx_irqs via vfio_cdx_msi_disable(), resulting in a use-after-free\nof the cdx_irqs array.\n\nAdd a cdx_irqs_lock mutex to struct vfio_cdx_device and acquire it in\nvfio_cdx_set_msi_trigger(), which is the single chokepoint through\nwhich all updates to config_msi, cdx_irqs, and msi_count flow, covering\nboth the ioctl path and the close-device cleanup path.  This keeps the\ntest of config_msi atomic with the subsequent enable, disable, or\ntrigger operations.\n\nDrop the pre-call !cdx_irqs test from vfio_cdx_irqs_cleanup() as part\nof this change: the optimization it provided is redundant with the\n!config_msi early-return inside vfio_cdx_msi_disable(), and leaving the\ntest in place would be an unsynchronized read of state the new lock is\nmeant to protect.",
   "datePublished": "May 27, 2026, 12:56:46 PM",
-  "dateUpdated": "May 27, 2026, 12:56:46 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:29:15 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ddf96e23c366c566283fce8377928851fa7f5e81",
     "https://git.kernel.org/stable/c/7b436ade16cc81095d79b79f8efa3af0a4f5c5a2",
@@ -12,20 +14,21 @@
     "https://git.kernel.org/stable/c/670e8864b1a218d72f08db40d0103adf38fa1d9b"
   ],
   "aliases": [
-    "CVE-2026-46036"
+    "CVE-2026-46036",
+    "GHSA-mg62-wj4p-3wq4"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
-      "id": "603ac704-f66a-3f0c-bf4c-c3ae436ce79c",
+      "id": "49e3b4fc-a3ee-3e36-8457-05255c56a1ce",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.1-rc1"
+      "product_version": "patch: 7.1"
     },
     {
       "id": "7017e79b-cb60-32f0-ab4e-e1ab6a6b6b03",

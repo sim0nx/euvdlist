@@ -3,8 +3,10 @@
   "enisaUuid": "2dd802b3-6f9f-30b5-9555-bd07f37a6b34",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfsd: fix posix_acl leak on SETACL decode failure\n\nnfsaclsvc_decode_setaclargs() and nfs3svc_decode_setaclargs() each\ncall nfs_stream_decode_acl() twice, first for NFS_ACL and then for\nNFS_DFACL.  Each successful call transfers ownership of a freshly\nallocated posix_acl into argp->acl_access or argp->acl_default.  If\nthe first call succeeds but the second fails, the decoder returns\nfalse and argp->acl_access is left dangling.\n\nACLPROC2_SETACL.pc_release was wired to nfssvc_release_attrstat and\nACLPROC3_SETACL.pc_release was wired to nfs3svc_release_fhandle.\nBoth only call fh_put() and have no knowledge of the ACL fields on\nargp.  The posix_acl_release() pairs sat at the out: labels inside\nnfsacld_proc_setacl() and nfsd3_proc_setacl(), but svc_process()\nskips pc_func when pc_decode returns false, so that cleanup is\nunreachable on decode failure:\n\n    svc_process_common()\n      pc_decode()                  /* decode_setaclargs: false */\n      /* pc_func skipped */\n      pc_release()                 /* fh_put only -- ACLs leaked */\n\nThe orphaned posix_acl is leaked for the lifetime of the server.\n\nFix by adding nfsaclsvc_release_setacl() and nfs3svc_release_setacl(),\nwhich release both argp->acl_access and argp->acl_default in addition\nto fh_put(), and wiring them as pc_release for their respective SETACL\nprocedures.  pc_release runs on every path svc_process() takes after\ndecode, including decode failure, so the posix_acl_release() pairs are\nremoved from the proc functions' out: labels to keep ownership in one\nplace.  This matches the existing release_getacl() pattern used by\nthe sibling GETACL procedures.",
   "datePublished": "Jul 19, 2026, 12:01:58 PM",
-  "dateUpdated": "Jul 19, 2026, 12:01:58 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:07:46 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/b2eb1ffd511d1b3c3e21122f97cbbccea411e277",
     "https://git.kernel.org/stable/c/b94c4be77682aab06d65ca7296149e3bcfb37353",
@@ -20,7 +22,7 @@
     "CVE-2026-53397"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.53,
   "enisaIdProduct": [
     {
       "id": "0da0f25d-acfb-3591-bce8-9de0f0a2d028",
@@ -93,14 +95,14 @@
       "product_version": "patch: 6.18.38"
     },
     {
-      "id": "5eeabb23-63d4-3186-870b-fe3a0269678c",
+      "id": "6066358b-0106-3c39-8054-9bafe94a050f",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "66de6a3c-ff88-3438-b00d-bded74121867",

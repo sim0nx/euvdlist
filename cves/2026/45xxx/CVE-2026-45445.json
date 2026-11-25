@@ -3,21 +3,24 @@
   "enisaUuid": "59ac6960-82d6-3585-8951-b1dc14800fc7",
   "description": "Issue summary: When an application drives an AES-OCB context through the\npublic EVP_Cipher() one-shot interface, the application-supplied\ninitialisation vector (IV) is silently discarded.\n\nImpact summary: Every message encrypted under the same key uses the\nsame effective nonce regardless of the IV supplied by the caller,\nresulting in (key, nonce) reuse and loss of confidentiality.  If the\nsame code path is used to compute the authentication tag, the tag\ndepends only on the (key, IV) pair and not on the plaintext or\nciphertext, allowing universal forgery of arbitrary ciphertext from a\nsingle captured message.\n\nOpenSSL provides two ways to drive a cipher: the documented streaming\ninterface (EVP_CipherUpdate / EVP_CipherFinal_ex) and a lower-level\none-shot, EVP_Cipher(), whose documentation explicitly recommends\nagainst use by applications in favour of EVP_CipherUpdate() and\nEVP_CipherFinal_ex().  The OCB provider's streaming handler flushes\nthe application-supplied IV into the OCB context before processing\ndata; the one-shot handler did not.  Every call to EVP_Cipher() on an\nAES-OCB context therefore ran with the all-zero key-derived offset\nstate left by cipher initialisation, regardless of the caller's IV.\n\nIf EVP_EncryptFinal_ex() is subsequently used to obtain the\nauthentication tag, the deferred IV setup runs at that point and\nclears the running checksum that should have been accumulated over the\nplaintext.  The resulting tag is a function of (key, IV) only and\nverifies against any ciphertext produced under the same (key, IV)\npair.\n\nThe OpenSSL SSL/TLS implementation is not affected: AES-OCB is not a\nTLS cipher suite, and libssl does not call EVP_Cipher() in any case.\nApplications that drive AES-OCB through the documented streaming AEAD\nAPI (EVP_CipherUpdate / EVP_CipherFinal_ex) are not affected.  Only\napplications that combine the AES-OCB cipher with the EVP_Cipher()\none-shot API are vulnerable.\n\nThe FIPS modules in 4.0, 3.6, 3.5, 3.4 and 3.0 are not affected by\nthis issue, as AES-OCB is outside the OpenSSL FIPS module boundary.",
   "datePublished": "Jun 9, 2026, 4:03:31 PM",
-  "dateUpdated": "Jun 9, 2026, 4:03:31 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Jun 10, 2026, 7:48:10 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
   "references": [
     "https://openssl-library.org/news/secadv/20260609.txt",
-    "https://github.com/openssl/security/commit/843c9b94ca9c2ed248bb30127bb4f3d7af0d607c",
-    "https://github.com/openssl/security/commit/787a6dfba81b7b09c1e05ab31396c0cd7c36b3f7",
-    "https://github.com/openssl/security/commit/983d54b5cce8d16147548ed1a37892d1720bbab6",
-    "https://github.com/openssl/security/commit/7ac4715234ee72d9f3c93426a2c08554b5b771af",
-    "https://github.com/openssl/security/commit/323f0b6e7d530a4cb4336d50c88cb70f3ac2a451"
+    "https://github.com/openssl/openssl/commit/843c9b94ca9c2ed248bb30127bb4f3d7af0d607c",
+    "https://github.com/openssl/openssl/commit/787a6dfba81b7b09c1e05ab31396c0cd7c36b3f7",
+    "https://github.com/openssl/openssl/commit/983d54b5cce8d16147548ed1a37892d1720bbab6",
+    "https://github.com/openssl/openssl/commit/7ac4715234ee72d9f3c93426a2c08554b5b771af",
+    "https://github.com/openssl/openssl/commit/323f0b6e7d530a4cb4336d50c88cb70f3ac2a451"
   ],
   "aliases": [
+    "GHSA-v446-xwfm-x7mr",
     "CVE-2026-45445"
   ],
   "assigner": "openssl",
-  "epss": 0.0,
+  "epss": 0.7,
   "enisaIdProduct": [
     {
       "id": "3ae3a037-6620-3870-81b7-a281bcfcbd95",

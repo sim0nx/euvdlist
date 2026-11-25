@@ -3,9 +3,14 @@
   "enisaUuid": "7084e96e-ffb5-3c48-950b-d8b7316b911e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Quiesce response IRQ before freeing request queue\n\nqla2xxx_delete_qpair() deletes the request queue before the response\nqueue. qla25xx_delete_req_que() frees the request queue memory\n(kfree(req) in qla25xx_free_req_que()), but the response-queue MSI-X is\nonly released later, in qla25xx_free_rsp_que(). In that window the\nresponse interrupt can still fire, qla2xxx_msix_rsp_q() queues\nqpair->q_work, and qla_do_work() -> qla24xx_process_response_queue()\ndereferences the now-freed rsp->req (LOGINOUT/CT/ELS entries and the\nstatus path), a use-after-free.\n\nThe cancel_work_sync() added for the qpair teardown lives in the\nresponse free path, which runs after the request queue is already freed,\nso it does not protect rsp->req.\n\nRelease the response-queue interrupt and flush qpair->q_work before\ndeleting the request queue, so no late completion can reach the freed\nrequest queue. Clearing have_irq makes the subsequent\nqla25xx_free_rsp_que() skip its free_irq(), and the firmware\nqueue-delete order (request then response) is preserved; the\nrequest-delete mailbox completes on the default vector and is unaffected\nby dropping the qpair response interrupt early.",
   "datePublished": "Sep 16, 2026, 10:31:22 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:22 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:33:18 PM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/730a18768b27582636b5af343069c30809b763a2",
+    "https://git.kernel.org/stable/c/be68aef64ab2e633867c4ac946d16644c306fc3d",
+    "https://git.kernel.org/stable/c/0a005dcc5e9bf7b31a45422b10f2765b25161389",
     "https://git.kernel.org/stable/c/7ac5be2a8609679fc6bbfea881360444a5ce8202",
     "https://git.kernel.org/stable/c/1486cc18be3e2b4c2a730f4a1b0448d009381b3d",
     "https://git.kernel.org/stable/c/10e9f05f7fd0a103886a867ec8afe621fe4b906a",
@@ -13,11 +18,62 @@
     "https://git.kernel.org/stable/c/505753ec2594c6af09a601f0dd60be7d840c1d2d"
   ],
   "aliases": [
-    "CVE-2026-89848"
+    "CVE-2026-89848",
+    "GHSA-c5f6-cp2c-vcqc"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.59,
   "enisaIdProduct": [
+    {
+      "id": "028779bd-6cc5-359d-be5a-18978704d1d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d74595278f4ab192af66d9e60a9087464638beee <be68aef64ab2e633867c4ac946d16644c306fc3d"
+    },
+    {
+      "id": "0b524801-2271-371c-b465-c50830028980",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "236f4f5c-a9c4-3ab1-bcde-d04d91036d3e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "2dfce542-183f-3ea5-a2fd-2af32d61adb0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "303d342c-85fb-35e8-ad64-5384f28e90f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d74595278f4ab192af66d9e60a9087464638beee <730a18768b27582636b5af343069c30809b763a2"
+    },
     {
       "id": "36061ef9-67b0-3833-8baf-9a009a9d90ab",
       "product": {
@@ -37,6 +93,16 @@
         }
       },
       "product_version": "d74595278f4ab192af66d9e60a9087464638beee <157ca7d1af45f87aa14a286754f19c3f72386988"
+    },
+    {
+      "id": "599175a2-1c3f-3a36-9f32-5a3a3d4def32",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d74595278f4ab192af66d9e60a9087464638beee <0a005dcc5e9bf7b31a45422b10f2765b25161389"
     },
     {
       "id": "5c2f1123-1404-3187-8a4e-6f65845f5351",
@@ -119,14 +185,14 @@
       "product_version": "patch: 6.12.110"
     },
     {
-      "id": "c405f2d4-3ba2-3f8b-b920-ba1715d4775c",
+      "id": "bf413519-f6c7-3ab5-b9b3-a6afe47d866b",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 5.10.273"
     },
     {
       "id": "fcac49fa-42c1-3941-a92d-69095d3f3b60",

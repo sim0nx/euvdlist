@@ -3,9 +3,12 @@
   "enisaUuid": "0bbd426c-52a3-3529-aea8-9f1f5983042a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmemstick: core: wait for request completion before freeing card\n\nIn memstick_alloc_card() and memstick_set_rw_addr(),\nwait_for_completion_timeout() is used to wait for device identification\nand address configuration requests to complete.\n\nThe memstick subsystem does not provide an abort or cancellation\ncallback in struct memstick_host for in-flight requests. If\nwait_for_completion_timeout() expires (for instance, when a USB transfer\nor command retry is delayed), memstick_alloc_card() returns an error and\nfrees the memstick_dev structure via kfree(card).\n\nHowever, the host controller driver (such as rtsx_usb_ms) is still\nrunning the request asynchronously in worker context. When the transfer\neventually finishes, the driver writes into host->req->data, which\npoints to memory inside the already freed card structure. This leads to\na KASAN slab-use-after-free write:\n\n  BUG: KASAN: slab-use-after-free in ms_read_bytes+0x8fe/0x990\n  Write of size 1 at addr ffff88813c188079 by task kworker/1:5/5239\n  Workqueue: events rtsx_usb_ms_handle_req\n  Call Trace:\n   ms_read_bytes+0x8fe/0x990 drivers/memstick/host/rtsx_usb_ms.c:450\n   rtsx_usb_ms_issue_cmd drivers/memstick/host/rtsx_usb_ms.c:477 [inline]\n   rtsx_usb_ms_handle_req+0x557/0x1a00 drivers/memstick/host/rtsx_usb_ms.c:531\n   process_one_work+0xac7/0x1b10 kernel/workqueue.c:3396\n   worker_thread+0x5ef/0xe50 kernel/workqueue.c:3560\n   kthread+0x373/0x450 kernel/kthread.c:436\n\n  Allocated by task 1662:\n   memstick_alloc_card drivers/memstick/core/memstick.c:383 [inline]\n   memstick_check+0x2c1/0x10d0 drivers/memstick/core/memstick.c:452\n   process_one_work+0xac7/0x1b10 kernel/workqueue.c:3396\n\n  Freed by task 1662:\n   kfree+0x20c/0x650 mm/slub.c:6792\n   memstick_alloc_card drivers/memstick/core/memstick.c:420 [inline]\n   memstick_check+0x72b/0x10d0 drivers/memstick/core/memstick.c:452\n   process_one_work+0xac7/0x1b10 kernel/workqueue.c:3396\n\nHost controller drivers (rtsx_usb_ms, jmb38x_ms, tifm_ms, r592) already\nimplement their own hardware and bus timeouts, and callers in\nmspro_block and ms_block already rely on wait_for_completion()\nunconditionally.\n\nReplace wait_for_completion_timeout() with wait_for_completion() in\nmemstick_set_rw_addr() and memstick_alloc_card() so that the card\nstructure is never freed while an asynchronous request is in flight.",
   "datePublished": "Oct 23, 2026, 12:21:57 PM",
-  "dateUpdated": "Oct 23, 2026, 12:21:57 PM",
+  "dateUpdated": "Oct 30, 2026, 12:41:12 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/b90f33ad9179c69658342323382bfed158f88cb9",
+    "https://git.kernel.org/stable/c/1c23da6f148089d59b3d3e9b2e7f1eefa927cab9",
+    "https://git.kernel.org/stable/c/a2f1aa3341f185ca52103dc4908647570b208855",
     "https://git.kernel.org/stable/c/c3ab92542475d59ae685cbb294e70ca4d0ba38e9",
     "https://git.kernel.org/stable/c/810580cf60edc75c9891c2de3225e4cda78e4d9f",
     "https://git.kernel.org/stable/c/f2795c50144d528dabc2cf2fd53c0f0c63a823a1",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/aa0a37b5024d921e96ac4f8f487c8bfbf1f1a582"
   ],
   "aliases": [
+    "GHSA-r8cv-6pg4-74wg",
     "CVE-2026-99039"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "01ff1c5a-4bf1-30af-b96a-519db1b87386",
@@ -57,6 +61,26 @@
         }
       },
       "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "33f4ce86-f6b7-3e8f-a33a-556284b0e7cb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "baf8532a147d5b76681ce040e2c8f25a3f0e718d <b90f33ad9179c69658342323382bfed158f88cb9"
+    },
+    {
+      "id": "3a0a2ed4-7956-36c8-8f01-b2e878029a6e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
     },
     {
       "id": "604f4771-647b-3a6d-b13d-5e132e846eba",
@@ -119,6 +143,26 @@
       "product_version": "baf8532a147d5b76681ce040e2c8f25a3f0e718d <f2795c50144d528dabc2cf2fd53c0f0c63a823a1"
     },
     {
+      "id": "c56a7eb7-d592-3252-919e-c6d480886db5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "baf8532a147d5b76681ce040e2c8f25a3f0e718d <a2f1aa3341f185ca52103dc4908647570b208855"
+    },
+    {
+      "id": "da18a2ca-7008-30db-a6d0-aaeb8e372a1f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "baf8532a147d5b76681ce040e2c8f25a3f0e718d <1c23da6f148089d59b3d3e9b2e7f1eefa927cab9"
+    },
+    {
       "id": "e1d2abdc-e607-3328-ae3d-0aa2ccde64ff",
       "product": {
         "name": "Linux",
@@ -127,6 +171,26 @@
         }
       },
       "product_version": "baf8532a147d5b76681ce040e2c8f25a3f0e718d <810580cf60edc75c9891c2de3225e4cda78e4d9f"
+    },
+    {
+      "id": "f215f50f-6817-3292-bc56-c5c7f9f29413",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "f5642af6-da56-32ad-ba5c-05f486c52898",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "fb8e1cfe-107b-3ca2-9b07-9aa184732054",

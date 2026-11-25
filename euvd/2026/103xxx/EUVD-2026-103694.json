@@ -3,9 +3,14 @@
   "enisaUuid": "fccc125c-0d5c-364c-a4f2-9aba5cbd8e85",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: fix create context out-of-bounds reads\n\nsmb2_parse_contexts() validates the complete create-context area but\ndoes not limit each record to its Next field before dispatching it.  A\nmalformed chain can therefore expose bytes beyond the current context to\na handler.  The QFid handler also used a full response-structure cast\nalthough it only reads DiskFileId.\n\nThe SMB2/SMB3 lease parsers made the same layout assumption: they read\nLeaseState and LeaseFlags at canonical offsets rather than at\nDataOffset.  A valid non-canonical DataOffset could therefore yield\nunrelated in-bounds data, while a short DataLength was still accepted.\n\nLimit each context to its Next value, reject offsets before the context\nheader, and reject malformed chains.  Bound the name range by the current\ncontext and do not dispatch a known handler when DataLength is zero.  Read\nthe QFid DiskFileId only when the context data covers that field.  Parse the\nlease context from DataOffset and require DataLength to match the v1 or v2\nlease_context size used by ksmbd.  A size mismatch skips lease parsing\nwithout failing the open.",
   "datePublished": "Oct 18, 2026, 3:15:04 PM",
-  "dateUpdated": "Oct 18, 2026, 3:15:04 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:38:13 PM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/34245048d6c1fa6d7be4f0dec1d14b5be02360e1",
+    "https://git.kernel.org/stable/c/0a8c2a6715c2a67b7abbbf874fccc9f5518146d9",
+    "https://git.kernel.org/stable/c/43d0ca48bb902d554b6531862248810d2ae3b8ef",
     "https://git.kernel.org/stable/c/e4c49012708c917eafd9c27054b02d0f8b30fe64",
     "https://git.kernel.org/stable/c/28bc9a871799363afa3139e961a8e3684feb8704",
     "https://git.kernel.org/stable/c/05a7fd80024ff32b9b40ab1478bb172eeab1c386",
@@ -13,10 +18,11 @@
     "https://git.kernel.org/stable/c/67f4c1c6a1b51e203d986779299824d1c2c590a6"
   ],
   "aliases": [
+    "GHSA-q4c4-v5h3-5c35",
     "CVE-2026-98454"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.39,
   "enisaIdProduct": [
     {
       "id": "0594d6fa-1bc5-3179-a5ea-38bdb20af394",
@@ -27,6 +33,16 @@
         }
       },
       "product_version": "patch: 7.2.9"
+    },
+    {
+      "id": "0e0f1e97-bdd3-377d-b2ed-550a2cb7aa12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b8c32dbb0deb287a5fcb78251e4eae6c7275760d <0a8c2a6715c2a67b7abbbf874fccc9f5518146d9"
     },
     {
       "id": "39e947af-8e11-3e44-8ae7-fbceebdd5be0",
@@ -69,6 +85,16 @@
       "product_version": "3.7"
     },
     {
+      "id": "7085dc81-0575-3155-8c74-0e34aaffaf89",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b8c32dbb0deb287a5fcb78251e4eae6c7275760d <34245048d6c1fa6d7be4f0dec1d14b5be02360e1"
+    },
+    {
       "id": "71045e6d-ab12-3702-bb08-c72390100cd7",
       "product": {
         "name": "Linux",
@@ -89,6 +115,16 @@
       "product_version": "b8c32dbb0deb287a5fcb78251e4eae6c7275760d <67f4c1c6a1b51e203d986779299824d1c2c590a6"
     },
     {
+      "id": "79c1a7eb-e058-3cac-9fc9-51eaa2b53975",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "8701d9bd-af51-3fd8-8b72-d70660337c65",
       "product": {
         "name": "Linux",
@@ -97,6 +133,46 @@
         }
       },
       "product_version": "b8c32dbb0deb287a5fcb78251e4eae6c7275760d <cecc5399987e73a528ce2b662eeb54af69163cbd"
+    },
+    {
+      "id": "88db9f97-f148-3617-9320-dd5c833d08a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "8e394157-432e-3140-8b8f-fe9b6668487e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b8c32dbb0deb287a5fcb78251e4eae6c7275760d <43d0ca48bb902d554b6531862248810d2ae3b8ef"
+    },
+    {
+      "id": "93d03655-8bbd-3081-a72c-c84a0287ea22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "967df633-b0cf-3d84-9db5-b78b3b50853d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "a5bb201c-52ac-333d-9549-60be88a7386b",
@@ -117,16 +193,6 @@
         }
       },
       "product_version": "b8c32dbb0deb287a5fcb78251e4eae6c7275760d <28bc9a871799363afa3139e961a8e3684feb8704"
-    },
-    {
-      "id": "d9dd2d77-a292-3bcb-892e-abebd6c058cb",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "eb728fbf-fe06-3cff-aa2c-8f9b5a50ba55",

@@ -3,19 +3,25 @@
   "enisaUuid": "b4e4a83a-5de0-3b55-8973-b6164f9b2171",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: fix slab-out-of-bounds write in id_mode_to_cifs_acl()\n\nIn id_mode_to_cifs_acl(), while the chown branch reserves\nsizeof(struct smb_ntsd) + 2 * sizeof(struct smb_sid) (plus\nsizeof(struct smb_acl) and the worst-case ACE space after\ncommit 0ee150794c75 (\"smb: client: fix heap overflow in DACL owner/group\nrewrite\")), the chmod branch only adds 2 * sizeof(struct smb_ace) or\n5 * sizeof(struct smb_ace) to secdesclen (or 1 * sizeof(struct smb_ace)\non posix).\n\nHowever, the chmod branch also invokes build_sec_desc() ->\ncopy_sec_desc(), which unconditionally writes the Owner SID at\npnntsd + sidsoffset and the Group SID at\npnntsd + sidsoffset + sizeof(struct smb_sid) (2 * 68 = 136 bytes total),\nand set_chmod_dacl() always writes a struct smb_acl header (8 bytes)\neven when the source descriptor has dacloffset == 0. When a security\ndescriptor has compact or overlapping Owner/Group SIDs (or\ndacloffset == 0), calling chmod() under-allocates pnntsd and writes past\nthe end of the slab buffer.\n\nReserve sizeof(struct smb_acl) + 2 * sizeof(struct smb_sid) (plus\nsizeof(struct smb_ntsd) on the posix path) in the chmod branch of\nid_mode_to_cifs_acl().",
   "datePublished": "Nov 16, 2026, 9:59:20 AM",
-  "dateUpdated": "Nov 16, 2026, 9:59:20 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:00:59 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/d1f14e890dff3b19fbc8dec1eb09f09c71ca69a8",
+    "https://git.kernel.org/stable/c/773c30f94a027e6a0a9774906d6cff3902dbe15c",
+    "https://git.kernel.org/stable/c/51e5772fdfc92a453995aba07ff2aa6e107b580d",
     "https://git.kernel.org/stable/c/cde80904e285a7ac29ba2e06bc23a60b09b05f54",
     "https://git.kernel.org/stable/c/ba57bfe1a9fa1566757cd3f3310ccdf88f4b7673",
     "https://git.kernel.org/stable/c/be1bcc9147facd85dc2ebe48688afde6d5590f10",
     "https://git.kernel.org/stable/c/a377a3645c7d0246af0bc4ef24db94bb2670bdde"
   ],
   "aliases": [
-    "CVE-2026-99292"
+    "CVE-2026-99292",
+    "GHSA-38fg-966h-53p2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.43,
   "enisaIdProduct": [
     {
       "id": "0a528883-92c6-3721-8beb-2bfbf18cf889",
@@ -38,6 +44,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "2aaf341c-b268-3d6d-8914-2cbdc34ac367",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ee0b4c635c091eb3c805977ba886bae2fd33f0c <51e5772fdfc92a453995aba07ff2aa6e107b580d"
+    },
+    {
       "id": "42255751-7ed9-300b-bbec-c0a3cceb5b72",
       "product": {
         "name": "Linux",
@@ -58,6 +74,16 @@
       "product_version": "7ee0b4c635c091eb3c805977ba886bae2fd33f0c <be1bcc9147facd85dc2ebe48688afde6d5590f10"
     },
     {
+      "id": "6fad9c3a-fdd1-38a6-83c9-9558945326ed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ee0b4c635c091eb3c805977ba886bae2fd33f0c <d1f14e890dff3b19fbc8dec1eb09f09c71ca69a8"
+    },
+    {
       "id": "783de50d-7c8d-39e3-911f-fb902ad1b4ce",
       "product": {
         "name": "Linux",
@@ -66,6 +92,16 @@
         }
       },
       "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "94abc5ea-8aea-3931-abb5-c1fe551a9274",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "98d15295-26b2-3314-b330-fda94a681323",
@@ -116,6 +152,36 @@
         }
       },
       "product_version": "3.8"
+    },
+    {
+      "id": "bff331d1-7eb5-3028-86e9-24ebb6709948",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "e7730659-3ee4-3030-9469-c114fca28e23",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "f59d7dab-cf34-351b-b42c-221523a8a3e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7ee0b4c635c091eb3c805977ba886bae2fd33f0c <773c30f94a027e6a0a9774906d6cff3902dbe15c"
     }
   ],
   "enisaIdVendor": [

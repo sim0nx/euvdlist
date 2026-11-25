@@ -1,0 +1,182 @@
+{
+  "id": "EUVD-2024-39447",
+  "enisaUuid": "b1200e16-c59e-3896-9f8b-1ace1e3fc4f3",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nexfat: fix potential deadlock on __exfat_get_dentry_set\n\nWhen accessing a file with more entries than ES_MAX_ENTRY_NUM, the bh-array\nis allocated in __exfat_get_entry_set. The problem is that the bh-array is\nallocated with GFP_KERNEL. It does not make sense. In the following cases,\na deadlock for sbi->s_lock between the two processes may occur.\n\n       CPU0                CPU1\n       ----                ----\n  kswapd\n   balance_pgdat\n    lock(fs_reclaim)\n                      exfat_iterate\n                       lock(&sbi->s_lock)\n                       exfat_readdir\n                        exfat_get_uniname_from_ext_entry\n                         exfat_get_dentry_set\n                          __exfat_get_dentry_set\n                           kmalloc_array\n                            ...\n                            lock(fs_reclaim)\n    ...\n    evict\n     exfat_evict_inode\n      lock(&sbi->s_lock)\n\nTo fix this, let's allocate bh-array with GFP_NOFS.",
+  "datePublished": "Aug 17, 2024, 9:09:23 AM",
+  "dateUpdated": "May 23, 2026, 3:52:53 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/632fb232b6bbf8277edcbe9ecd4b4d98ecb122eb",
+    "https://git.kernel.org/stable/c/c052f775ee6ccacd3c97e4cf41a2a657e63d4259",
+    "https://git.kernel.org/stable/c/cd1c7858641384191ff7033fb1fc65dfcd559c6f",
+    "https://git.kernel.org/stable/c/a7ac198f8dba791e3144c4da48a5a9b95773ee4b",
+    "https://git.kernel.org/stable/c/1d1970493c289e3f44b9ec847ed26a5dbdf56a62",
+    "https://git.kernel.org/stable/c/89fc548767a2155231128cb98726d6d2ea1256c9"
+  ],
+  "aliases": [
+    "CVE-2024-42315",
+    "GHSA-269x-4f35-gf3h"
+  ],
+  "assigner": "Linux",
+  "epss": 0.17,
+  "enisaIdProduct": [
+    {
+      "id": "12b46cdd-07cf-3890-a91f-23791c36138e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.232"
+    },
+    {
+      "id": "2232cb6d-1089-317d-a480-ca9b09cd1722",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "92dcd7d6c6068bf4fd35a6f64d606e27d634807e <c052f775ee6ccacd3c97e4cf41a2a657e63d4259"
+    },
+    {
+      "id": "3c164baf-a0e5-3f90-8fd0-86545d8d4091",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bd3bdb9e0d656f760b11d0c638d35d7f7068144d <632fb232b6bbf8277edcbe9ecd4b4d98ecb122eb"
+    },
+    {
+      "id": "4c19d4c6-318a-3fc3-be0f-0ffb8c68c558",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.150 <5.15.175"
+    },
+    {
+      "id": "5c9a32d1-f1ca-391b-be64-5f3301393b36",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a3ff29a95fde16906304455aa8c0bd84eb770258 <89fc548767a2155231128cb98726d6d2ea1256c9"
+    },
+    {
+      "id": "95a25bce-06d9-382d-8df2-3cdf08e9ad92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.3"
+    },
+    {
+      "id": "99c41b87-bbf3-3fb7-9799-dc2dac1e4226",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.175"
+    },
+    {
+      "id": "aca568ce-9438-35f5-9282-639cf76aedbc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "af72f3bd-fd33-375f-841c-ca4612df106e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.10.190 <5.10.232"
+    },
+    {
+      "id": "b389086e-df82-394d-ad00-758f0647c090",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.44"
+    },
+    {
+      "id": "bf25dce4-5fc1-3fc5-9992-2d812b99b7e4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a3ff29a95fde16906304455aa8c0bd84eb770258 <a7ac198f8dba791e3144c4da48a5a9b95773ee4b"
+    },
+    {
+      "id": "d2237fdb-f779-3238-a129-b94cdc23c92b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d8fe01ad2d8ab33aaf8f2efad9e8f1dae11c4b0c <cd1c7858641384191ff7033fb1fc65dfcd559c6f"
+    },
+    {
+      "id": "ef797d13-8aad-318f-9ec3-c94b897c27ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "f6d05ca8-7461-3124-a79c-1c2485328782",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.2"
+    },
+    {
+      "id": "fbf2de93-0d83-35e3-b4a3-65f5dfa34dd7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a3ff29a95fde16906304455aa8c0bd84eb770258 <1d1970493c289e3f44b9ec847ed26a5dbdf56a62"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d642bad9-9695-3050-afef-1e01e847e99d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

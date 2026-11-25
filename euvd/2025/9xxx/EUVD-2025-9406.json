@@ -3,8 +3,10 @@
   "enisaUuid": "4320a4c9-fc21-3683-b30e-0351f4d4a48f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncdx: Fix possible UAF error in driver_override_show()\n\nFixed a possible UAF problem in driver_override_show() in drivers/cdx/cdx.c\n\nThis function driver_override_show() is part of DEVICE_ATTR_RW, which\nincludes both driver_override_show() and driver_override_store().\nThese functions can be executed concurrently in sysfs.\n\nThe driver_override_store() function uses driver_set_override() to\nupdate the driver_override value, and driver_set_override() internally\nlocks the device (device_lock(dev)). If driver_override_show() reads\ncdx_dev->driver_override without locking, it could potentially access\na freed pointer if driver_override_store() frees the string\nconcurrently. This could lead to printing a kernel address, which is a\nsecurity risk since DEVICE_ATTR can be read by all users.\n\nAdditionally, a similar pattern is used in drivers/amba/bus.c, as well\nas many other bus drivers, where device_lock() is taken in the show\nfunction, and it has been working without issues.\n\nThis potential bug was detected by our experimental static analysis\ntool, which analyzes locking APIs and paired functions to identify\ndata races and atomicity violations.",
   "datePublished": "Apr 1, 2025, 3:40:52 PM",
-  "dateUpdated": "Apr 1, 2025, 3:40:52 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 11:55:19 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/d7b339bbc887bcfc1a5b620bfc70c6fbb8f733bf",
     "https://git.kernel.org/stable/c/8473135f89c0949436a22adb05b8cece2fb3da91",
@@ -12,52 +14,111 @@
     "https://git.kernel.org/stable/c/91d44c1afc61a2fec37a9c7a3485368309391e0b"
   ],
   "aliases": [
-    "CVE-2025-21915"
+    "CVE-2025-21915",
+    "GHSA-4v94-f8pq-mj8v"
   ],
   "assigner": "Linux",
-  "epss": 0.02,
+  "epss": 0.23,
   "enisaIdProduct": [
     {
-      "id": "4a0a8744-0a12-331c-8de1-ef34e7713e56",
+      "id": "10045fbc-5b27-3c2b-9581-3fe12f6fa9d4",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "5.10"
+      "product_version": "patch: 6.12.19"
     },
     {
-      "id": "66948cbf-18e5-34b6-a243-4fed2f35b314",
+      "id": "1d4ab36f-effa-3bbb-b477-71cc2e8891f2",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1f86a00c1159fd77e66b1bd6ff1a183f4d46f34d <91d44c1afc61a2fec37a9c7a3485368309391e0b"
+      "product_version": "patch: 6.6.83"
     },
     {
-      "id": "be8ceaff-4576-37c2-b0b6-8a707d52d91e",
+      "id": "20b8b2e0-ec3e-335f-9139-184726912256",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": ""
+      "product_version": "2959ab247061e67485d83b6af8feb3761ec08cb9 <8473135f89c0949436a22adb05b8cece2fb3da91"
     },
     {
-      "id": "c15f17ea-79ab-337d-98c4-e3aecfcda270",
+      "id": "3c284782-b0a3-36a9-92e0-ca29b4b354d5",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1f86a00c1159fd77e66b1bd6ff1a183f4d46f34d <8473135f89c0949436a22adb05b8cece2fb3da91"
+      "product_version": "patch: 6.14"
     },
     {
-      "id": "c1b751b2-e1d5-3f87-98c3-554f21705bdf",
+      "id": "41bbf5ee-071c-3a91-9006-c54e76fa3ce8",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1f86a00c1159fd77e66b1bd6ff1a183f4d46f34d <0439d541aa8d3444ad41c39e39eb71acb57acde3"
+      "product_version": "patch: 6.13.7"
     },
     {
-      "id": "dfd4c445-3f28-344f-ba0e-02c162a2c84c",
+      "id": "7db1ba10-3eb4-3d3a-ac34-1ec300375049",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1f86a00c1159fd77e66b1bd6ff1a183f4d46f34d <d7b339bbc887bcfc1a5b620bfc70c6fbb8f733bf"
+      "product_version": "2959ab247061e67485d83b6af8feb3761ec08cb9 <0439d541aa8d3444ad41c39e39eb71acb57acde3"
+    },
+    {
+      "id": "96cefc36-7d52-39de-910c-ef1e83a91875",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b98ca502-1625-3f97-9e89-3adf0e1cf6de",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2959ab247061e67485d83b6af8feb3761ec08cb9 <91d44c1afc61a2fec37a9c7a3485368309391e0b"
+    },
+    {
+      "id": "d0a53839-411d-344c-9031-d737b746ff4c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.4"
+    },
+    {
+      "id": "edd2df2f-2d1d-3eed-85bf-e464957f1fa9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2959ab247061e67485d83b6af8feb3761ec08cb9 <d7b339bbc887bcfc1a5b620bfc70c6fbb8f733bf"
     }
   ],
   "enisaIdVendor": [

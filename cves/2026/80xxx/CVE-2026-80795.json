@@ -3,7 +3,7 @@
   "enisaUuid": "927a85b8-3403-33f1-970d-99eb6aeec8c7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfc: nci: fix out-of-bounds write in nci_target_auto_activated()\n\nnci_target_auto_activated() appends a target to the fixed-size array\nndev->targets[NCI_MAX_DISCOVERED_TARGETS] and increments ndev->n_targets\nwithout first checking the array is full; unlike its sibling\nnci_add_new_target(), which bails out when n_targets already equals\nNCI_MAX_DISCOVERED_TARGETS.\n\nndev->n_targets is only cleared by nci_clear_target_list(), so an NFCC\nthat repeatedly re-runs discovery (RF_DISCOVER_RSP, which re-enters\nNCI_DISCOVERY without clearing the target list) and reports an\nauto-activated target (RF_INTF_ACTIVATED_NTF) drives n_targets past the\nlimit. The append then writes a struct nfc_target past the end of the\narray (a slab out-of-bounds write), and nfc_targets_found() goes on to\nwalk the array with the inflated count:\n\n  BUG: KASAN: slab-out-of-bounds in nci_add_new_protocol+0x94/0x2ac [nci]\n  Write of size 2 at addr ffff0000c7299a18 by task kworker/u8:0/12\n  Workqueue: nfc0_nci_rx_wq nci_rx_work [nci]\n  Call trace:\n   nci_add_new_protocol+0x94/0x2ac [nci]\n   nci_ntf_packet+0xddc/0x11a0 [nci]\n   nci_rx_work+0x15c/0x1e0 [nci]\n   process_one_work+0x2dc/0x500\n   worker_thread+0x240/0x460\n   kthread+0x1c0/0x1d0\n   ret_from_fork+0x10/0x20\n\n  The buggy address belongs to the cache kmalloc-2k of size 2048\n  The buggy address is located 1024 bytes to the right of\n  allocated 1560-byte region [ffff0000c7299000, ffff0000c7299618)\n\nGuard nci_target_auto_activated() with the same check used by\nnci_add_new_target().",
   "datePublished": "Sep 4, 2026, 3:13:08 PM",
-  "dateUpdated": "Sep 4, 2026, 3:13:08 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:48 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/0dc59de0075f88404a0f4a2b5233104ef459fbb2",
@@ -17,11 +17,22 @@
     "https://git.kernel.org/stable/c/ac200079db50af81e6b04d058b33ec92901d8edd"
   ],
   "aliases": [
+    "GHSA-rj9g-hqc5-rqg9",
     "CVE-2026-80795"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
+    {
+      "id": "0d5af8a4-af3e-3d06-8257-0a1cb1d5ada8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "0dc95ea6-e7c0-324b-b879-aa871c56a935",
       "product": {
@@ -81,16 +92,6 @@
         }
       },
       "product_version": "patch: 6.12.106"
-    },
-    {
-      "id": "5138ddc7-21ec-3e2b-acfa-9cc881710a72",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "57ce6c7b-61b2-309c-b9c2-a14bf061259f",

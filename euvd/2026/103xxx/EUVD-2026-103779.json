@@ -3,7 +3,7 @@
   "enisaUuid": "b44d8883-d1e0-31a6-89f6-428a012b705a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvt: selection: Fix unsigned underflow and slab-out-of-bounds read in paste_selection()\n\nIn paste_selection(), the loop copies min_t(unsigned int,\nvc_sel.buf_len - pasted,tty->receive_room) bytes per iteration into\ntty_ldisc_receive_buf() and increments pasted += count.\n\nBecause the selection mutex (vc_sel.lock) is dropped inside the loop\nWhenever the line discipline buffer fills up and paste_selection()\nsleeps on tty->write_wait, a concurrent TIOCLINUX (TIOCL_SETSEL) ioctl\ncan replace vc_sel.buffer with a shorter selection and reduce\nvc_sel.buf_len below pasted.\n\nWhen paste_selection() resumes, vc_sel.buf_len - pasted underflows as an\nunsigned integer to a large positive value, causing\ntty_ldisc_receive_buf(ld, vc_sel.buffer + pasted, NULL, count) to read\nup to 4094 bytes out-of-bounds past the newly allocated vc_sel.buffer.\n\nFix this by terminating the loop when pasted >= vc_sel.buf_len.\n\nKernel stack trace (Linux 7.3.0-rc3):\n ==================================================================\n BUG: KASAN: slab-out-of-bounds in n_tty_receive_buf_common+0xa01/0x1650\n Read of size 4094 at addr ffff888101c58010 by task kworker/u17:1/65\n Workqueue: events_unbound flush_to_ldisc\n Call Trace:\n  <TASK>\n  dump_stack_lvl+0x70/0xa0\n  print_report+0x153/0x4c6\n  kasan_report+0xf1/0x120\n  kasan_check_range+0x11c/0x200\n  __asan_memcpy+0x29/0x70\n  n_tty_receive_buf_common+0xa01/0x1650\n  tty_ldisc_receive_buf+0x66/0x110\n  tty_port_default_receive_buf+0x6b/0xb0\n  flush_to_ldisc+0x1b4/0x410\n  process_one_work+0x6ff/0x1110\n  worker_thread+0x4a8/0xb70\n  kthread+0x307/0x3e0\n  ret_from_fork+0x3ed/0x680\n  </TASK>\n ==================================================================",
   "datePublished": "Oct 18, 2026, 3:50:11 PM",
-  "dateUpdated": "Oct 18, 2026, 3:50:11 PM",
+  "dateUpdated": "Oct 19, 2026, 9:26:31 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/037d7e3ca5c593092f4b0d471eb869a85cbddde0",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/39495ef5d6f8019e62d65807f217a7ca8232727a"
   ],
   "aliases": [
-    "CVE-2026-98839"
+    "CVE-2026-98839",
+    "GHSA-rgr5-hhj8-qq6p"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "077ff34d-6c20-39f8-9097-013b355c4a67",
@@ -75,16 +76,6 @@
         }
       },
       "product_version": "5.4.25 <5.5"
-    },
-    {
-      "id": "5fe1c26c-34f8-3ca9-b126-abf916e42e48",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc6"
     },
     {
       "id": "6012d60d-d802-3210-9a49-744e5ef87396",
@@ -185,6 +176,16 @@
         }
       },
       "product_version": "b4492f1e7456bd162714c0ec2815c2749d930844"
+    },
+    {
+      "id": "c35b079a-c745-3fa9-97f4-646769463b2e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "c925926c-a496-3b11-8517-71aa605d3031",

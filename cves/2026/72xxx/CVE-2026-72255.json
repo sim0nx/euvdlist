@@ -2,24 +2,27 @@
   "id": "EUVD-2026-59154",
   "enisaUuid": "5ec448d4-f39b-3346-b095-2867473dd788",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: nf_queue: pin bridge device while NFQUEUE holds fake dst\n\nThe br_netfilter fake rtable is embedded in struct net_bridge and is\nattached to bridged packets with skb_dst_set_noref(). If such a packet is\nqueued to NFQUEUE, __nf_queue() upgrades that fake dst with\nskb_dst_force().\n\nAt that point the queued skb can hold a real dst reference after bridge\nteardown has started. The problem is not that every bridged packet needs\nits own dst reference. The problem is that NFQUEUE can keep the bridge\nprivate fake dst alive after unregister begins.\n\nFix this by keeping the bridge fake dst model unchanged and pinning the\nbridge master device only while the packet sits in NFQUEUE. Record the\nbridge device in nf_queue_entry when the queued skb carries a bridge fake\ndst, take a device reference for the queue lifetime, and drop it when the\nqueue entry is freed.\n\nAlso make sure queued entries are reaped when that bridge device goes\ndown, and drop the redundant nf_bridge_info_exists() test from the fake\ndst detection.\n\nThis keeps netdev_priv(br->dev) alive until verdict completion, so the\nembedded fake rtable and its metrics backing storage cannot be freed out\nfrom under dst_release(). It also avoids the constant refcount bump and\navoids using ipv4-specific dst helpers for IPv6 bridge traffic.",
-  "datePublished": "Aug 15, 2026, 6:32:17 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:17 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:54:42 AM",
+  "dateUpdated": "Oct 16, 2026, 6:55:13 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/4e56d3d60d3192ef0a0c08e8b433636690189384",
+    "https://git.kernel.org/stable/c/8dc51351472825500145eed5bddfb88b2ec32008",
     "https://git.kernel.org/stable/c/430521af7fe8a9c08f5a2554224a35f11f51d99e",
     "https://git.kernel.org/stable/c/3f03a2d225c668283110ad5f9ff159ba4591e2c7",
     "https://git.kernel.org/stable/c/01ace27af47801dd7f6b839e782b62863af979cc",
     "https://git.kernel.org/stable/c/0ca505346c5e2905ab7b5313af801fcf38f594a8",
     "https://git.kernel.org/stable/c/47b3af24de5fbed4bf2952de0f5294ef1a338a26",
-    "https://git.kernel.org/stable/c/c9c9b37f8c5505224e8d206184df3bb668ee00cf",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72255"
+    "https://git.kernel.org/stable/c/c9c9b37f8c5505224e8d206184df3bb668ee00cf"
   ],
   "aliases": [
     "GHSA-gv97-ph2v-g3p8",
     "CVE-2026-72255"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "04efb573-8245-3d05-8a48-65b914d8794c",
@@ -72,6 +75,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "445aff0a-9609-3410-aed0-c1740be9e165",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "34666d467cbf1e2e3c7bb15a63eccfb582cdd71f <4e56d3d60d3192ef0a0c08e8b433636690189384"
+    },
+    {
+      "id": "49d075b5-cac6-3055-8fbc-ec13cc4988e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.270"
+    },
+    {
       "id": "51cb15bb-1bfc-3fae-973b-86d2f47edd4e",
       "product": {
         "name": "Linux",
@@ -92,14 +115,14 @@
       "product_version": "34666d467cbf1e2e3c7bb15a63eccfb582cdd71f <01ace27af47801dd7f6b839e782b62863af979cc"
     },
     {
-      "id": "834ab7f9-d363-365b-97f9-8621e1b0e260",
+      "id": "618fc01f-62ac-3df9-932c-3f793c042c80",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "34666d467cbf1e2e3c7bb15a63eccfb582cdd71f <8dc51351472825500145eed5bddfb88b2ec32008"
     },
     {
       "id": "9b469c8c-616d-319c-bda3-b95ed73e2449",
@@ -110,6 +133,26 @@
         }
       },
       "product_version": "34666d467cbf1e2e3c7bb15a63eccfb582cdd71f <430521af7fe8a9c08f5a2554224a35f11f51d99e"
+    },
+    {
+      "id": "a478dbce-3de9-3720-8fba-3dcb2824e21c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.217"
+    },
+    {
+      "id": "af34a451-865c-352f-ba3a-5b33883da872",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "bc4659dd-333a-3d78-9e7c-fc970f095c3a",

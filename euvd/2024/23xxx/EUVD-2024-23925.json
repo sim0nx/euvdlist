@@ -1,0 +1,216 @@
+{
+  "id": "EUVD-2024-23925",
+  "enisaUuid": "c29abaa0-4e0a-3d18-aa4d-9116aa6db514",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntipc: Check the bearer type before calling tipc_udp_nl_bearer_add()\n\nsyzbot reported the following general protection fault [1]:\n\ngeneral protection fault, probably for non-canonical address 0xdffffc0000000010: 0000 [#1] PREEMPT SMP KASAN\nKASAN: null-ptr-deref in range [0x0000000000000080-0x0000000000000087]\n...\nRIP: 0010:tipc_udp_is_known_peer+0x9c/0x250 net/tipc/udp_media.c:291\n...\nCall Trace:\n <TASK>\n tipc_udp_nl_bearer_add+0x212/0x2f0 net/tipc/udp_media.c:646\n tipc_nl_bearer_add+0x21e/0x360 net/tipc/bearer.c:1089\n genl_family_rcv_msg_doit+0x1fc/0x2e0 net/netlink/genetlink.c:972\n genl_family_rcv_msg net/netlink/genetlink.c:1052 [inline]\n genl_rcv_msg+0x561/0x800 net/netlink/genetlink.c:1067\n netlink_rcv_skb+0x16b/0x440 net/netlink/af_netlink.c:2544\n genl_rcv+0x28/0x40 net/netlink/genetlink.c:1076\n netlink_unicast_kernel net/netlink/af_netlink.c:1341 [inline]\n netlink_unicast+0x53b/0x810 net/netlink/af_netlink.c:1367\n netlink_sendmsg+0x8b7/0xd70 net/netlink/af_netlink.c:1909\n sock_sendmsg_nosec net/socket.c:730 [inline]\n __sock_sendmsg+0xd5/0x180 net/socket.c:745\n ____sys_sendmsg+0x6ac/0x940 net/socket.c:2584\n ___sys_sendmsg+0x135/0x1d0 net/socket.c:2638\n __sys_sendmsg+0x117/0x1e0 net/socket.c:2667\n do_syscall_x64 arch/x86/entry/common.c:52 [inline]\n do_syscall_64+0x40/0x110 arch/x86/entry/common.c:83\n entry_SYSCALL_64_after_hwframe+0x63/0x6b\n\nThe cause of this issue is that when tipc_nl_bearer_add() is called with\nthe TIPC_NLA_BEARER_UDP_OPTS attribute, tipc_udp_nl_bearer_add() is called\neven if the bearer is not UDP.\n\ntipc_udp_is_known_peer() called by tipc_udp_nl_bearer_add() assumes that\nthe media_ptr field of the tipc_bearer has an udp_bearer type object, so\nthe function goes crazy for non-UDP bearers.\n\nThis patch fixes the issue by checking the bearer type before calling\ntipc_udp_nl_bearer_add() in tipc_nl_bearer_add().",
+  "datePublished": "Apr 2, 2024, 6:22:12 AM",
+  "dateUpdated": "Aug 5, 2026, 11:26:37 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/24ec8f0da93b8a9fba11600be8a90f0d73fb46f1",
+    "https://git.kernel.org/stable/c/6f70f0b412458c622a12d4292782c8e92e210c2f",
+    "https://git.kernel.org/stable/c/19d7314f2fb9515bdaac9829d4d8eb34edd1fe95",
+    "https://git.kernel.org/stable/c/c1701ea85ef0ec7be6a1b36c7da69f572ed2fd12",
+    "https://git.kernel.org/stable/c/3d3a5b31b43515b5752ff282702ca546ec3e48b6",
+    "https://git.kernel.org/stable/c/888e3524be87f3df9fa3c083484e4b62b3e3bb59",
+    "https://git.kernel.org/stable/c/0cd331dfd6023640c9669d0592bc0fd491205f87",
+    "https://git.kernel.org/stable/c/3871aa01e1a779d866fa9dfdd5a836f342f4eb87"
+  ],
+  "aliases": [
+    "CVE-2024-26663",
+    "GHSA-jg3j-8qg2-gph3"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "0c4ae5f4-aa3c-3bcb-9f38-a7f9aee0b0ae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "0e4bf3c3-58da-3730-82f9-26d15cef2ec7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.307"
+    },
+    {
+      "id": "0fe7fcf0-b0af-37c3-8998-4daca49cfc79",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ef20cd4dd1633987bcf46ac34ace2c8af212361f <888e3524be87f3df9fa3c083484e4b62b3e3bb59"
+    },
+    {
+      "id": "2d28e9ed-1dae-3111-8e61-63872082294f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.78"
+    },
+    {
+      "id": "39eb2be5-b146-3e38-895b-3f88a4a2fb18",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ef20cd4dd1633987bcf46ac34ace2c8af212361f <19d7314f2fb9515bdaac9829d4d8eb34edd1fe95"
+    },
+    {
+      "id": "3c6963d7-b6ec-3942-98f4-805266f374d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ef20cd4dd1633987bcf46ac34ace2c8af212361f <3d3a5b31b43515b5752ff282702ca546ec3e48b6"
+    },
+    {
+      "id": "4249f367-fff7-37fd-85cc-d3ab66a1dd9a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.5"
+    },
+    {
+      "id": "5d075626-5862-3b11-a840-6b8488bad516",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.17"
+    },
+    {
+      "id": "76de3a21-3112-3dae-8092-747e007d2996",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ef20cd4dd1633987bcf46ac34ace2c8af212361f <6f70f0b412458c622a12d4292782c8e92e210c2f"
+    },
+    {
+      "id": "86353501-93da-3400-9e9b-20c9b71f068e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.210"
+    },
+    {
+      "id": "9cfae12d-ae30-353d-bc6b-41e5c75b13c4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ef20cd4dd1633987bcf46ac34ace2c8af212361f <24ec8f0da93b8a9fba11600be8a90f0d73fb46f1"
+    },
+    {
+      "id": "a937281b-7728-3396-aef4-a27fd52137c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "b78eca80-a4b4-3db9-a0e4-07eda5e9a9fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ef20cd4dd1633987bcf46ac34ace2c8af212361f <3871aa01e1a779d866fa9dfdd5a836f342f4eb87"
+    },
+    {
+      "id": "c57ed7ec-d0bb-3968-8f97-a43a5a22a954",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ef20cd4dd1633987bcf46ac34ace2c8af212361f <c1701ea85ef0ec7be6a1b36c7da69f572ed2fd12"
+    },
+    {
+      "id": "c901f97c-b577-3c02-aad9-bd9461f797c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.269"
+    },
+    {
+      "id": "cd9ed147-5e0a-3503-873f-760e2eca9b55",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ef20cd4dd1633987bcf46ac34ace2c8af212361f <0cd331dfd6023640c9669d0592bc0fd491205f87"
+    },
+    {
+      "id": "f6e2c4b6-c657-3fb9-8126-6fc70954f275",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.149"
+    },
+    {
+      "id": "f8c71102-99ff-3aae-857d-4c6a30d0c738",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "49e07add-41fc-3b97-a2bf-d7d0376ce660",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -1,0 +1,174 @@
+{
+  "id": "EUVD-2021-33870",
+  "enisaUuid": "c7e6f28e-5647-3b08-aa6f-609acf27e0fb",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: bridge: fix vlan tunnel dst refcnt when egressing\n\nThe egress tunnel code uses dst_clone() and directly sets the result\nwhich is wrong because the entry might have 0 refcnt or be already deleted,\ncausing number of problems. It also triggers the WARN_ON() in dst_hold()[1]\nwhen a refcnt couldn't be taken. Fix it by using dst_hold_safe() and\nchecking if a reference was actually taken before setting the dst.\n\n[1] dmesg WARN_ON log and following refcnt errors\n WARNING: CPU: 5 PID: 38 at include/net/dst.h:230 br_handle_egress_vlan_tunnel+0x10b/0x134 [bridge]\n Modules linked in: 8021q garp mrp bridge stp llc bonding ipv6 virtio_net\n CPU: 5 PID: 38 Comm: ksoftirqd/5 Kdump: loaded Tainted: G        W         5.13.0-rc3+ #360\n Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.14.0-1.fc33 04/01/2014\n RIP: 0010:br_handle_egress_vlan_tunnel+0x10b/0x134 [bridge]\n Code: e8 85 bc 01 e1 45 84 f6 74 90 45 31 f6 85 db 48 c7 c7 a0 02 19 a0 41 0f 94 c6 31 c9 31 d2 44 89 f6 e8 64 bc 01 e1 85 db 75 02 <0f> 0b 31 c9 31 d2 44 89 f6 48 c7 c7 70 02 19 a0 e8 4b bc 01 e1 49\n RSP: 0018:ffff8881003d39e8 EFLAGS: 00010246\n RAX: 0000000000000000 RBX: 0000000000000000 RCX: 0000000000000000\n RDX: 0000000000000000 RSI: 0000000000000001 RDI: ffffffffa01902a0\n RBP: ffff8881040c6700 R08: 0000000000000000 R09: 0000000000000001\n R10: 2ce93d0054fe0d00 R11: 54fe0d00000e0000 R12: ffff888109515000\n R13: 0000000000000000 R14: 0000000000000001 R15: 0000000000000401\n FS:  0000000000000000(0000) GS:ffff88822bf40000(0000) knlGS:0000000000000000\n CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033\n CR2: 00007f42ba70f030 CR3: 0000000109926000 CR4: 00000000000006e0\n Call Trace:\n  br_handle_vlan+0xbc/0xca [bridge]\n  __br_forward+0x23/0x164 [bridge]\n  deliver_clone+0x41/0x48 [bridge]\n  br_handle_frame_finish+0x36f/0x3aa [bridge]\n  ? skb_dst+0x2e/0x38 [bridge]\n  ? br_handle_ingress_vlan_tunnel+0x3e/0x1c8 [bridge]\n  ? br_handle_frame_finish+0x3aa/0x3aa [bridge]\n  br_handle_frame+0x2c3/0x377 [bridge]\n  ? __skb_pull+0x33/0x51\n  ? vlan_do_receive+0x4f/0x36a\n  ? br_handle_frame_finish+0x3aa/0x3aa [bridge]\n  __netif_receive_skb_core+0x539/0x7c6\n  ? __list_del_entry_valid+0x16e/0x1c2\n  __netif_receive_skb_list_core+0x6d/0xd6\n  netif_receive_skb_list_internal+0x1d9/0x1fa\n  gro_normal_list+0x22/0x3e\n  dev_gro_receive+0x55b/0x600\n  ? detach_buf_split+0x58/0x140\n  napi_gro_receive+0x94/0x12e\n  virtnet_poll+0x15d/0x315 [virtio_net]\n  __napi_poll+0x2c/0x1c9\n  net_rx_action+0xe6/0x1fb\n  __do_softirq+0x115/0x2d8\n  run_ksoftirqd+0x18/0x20\n  smpboot_thread_fn+0x183/0x19c\n  ? smpboot_unregister_percpu_thread+0x66/0x66\n  kthread+0x10a/0x10f\n  ? kthread_mod_delayed_work+0xb6/0xb6\n  ret_from_fork+0x22/0x30\n ---[ end trace 49f61b07f775fd2b ]---\n dst_release: dst:00000000c02d677a refcnt:-1\n dst_release underflow",
+  "datePublished": "May 21, 2024, 2:19:28 PM",
+  "dateUpdated": "Aug 5, 2026, 8:46:47 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/42020f7f37a90d24b9551f5f7eba3f7c7c102968",
+    "https://git.kernel.org/stable/c/84fc1c944e45ab317e2e70a0e7f76fa2a5e43b6e",
+    "https://git.kernel.org/stable/c/79855be6445b6592bddb7bd7167083ec8cdbd73f",
+    "https://git.kernel.org/stable/c/fc7fdd8c5c2ad2fe3e297698be9d4dbe4a4e0579",
+    "https://git.kernel.org/stable/c/25053a8404ba17ca48f5553d487afc1882e9f56c",
+    "https://git.kernel.org/stable/c/cfc579f9d89af4ada58c69b03bcaa4887840f3b3"
+  ],
+  "aliases": [
+    "CVE-2021-47222",
+    "GHSA-h423-6g7m-qpqq"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "0d0d0b82-601f-30a6-8fc8-97e46b4da5f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.196"
+    },
+    {
+      "id": "1c7a58b3-0674-3d4c-9bc8-9672b330c32b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.11"
+    },
+    {
+      "id": "225192e0-9eed-32de-bb95-eb6ed9ec339e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11538d039ac6efcf4f1a6c536e1b87cd3668a9fd <42020f7f37a90d24b9551f5f7eba3f7c7c102968"
+    },
+    {
+      "id": "40ebfbcf-ebdd-3113-9071-a1610acac846",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.128"
+    },
+    {
+      "id": "60b220d0-d68a-3d96-b997-199860cf4f20",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "67d7204c-d76d-391a-b1b0-6a670eae2fa7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11538d039ac6efcf4f1a6c536e1b87cd3668a9fd <fc7fdd8c5c2ad2fe3e297698be9d4dbe4a4e0579"
+    },
+    {
+      "id": "8645310d-f0af-360e-bc6c-5e71a6afabff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11538d039ac6efcf4f1a6c536e1b87cd3668a9fd <cfc579f9d89af4ada58c69b03bcaa4887840f3b3"
+    },
+    {
+      "id": "8fd591e0-88a4-3601-ae94-54de03e02020",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.46"
+    },
+    {
+      "id": "9d9a6585-8760-385f-a829-cc7de9de42ae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.13"
+    },
+    {
+      "id": "9f913c6b-8278-3748-b332-d4c6f731ec78",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11538d039ac6efcf4f1a6c536e1b87cd3668a9fd <79855be6445b6592bddb7bd7167083ec8cdbd73f"
+    },
+    {
+      "id": "ae2a0e5e-fcef-3444-bb92-b3d0d407a59c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11538d039ac6efcf4f1a6c536e1b87cd3668a9fd <25053a8404ba17ca48f5553d487afc1882e9f56c"
+    },
+    {
+      "id": "c11c0f97-daff-3b88-8a54-a1d32e9a99e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.238"
+    },
+    {
+      "id": "e15665c4-eacc-37b2-9f7d-a142ad384b53",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "11538d039ac6efcf4f1a6c536e1b87cd3668a9fd <84fc1c944e45ab317e2e70a0e7f76fa2a5e43b6e"
+    },
+    {
+      "id": "f3c62b22-3f70-32e3-93bd-5978b06d5610",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "28f4aaaf-fd77-355b-b27a-16aaa18cdc0f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

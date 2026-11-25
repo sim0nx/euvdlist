@@ -3,19 +3,35 @@
   "enisaUuid": "cac88251-1b2a-363c-b793-0fbec2803da1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsctp: validate embedded INIT chunk and address list lengths in cookie\n\nsctp_unpack_cookie() only checked that the embedded INIT chunk length\ndid not exceed the remaining cookie payload, but did not ensure that the\nINIT chunk is large enough to contain a complete INIT header.\n\nA malformed COOKIE_ECHO can therefore carry a truncated INIT chunk whose\nlength field is smaller than sizeof(struct sctp_init_chunk).  Later,\nsctp_process_init() accesses INIT parameters unconditionally, which may\nlead to out-of-bounds reads.\n\nIn addition, raw_addr_list_len is not fully validated against the\nremaining cookie payload. When cookie authentication is disabled, an\nattacker can supply an oversized raw_addr_list_len and cause\nsctp_raw_to_bind_addrs() to read beyond the end of the cookie. The\naddress parser also lacks sufficient bounds checks for parameter headers\nand lengths, allowing malformed address parameters to trigger\nout-of-bounds reads.\n\nFix this by:\n\n- requiring the embedded INIT chunk length to be at least sizeof(struct\n  sctp_init_chunk);\n- validating that the INIT chunk and raw address list together fit\n  within the cookie payload;\n- verifying sufficient data exists for each address parameter header and\n  payload before parsing it.\n\nNote that sctp_verify_init() must be called after sctp_unpack_cookie()\nand before sctp_process_init() when cookie authentication is disabled.\nThis will be addressed in a separate patch.",
   "datePublished": "Jun 25, 2026, 8:39:25 AM",
-  "dateUpdated": "Jun 25, 2026, 8:39:25 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:26:45 PM",
+  "baseScore": 9.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/b1ca7dcfb335caa2c73d2d1bb5710e6dea2c11e0",
+    "https://git.kernel.org/stable/c/dd75066882ecc4ec8df3f5384b4b9fa9579be8f0",
+    "https://git.kernel.org/stable/c/29ab56e7660b6f849c10c46e87e085649df751eb",
     "https://git.kernel.org/stable/c/7560afb8cddafd829e709d7ea09230e45a825557",
     "https://git.kernel.org/stable/c/512a9bb77c04ac9927648ea58af617e472be96e6",
     "https://git.kernel.org/stable/c/6f4c80a2a7e6d06753b89a578b710a2499a5e62b"
   ],
   "aliases": [
-    "CVE-2026-53224"
+    "CVE-2026-53224",
+    "GHSA-h634-6f45-j5wj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.57,
   "enisaIdProduct": [
+    {
+      "id": "142de2d8-61e4-329e-aa25-f9688fd4450e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.114"
+    },
     {
       "id": "2f57c59c-57fd-39a2-92ba-d269fa53f879",
       "product": {
@@ -27,6 +43,26 @@
       "product_version": "2.6.12"
     },
     {
+      "id": "49a05ce4-4efe-3012-9613-bdd04c298207",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <dd75066882ecc4ec8df3f5384b4b9fa9579be8f0"
+    },
+    {
+      "id": "55c6c773-866f-38bd-ba1d-81cffb5fe30f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
       "id": "5d1166d9-0647-3c03-87cc-b36ea1fe22fa",
       "product": {
         "name": "Linux",
@@ -35,6 +71,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "6846573a-d407-39d5-a496-bb76ab242d47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b1ca7dcfb335caa2c73d2d1bb5710e6dea2c11e0"
     },
     {
       "id": "6ea1d710-ca9f-38e4-a1d1-12c3bb3dc187",
@@ -67,6 +113,16 @@
       "product_version": "patch: 6.18.36"
     },
     {
+      "id": "8d597df1-b542-3fa6-8a5b-3e3a70908ba3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <29ab56e7660b6f849c10c46e87e085649df751eb"
+    },
+    {
       "id": "e3f64f70-da98-3878-93cf-a8be7d75dc84",
       "product": {
         "name": "Linux",
@@ -95,6 +151,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6f4c80a2a7e6d06753b89a578b710a2499a5e62b"
+    },
+    {
+      "id": "fa36d3d7-af6e-3231-9ca7-3c1f426d0807",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     }
   ],
   "enisaIdVendor": [

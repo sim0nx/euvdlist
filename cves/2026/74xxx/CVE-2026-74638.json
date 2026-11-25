@@ -3,7 +3,7 @@
   "enisaUuid": "9aecee3d-a133-3aad-8bff-da10ab39feb9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/v3d: Serialize the scheduler timeout handlers\n\nV3D exposes several independent hardware queues (BIN, RENDER, TFU and\nCSD) but has only a single, global reset. A timeout on any one queue\ntherefore has to stop, reset and restart the schedulers of every other\nqueue as well. That makes concurrent timeout handlers unsafe.\n\n`reset_lock` was never able to make them safe, as a driver-side lock can\nonly cover the driver's &drm_sched_backend_ops.timedout_job callback.\nThe scheduler handles the timed out job and its pending list around that\ncallback, outside of the driver's control, so a global reset triggered\nby one queue can still interfere with another queue that is in the\nmiddle of handling a timeout of its own.\n\nConsequently, if a reset happens in the CSD queue while a CL-intensive\napplication is running, the global reset stops and restarts the CL\nqueue's scheduler while that queue is handling a timeout of its own. As\ndrm_sched_stop() and drm_sched_start() subtract and add the credits of\nevery job sitting on the pending list of the scheduler they are called\non, and as the CL queue's handler concurrently takes its job off that\nsame list and puts it back, the stop and the start no longer see the\nsame set of jobs. The CL queue is left with more credits in flight than\nits limit:\n\n[  327.302739] ------------[ cut here ]------------\n[  327.302744] WARNING: CPU: 2 PID: 43 at drivers/gpu/drm/scheduler/sched_main.c:102 drm_sched_run_job_work+0x238/0x4d0 [gpu_sched]\n[  327.302884] CPU: 2 UID: 0 PID: 43 Comm: kworker/u16:1 Not tainted 6.18.39-v8-16k+ #3 PREEMPT\n[  327.302889] Hardware name: Raspberry Pi 5 Model B Rev 1.0 (DT)\n[  327.302893] Workqueue: v3d_bin drm_sched_run_job_work [gpu_sched]\n[  327.302984] Call trace:\n[  327.302987]  drm_sched_run_job_work+0x238/0x4d0 [gpu_sched] (P)\n[  327.302997]  process_scheduled_works+0x180/0x3d0\n[  327.303010]  worker_thread+0x268/0x3e8\n[  327.303016]  kthread+0x140/0x250\n[  327.303022]  ret_from_fork+0x10/0x20\n[  327.303031] ---[ end trace 0000000000000000 ]---\n\nFrom that point on, the credit count of the CL queue is broken, causing\na complete GPU hang and UI freeze.\n\nThe DRM scheduler already provides a mechanism to serialize the timeout\nhandlers of different schedulers: an ordered workqueue passed as\ndrm_sched_init()'s @timeout_wq parameter. By default, each scheduler\nqueues its timeout work on the system workqueue, which runs the handlers\nconcurrently. Give all of the queues a shared ordered workqueue instead,\nas recommended by the DRM scheduler documentation for hardware that has\ndistinct queues but resets globally.",
   "datePublished": "Aug 22, 2026, 3:32:17 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:17 PM",
+  "dateUpdated": "Aug 25, 2026, 5:23:13 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/5884851a096d8afcdf91f0e542bac193035183a6",
@@ -11,20 +11,21 @@
     "https://git.kernel.org/stable/c/4da94744707b27a3ae1197bdd7127da4505dc5b1"
   ],
   "aliases": [
-    "CVE-2026-74638"
+    "CVE-2026-74638",
+    "GHSA-g887-j6m8-c6gc"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
-      "id": "24159965-7ae7-3579-9a8a-6f0533e1b8ba",
+      "id": "15529263-82b3-3464-a25c-c6edd9546184",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.18.45"
+      "product_version": "patch: 0"
     },
     {
       "id": "2c8258be-aac3-3418-8bf5-e294df398bc2",
@@ -37,6 +38,26 @@
       "product_version": "patch: 7.1.9"
     },
     {
+      "id": "30488729-7ab9-33e7-b44e-26f2fbd6215a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.14.7 <6.15"
+    },
+    {
+      "id": "317b8ed7-13f4-3f89-aba6-0b1ad28ce0dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.12.29 <6.13"
+    },
+    {
       "id": "35bd8c68-9c84-38f8-8488-9029c40b47e7",
       "product": {
         "name": "Linux",
@@ -47,34 +68,94 @@
       "product_version": "patch: 7.2"
     },
     {
-      "id": "35d1b063-b3ce-39bc-9c6e-22069c4c993d",
+      "id": "45152985-fb55-343c-86ea-a506f56430a1",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <4da94744707b27a3ae1197bdd7127da4505dc5b1"
+      "product_version": "6.15"
     },
     {
-      "id": "70d24fe6-e51d-33f0-af1e-ccb13c9c2a7c",
+      "id": "6255933f-0c6f-3168-8a19-f0376ca6b9e7",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <5884851a096d8afcdf91f0e542bac193035183a6"
+      "product_version": "a5f162727b91e480656da1876247a91f651f76de"
     },
     {
-      "id": "770c2798-77ea-3d73-9d1e-ea358c7a3fdb",
+      "id": "689fa25a-9a98-32d9-8257-afb6ebd3251e",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c22a45817b9c92aa0391db60e2ed467c7e6027d7"
+      "product_version": "35e4079bf1a2570abffce6ababa631afcf8ea0e5 <5884851a096d8afcdf91f0e542bac193035183a6"
+    },
+    {
+      "id": "736be19e-be18-32d7-a0bd-4668dcef5f0a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "12125f7d9c15e6d8ac91d10373b2db2f17dcf767"
+    },
+    {
+      "id": "7404d627-f952-3431-8ca3-0e1b386a98ca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "35e4079bf1a2570abffce6ababa631afcf8ea0e5 <4da94744707b27a3ae1197bdd7127da4505dc5b1"
+    },
+    {
+      "id": "89aa09f5-f0ff-36f4-9e7e-a8731c215692",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5235b56b7e5449d990d21d78723b1a5e7bb5738e"
+    },
+    {
+      "id": "a1fc2e8a-fc4b-3f19-b875-92085259f197",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6.91 <6.7"
+    },
+    {
+      "id": "adb892c2-1bb9-3e28-95a2-1712a1010012",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.139 <6.2"
+    },
+    {
+      "id": "b7c2c8ec-1f69-35e2-b35b-af0dbb99abdc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "35e4079bf1a2570abffce6ababa631afcf8ea0e5 <c22a45817b9c92aa0391db60e2ed467c7e6027d7"
     },
     {
       "id": "bcc8ebae-3e1f-3249-8224-c3febc41409c",
@@ -87,14 +168,14 @@
       "product_version": "patch: 6.18.45"
     },
     {
-      "id": "f6fd24b0-d25d-3b02-a843-69743225941c",
+      "id": "ddd070ed-97b3-3279-9560-163a87b1d849",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.1.9"
+      "product_version": "422a8b10ba42097a704d6909ada2956f880246f2"
     }
   ],
   "enisaIdVendor": [

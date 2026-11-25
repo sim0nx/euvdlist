@@ -3,9 +3,11 @@
   "enisaUuid": "fae873d1-3659-3fb2-add8-4b22b0441c26",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: bcd2000: Fix race between rawmidi and disconnect\n\nAlthough we tried to fix the potential UAF issues at USB disconnect on\nbcd2000 driver, there is still an overlooked case -- namely, when a\nrawmidi trigger callback has been already running at USB disconnect\nhandling, the in-flight function (e.g. bcd2000_midi_send()) could\nstill access the URB, because the previous URB NULL-check & clearance\nwas considered only for the URB complete callbacks, but not about the\nparallel rawmidi operations.\n\nFor addressing the race, this patch introduced a new spinlock that\ncovers each rawmidi operation as well as the rawmidi handling in the\ncomplete callback.  The URB is cleared with the lock, so it guarantees\nthat the pending rawmidi task already finished or a NULL check is\neffective.",
   "datePublished": "Oct 6, 2026, 8:46:11 AM",
-  "dateUpdated": "Oct 6, 2026, 8:46:11 AM",
+  "dateUpdated": "Nov 23, 2026, 7:59:47 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/c3f37100d0a5a6f8a4c590b696c7b9d58b006068",
+    "https://git.kernel.org/stable/c/9a0f09d80cd54a4e9825e00e4aae5e0e121ef095",
     "https://git.kernel.org/stable/c/3b824930259d54f5047ce6b5c97bd20db2fc2b98",
     "https://git.kernel.org/stable/c/c83d6b0a65f7b71bbabcc91c045dfbffdff6ae76",
     "https://git.kernel.org/stable/c/0a7ecf52cb59ed77ec525deb52c496ea8fba10b1",
@@ -14,10 +16,11 @@
     "https://git.kernel.org/stable/c/221253723dc58bb901c3f27a7659823e63fc598c"
   ],
   "aliases": [
-    "CVE-2026-98316"
+    "CVE-2026-98316",
+    "GHSA-877f-c8m6-hq9r"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "07c8e820-bdcf-3dad-8319-9a005cac2c89",
@@ -50,26 +53,6 @@
       "product_version": "459d3a64766f5ca2f1886daeaf24582831a5f5ab <221253723dc58bb901c3f27a7659823e63fc598c"
     },
     {
-      "id": "12116a3d-758d-3d31-89f1-08c6da466f27",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2.8"
-    },
-    {
-      "id": "14ca3f30-7dda-3035-8e09-0b0174229e3b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 6.1.189"
-    },
-    {
       "id": "14eaa0f0-a510-329f-85ad-a467ff2d31f0",
       "product": {
         "name": "Linux",
@@ -78,16 +61,6 @@
         }
       },
       "product_version": "7.2.4 <7.2.8"
-    },
-    {
-      "id": "172a4e79-dd3e-3aa6-b819-f8f015997cff",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "17c28376-ee7c-345f-b2da-20e15b508513",
@@ -100,44 +73,24 @@
       "product_version": "6.1.188 <6.1.189"
     },
     {
-      "id": "3984f8f1-3f59-3ac8-a2ce-dcc00397a4f8",
+      "id": "7394c9af-00b3-3bd9-b3fb-4997468b73ec",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "7.3-rc1"
+      "product_version": "5.15.221 <5.15.226"
     },
     {
-      "id": "43c94725-c309-38a9-8b0c-0677ff5b3871",
+      "id": "7b406aae-02d3-3956-b5a8-911b87531653",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 6.6.158"
-    },
-    {
-      "id": "5af898dd-7e29-3eae-bc90-f47cdd3a9c2d",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5.10.270 <5.11"
-    },
-    {
-      "id": "66c7b338-035a-3400-8f90-f0d9b64a70df",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 6.18.54"
+      "product_version": "5.10.270 <5.10.275"
     },
     {
       "id": "827439ad-ee4f-3135-83e5-79d04135b16e",
@@ -148,6 +101,16 @@
         }
       },
       "product_version": "6.6.157 <6.6.158"
+    },
+    {
+      "id": "8f84ce98-be96-38b3-8495-9a7e37d83791",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9af08677aa57debaca5b57c8045c52a83d3dd376 <c3f37100d0a5a6f8a4c590b696c7b9d58b006068"
     },
     {
       "id": "94189dce-b96f-33ee-a85e-1c365526eb3e",
@@ -180,16 +143,6 @@
       "product_version": "3c00004f134fc819f9d9e202c6a64acde0a1f8d0 <3b824930259d54f5047ce6b5c97bd20db2fc2b98"
     },
     {
-      "id": "b8177295-cce9-30a7-a465-09d407b0d577",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5a77febac6faf6da40fbb4555f703eeb91b58130"
-    },
-    {
       "id": "d14ca2e9-d00d-316d-89d8-c7d9dd082b3b",
       "product": {
         "name": "Linux",
@@ -200,44 +153,14 @@
       "product_version": "6c07aad8a7c9ef8ebc4d03a964b882123a349a2e <c83d6b0a65f7b71bbabcc91c045dfbffdff6ae76"
     },
     {
-      "id": "eaf93be6-7e56-3da2-ab58-56a4a6952fb8",
+      "id": "de95468e-e313-3d88-9b40-397a2c9fa655",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 6.12.112"
-    },
-    {
-      "id": "f111ebac-74e1-3126-a2b2-04dce2d585ef",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5.15.221 <5.16"
-    },
-    {
-      "id": "f7e4485a-2a52-3b31-985a-3e4ca48ebfa4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "9af08677aa57debaca5b57c8045c52a83d3dd376"
-    },
-    {
-      "id": "fa6f2484-12a1-3bcf-af8a-cb4a7b2179bd",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 0"
+      "product_version": "5a77febac6faf6da40fbb4555f703eeb91b58130 <9a0f09d80cd54a4e9825e00e4aae5e0e121ef095"
     },
     {
       "id": "fc4685b0-5914-3c64-8941-29546b4fbaa6",

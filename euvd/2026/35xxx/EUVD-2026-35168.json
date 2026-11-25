@@ -3,8 +3,10 @@
   "enisaUuid": "7930926a-91e2-3c19-84f8-77a81972719a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nisofs: validate Rock Ridge CE continuation extent against volume size\n\nrock_continue() reads rs->cont_extent verbatim from the Rock Ridge CE\nrecord and passes it to sb_bread() without checking that the block\nnumber is within the mounted ISO 9660 volume.  commit e595447e177b\n(\"[PATCH] rock.c: handle corrupted directories\") added cont_offset\nand cont_size rejection for the CE continuation but did not validate\nthe extent block number itself.  commit f54e18f1b831 (\"isofs: Fix\ninfinite looping over CE entries\") later capped the CE chain length\nat RR_MAX_CE_ENTRIES = 32 but again left the block number unchecked.\n\nWith a crafted ISO mounted via udisks2 (desktop optical auto-mount)\nor via CAP_SYS_ADMIN mount, rs->cont_extent can therefore point at\nan out-of-range block or at blocks belonging to an adjacent\nfilesystem on the same block device.  sb_bread() on an out-of-range\nblock returns NULL cleanly via the block layer EIO path, so there\nis no memory-safety violation.  For in-range reads of adjacent-\nfilesystem data, the CE buffer is parsed as Rock Ridge records and\nonly the text of SL sub-records reaches userspace through\nreadlink(), which makes the info-leak channel narrow and difficult\nto exploit; still, rejecting the malformed CE outright matches the\nrejection shape already present in the same function for\ncont_offset and cont_size.\n\nAdd an ISOFS_SB(sb)->s_nzones bounds check to rock_continue() next\nto the existing offset/size rejection, printing the same\ncorrupted-directory-entry notice.",
   "datePublished": "Jun 8, 2026, 3:46:30 PM",
-  "dateUpdated": "Jun 8, 2026, 3:46:30 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 10, 2026, 12:47:27 PM",
+  "baseScore": 8.2,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:N",
   "references": [
     "https://git.kernel.org/stable/c/8356fb821016797f5677cbeee5ddc0d32a95b4be",
     "https://git.kernel.org/stable/c/d582e12378bc1637f337622feef762f53c43fd57",
@@ -16,21 +18,12 @@
     "https://git.kernel.org/stable/c/a36d990f591320e9dd379ab30063ebfe91d47e1f"
   ],
   "aliases": [
-    "CVE-2026-46303"
+    "CVE-2026-46303",
+    "GHSA-phcq-c45r-9f84"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.32,
   "enisaIdProduct": [
-    {
-      "id": "01d77be2-2789-36da-a731-6eac712fd19d",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc2"
-    },
     {
       "id": "0c36324a-6656-3a96-a402-ddbc6e397f5b",
       "product": {
@@ -90,6 +83,16 @@
         }
       },
       "product_version": "1fe5620fcd6c2f0a4a927ee10c8e53196da392f3"
+    },
+    {
+      "id": "217d8dec-5563-3dc0-8067-0e8228d98934",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "2eb660ae-0bef-339d-9f3d-af6b586ef2b3",

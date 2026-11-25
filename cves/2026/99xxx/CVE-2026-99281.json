@@ -3,19 +3,37 @@
   "enisaUuid": "d64f7d58-49b2-384d-bb52-83aee0acb6f8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntun: Require CAP_NET_ADMIN to attach to an ownerless device\n\nTwenty years ago I made creating a tuntap device require CAP_NET_ADMIN\nin commit ca6bb5d7ab22 (\"[NET]: Require CAP_NET_ADMIN to create tuntap\ndevices.\")\n\nThe idea was to allow the permissions on /dev/net/tun to be relaxed to\n0666 and thus allow owners of tun devices assigned with TUNSETOWNER to\nactually open it and get at their devices.\n\nWhat we missed at the time was that persistent devices with *no* owner\nwere already essentially world-consumable, and anyone who could open\nthe device node could also attach to those.\n\nEven then, using persistent devices with no explicitly set owner \u2014 on\nthe (false) presumption that CAP_NET_ADMIN would be required to open\nthem \u2014 wasn't an egregious userspace bug. There are cases where it does\nmake sense to separate the creation/configuration of the netdevice, from\nthe process which shovels packets into it.\n\nSince then, TUNSETGROUP was added a year later in commit 8c644623fe7e\n(\"[NET]: Allow group ownership of TUN/TAP devices.\"). Its commit message\nnoted that if both uid and gid are set, both have to match (in itself a\nbizarre choice) \u2014 but still not that with *neither* set, no permission\nat all was required.\n\nThen in 2012 commit c8d68e6be1c3 (\"tuntap: multiqueue support\") allowed\nnew queues to be attached to a device from the moment of its creation,\nwith no way for userspace to close the race between creation and a\nsubsequent TUNSET{OWNER,GROUP}.\n\nIn 2024, commit 3ca459eaba1bf (\"tun: fix group permission check\") tried\nto fix things to be saner: only require the user *or* the group to\nmatch, in line with standard POSIX permissions, and require\nCAP_NET_ADMIN if neither the user nor group authorised the access\n(although it put the CAP_NET_ADMIN check first, and would wrongly have\nreported the capability as having been used even when it was not).\n\nThat fix was reverted in commit a70c7b3cbc06 (\"tun: revert fix group\npermission check\") due to allegedly causing a regression in an selinux\ntest suite which *expected* the attachment to succeed when authorised\nby none of user, group, nor CAP_NET_ADMIN:\nhttps://lore.kernel.org/netdev/CAFqZXNtkCBT4f+PwyVRmQGoT3p1eVa01fCG_aNtpt6dakXncUg@mail.gmail.com/\n\nWe should not break UAPI. But we don't have to consider an selinux test\ncase which deliberately exercises a security flaw to be UAPI worth\npreserving either. To which end, I have fixed it in selinux-testsuite\ncommit b2f894f0016b (\"tests/tun_tap: set an owner on the device for the\nrelabel tests\").\n\nSo: fix the lack of CAP_NET_ADMIN check on devices which *haven't* been\nassigned an owner or group, while leaving the weird tun ownership model\nas it was (user *and* group have to match, if both are set). If someone\nstill wants to fix the latter (which wasn't actually the reason the\nprevious attempt was reverted), they can do it under separate cover.\n\nPermit attaching to an existing device only if an owner and/or group was\nset and the caller matches all that were set, or if the caller has\nCAP_NET_ADMIN. The only behavioural change is that a device with no\nowner or group now requires CAP_NET_ADMIN to attach \u2014 precisely the\nloophole we want to close.\n\nAnd put the CAP_NET_ADMIN check in the right place this time.",
   "datePublished": "Nov 7, 2026, 2:08:47 PM",
-  "dateUpdated": "Nov 7, 2026, 2:08:47 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:00:50 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/553fd5722b4df7d6c0290d645e31871a64429b6d",
+    "https://git.kernel.org/stable/c/43f0727b2a3a79607e8bc2daf2e5fcc02b571f76",
+    "https://git.kernel.org/stable/c/ea77d8eeaf10a2976f82aa099dd879b4f65bf711",
+    "https://git.kernel.org/stable/c/8d6ff792add6ceada5a137dcaf08ca05785bac9a",
+    "https://git.kernel.org/stable/c/e0d98aab41b79b88609f33fb4d8e7a80ab8f648d",
     "https://git.kernel.org/stable/c/2f92c0286cfd58bff9d6d54c01a771073d5eb775",
     "https://git.kernel.org/stable/c/e53d1cf05da8ea58a5743b7ce5894fb51b0b9700",
     "https://git.kernel.org/stable/c/ffdf678dd16610e3f006dac904bd37c09684673c"
   ],
   "aliases": [
-    "CVE-2026-99281"
+    "CVE-2026-99281",
+    "GHSA-cfrf-w8r8-rf8x"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
+    {
+      "id": "1d0847b0-bbc0-3695-b23f-1736167714d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca6bb5d7ab22ac79f608fe6cbc6b12de6a5a19f0 <ea77d8eeaf10a2976f82aa099dd879b4f65bf711"
+    },
     {
       "id": "2511a20d-1897-3b04-b9bc-305e182767f9",
       "product": {
@@ -25,6 +43,36 @@
         }
       },
       "product_version": "patch: 7.4-rc1"
+    },
+    {
+      "id": "40e84137-bc50-378e-ac64-4a19b68de62f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca6bb5d7ab22ac79f608fe6cbc6b12de6a5a19f0 <43f0727b2a3a79607e8bc2daf2e5fcc02b571f76"
+    },
+    {
+      "id": "4c9d927d-28c3-3177-851f-97a85faf798b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "544f2891-fcfb-3f67-9e6c-8a8f8255d6a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.117"
     },
     {
       "id": "6158c603-b4b4-3f56-bad5-753a9c034391",
@@ -47,6 +95,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "6c52c789-142b-336b-a2f0-a9616f774c3f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "7f1f16e3-9a09-3ae4-80d4-50daf44a5b68",
       "product": {
         "name": "Linux",
@@ -57,6 +115,16 @@
       "product_version": "ca6bb5d7ab22ac79f608fe6cbc6b12de6a5a19f0 <e53d1cf05da8ea58a5743b7ce5894fb51b0b9700"
     },
     {
+      "id": "8c7fedeb-bb89-337d-a4d2-0b159b2a3483",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "8cc699b5-116c-3007-bbb4-ff13117ec8d1",
       "product": {
         "name": "Linux",
@@ -65,6 +133,16 @@
         }
       },
       "product_version": "patch: 6.18.61"
+    },
+    {
+      "id": "a0cd7286-1e68-3470-a0f9-70287ba18a39",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "a85f145d-222e-38df-be18-45403aa69f96",
@@ -95,6 +173,36 @@
         }
       },
       "product_version": "ca6bb5d7ab22ac79f608fe6cbc6b12de6a5a19f0 <ffdf678dd16610e3f006dac904bd37c09684673c"
+    },
+    {
+      "id": "d1150bbf-086b-3c11-bfde-f3612fca95ed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca6bb5d7ab22ac79f608fe6cbc6b12de6a5a19f0 <553fd5722b4df7d6c0290d645e31871a64429b6d"
+    },
+    {
+      "id": "df2f16ea-0bb4-3bc2-a00e-9c17da6324cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca6bb5d7ab22ac79f608fe6cbc6b12de6a5a19f0 <e0d98aab41b79b88609f33fb4d8e7a80ab8f648d"
+    },
+    {
+      "id": "fafae113-5c24-3d5f-b4f2-2f4e19d9c870",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ca6bb5d7ab22ac79f608fe6cbc6b12de6a5a19f0 <8d6ff792add6ceada5a137dcaf08ca05785bac9a"
     }
   ],
   "enisaIdVendor": [

@@ -1,0 +1,192 @@
+{
+  "id": "EUVD-2024-36289",
+  "enisaUuid": "9ed87bf2-b737-3568-9b28-0d38f45eea5b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfs: Handle error of rpc_proc_register() in nfs_net_init().\n\nsyzkaller reported a warning [0] triggered while destroying immature\nnetns.\n\nrpc_proc_register() was called in init_nfs_fs(), but its error\nhas been ignored since at least the initial commit 1da177e4c3f4\n(\"Linux-2.6.12-rc2\").\n\nRecently, commit d47151b79e32 (\"nfs: expose /proc/net/sunrpc/nfs\nin net namespaces\") converted the procfs to per-netns and made\nthe problem more visible.\n\nEven when rpc_proc_register() fails, nfs_net_init() could succeed,\nand thus nfs_net_exit() will be called while destroying the netns.\n\nThen, remove_proc_entry() will be called for non-existing proc\ndirectory and trigger the warning below.\n\nLet's handle the error of rpc_proc_register() properly in nfs_net_init().\n\n[0]:\nname 'nfs'\nWARNING: CPU: 1 PID: 1710 at fs/proc/generic.c:711 remove_proc_entry+0x1bb/0x2d0 fs/proc/generic.c:711\nModules linked in:\nCPU: 1 PID: 1710 Comm: syz-executor.2 Not tainted 6.8.0-12822-gcd51db110a7e #12\nHardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.16.0-0-gd239552ce722-prebuilt.qemu.org 04/01/2014\nRIP: 0010:remove_proc_entry+0x1bb/0x2d0 fs/proc/generic.c:711\nCode: 41 5d 41 5e c3 e8 85 09 b5 ff 48 c7 c7 88 58 64 86 e8 09 0e 71 02 e8 74 09 b5 ff 4c 89 e6 48 c7 c7 de 1b 80 84 e8 c5 ad 97 ff <0f> 0b eb b1 e8 5c 09 b5 ff 48 c7 c7 88 58 64 86 e8 e0 0d 71 02 eb\nRSP: 0018:ffffc9000c6d7ce0 EFLAGS: 00010286\nRAX: 0000000000000000 RBX: ffff8880422b8b00 RCX: ffffffff8110503c\nRDX: ffff888030652f00 RSI: ffffffff81105045 RDI: 0000000000000001\nRBP: 0000000000000000 R08: 0000000000000001 R09: 0000000000000000\nR10: 0000000000000001 R11: ffffffff81bb62cb R12: ffffffff84807ffc\nR13: ffff88804ad6fcc0 R14: ffffffff84807ffc R15: ffffffff85741ff8\nFS:  00007f30cfba8640(0000) GS:ffff88807dd00000(0000) knlGS:0000000000000000\nCS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033\nCR2: 00007ff51afe8000 CR3: 000000005a60a005 CR4: 0000000000770ef0\nDR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000\nDR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400\nPKRU: 55555554\nCall Trace:\n <TASK>\n rpc_proc_unregister+0x64/0x70 net/sunrpc/stats.c:310\n nfs_net_exit+0x1c/0x30 fs/nfs/inode.c:2438\n ops_exit_list+0x62/0xb0 net/core/net_namespace.c:170\n setup_net+0x46c/0x660 net/core/net_namespace.c:372\n copy_net_ns+0x244/0x590 net/core/net_namespace.c:505\n create_new_namespaces+0x2ed/0x770 kernel/nsproxy.c:110\n unshare_nsproxy_namespaces+0xae/0x160 kernel/nsproxy.c:228\n ksys_unshare+0x342/0x760 kernel/fork.c:3322\n __do_sys_unshare kernel/fork.c:3393 [inline]\n __se_sys_unshare kernel/fork.c:3391 [inline]\n __x64_sys_unshare+0x1f/0x30 kernel/fork.c:3391\n do_syscall_x64 arch/x86/entry/common.c:52 [inline]\n do_syscall_64+0x4f/0x110 arch/x86/entry/common.c:83\n entry_SYSCALL_64_after_hwframe+0x46/0x4e\nRIP: 0033:0x7f30d0febe5d\nCode: ff c3 66 2e 0f 1f 84 00 00 00 00 00 90 f3 0f 1e fa 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 73 9f 1b 00 f7 d8 64 89 01 48\nRSP: 002b:00007f30cfba7cc8 EFLAGS: 00000246 ORIG_RAX: 0000000000000110\nRAX: ffffffffffffffda RBX: 00000000004bbf80 RCX: 00007f30d0febe5d\nRDX: 0000000000000000 RSI: 0000000000000000 RDI: 000000006c020600\nRBP: 00000000004bbf80 R08: 0000000000000000 R09: 0000000000000000\nR10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000002\nR13: 000000000000000b R14: 00007f30d104c530 R15: 0000000000000000\n </TASK>",
+  "datePublished": "May 30, 2024, 3:29:27 PM",
+  "dateUpdated": "Oct 15, 2026, 12:42:56 AM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/b33ca18c3a1190208dfd569c4fa8a2f93084709f",
+    "https://git.kernel.org/stable/c/d4891d817350c67392d4731536945f3809a2a0ba",
+    "https://git.kernel.org/stable/c/ea6ce93327bd2c8a0c6cf6f2f0e800f3b778f021",
+    "https://git.kernel.org/stable/c/8ae63bd858691bee0e2a92571f2fbb36a4d86d65",
+    "https://git.kernel.org/stable/c/8a1f89c98dcc542dd6d287e573523714702e0f9c",
+    "https://git.kernel.org/stable/c/9909dde2e53a19585212c32fe3eda482b5faaaa3",
+    "https://git.kernel.org/stable/c/24457f1be29f1e7042e50a7749f5c2dde8c433c8"
+  ],
+  "aliases": [
+    "CVE-2024-36939"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "0563c20f-7f09-37e0-b21b-03d639746c4f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <8a1f89c98dcc542dd6d287e573523714702e0f9c"
+    },
+    {
+      "id": "0d4e0330-f617-3a9d-9806-fa738af83298",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "2f0c4725-a180-3166-b749-753748dc3046",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.276"
+    },
+    {
+      "id": "499a93c3-b700-3e9e-9bb0-3f85beeadb04",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <24457f1be29f1e7042e50a7749f5c2dde8c433c8"
+    },
+    {
+      "id": "68ddf27a-3025-30e3-88b5-8ecd84f24843",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d4891d817350c67392d4731536945f3809a2a0ba"
+    },
+    {
+      "id": "817dd0ef-0fc0-3af9-947c-02ec673812cd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.159"
+    },
+    {
+      "id": "97ca5094-452d-3fd0-bb51-123edafe0b46",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "a562cdc2-120f-3e29-b9dc-acea5f206be3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "a954c7e7-750c-3510-9aaf-9779ce1daad7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <8ae63bd858691bee0e2a92571f2fbb36a4d86d65"
+    },
+    {
+      "id": "afc48fce-4966-38c1-bb8c-cb4c02961c16",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <b33ca18c3a1190208dfd569c4fa8a2f93084709f"
+    },
+    {
+      "id": "b9c15bbe-a0e5-3563-a039-9c177b5de4fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <9909dde2e53a19585212c32fe3eda482b5faaaa3"
+    },
+    {
+      "id": "ba3a4544-a6a6-369d-8f0e-646f9016e4f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.217"
+    },
+    {
+      "id": "c1f1792c-f008-3c25-ae61-e46c6d461229",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.10"
+    },
+    {
+      "id": "d26770fc-f523-30c6-9b2a-831f3bffa9b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.91"
+    },
+    {
+      "id": "edd106c9-4e22-32ba-bbbe-80f4b66219cd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <ea6ce93327bd2c8a0c6cf6f2f0e800f3b778f021"
+    },
+    {
+      "id": "f848dae8-8fca-3d86-a318-9d131faee82a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.31"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "86fb2313-e8e9-307b-bae9-25adf82a1aac",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

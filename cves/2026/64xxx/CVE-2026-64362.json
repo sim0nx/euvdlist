@@ -3,7 +3,7 @@
   "enisaUuid": "8af89931-876f-3206-a94d-ccd685a57e44",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: lg-g15: cancel pending work on remove to fix a use-after-free\n\nlg_g15_data is allocated with devm and holds a work item. The report\nhandlers schedule that work straight from device input.\nlg_g15_event() and lg_g15_v2_event() do it on the backlight cycle key,\nand lg_g510_leds_event() does it too. The worker dereferences the\nlg_g15_data back through container_of.\n\nThe driver had no remove callback and never cancelled the work. So if a\nreport scheduled the work and the keyboard was then unplugged, devres\nfreed lg_g15_data while the work was still pending or running, and the\nworker touched freed memory. This is a use-after-free. It is reachable\nas a race on device unplug.\n\nAdd a remove callback that cancels the work before devres frees the\nstate. g15->work is only initialized for the models that schedule it\n(G15, G15 v2, G510). The G13 and Z-10 leave it zeroed, so guard the\ncancel on g15->work.func to avoid cancelling a work that was never set\nup. The g15 NULL test mirrors the one already in lg_g15_raw_event().",
   "datePublished": "Jul 25, 2026, 8:50:18 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:18 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:49 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/3b9a3919aac6977262f04d5365c0456877522a44",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/7705b4140d188ce22656f6e541ae7ef834c7e11a"
   ],
   "aliases": [
-    "CVE-2026-64362"
+    "CVE-2026-64362",
+    "GHSA-6q43-gp6v-hqmf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "39fdac49-19c7-3ae4-8f2b-e1e1c333f94f",
@@ -142,14 +143,14 @@
       "product_version": "97b741aba918c4143f4208d2421d08ff215c1b49 <8131f4226688c4be5f30874d167e44dab838eb09"
     },
     {
-      "id": "bf413866-80fe-34d8-bce6-712cb75af331",
+      "id": "bc895d8b-c9da-33a7-a41e-f7db91133730",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc3"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "c23f134b-36d6-34c4-8ed7-e9204ccecb58",

@@ -3,7 +3,7 @@
   "enisaUuid": "40971041-339e-3226-93e8-adef11388d9c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: hci_sock: validate event length before filtering\n\nis_filtered_packet() reads the event code from skb->data[0] without first\nchecking that the skb is nonempty. When an opcode filter is configured,\nit also reads the command opcode at offsets 3 or 4 without checking that\na Command Complete or Command Status event is long enough.\n\nhci_send_to_sock() invokes the filter before hci_event_packet() validates\nthe event header. A malformed event supplied by a controller or a vhci\ndevice can therefore cause an out-of-bounds read.\n\nKeep the unmasked event code for the opcode checks. The masked value is\nneeded for the 64-bit event bitmap, but using it to identify command events\naliases event codes above 0x3f. In particular, Synchronous Train Complete\n(0x4f) was treated as Command Status (0x0f) even though its payload has no\nopcode.\n\nReject actual command events that are too short for the field being\ninspected. A truncated command event cannot match a configured opcode.",
   "datePublished": "Oct 18, 2026, 3:15:10 PM",
-  "dateUpdated": "Oct 18, 2026, 3:15:10 PM",
+  "dateUpdated": "Oct 19, 2026, 9:19:58 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/39e99d85071bca0feeec3164a9437ca1bff297fc",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/b0a6cf99afd57a39598b1beca0e86ef5004980de"
   ],
   "aliases": [
+    "GHSA-xggg-9q4f-8rr9",
     "CVE-2026-98461"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0a3c7466-5b83-3404-abf6-b35b744b56e7",
@@ -72,16 +73,6 @@
       "product_version": "patch: 6.18.55"
     },
     {
-      "id": "2e3d7f20-8987-3d93-9bd4-bae27153e808",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
-    },
-    {
       "id": "35928645-2b08-391c-ad7d-931d6b93ea78",
       "product": {
         "name": "Linux",
@@ -100,6 +91,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2501a3b7b7144d1d11939b355a48ed01f83d0c62"
+    },
+    {
+      "id": "5d4579a9-7a32-31f2-81a8-238a25902cba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "7e60c0ad-1a6e-3fd8-b301-2438c1150466",

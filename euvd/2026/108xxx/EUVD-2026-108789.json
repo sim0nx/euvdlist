@@ -3,18 +3,21 @@
   "enisaUuid": "306e5724-db7b-3a52-a3fa-f1ef726ad407",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnamespace: reset the old parent's ->overmount in mnt_change_mountpoint()\n\n__umount_mnt() resets ->overmount of the parent when it unmounts the\nmount that overmounts it. mnt_change_mountpoint() doesn't. It moves the\nmount to its new parent and leaves the old one pointing at it.\n\nFor a mount that is moved beneath in attach_recursive_mnt() that doesn't\nmatter. The new mount has already reset ->overmount of the old parent by\nthe time the old top mount is moved onto it.\n\nIt matters for reparent() though. propagate_umount() moves a surviving\novermount onto the first ancestor that isn't going to be unmounted. The\nmount it was taken from is unmounted immediately afterwards. If a file\ndescriptor keeps that unmounted mount alive ->overmount points at the\nmoved mount. That's a dangling pointer and UAF as the moved mount is\nunmounted and freed.\n\ndo_lock_mount() follows ->overmount from the target path under\nmount_lock. With a file descriptor on such a mount as the target of a\nmount beneath topmost_overmount() walks into the freed mount and\ndo_lock_mount() takes references on whatever it finds there.\n\nSo reset ->overmount of the old parent in mnt_change_mountpoint() the\nsame way __umount_mnt() does. A mount's ->overmount is then always a\nmount that is attached to it.",
   "datePublished": "Oct 23, 2026, 12:20:14 PM",
-  "dateUpdated": "Oct 23, 2026, 12:20:14 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 24, 2026, 2:09:55 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/5e0a1f2c753a79749bc2ead3ae2f2ede3941daa5",
     "https://git.kernel.org/stable/c/08d575ee89393fd812dbdca7b5d7b4574cd5a564",
     "https://git.kernel.org/stable/c/476ef286a7a5db8bda51325dc0c45887b4d99d9a"
   ],
   "aliases": [
+    "GHSA-h4q9-qcg7-rj48",
     "CVE-2026-98995"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "20f58b16-06bc-3d0e-b9e3-9a35dd89be60",

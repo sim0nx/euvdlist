@@ -3,9 +3,10 @@
   "enisaUuid": "57411c11-6bf6-3457-b090-4280c2596b03",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npower: supply: ab8500: Fix use-after-free in power_supply_changed()\n\nUsing the `devm_` variant for requesting IRQ _before_ the `devm_`\nvariant for allocating/registering the `power_supply` handle, means that\nthe `power_supply` handle will be deallocated/unregistered _before_ the\ninterrupt handler (since `devm_` naturally deallocates in reverse\nallocation order). This means that during removal, there is a race\ncondition where an interrupt can fire just _after_ the `power_supply`\nhandle has been freed, *but* just _before_ the corresponding\nunregistration of the IRQ handler has run.\n\nThis will lead to the IRQ handler calling `power_supply_changed()` with\na freed `power_supply` handle. Which usually crashes the system or\notherwise silently corrupts the memory...\n\nNote that there is a similar situation which can also happen during\n`probe()`; the possibility of an interrupt firing _before_ registering\nthe `power_supply` handle. This would then lead to the nasty situation\nof using the `power_supply` handle *uninitialized* in\n`power_supply_changed()`.\n\nCommit 1c1f13a006ed (\"power: supply: ab8500: Move to componentized\nbinding\") introduced this issue during a refactorization. Fix this racy\nuse-after-free by making sure the IRQ is requested _after_ the\nregistration of the `power_supply` handle.",
   "datePublished": "May 27, 2026, 12:18:02 PM",
-  "dateUpdated": "May 27, 2026, 12:18:02 PM",
+  "dateUpdated": "Nov 23, 2026, 7:58:44 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/5835e6a5a7469991c1adc47fa68464fd8d58c2c1",
     "https://git.kernel.org/stable/c/43cbb78ee047b9b12d096d40e3be265969d4c1f8",
     "https://git.kernel.org/stable/c/551672981fe227122258a25a385a05f5c0746ad6",
     "https://git.kernel.org/stable/c/f50433f2603def08b21a4bf2fd238687fb5cbde9",
@@ -15,10 +16,11 @@
     "https://git.kernel.org/stable/c/c4af8a98bb52825a5331ae1d0604c0ea6956ba4b"
   ],
   "aliases": [
+    "GHSA-wp75-7gqm-j93m",
     "CVE-2026-45946"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "04d6305f-d22e-3e71-9f87-1db40870db20",
@@ -69,6 +71,16 @@
         }
       },
       "product_version": "patch: 6.18.14"
+    },
+    {
+      "id": "37b549d2-90ec-3dff-9f3d-f9f4ac0c2817",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "07d30217dd886c141dd50a5bea77477bedab0aba <5835e6a5a7469991c1adc47fa68464fd8d58c2c1"
     },
     {
       "id": "4306a03d-a1f3-3d90-a36b-df1b66bccdcf",

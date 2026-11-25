@@ -3,8 +3,10 @@
   "enisaUuid": "d793c353-79c5-3732-bf38-2233822255eb",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Reject non-SCSI SRB on status IOCB fast path\n\nqla2x00_status_entry() filters out non-TYPE_SRB entries and the\nSRB_NVME_CMD, SRB_BIDI_CMD and SRB_TM_CMD types, then falls through to a\nSCSI fast path that assumes the command is an SRB_SCSI_CMD. The first\nthing on that path, qla_chk_edif_rx_sa_delete_pending(), and the\nsubsequent handling both evaluate GET_CMD_SP(sp), i.e. sp->u.scmd.cmd.\n\nThe srb u union overlays the SCSI command pointer with other command\nlayouts (bsg_job, iocb_cmd). If firmware delivers an unexpected\nSTATUS_TYPE IOCB for a non-SCSI handle, sp->u.scmd.cmd can read as a\nnon-NULL garbage pointer, bypassing the NULL checks in\nqla_chk_edif_rx_sa_delete_pending() and at the cp == NULL test, and\nleading to a wild pointer dereference.\n\nReject any SRB whose type is not SRB_SCSI_CMD before entering the fast\npath. The outstanding_cmds slot is left untouched so a genuinely\nnon-SCSI command still completes through its proper handler.",
   "datePublished": "Sep 16, 2026, 10:31:23 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:23 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:53:42 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/9204fb0888374083be74f799049649a17eab4191",
     "https://git.kernel.org/stable/c/b7418198b45b327194b97f856fe8ea8daa91f3fd",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/0f41d07d72f2245208c45374ca8d0a1846cad667"
   ],
   "aliases": [
+    "GHSA-3v4r-7crj-gvc7",
     "CVE-2026-89849"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.36,
   "enisaIdProduct": [
     {
       "id": "05fc871c-7648-3d69-9784-2723c554052f",
@@ -81,16 +84,6 @@
       "product_version": "patch: 5.15.221"
     },
     {
-      "id": "744dc9e5-96ae-36dc-b04d-f459d099c125",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "7668a23d-b3c8-33b9-9e18-90199631319d",
       "product": {
         "name": "Linux",
@@ -99,6 +92,16 @@
         }
       },
       "product_version": "dd30706e73b70d67e88fdaca688db7a3374fd5de <e93aa3c5125d9a4352ac0fa8ba4a7f8f87881805"
+    },
+    {
+      "id": "805941e7-b6b4-340a-aea4-e7c09de6364b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "8063c890-3cb9-31ff-9746-3fd866e64211",

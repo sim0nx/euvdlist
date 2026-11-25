@@ -3,9 +3,14 @@
   "enisaUuid": "4911e138-d4ee-3dcf-a532-2ffd843cfa57",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: libiscsi_tcp: Bound SCSI Response data segment to the connection buffer\n\niscsi_tcp_hdr_dissect() receives the data segment of several PDU types\ninto the fixed-size conn->data buffer, which is allocated for\nISCSI_DEF_MAX_RECV_SEG_LEN (8192) bytes.  For the LOGIN_RSP, TEXT_RSP,\nREJECT and ASYNC_EVENT opcodes the dissect path already rejects a PDU\nwhose DataSegmentLength exceeds that buffer.\n\nThe SCSI Command Response (ISCSI_OP_SCSI_CMD_RSP) path also copies its\ndata segment (sense/response data) into conn->data via\niscsi_tcp_data_recv_prep(), but it does so without the same check.  The\nonly upstream bound on in.datalen is conn->max_recv_dlength, the\ninitiator's advertised MaxRecvDataSegmentLength, which is commonly\nnegotiated well above 8192 (open-iscsi defaults to 262144).  A target\nthat returns a SCSI Response with a DataSegmentLength between 8193 and\nmax_recv_dlength therefore overflows the 8192-byte conn->data buffer.\n\nOnce the same bound applies, ISCSI_OP_SCSI_CMD_RSP is handled exactly\nlike those responses: bound the data segment, receive it into conn->data\nwhen present, and otherwise complete the PDU with no data.  Fold the\nopcode into that case group rather than duplicating the check.",
   "datePublished": "Aug 15, 2026, 12:28:01 PM",
-  "dateUpdated": "Aug 15, 2026, 12:28:01 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:05:55 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/a51812842084fd390590ab8dc0431f10c73ddc56",
+    "https://git.kernel.org/stable/c/a8f94cc9f0e5759252551be3a172960c57f21f54",
+    "https://git.kernel.org/stable/c/f1a3a51fc5dba0e99532379665069f1700da6b44",
     "https://git.kernel.org/stable/c/c97b5265cc47775f77fd2a23d6bde0426997b233",
     "https://git.kernel.org/stable/c/084af0253673425ce2ae62e3c7f74f0dd023711b",
     "https://git.kernel.org/stable/c/72815741715bd41556dac5eeb068bf0f8af06ee7",
@@ -13,10 +18,11 @@
     "https://git.kernel.org/stable/c/c1dea15f819cded9b3faf58f8bec72323568b6e6"
   ],
   "aliases": [
-    "CVE-2026-74556"
+    "CVE-2026-74556",
+    "GHSA-2m3x-37gx-2chv"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.4,
   "enisaIdProduct": [
     {
       "id": "25a34201-7b6e-3947-8ecb-e7618bb31379",
@@ -27,6 +33,16 @@
         }
       },
       "product_version": "a081c13e39b5c17052a7b46fafa61019c4c110ff <c97b5265cc47775f77fd2a23d6bde0426997b233"
+    },
+    {
+      "id": "2ab7a861-e90b-3fcf-9981-e990aeaa6961",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "39f214c0-ba39-3de6-bacf-154378cbde34",
@@ -47,6 +63,36 @@
         }
       },
       "product_version": "patch: 7.1.8"
+    },
+    {
+      "id": "4b3579e9-ec4f-347e-a59b-27d815b63c93",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
+      "id": "5b033722-2e6e-3713-b0fb-da7e8a148163",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a081c13e39b5c17052a7b46fafa61019c4c110ff <a51812842084fd390590ab8dc0431f10c73ddc56"
+    },
+    {
+      "id": "6eb73d84-f72f-30d8-9548-194898310ad8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a081c13e39b5c17052a7b46fafa61019c4c110ff <a8f94cc9f0e5759252551be3a172960c57f21f54"
     },
     {
       "id": "796927f7-1f29-35d3-9277-0aae21b11935",
@@ -109,14 +155,14 @@
       "product_version": "patch: 6.6.151"
     },
     {
-      "id": "e12b2867-5e33-39a1-a82c-4f1d8d8d536d",
+      "id": "df7c2534-2471-3e76-9cc4-c44a2ce332f6",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc6"
+      "product_version": "a081c13e39b5c17052a7b46fafa61019c4c110ff <f1a3a51fc5dba0e99532379665069f1700da6b44"
     },
     {
       "id": "e15cae0b-2ce3-38eb-942c-713a1ae30312",
@@ -137,6 +183,26 @@
         }
       },
       "product_version": "a081c13e39b5c17052a7b46fafa61019c4c110ff <c1dea15f819cded9b3faf58f8bec72323568b6e6"
+    },
+    {
+      "id": "f2537756-ad61-3994-87ab-d62b02390fcb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "fda40dfa-b2a0-39d6-b76f-59fb1116d1e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
     }
   ],
   "enisaIdVendor": [

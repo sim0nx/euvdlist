@@ -3,20 +3,43 @@
   "enisaUuid": "5cf185db-e431-3960-8785-97d1db16bd02",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: sched: fix 32-bit backlog wrap in gred, bfifo and plug enqueue\n\ngred_enqueue(), bfifo_enqueue() and plug_enqueue() admit a packet when the\ncurrent backlog plus the packet length fits within the queue limit:\n\n  sch->qstats.backlog + qdisc_pkt_len(skb) <= sch->limit (gred default VQ)\n  gred_backlog+qdisc_pkt_len(skb) <= q->limit  (gred configured VQ)\n  sch->qstats.backlog + qdisc_pkt_len(skb) <= sch->limit (bfifo)\n  sch->qstats.backlog + skb->len <= q->limit             (plug)\n\nsch->qstats.backlog and q->backlog are u32, and qdisc_pkt_len()/skb->len\nare unsigned int, so all sums are computed in 32 bits and wrap at 2^32.\nOnce the true backlog exceeds 4 GiB the wrapped sum becomes small and\nadmission keeps succeeding, so the queue grows without bound and the kernel\ncan be driven to OOM.\n\nPromote the sums to u64 so admission stops once the true backlog exceeds\nthe limit.  The limit is u32, so the bounded queue stays below 2^32 and\nthe stored u32 backlog never wraps.\n\nThe bug can only be reproduced as root (albeit with ridiculous setup):\n attach a gred (or bfifo/plug) qdisc with a limit near 4 GiB,\n leaving the default VQ unconfigured (for gred), and drive >4 GiB of\n queued traffic (e.g. via a size table / stab to inflate qdisc_pkt_len,\n or sustained high-rate traffic). The u32 backlog+len sum wraps at 2^32,\n admission keeps succeeding, and the queue grows unboundedly to OOM.",
   "datePublished": "Sep 17, 2026, 4:06:17 PM",
-  "dateUpdated": "Sep 17, 2026, 4:06:17 PM",
+  "dateUpdated": "Oct 30, 2026, 12:34:12 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/771a1123570b487765bcf2d4cff3567e66bf1322",
+    "https://git.kernel.org/stable/c/c5ca77024812563fe15c4f7aa906791c3683e9fd",
     "https://git.kernel.org/stable/c/3fb51b3960342bbee563543f8d33710fd0fb5a96",
     "https://git.kernel.org/stable/c/8b2d8c70b969bf84f9e248bfaf2a7135129f2eb6",
     "https://git.kernel.org/stable/c/d98b92f3d57976ae185238946ec5ea0be32195aa",
     "https://git.kernel.org/stable/c/4c660ee8c809637909f4f7eb1017f7b9401c75c4"
   ],
   "aliases": [
-    "CVE-2026-90109"
+    "CVE-2026-90109",
+    "GHSA-6qjr-4f2g-wppr"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.23,
   "enisaIdProduct": [
+    {
+      "id": "07c5fc9d-98dc-3122-a3c5-307bb36e6c84",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a3eb95f891d6130b1fc03dd07a8b54cf0a5c8ab8 <c5ca77024812563fe15c4f7aa906791c3683e9fd"
+    },
+    {
+      "id": "4a9e61be-1417-31bc-8cbb-48f05603a791",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
     {
       "id": "51cbddf1-e9ac-3c4f-9202-21a1083eb691",
       "product": {
@@ -58,14 +81,24 @@
       "product_version": "a3eb95f891d6130b1fc03dd07a8b54cf0a5c8ab8 <8b2d8c70b969bf84f9e248bfaf2a7135129f2eb6"
     },
     {
-      "id": "7ff7631a-45ad-3ccf-a538-98841344f33e",
+      "id": "80981ea7-8541-3c01-9e6f-381fb5b37674",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "897f4cf5-9685-38e4-a3e4-924fb32ef68e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a3eb95f891d6130b1fc03dd07a8b54cf0a5c8ab8 <771a1123570b487765bcf2d4cff3567e66bf1322"
     },
     {
       "id": "959f8ee4-ff8c-3bc4-9eaf-651fd9935230",
@@ -86,6 +119,16 @@
         }
       },
       "product_version": "4.2"
+    },
+    {
+      "id": "b03b1545-a265-337a-8653-3c3d3d4ddf4b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "c01d8fce-13c3-30b1-bb4f-f19bfa419c58",

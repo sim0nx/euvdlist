@@ -3,8 +3,10 @@
   "enisaUuid": "caf5ad66-cb46-392f-b350-66d49cea9756",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio_uring/net: inherit IORING_CQE_F_BUF_MORE across bundle recv retries\n\nWhen a bundle recv retries inside io_recv_finish(), the merge logic OR\nthe saved cflags from the previous iteration with the cflags returned by\nthe new iteration:\n  cflags = req->cqe.flags | (cflags & CQE_F_MASK);\n\nBits listed in CQE_F_MASK are inherited from the new iteration, and all\nother bits (notably IORING_CQE_F_BUFFER and the buffer ID) come from the\nsaved cflags. Before this change CQE_F_MASK covered only\nIORING_CQE_F_SOCK_NONEMPTY and IORING_CQE_F_MORE.\n\nWhen using provided buffer rings (IOU_PBUF_RING_INC) with incremental\nmode, and bundle recv, io_kbuf_inc_commit() can leave the head ring\nentry partially consumed, __io_put_kbufs() then sets\nIORING_CQE_F_BUF_MORE on the returned cflags so userspace knows the\nbuffer ID will be reused for subsequent completions.\n\nBecause IORING_CQE_F_BUF_MORE was not in CQE_F_MASK, the merge above\nsilently dropped it whenever the final retry iteration partially\nconsumed the buffer, and the subsequent req->cqe.flags = cflags &\n~CQE_F_MASK save would have left a stale IORING_CQE_F_BUF_MORE in the\ncarried-over cflags had one been present. Userspace would then\nwrongfully advance it ring head past an entry the kernel still uses.\n\nAdd IORING_CQE_F_BUF_MORE to CQE_F_MASK so it is both inherited from the\nnew iteration into the user-visible CQE and stripped from the saved\ncflags between iterations.",
   "datePublished": "Jun 25, 2026, 8:39:03 AM",
-  "dateUpdated": "Jun 25, 2026, 8:39:03 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:57:27 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/f40570fda3f3a1f96aeaa4aef665ba274b2810b5",
     "https://git.kernel.org/stable/c/0bbc9481f970b0b4ddb08cfa464db1cc93b74b56",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/ed46f39c47eb5530a9c161481a2080d3a869cfaf"
   ],
   "aliases": [
+    "GHSA-qhpr-79xw-32m8",
     "CVE-2026-53191"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0c7c714f-3624-3557-a20c-88a08bcc6daa",

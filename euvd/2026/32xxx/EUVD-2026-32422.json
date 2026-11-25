@@ -3,7 +3,7 @@
   "enisaUuid": "c96fd2ba-3790-3df0-b490-87939e0851e1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngreybus: gb-beagleplay: fix sleep in atomic context in hdlc_tx_frames()\n\nhdlc_append() calls usleep_range() to wait for circular buffer space,\nbut it is called with tx_producer_lock (a spinlock) held via\nhdlc_tx_frames() -> hdlc_append_tx_frame()/hdlc_append_tx_u8()/etc.\nSleeping while holding a spinlock is illegal and can trigger\n\"BUG: scheduling while atomic\".\n\nFix this by moving the buffer-space wait out of hdlc_append() and into\nhdlc_tx_frames(), before the spinlock is acquired.  The new flow:\n\n 1. Pre-calculate the worst-case encoded frame length.\n 2. Wait (with sleep) outside the lock until enough space is available,\n    kicking the TX consumer work to drain the buffer.\n 3. Acquire the spinlock, re-verify space, and write the entire frame\n    atomically.\n\nThis ensures that sleeping only happens without any lock held, and\nthat frames are either fully enqueued or not written at all.\n\nThis bug is found by CodeQL static analysis tool (interprocedural\nsleep-in-atomic query) and my code review.",
   "datePublished": "May 27, 2026, 12:56:54 PM",
-  "dateUpdated": "May 27, 2026, 12:56:54 PM",
+  "dateUpdated": "Jun 14, 2026, 5:50:02 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/9f2b87bcdfed55145acbf932dc12f2c057145cad",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/6b526dca0966f2370835765019a54319b78fca8d"
   ],
   "aliases": [
-    "CVE-2026-46041"
+    "CVE-2026-46041",
+    "GHSA-f857-h46c-q655"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "0bb8bace-c238-3580-9901-6e4cce38e21f",
@@ -46,6 +47,16 @@
         }
       },
       "product_version": "ec558bbfea671ac020a6dc6be8bf8f0ee556cce0 <51667fe2d9294d66e0228b9f51d1f01b6680a641"
+    },
+    {
+      "id": "752b554f-1b1f-3ba6-a635-c275b17a8b57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "9835fc5e-0966-3861-a531-d437ea21111c",
@@ -106,16 +117,6 @@
         }
       },
       "product_version": "ec558bbfea671ac020a6dc6be8bf8f0ee556cce0 <6b526dca0966f2370835765019a54319b78fca8d"
-    },
-    {
-      "id": "fcc8068b-6914-3aeb-82d3-73925adcc2a5",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc1"
     }
   ],
   "enisaIdVendor": [

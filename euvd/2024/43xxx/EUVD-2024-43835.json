@@ -1,0 +1,153 @@
+{
+  "id": "EUVD-2024-43835",
+  "enisaUuid": "520aca04-0e42-3374-9b77-5a8dab94e812",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix helper writes to read-only maps\n\nLonial found an issue that despite user- and BPF-side frozen BPF map\n(like in case of .rodata), it was still possible to write into it from\na BPF program side through specific helpers having ARG_PTR_TO_{LONG,INT}\nas arguments.\n\nIn check_func_arg() when the argument is as mentioned, the meta->raw_mode\nis never set. Later, check_helper_mem_access(), under the case of\nPTR_TO_MAP_VALUE as register base type, it assumes BPF_READ for the\nsubsequent call to check_map_access_type() and given the BPF map is\nread-only it succeeds.\n\nThe helpers really need to be annotated as ARG_PTR_TO_{LONG,INT} | MEM_UNINIT\nwhen results are written into them as opposed to read out of them. The\nlatter indicates that it's okay to pass a pointer to uninitialized memory\nas the memory is written to anyway.\n\nHowever, ARG_PTR_TO_{LONG,INT} is a special case of ARG_PTR_TO_FIXED_SIZE_MEM\njust with additional alignment requirement. So it is better to just get\nrid of the ARG_PTR_TO_{LONG,INT} special cases altogether and reuse the\nfixed size memory types. For this, add MEM_ALIGNED to additionally ensure\nalignment given these helpers write directly into the args via *<ptr> = val.\nThe .arg*_size has been initialized reflecting the actual sizeof(*<ptr>).\n\nMEM_ALIGNED can only be used in combination with MEM_FIXED_SIZE annotated\nargument types, since in !MEM_FIXED_SIZE cases the verifier does not know\nthe buffer size a priori and therefore cannot blindly write *<ptr> = val.",
+  "datePublished": "Oct 21, 2024, 12:27:19 PM",
+  "dateUpdated": "Aug 5, 2026, 11:40:09 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/988e55abcf7fdb8fc9a76a7cf3f4e939a4d4fb3a",
+    "https://git.kernel.org/stable/c/a2c8dc7e21803257e762b0bf067fd13e9c995da0",
+    "https://git.kernel.org/stable/c/2ed98ee02d1e08afee88f54baec39ea78dc8a23c",
+    "https://git.kernel.org/stable/c/1e75d25133158b525e0456876e9bcfd6b2993fd5",
+    "https://git.kernel.org/stable/c/32556ce93bc45c730829083cb60f95a2728ea48b"
+  ],
+  "aliases": [
+    "GHSA-vf64-qg5h-qxhf",
+    "CVE-2024-49861"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "55da63a3-0451-3444-a7e0-84180ba82f9a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "57c3bb725a3dd97d960d7e1cd0845d88de53217f <1e75d25133158b525e0456876e9bcfd6b2993fd5"
+    },
+    {
+      "id": "586f8d61-c94a-3909-84d3-9bac76b49664",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.2"
+    },
+    {
+      "id": "5a5560e9-3e71-3de0-9075-2380a90a9b4b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.2"
+    },
+    {
+      "id": "68221d39-b0d9-349c-8564-75e41fc5c490",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "57c3bb725a3dd97d960d7e1cd0845d88de53217f <988e55abcf7fdb8fc9a76a7cf3f4e939a4d4fb3a"
+    },
+    {
+      "id": "789a4cb5-d45f-3308-ab6d-c290ce28620d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "9dc7d31f-9449-36ce-aacf-300ef43b3db4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.13"
+    },
+    {
+      "id": "a71533f8-2498-3c60-a3f2-67a1ca5f5786",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "57c3bb725a3dd97d960d7e1cd0845d88de53217f <32556ce93bc45c730829083cb60f95a2728ea48b"
+    },
+    {
+      "id": "b47b6a87-2920-3928-b52d-ecabd4f645bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "b5651d64-5c87-35a3-ac64-4e6a60c74016",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "57c3bb725a3dd97d960d7e1cd0845d88de53217f <2ed98ee02d1e08afee88f54baec39ea78dc8a23c"
+    },
+    {
+      "id": "be050a64-7608-3b17-b057-e293f9b48795",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.120"
+    },
+    {
+      "id": "da1c446c-a1f7-3e66-bd7c-4a282c692784",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "57c3bb725a3dd97d960d7e1cd0845d88de53217f <a2c8dc7e21803257e762b0bf067fd13e9c995da0"
+    },
+    {
+      "id": "ed980e49-4bce-3d98-a3ce-4776746b3c5c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.54"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "eb858c7e-4f6d-36b2-912f-b3792c577537",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

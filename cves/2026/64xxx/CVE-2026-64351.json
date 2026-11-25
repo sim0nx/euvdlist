@@ -3,7 +3,7 @@
   "enisaUuid": "45adbde4-01eb-3718-abb6-632e65395dfe",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: usb: kalmia: bound RX frame length in kalmia_rx_fixup()\n\nkalmia_rx_fixup() computes usb_packet_length = skb->len - (2 *\nKALMIA_HEADER_LENGTH) as a u16, guarded only by a pre-loop check that\nskb->len is at least KALMIA_HEADER_LENGTH, which is 6. A device can\ndeliver a short bulk-IN frame with skb->len in the 6 to 11 range, or\nleave a short trailing remainder on a later loop iteration. Either case\nunderflows usb_packet_length to about 65530.\n\nThat bypasses the usb_packet_length < ether_packet_length truncation path.\nThe device-supplied ether_packet_length, a le16 up to 65535 read from\nheader_start[2], then drives a memcmp() and the following skb_trim() and\nskb_pull() past the end of the rx buffer. The rx buffer is hard_mtu * 10,\nwhich is 14000 bytes. That is an out of bounds read.\n\nRequire both the start and end framing headers to be present before\nsubtracting them, on every loop iteration.",
   "datePublished": "Jul 25, 2026, 8:50:10 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:10 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:48 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/391706889a5112feafdc0c68db3ecc7ed325d09c",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/47b6bcef6e679593d2e86e04ee72c46a4e2f7139"
   ],
   "aliases": [
+    "GHSA-8qc4-xrrp-xx3v",
     "CVE-2026-64351"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "0daf2f50-00e8-3850-94d1-2d562cbacfe1",
@@ -40,6 +41,16 @@
         }
       },
       "product_version": "d40261236e8e278cb1936cb5e934262971692b10 <51e65f1d78457ea4f9513d90ab22c9dccbb35110"
+    },
+    {
+      "id": "240bc68f-c35f-3839-8a54-a6d6f88ada4f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "6054e2b9-8555-3fd4-9b56-2aa88625c387",
@@ -180,16 +191,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "f81dcc76-6b9f-3781-9f6b-c1d735b3b685",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "f84b000e-b4b5-3da1-ba06-a8336805f069",

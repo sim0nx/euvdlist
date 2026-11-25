@@ -3,8 +3,10 @@
   "enisaUuid": "00d4dde9-5033-3667-ae70-a101ad73da67",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nio-wq: check that the predecessor is hashed in io_wq_remove_pending()\n\nio_wq_remove_pending() needs to fix up wq->hash_tail[] if the cancelled\nwork was the tail of its hash bucket. When doing this, it checks whether\nthe preceding entry in acct->work_list has the same hash value, but\nnever checks that the predecessor is hashed at all. io_get_work_hash()\nis simply atomic_read(&work->flags) >> IO_WQ_HASH_SHIFT, and the hash\nbits are never set for non-hashed work, so it returns 0. Thus, when a\nhashed bucket-0 work is cancelled while a non-hashed work is its list\npredecessor, the check spuriously passes and a pointer to the non-hashed\nio_kiocb is stored in wq->hash_tail[0].\n\nBecause non-hashed work is dequeued via the fast path in\nio_get_next_work(), which never touches hash_tail[], the stale pointer\nis never cleared. Therefore, after the non-hashed io_kiocb completes and\nis freed back to req_cachep, wq->hash_tail[0] is a dangling pointer. The\nio_wq is per-task (tctx->io_wq) and survives ring open/close, so the\ndangling pointer persists for the lifetime of the task; the next hashed\nbucket-0 enqueue dereferences it in io_wq_insert_work() and\nwq_list_add_after() writes through freed memory.\n\nAdd the missing io_wq_is_hashed() check so a non-hashed predecessor\nnever inherits a hash_tail[] slot.",
   "datePublished": "Jun 8, 2026, 2:30:53 PM",
-  "dateUpdated": "Jun 8, 2026, 2:30:53 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:30:57 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/d6bda9df0c0a3080804181464d5c0f4d78a4e769",
     "https://git.kernel.org/stable/c/5a20ebf0c81b61f5ea3b1b529c100cad69b9f603",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/d6a2d7b04b5a093021a7a0e2e69e9d5237dfa8cc"
   ],
   "aliases": [
+    "GHSA-52w9-98q8-6pwf",
     "CVE-2026-46274"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "1cc252dd-4e94-3b68-8a63-6a75b53390be",
@@ -47,16 +50,6 @@
         }
       },
       "product_version": "204361a77f4018627addd4a06877448f088ddfc0 <d376c131af7c7739a87ff037ed2fdb67c2542c8a"
-    },
-    {
-      "id": "5d06b317-d69d-30cb-bfcd-17073c1bbd0e",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc4"
     },
     {
       "id": "6b684993-0103-3c6a-b633-35f8707562f6",
@@ -107,6 +100,16 @@
         }
       },
       "product_version": "patch: 7.0.10"
+    },
+    {
+      "id": "ce9afee7-4ec0-3883-b48a-feea6a8a1869",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "e056641b-4e41-3828-9bdb-3e7d5aebbf93",

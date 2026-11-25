@@ -3,29 +3,42 @@
   "enisaUuid": "0eeae891-7d87-39b0-bb95-66d06e035bef",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\njbd2: check need_resched() when skipping busy checkpoint buffers\n\njournal_shrink_one_cp_list() skips busy checkpoint buffers when called\nwith JBD2_SHRINK_BUSY_SKIP.  The continue statement on this path also\nskips the need_resched() check at the end of the loop body.\n\nConsequently, when a checkpoint list contains mostly busy buffers, the\nshrinker can walk the entire list while holding journal->j_list_lock,\neven when a reschedule has been requested.  Large checkpoint lists under\nmemory pressure can therefore cause long lock hold times and leave other\nCPUs spinning on j_list_lock, resulting in soft lockups or RCU stalls.\n\nRoute the busy-buffer path through the need_resched() check so that the\nshrinker can release j_list_lock and reschedule promptly, restoring\nparity with the clean-buffer path, which already checks need_resched().\nThis does not change which checkpoint buffers are eligible for removal.",
   "datePublished": "Sep 11, 2026, 7:44:36 PM",
-  "dateUpdated": "Sep 11, 2026, 7:44:36 PM",
+  "dateUpdated": "Nov 23, 2026, 7:59:06 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/d340f02eea3afecc17c422301d888fb2a36b2d94",
+    "https://git.kernel.org/stable/c/dc7ece0b827fe3b748db685fb85cd2fc3710c3f9",
     "https://git.kernel.org/stable/c/f83c23286e54180cdc83a36463a60003534cc290",
     "https://git.kernel.org/stable/c/f9182a85991a0ad5cd2940df6db75f40ad90028c",
     "https://git.kernel.org/stable/c/595cac7f1b32d009b97f83dd2b2d6a1a445e9bb4",
     "https://git.kernel.org/stable/c/f213e12ff5c9590b1034ae8da0e6d09665c772d0"
   ],
   "aliases": [
-    "CVE-2026-89566"
+    "CVE-2026-89566",
+    "GHSA-p6jx-2fv3-6j26"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
-      "id": "2600b81c-f2ce-38e2-bbb1-15f3a5e29c9a",
+      "id": "1ae4870f-06b0-3390-b721-159a3f7adf09",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "5fda50e262e65bd553ff777c4b280afd1495a18b"
+      "product_version": "b98dba273a0e47dbfade89c9af73c5b012a4eabb <dc7ece0b827fe3b748db685fb85cd2fc3710c3f9"
+    },
+    {
+      "id": "1c336ff6-456f-3268-913a-eab9fc4154d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "42591341-97aa-3352-a05f-68b22cf7b4b7",
@@ -68,16 +81,6 @@
       "product_version": "557fda9ed70ebf8eda2620ba3d746215285a1303"
     },
     {
-      "id": "6b8a5e19-4f02-3b7b-ab71-ec3e56b82ba1",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "7166a235-178f-3c09-82c8-e36f9212f343",
       "product": {
         "name": "Linux",
@@ -108,16 +111,6 @@
       "product_version": "5.15.129 <5.16"
     },
     {
-      "id": "9c488a8a-a739-3046-ab95-dd14a3f8d93c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "6.1.50 <6.2"
-    },
-    {
       "id": "a72fd8a8-e850-38a0-b434-66ddfcbcb929",
       "product": {
         "name": "Linux",
@@ -126,6 +119,16 @@
         }
       },
       "product_version": "patch: 7.2.4"
+    },
+    {
+      "id": "adffb224-fea5-3d0e-82ce-a262b585a802",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     },
     {
       "id": "ae590a42-51c7-3bd4-9c79-c9279baf303b",
@@ -158,6 +161,16 @@
       "product_version": "b98dba273a0e47dbfade89c9af73c5b012a4eabb <f9182a85991a0ad5cd2940df6db75f40ad90028c"
     },
     {
+      "id": "c37416e1-f470-3702-bf8a-12ed1052e258",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
+    },
+    {
       "id": "c76606d0-f1e7-3a5a-9888-1c7e339b61e9",
       "product": {
         "name": "Linux",
@@ -176,6 +189,26 @@
         }
       },
       "product_version": "9c31bb2684f8035beca0275349d19d679b679ffb"
+    },
+    {
+      "id": "cb8116fe-6e12-33f6-bd3b-3f57fc0625d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5fda50e262e65bd553ff777c4b280afd1495a18b <d340f02eea3afecc17c422301d888fb2a36b2d94"
+    },
+    {
+      "id": "fdc8a097-8b4a-3eb1-b6d8-471267b87a81",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.50 <6.1.193"
     }
   ],
   "enisaIdVendor": [

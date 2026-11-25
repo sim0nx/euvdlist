@@ -1,19 +1,23 @@
 {
   "id": "EUVD-2026-82869",
   "enisaUuid": "e4b7f322-be05-31b9-aa98-9e49a69152c6",
-  "description": "### Summary\r\nNetty's fix for CVE-2026-44248 is incomplete. The decoder checks if the MQTT packet's `Remaining Length` exceeds `maxBytesInMessage`, but fails to validate the `Properties Length` against the `Remaining Length`. An attacker can bypass the size limit by sending a small `Remaining Length` but an enormous `Properties Length`. This forces Netty to buffer and parse millions of properties, allowing an unauthenticated remote attacker to trigger excessive memory and CPU consumption, leading to OutOfMemoryError.\r\n\r\n### Details\r\nIn `io.netty.handler.codec.mqtt.MqttDecoder`, the `decodeProperties()` helper method reads `totalPropertiesLength` and attempts to parse that many bytes. If the buffer lacks the full length, a `Signal` is thrown. The `catch` block inside `decode()` only enforces `maxBytesInMessage` against `bytesRemainingBeforeVariableHeader` (the packet's `Remaining Length`).\r\n\r\nBy sending a `CONNECT` packet with a small `Remaining Length` but a huge `Properties Length`, the size check passes. `ReplayingDecoder` then buffers data from the network until the huge `Properties Length` is reached, parsing millions of `UserProperty` objects and exhausting CPU and memory.\r\n\r\n#",
+  "description": "A flaw was found in Netty's MqttDecoder. An unauthenticated remote attacker can exploit this vulnerability by sending a specially crafted MQTT CONNECT packet. The decoder fails to properly validate the 'Properties Length' against the 'Remaining Length', allowing an attacker to bypass size limits. This leads to excessive memory and CPU consumption, resulting in a denial of service (DoS) due to an OutOfMemoryError.",
   "datePublished": "Sep 18, 2026, 10:53:48 AM",
-  "dateUpdated": "Sep 18, 2026, 10:53:48 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 12:13:32 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
+    "https://access.redhat.com/errata/RHSA-2026:102288",
     "https://access.redhat.com/security/cve/CVE-2026-93575",
     "https://bugzilla.redhat.com/show_bug.cgi?id=2536967"
   ],
   "aliases": [
+    "GHSA-fcr3-v77c-x7hx",
     "CVE-2026-93575"
   ],
   "assigner": "redhat",
-  "epss": 0.0,
+  "epss": 0.39,
   "enisaIdProduct": [],
   "enisaIdVendor": []
 }

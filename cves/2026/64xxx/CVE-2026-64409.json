@@ -3,7 +3,7 @@
   "enisaUuid": "b611da1a-f828-351d-88f3-7c7ce4fa8d1b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: btmtksdio: fix infinite loop in btmtksdio_txrx_work()\n\nEvery once in a while we see a hung btmtksdio_flush() task:\n\n INFO: task kworker/u17:0:189 blocked for more than 122 seconds.\n __cancel_work_timer+0x3f4/0x460\n cancel_work_sync+0x1c/0x2c\n btmtksdio_flush+0x2c/0x40\n hci_dev_open_sync+0x10c4/0x2190\n [..]\n\nIt all boils down to incorrect time_is_before_jiffies() usage in\nbtmtksdio_txrx_work().  The btmtksdio_txrx_work() loop is expected\nto be terminated if running for longer than 5*HZ.  However the\ntimeout check is twisted:  time_is_before_jiffies(old_jiffies + 5*HZ)\nevaluates to true when old_jiffies + 5*HZ is in the past i.e. when a\ntimeout has occurred.  Using OR with time_is_before_jiffies(txrx_timeout)\nmeans that:\n- before the 5-second timeout: the condition is `int_status || false`,\n  so it loops as long as there are pending interrupts.\n- after the 5-second timeout: the condition becomes `int_status || true`,\n  which is always true.\n\nWhen the loop becomes infinite btmtksdio_txrx_work() loop never\nterminates and never releases the SDIO host.\n\nFix loop termination condition to actually enforce a 5*HZ timeout.",
   "datePublished": "Jul 25, 2026, 8:50:50 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:50 AM",
+  "dateUpdated": "Aug 17, 2026, 4:55:07 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/f6682c23b6fac4780d297ae4662053d17e58fd52",
@@ -14,21 +14,12 @@
     "https://git.kernel.org/stable/c/a257407e2bbbb099ed427719a50563f67fa366d8"
   ],
   "aliases": [
-    "CVE-2026-64409"
+    "CVE-2026-64409",
+    "GHSA-x8qw-hc9f-qxq2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
-    {
-      "id": "024234dd-7b43-3ac3-a773-80b3a295fb9e",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
     {
       "id": "0634442d-4cf3-322f-9693-bdf803f4ee65",
       "product": {
@@ -88,6 +79,16 @@
         }
       },
       "product_version": "26270bc189ea4b5a8356ec99561357fc87f00b32 <466540e045d01fcacf383a5beb8a2dad2fc53a26"
+    },
+    {
+      "id": "b463bd03-7579-337f-90af-d5d6d81be187",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "bf4b92ed-35e3-3272-a1a6-a8d290b4dd8a",

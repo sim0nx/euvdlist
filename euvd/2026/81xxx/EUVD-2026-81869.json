@@ -3,7 +3,7 @@
   "enisaUuid": "a90821e0-c236-36fa-8a45-60b38af1c4b7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmd/md-llbitmap: stop daemon timer rearm on destroy\n\nllbitmap_destroy() deletes pending_timer before flushing\nmd_llbitmap_io_wq. However, daemon_work can still be queued or running\nafter the timer has been deleted, and the daemon path can arm\npending_timer again when it finds dirty chunks that are not ready to\nflush yet.\n\nIf that happens during teardown, pending_timer can remain armed after\nllbitmap is freed and later dereference freed memory.\n\nAdd a BITMAP_SHUTDOWN bit to llbitmap->flags, set it before deleting\nthe timer, and make the timer and daemon paths stop queueing or rearming\nwork once teardown starts. Cancel daemon_work before flushing the shared\nworkqueue so no already queued daemon instance can race with the free.\nUse timer_shutdown_sync() so a daemon instance that passed the shutdown\ncheck before teardown cannot rearm the timer afterward.\n\nBITMAP_SHUTDOWN is a runtime-only state. Mask it out when reading and\nupdating the llbitmap superblock so the shutdown state is never loaded\nfrom disk or persisted to disk.",
   "datePublished": "Sep 17, 2026, 4:08:08 PM",
-  "dateUpdated": "Sep 17, 2026, 4:08:08 PM",
+  "dateUpdated": "Oct 19, 2026, 9:00:53 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/c55aa6c17f019b6296952d336939891efa084c06",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/5553d64e01d9a995be6c3de38501c6dd4ceede3b"
   ],
   "aliases": [
+    "GHSA-wg47-q44p-vcm3",
     "CVE-2026-90276"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "28db5ff1-e01e-3daa-a9d0-e6811ea8a1e4",
@@ -35,16 +36,6 @@
         }
       },
       "product_version": "6.18"
-    },
-    {
-      "id": "3a378222-050f-3fdc-949f-20ce4f8fd247",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "4b1bb389-c1a8-35cf-be3b-23de1544a960",
@@ -75,6 +66,16 @@
         }
       },
       "product_version": "5ab829f1971dc99f2aac10846c378e67fc875abc <c55aa6c17f019b6296952d336939891efa084c06"
+    },
+    {
+      "id": "99dc4964-8e7d-31b1-bcd7-c79162247f26",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "d35a60b9-a82c-3c44-94c7-30f7b48cecc9",

@@ -3,20 +3,35 @@
   "enisaUuid": "c369c459-aa22-35aa-9893-5981e4896204",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Disable preemption in __bpf_get_stack\n\nget_perf_callchain() returns a per-CPU perf_callchain_entry buffer and\nreleases its recursion slot via put_callchain_entry() before returning,\nso nothing keeps the entry reserved while __bpf_get_stack() consumes\nit below.\n\nA preemptible BPF program (e.g. a non-sleepable raw tracepoint program\non a PREEMPT kernel, which runs under migrate_disable() but not\npreempt_disable()) can be scheduled out between obtaining the entry\nand the copy. Another task scheduled on the same CPU then reuses the\nsame per-CPU buffer and overwrites trace->nr with a larger value.\ncopy_len is then computed from the inflated trace->nr and can exceed\nthe caller's buffer, causing an out-of-bounds write in the memcpy()\nand in the build_id path.\n\nThe rcu_read_lock() taken here alone does not prevent this. It is\nonly taken on the may_fault path, and under CONFIG_PREEMPT_RCU it does\nnot disable preemption; it merely keeps perf's callchain buffer array\nalive (freed via call_rcu()) and does nothing to stop another task\nfrom reusing the entry.\n\nDisable preemption around obtaining the callchain entry and copying\nit into the caller's buffer, so the entry cannot be reused underneath\nus and trace->nr stays bounded by max_depth. Build ID resolution may\nfault and is therefore deferred until after preemption is re-enabled;\nby then the instruction pointers have already been copied into buf,\nso it operates only on that private copy. Note, preempt_disable() also\nsubsumes the buffer-lifetime guarantee the rcu_read_lock() provided,\nsince a preempt-disabled section is an RCU read-side critical section\nfor the callchain buffers' call_rcu() reclaim.\n\n\n[ changed Fixes: commit ]",
   "datePublished": "Sep 11, 2026, 7:44:46 PM",
-  "dateUpdated": "Sep 11, 2026, 7:44:46 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:32:16 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/68eebc89c5ab5a8f9281773f35e49c83940450a0",
+    "https://git.kernel.org/stable/c/719e69421de28829c72bf8a2722ab48a1c5a59ad",
     "https://git.kernel.org/stable/c/8c5ba022f2085ea42d011497a6e92e527d123b9b",
     "https://git.kernel.org/stable/c/dbfecc8a6631c0d3626c14ba1f1a485a4498445a",
     "https://git.kernel.org/stable/c/9a23747909fcae707990c8466c381a0e7acfaa4e",
     "https://git.kernel.org/stable/c/b1a47b2708d4e95dbd23aee2ec83752190897b3f"
   ],
   "aliases": [
-    "CVE-2026-89580"
+    "CVE-2026-89580",
+    "GHSA-9w72-pq5v-mqv8"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
+    {
+      "id": "0195fb8f-7482-38b2-86d1-57cf6ad24c3a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
     {
       "id": "0634f062-7f72-3400-974c-9b5c6d11478f",
       "product": {
@@ -26,6 +41,16 @@
         }
       },
       "product_version": "c195651e565ae7f41a68acb7d4aa7390ad215de1 <b1a47b2708d4e95dbd23aee2ec83752190897b3f"
+    },
+    {
+      "id": "16a7b911-53f9-37a6-8fc7-0c77de8ae2fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c195651e565ae7f41a68acb7d4aa7390ad215de1 <719e69421de28829c72bf8a2722ab48a1c5a59ad"
     },
     {
       "id": "185c7802-f5d1-3249-bff8-cb8d97e0af5c",
@@ -48,14 +73,24 @@
       "product_version": "patch: 7.2.4"
     },
     {
-      "id": "35db49e5-4756-3483-b2db-9d12d4d4911d",
+      "id": "45366132-4a82-33f9-bff0-7f4aff30fce9",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "c195651e565ae7f41a68acb7d4aa7390ad215de1 <68eebc89c5ab5a8f9281773f35e49c83940450a0"
+    },
+    {
+      "id": "4efdd85a-ab6b-3630-8960-44544e64617a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "693c58c2-b598-3d7f-9f70-93abd8b0b094",
@@ -66,6 +101,16 @@
         }
       },
       "product_version": "patch: 6.18.50"
+    },
+    {
+      "id": "7dc3a142-74cc-3170-a41a-db2f2949a9bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "b4302d8b-afcc-3aee-8204-4dfc3c46aa41",

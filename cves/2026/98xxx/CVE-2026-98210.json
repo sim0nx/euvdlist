@@ -3,7 +3,7 @@
   "enisaUuid": "cd322721-afa7-320d-bd91-ff93e45c1d63",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmmc: mxcmmc: cancel data work and watchdog on remove\n\nmxcmci_remove() frees the host through the devm tail, but neither it nor\nmmc_remove_host() drains the driver's own asynchronous state.\nhost->watchdog, a 10 s timer armed on the DMA path in mxcmci_setup_data(),\nis deleted only by the DMA- and IRQ-complete paths, which the remove path\ndoes not explicitly drain; it can therefore fire after the host is freed\nand dereference it in mxcmci_watchdog().  host->datawork, armed from the\nIRQ handler on the PIO path, is not cancelled by the remove path either.\n\nFree the devm-registered IRQ, then cancel datawork and delete the watchdog\nin mxcmci_remove(), before dma_release_channel().  Freeing the IRQ first\nkeeps a trailing handler from re-arming datawork between the cancel and\nthe host free.  Both callbacks are non-self-rearming.\n\nThis issue was found by an in-house static analysis tool.",
   "datePublished": "Oct 6, 2026, 8:44:46 AM",
-  "dateUpdated": "Oct 6, 2026, 8:44:46 AM",
+  "dateUpdated": "Oct 19, 2026, 9:15:41 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/740f595f8ad678cb4d79f13edd12851df2492bdd",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/d3a421c82412344022982d5b91ba23194a0a6f29"
   ],
   "aliases": [
+    "GHSA-3899-r8v9-5w9h",
     "CVE-2026-98210"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "09bbffe3-a16f-308a-a4ab-d22b5981e4f1",
@@ -132,16 +133,6 @@
       "product_version": "patch: 6.18.54"
     },
     {
-      "id": "742f8c00-2c4a-3744-9157-60b33f6aa97b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
-    {
       "id": "7a600ed3-298a-3e32-bffe-77bc9f83528a",
       "product": {
         "name": "Linux",
@@ -190,6 +181,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "d999f62b-ddf8-37ee-900b-e2b228b82a0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "f45e739c-0005-30b8-89bb-9005aa51965c",

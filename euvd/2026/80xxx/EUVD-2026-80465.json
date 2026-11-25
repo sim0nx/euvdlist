@@ -3,7 +3,7 @@
   "enisaUuid": "4ee347bd-cc16-35d8-9b2d-9c3fa784ec1d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Zero SFP DMA buffer in FRU/I2C bsg handlers\n\nThe FRU and I2C bsg handlers stage their transfer in a DMA_POOL_SIZE\n(256-byte) bounce buffer obtained from dma_pool_alloc(), which does not\nzero the allocation. They initialize only a few leading bytes before\nhanding the buffer to qla2x00_write_sfp().\n\nqla2x00_write_sfp() can override the transfer length with a user-supplied\nvalue:\n\n\tif (len == 1)\n\t\topt |= BIT_0;\n\tif (opt & BIT_0)\n\t\tlen = *sfp;\n\n*sfp is the first byte of the (user-controlled) payload, so len can grow\nup to 255. The device then DMA-reads len bytes from the 256-byte pool\nbuffer. Since only a small prefix was written\n(e.g. MAX_FRU_SIZE == 36 bytes for a FRU version, one byte for a FRU\nstatus register), the hardware reads past the initialized region and\nwrites up to ~219 bytes of stale DMA-pool heap memory to the device\nflash.\n\nAllocate the buffer with dma_pool_zalloc() in all five FRU/I2C handlers\nso any bytes beyond the initialized data are zero rather than stale heap\ncontents.",
   "datePublished": "Sep 16, 2026, 10:31:35 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:35 AM",
+  "dateUpdated": "Oct 19, 2026, 8:53:58 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/a476377a66897549dd49bee319f4df66623417b7",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/b47d4a1547d9ef21b2e9d1a739fe2204d4be05dc"
   ],
   "aliases": [
-    "CVE-2026-89865"
+    "CVE-2026-89865",
+    "GHSA-rqfh-jqm9-82qm"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "1009a9a0-3c98-3a0a-86e5-d7399d32475d",
@@ -50,6 +51,16 @@
         }
       },
       "product_version": "patch: 6.18.51"
+    },
+    {
+      "id": "32a30aa6-51f3-3a27-aaa1-a3caf22daaf6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "378e6449-6cfd-3d34-8bd3-72268a4813e7",
@@ -190,16 +201,6 @@
         }
       },
       "product_version": "697a4bc69159c3396035b0506ffa55c4b2d0b1f4 <a5501c42256235523c4dddf799f032dfbf4f4c77"
-    },
-    {
-      "id": "fc9e3436-c804-3ff5-a13a-c6653e710491",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     }
   ],
   "enisaIdVendor": [

@@ -3,9 +3,10 @@
   "enisaUuid": "5540ecbb-3585-387d-969f-e5d0dfdd828c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nspi: davinci: switch to managed controller allocation\n\nThe controller is allocated with the non-managed spi_alloc_host() while\nthe interrupt is registered with devm_request_threaded_irq().  During\nremoval, spi_bitbang_stop() only unregisters the controller; the\nsubsequent spi_controller_put() then frees the controller together with\nits embedded davinci_spi devdata, which is the IRQ handler's dev_id.\nThe devm_request_threaded_irq() release action (free_irq()), which\ndrains the handler, does not run until after .remove() returns.  A late\nor latched interrupt can therefore reach davinci_spi_irq() and\ndereference already-freed memory.\n\nSwitch to devm_spi_alloc_host() so that the devres LIFO order releases\nthe controller only after free_irq() has drained the handler, and drop\nthe now-redundant spi_controller_put() from .remove().  The probe error\npath is simplified to direct returns.\n\nThe clock is acquired with devm_clk_get_enabled(), which is registered\nafter the IRQ and thus released before it by the devres LIFO order.\nDrain the interrupt explicitly with devm_free_irq() before disabling the\ncontroller so that a late interrupt cannot access the registers of a\nclock-gated controller.\n\nThis issue was found by an in-house static analysis tool.",
   "datePublished": "Sep 17, 2026, 4:09:37 PM",
-  "dateUpdated": "Sep 17, 2026, 4:09:37 PM",
+  "dateUpdated": "Oct 30, 2026, 12:35:31 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/2382f18daa4303923d66526db984e9a38074a312",
     "https://git.kernel.org/stable/c/29e37f768f35592e26477f703649bd2e6f18d857",
     "https://git.kernel.org/stable/c/f9452eba71fbfcee55c0b8e030ee3615e9f75f65",
     "https://git.kernel.org/stable/c/3b544072185c3d19ddec621ec9f6897ea2d10ee3",
@@ -13,11 +14,22 @@
     "https://git.kernel.org/stable/c/ea408a05dc8f18b4a184b88d6e19d2fd1acc1527"
   ],
   "aliases": [
+    "GHSA-j436-5fx7-7xpm",
     "CVE-2026-90410"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
+    {
+      "id": "005f7dd6-5d0f-386c-8ecd-61503e220c2e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "15d711ba-ee5d-3843-80ec-cdf43b04640c",
       "product": {
@@ -27,16 +39,6 @@
         }
       },
       "product_version": "patch: 6.12.110"
-    },
-    {
-      "id": "17423de3-45f9-3fd2-882d-c900e428e71d",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "2f8e304e-49e4-3740-8d17-30fcf7293147",
@@ -89,6 +91,16 @@
       "product_version": "patch: 6.18.52"
     },
     {
+      "id": "8ee60f24-ffc4-3392-af5b-c6345acd68ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5b3bb5963ff23a344062aba04937533a6f575761 <2382f18daa4303923d66526db984e9a38074a312"
+    },
+    {
       "id": "927fd4ae-eb5b-3bf9-ac63-dbba66c0f516",
       "product": {
         "name": "Linux",
@@ -117,6 +129,16 @@
         }
       },
       "product_version": "5b3bb5963ff23a344062aba04937533a6f575761 <1a7958ce58dc95b06615df00c120ece4eb9ccc86"
+    },
+    {
+      "id": "b59231b5-1ba4-364d-877d-21b9110f6743",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "e2a3203a-2a27-3eb7-9adf-a5fe6e7b25a9",

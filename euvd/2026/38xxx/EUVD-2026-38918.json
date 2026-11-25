@@ -3,8 +3,10 @@
   "enisaUuid": "762062a6-c186-3877-83ba-35281c25ebe4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nquota: Fix race of dquot_scan_active() with quota deactivation\n\ndquot_scan_active() can race with quota deactivation in\nquota_release_workfn() like:\n\n  CPU0 (quota_release_workfn)         CPU1 (dquot_scan_active)\n  ==============================      ==============================\n  spin_lock(&dq_list_lock);\n  list_replace_init(\n    &releasing_dquots, &rls_head);\n    /* dquot X on rls_head,\n       dq_count == 0,\n       DQ_ACTIVE_B still set */\n  spin_unlock(&dq_list_lock);\n  synchronize_srcu(&dquot_srcu);\n                                      spin_lock(&dq_list_lock);\n                                      list_for_each_entry(dquot,\n                                          &inuse_list, dq_inuse) {\n                                        /* finds dquot X */\n                                        dquot_active(X) -> true\n                                        atomic_inc(&X->dq_count);\n                                      }\n                                      spin_unlock(&dq_list_lock);\n  spin_lock(&dq_list_lock);\n  dquot = list_first_entry(&rls_head);\n  WARN_ON_ONCE(atomic_read(&dquot->dq_count));\n\nThe problem is not only a cosmetic one as under memory pressure the\ncaller of dquot_scan_active() can end up working on freed dquot.\n\nFix the problem by making sure the dquot is removed from releasing list\nwhen we acquire a reference to it.",
   "datePublished": "Jun 24, 2026, 4:29:56 PM",
-  "dateUpdated": "Jun 24, 2026, 4:29:56 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 10, 2026, 12:48:07 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/2bdc80f4619411e5bd4a3ef23f51e14021ed457c",
     "https://git.kernel.org/stable/c/f9438cb8c8ec3adc84b2b450a3aab0123d074c3b",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/e93ab401da4b2e2c1b8ef2424de2f238d51c8b2d"
   ],
   "aliases": [
+    "GHSA-4mf5-rjc5-62qc",
     "CVE-2026-53050"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.1,
   "enisaIdProduct": [
     {
       "id": "02f77ceb-7976-31ee-95a2-e5abba8b5cdf",

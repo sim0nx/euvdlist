@@ -3,18 +3,40 @@
   "enisaUuid": "8bd02fed-43ee-35d8-8347-7059d779c135",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbtrfs: zoned: flush active metadata block group at btree_writepages() start\n\nbtree_writepages() writes the btree inode's dirty metadata in ascending\nlogical address order. On a zoned filesystem only one metadata and one\nsystem block group is active for writing at a time, and\ncheck_bg_is_active() (via btrfs_check_meta_write_pointer()) pivots the\nactive block group as writeback moves from one block group to the next.\n\nIf the active block group sits at a higher logical address than another\nblock group that also holds dirty metadata, the ascending walk reaches\nthe lower one first and, to write it, has to finish the active block\ngroup and activate the lower one. It cannot finish a block group that\nstill has unsent IO, and during WB_SYNC_ALL && !for_sync (commit)\nwriteback it deliberately refuses to wait for that IO under\nfs_info->zoned_meta_io_lock, as that can deadlock. The pivot thus cannot\nissue the submission itself either, so it gives up:\nbtrfs_check_meta_write_pointer() returns -EAGAIN, which\nbtrfs_write_and_wait_transaction() treats as fatal and aborts the\ntransaction, forcing the filesystem read-only. This happens\nintermittently under metadata-heavy relocation (e.g. fstests btrfs/187).\n\nFlush the active metadata and system block groups at the start of\nbtree_writepages(), under the fs_info->zoned_meta_io_lock it already\nholds, so they have no unsent IO left and the later pivot can finish\nthem and make forward progress.",
   "datePublished": "Sep 17, 2026, 4:07:58 PM",
-  "dateUpdated": "Sep 17, 2026, 4:07:58 PM",
+  "dateUpdated": "Oct 19, 2026, 9:00:37 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/58b0ab0340ce04a057169d42cbacbf786063813d",
     "https://git.kernel.org/stable/c/e2de2989adb3e58c2320e57c255f52e065667b5e",
     "https://git.kernel.org/stable/c/ecc05eda9a346848ae01a6c8bfa3f0bec133bd8b"
   ],
   "aliases": [
-    "CVE-2026-90261"
+    "CVE-2026-90261",
+    "GHSA-6683-vc4x-94r5"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "087d1fa9-1ec1-39df-8fe8-e8a025c157a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "13bb483d32abb6f8ebd40141d87eb68f11cc2dd2 <58b0ab0340ce04a057169d42cbacbf786063813d"
+    },
+    {
+      "id": "28402b48-1f39-346a-b74f-3e337ba9ecff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.57"
+    },
     {
       "id": "32c957be-0925-3780-956b-acc730e5c2c1",
       "product": {
@@ -34,6 +56,16 @@
         }
       },
       "product_version": "6.5.5 <6.6"
+    },
+    {
+      "id": "3f10ecb3-f6dc-3bb9-b2e5-d98acaf8603e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "49440507-04a7-329a-9780-82106f91d43d",
@@ -64,16 +96,6 @@
         }
       },
       "product_version": "patch: 7.2.6"
-    },
-    {
-      "id": "79ba3046-7369-39a2-98cf-3c5b2cc4f557",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "970b1a19-41c3-38ad-b5a5-ced62131983b",

@@ -3,7 +3,7 @@
   "enisaUuid": "0f4c4635-b17e-34ef-8d43-393e7ff5c257",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvfio/pci: Latch disable_idle_d3 per device\n\nWhen disable_idle_d3 was introduced in vfio-pci, it directly manipulated\nthe device power state with pci_set_power_state().  There were no\nrefcounts to maintain or balanced operations, we could unconditionally\nbring the device to D0 and conditionally move it to D3hot.  Therefore\nthe module parameter was made writable.\n\nLater, in commit c61302aa48f7 (\"vfio/pci: Move module parameters to\nvfio_pci.c\"), as part of the vfio-pci-core split, the writable aspect\nof the module parameter was nullified.  The parameter value could still\nbe changed through sysfs, but the vfio-pci driver latched the values\ninto vfio-pci-core globals at module init.  Loading the vfio-pci module,\nor unloading and reloading, with non-default or different values could\nchange the globals relative to existing devices bound to vfio-pci\nvariant drivers.\n\nRuntime PM was introduced in commit 7ab5e10eda02 (\"vfio/pci: Move the\nunused device into low power state with runtime PM\"), which marks the\npoint where power states became refcounted.  PM get and put operations\nneed to be balanced, but the same module operations noted above can\nchange the global variables relative to those devices already bound to\nvfio-pci variant drivers.  This introduces a window where PM operations\ncan now become unbalanced.\n\nTo resolve this with a narrow footprint for stable backports, the\ndisable_idle_d3 flag is latched into the vfio_pci_core_device at the\ntime of initialization, such that the device always operates with a\nconsistent value.\n\nNB. vfio_pci_dev_set_try_reset() now unconditionally raises the\nruntime PM usage count around bus reset to account for disable_idle_d3\nbecoming a per-device rather than global flag.  When this flag is set,\nthe additional get/put pair is harmless and allows continued use of the\nshared vfio_pci_dev_set_pm_runtime_get() helper.",
   "datePublished": "Jul 25, 2026, 8:51:38 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:38 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:53 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/332d785f9ae426eeeb92527872adf09d84101ba3",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/4575e9aac5336d1365138c0284773bf8da4b1fa3"
   ],
   "aliases": [
-    "CVE-2026-64476"
+    "CVE-2026-64476",
+    "GHSA-mcmr-g6rj-vcxr"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "10d3d5e8-7b58-310b-9adf-462aa3772845",
@@ -38,16 +39,6 @@
         }
       },
       "product_version": "patch: 6.18.39"
-    },
-    {
-      "id": "35aa6bde-0f31-34ae-a216-f7cedd614840",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc2"
     },
     {
       "id": "4ccc7626-2b2a-3105-8047-4265bbd34277",
@@ -158,6 +149,16 @@
         }
       },
       "product_version": "7ab5e10eda02da1d9562ffde562c51055d368e9c <062b820290bcb9778e43a73597df76e9bb08acfb"
+    },
+    {
+      "id": "ee762cb4-de14-3bdd-9e20-4dc40cf5771c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

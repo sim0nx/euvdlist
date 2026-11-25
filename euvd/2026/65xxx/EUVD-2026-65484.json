@@ -3,8 +3,10 @@
   "enisaUuid": "79d203e8-9be2-3fa1-a49c-ad70bd3fc550",
   "description": "Issue summary: The OpenSSL Certificate Management Protocol (CMP) caches\nadditional certificates (extraCerts) sent in a CMP message, but never expunges\nthem (for instance if they are invalid).  If a server reuses an OSSL_CMP_CTX\nfrequently, this cache of extraCerts may grow unboundedly, and a malicious\nclient may flood a CMP server with requests driving this growth.\n\nImpact summary: Users utilizing a CMP server that reuses a single OSSL_CMP_CTX\nfor the lifetime of a server process may observe unbounded memory growth in the\nevent a malicious client repeatedly sends requests containing unique extra\ncertificates, which may lead to OOM conditions.\n\nCWE: CWE-770: Allocation of Resources Without Limits or Throttling\n\nDescription: If a remote user sends CMP messages to a server with a list of\nextraCerts and the message is rejected, the extraCerts from the message remains\nin the server contexts untrusted certificate stack.  This exposes servers with\nlong lived ctx objects to Denial of Service attacks in which an attacker sends\nmessages intending to be rejected with a large list of additional certificates\nrepeatedly, forcing the server to store them indefinitely.\n   \nThe issue was fixed by removing the added extra certs if the message is\nrejected, using the same method as when the context is configured to not do\ncaching at all.\n\nFIPS impact: no\nAs the CMP code lives outside the FIPS module boundary, no FIPS\nmodules are affected by this CVE.",
   "datePublished": "Aug 25, 2026, 12:59:58 PM",
-  "dateUpdated": "Aug 25, 2026, 12:59:58 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 25, 2026, 2:36:13 PM",
+  "baseScore": 5.9,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://openssl-library.org/news/secadv/20260825.txt",
     "https://github.com/openssl/openssl/commit/74ae7f6df47a5767c1010b88c47507dfc5b32c46",
@@ -14,10 +16,11 @@
     "https://github.com/openssl/openssl/commit/21a5d9658b0c66daace60e10ea18ff32a448de9f"
   ],
   "aliases": [
-    "CVE-2026-63074"
+    "CVE-2026-63074",
+    "GHSA-2q27-mpm9-44m4"
   ],
   "assigner": "openssl",
-  "epss": 0.0,
+  "epss": 0.6,
   "enisaIdProduct": [
     {
       "id": "2c699c64-51bf-30a7-a325-aaaa7b5ee782",

@@ -3,7 +3,7 @@
   "enisaUuid": "8ef64285-2137-3332-93a7-b56315a7c2da",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nata: libata-scsi: bound the ATA passthru sense descriptor writes\n\nWhen an ATA PASS-THROUGH command to an ATAPI device fails, the sense\nbuffer holds the device's REQUEST SENSE reply, and\nata_scsi_set_passthru_sense_fields() trusts its additional length\nbyte, sb[7], when adding the ATA Status Return descriptor.  A faulty\nor malicious device can use that to make the kernel read and write\npast the 96-byte buffer in three ways:\n\n- scsi_sense_desc_find() is passed sb[7] + 8 as the buffer length, so\n  its clamp against sb[7] does nothing and the walk runs off the end.\n- A type-9 descriptor found near the end is filled in unchecked.\n- A new descriptor at sb[8 + len] needs len + 22 bytes, not len + 14,\n  so len 75..82 writes up to 8 bytes past the end.\n\nReproduced with KASAN under qemu, with the emulated ATAPI REQUEST SENSE\nreply patched:\n\n  BUG: KASAN: slab-out-of-bounds in scsi_sense_desc_find+0x1a5/0x210\n  BUG: KASAN: slab-out-of-bounds in ata_scsi_qc_complete+0x1a15/0x1a50\n\nBoth are gone with this patch, and a valid descriptor is still filled\nin.",
   "datePublished": "Oct 18, 2026, 3:18:13 PM",
-  "dateUpdated": "Oct 18, 2026, 3:18:13 PM",
+  "dateUpdated": "Oct 19, 2026, 9:21:28 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/c698f6deabf680f8f4a1727ef2dc80fe78815fbf",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/80320b278fea07ffcda3f57b67b61658e0a4e1ca"
   ],
   "aliases": [
+    "GHSA-gq8r-6748-x6m5",
     "CVE-2026-98545"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "0dececb3-892c-3ff5-a407-145b43f0f206",
@@ -57,16 +58,6 @@
         }
       },
       "product_version": "6.6.44 <6.6.158"
-    },
-    {
-      "id": "38a36b09-9bdf-34d7-b664-ca52911e9526",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "41a5e5a8-5339-3e46-8a3c-846d46d6e25e",
@@ -167,6 +158,16 @@
         }
       },
       "product_version": "patch: 6.12.112"
+    },
+    {
+      "id": "f94e3884-5349-3816-a020-6f637cce0bf9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

@@ -3,8 +3,10 @@
   "enisaUuid": "a6b96fe6-a994-36b5-a373-f8d83e6e5bef",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdkfd: Fix watch_id bounds checking in debug address watch v2\n\nThe address watch clear code receives watch_id as an unsigned value\n(u32), but some helper functions were using a signed int and checked\nbits by shifting with watch_id.\n\nIf a very large watch_id is passed from userspace, it can be converted\nto a negative value.  This can cause invalid shifts and may access\nmemory outside the watch_points array.\n\ndrm/amdkfd: Fix watch_id bounds checking in debug address watch v2\n\nFix this by checking that watch_id is within MAX_WATCH_ADDRESSES before\nusing it.  Also use BIT(watch_id) to test and clear bits safely.\n\nThis keeps the behavior unchanged for valid watch IDs and avoids\nundefined behavior for invalid ones.\n\nFixes the below:\ndrivers/gpu/drm/amd/amdgpu/../amdkfd/kfd_debug.c:448\nkfd_dbg_trap_clear_dev_address_watch() error: buffer overflow\n'pdd->watch_points' 4 <= u32max user_rl='0-3,2147483648-u32max' uncapped\n\ndrivers/gpu/drm/amd/amdgpu/../amdkfd/kfd_debug.c\n    433 int kfd_dbg_trap_clear_dev_address_watch(struct kfd_process_device *pdd,\n    434                                         uint32_t watch_id)\n    435 {\n    436         int r;\n    437\n    438         if (!kfd_dbg_owns_dev_watch_id(pdd, watch_id))\n\nkfd_dbg_owns_dev_watch_id() doesn't check for negative values so if\nwatch_id is larger than INT_MAX it leads to a buffer overflow.\n(Negative shifts are undefined).\n\n    439                 return -EINVAL;\n    440\n    441         if (!pdd->dev->kfd->shared_resources.enable_mes) {\n    442                 r = debug_lock_and_unmap(pdd->dev->dqm);\n    443                 if (r)\n    444                         return r;\n    445         }\n    446\n    447         amdgpu_gfx_off_ctrl(pdd->dev->adev, false);\n--> 448         pdd->watch_points[watch_id] = pdd->dev->kfd2kgd->clear_address_watch(\n    449                                                         pdd->dev->adev,\n    450                                                         watch_id);\n\nv2: (as per, Jonathan Kim)\n - Add early watch_id >= MAX_WATCH_ADDRESSES validation in the set path to\n   match the clear path.\n - Drop the redundant bounds check in kfd_dbg_owns_dev_watch_id().",
   "datePublished": "May 27, 2026, 12:16:49 PM",
-  "dateUpdated": "May 27, 2026, 12:16:49 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:26:39 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/971bf8e61e9b4abaacf9b35eaf76ec222758f9d6",
     "https://git.kernel.org/stable/c/a0d367e13db63a6ed76ee0d0a8c3a58c1fa98488",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/5a19302cab5cec7ae7f1a60c619951e6c17d8742"
   ],
   "aliases": [
+    "GHSA-4753-mhw2-5g7r",
     "CVE-2026-45878"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "018c21a0-4440-32ee-9812-7d1e881c1aef",

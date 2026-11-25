@@ -3,7 +3,7 @@
   "enisaUuid": "4f37c0e5-1796-3bb9-9840-b9221e809f4f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngve: DQO: fix header length used by gve_can_send_tso() for UDP GSO\n\ngve_can_send_tso() computes how many buffers each segment of a GSO\npacket would span, and for this it needs the length of the headers\nthat the device replicates in front of every segment.\n\nIt unconditionally uses skb_tcp_all_headers(), which reads the doff\nfield of the TCP header. SKB_GSO_UDP_L4 packets have no TCP header:\ntcp_hdrlen() then reads one byte of the UDP payload, and header_len\ncan be anything in [0, 60] instead of the transport offset plus the\neight bytes of the UDP header that gve_prep_tso() programs into the\nTSO context descriptor.\n\nA wrong header length shifts all the segment boundaries computed in\nthe loop, so the number of buffers per segment can be over or under\nestimated. In the first case, GSO is needlessly disabled for this\npacket by gve_features_check_dqo() and the stack has to segment it.\nIn the second case, the driver hands the device a packet whose\nsegments span more than GVE_TX_MAX_DATA_DESCS buffers.\n\nUse the UDP header length for SKB_GSO_UDP_L4 packets, matching what\ngve_prep_tso() does.",
   "datePublished": "Oct 18, 2026, 3:18:24 PM",
-  "dateUpdated": "Oct 18, 2026, 3:18:24 PM",
+  "dateUpdated": "Oct 19, 2026, 9:21:41 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/feab3880a72b43913d332c06b75bb80526fa47ba",
@@ -11,11 +11,22 @@
     "https://git.kernel.org/stable/c/83769c23fb1879edc916a526ba424285033baf2d"
   ],
   "aliases": [
+    "GHSA-jvwf-rjpr-3g5x",
     "CVE-2026-98557"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
+    {
+      "id": "19c98e84-472a-3799-bef9-7fbe0c7befea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "25795821-b7b2-399c-a391-7c995fd28af4",
       "product": {
@@ -65,16 +76,6 @@
         }
       },
       "product_version": "2f855c52a2e1d3c40d186549ac46cbd88b38eb49 <feab3880a72b43913d332c06b75bb80526fa47ba"
-    },
-    {
-      "id": "a03a421e-dab8-33a7-a669-8c2922e83292",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "efbee732-2c86-344c-9f4e-3f13008f7a33",

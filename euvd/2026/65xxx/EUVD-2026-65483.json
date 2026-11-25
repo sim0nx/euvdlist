@@ -3,8 +3,10 @@
   "enisaUuid": "9438a236-5b8b-3c85-95cd-1cbfa43f36e5",
   "description": "Issue summary: OpenSSL CMP response validation passed an unexpected response\nsender distinguished name directly as the format string to `ERR_raise_data()`.\n\nImpact summary: A malicious or intercepted CMP endpoint can crash a CMP client\nthat enforces an expected sender or uses a pinned server certificate whose\nsubject becomes the default expected sender.\n\nCWE: CWE-134 (Use of Externally-Controlled Format String)\n\nDescription: When validating a received CMP message, ossl_cmp_msg_check_update()\nconverts the peer-supplied sender distinguished name with X509_NAME_oneline()\nand passes it directly as the format argument to ERR_raise_data(). Percent\ncharacters survive the conversion, so a sender DN such as \"CN=%s%n\" reaches\nBIO_vsnprintf() as an attacker-controlled format string with no matching variadic\narguments. This path is only reached when the caller configures an expected\nsender or pins a server certificate, which is the normal configuration for a\nCMP client validating server responses.\n\nSince the attacker controls the format string but none of the variadic\narguments, such specifiers as %s and %n dereference or write through unrelated\nstack contents and crash the client. The reliable consequence is a denial of\nservice, when the response comes from a malicious or intercepted CMP endpoint.\nThere is no controlled memory write, arbitrary-address read, or reliable path\nto remote code execution.\n\nFIPS impact: no\n\nNo FIPS modules are affected by this issue, as the CMP protocol\nimplementation is outside the OpenSSL FIPS module boundary.",
   "datePublished": "Aug 25, 2026, 12:59:43 PM",
-  "dateUpdated": "Aug 25, 2026, 12:59:43 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 31, 2026, 7:12:54 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://openssl-library.org/news/secadv/20260825.txt",
     "https://github.com/openssl/openssl/commit/7eb2e3ec9d1d4f35c8022fccd4b03398b3f33e21",
@@ -13,10 +15,11 @@
     "https://github.com/openssl/openssl/commit/a7e5a6eea8fd3ccca6b6fbba031a5fbf8a3d93b4"
   ],
   "aliases": [
+    "GHSA-826x-qg76-xqjx",
     "CVE-2026-63073"
   ],
   "assigner": "openssl",
-  "epss": 0.0,
+  "epss": 1.09,
   "enisaIdProduct": [
     {
       "id": "0a14bf4e-adca-3a34-9bb9-2ab175eef341",

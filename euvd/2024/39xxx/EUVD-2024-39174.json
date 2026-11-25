@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2024-39174",
+  "enisaUuid": "82692577-061e-3efc-9776-23137bd45877",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Defer work in bpf_timer_cancel_and_free\n\nCurrently, the same case as previous patch (two timer callbacks trying\nto cancel each other) can be invoked through bpf_map_update_elem as\nwell, or more precisely, freeing map elements containing timers. Since\nthis relies on hrtimer_cancel as well, it is prone to the same deadlock\nsituation as the previous patch.\n\nIt would be sufficient to use hrtimer_try_to_cancel to fix this problem,\nas the timer cannot be enqueued after async_cancel_and_free. Once\nasync_cancel_and_free has been done, the timer must be reinitialized\nbefore it can be armed again. The callback running in parallel trying to\narm the timer will fail, and freeing bpf_hrtimer without waiting is\nsufficient (given kfree_rcu), and bpf_timer_cb will return\nHRTIMER_NORESTART, preventing the timer from being rearmed again.\n\nHowever, there exists a UAF scenario where the callback arms the timer\nbefore entering this function, such that if cancellation fails (due to\ntimer callback invoking this routine, or the target timer callback\nrunning concurrently). In such a case, if the timer expiration is\nsignificantly far in the future, the RCU grace period expiration\nhappening before it will free the bpf_hrtimer state and along with it\nthe struct hrtimer, that is enqueued.\n\nHence, it is clear cancellation needs to occur after\nasync_cancel_and_free, and yet it cannot be done inline due to deadlock\nissues. We thus modify bpf_timer_cancel_and_free to defer work to the\nglobal workqueue, adding a work_struct alongside rcu_head (both used at\n_different_ points of time, so can share space).\n\nUpdate existing code comments to reflect the new state of affairs.",
+  "datePublished": "Jul 29, 2024, 2:32:02 PM",
+  "dateUpdated": "Oct 30, 2026, 12:18:44 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/7b27f15cab4c7d4f28c25b94a5284ad6d9d3695d",
+    "https://git.kernel.org/stable/c/5eaa11c500ed07f505f86cec07d5593a71927e26",
+    "https://git.kernel.org/stable/c/7aa5a19279c3639ae8b758b63f05d0c616a39fa1",
+    "https://git.kernel.org/stable/c/a6fcd19d7eac1335eb76bc16b6a66b7f574d1d69"
+  ],
+  "aliases": [
+    "CVE-2024-41045",
+    "GHSA-w3rc-7c7w-5vq5"
+  ],
+  "assigner": "Linux",
+  "epss": 0.3,
+  "enisaIdProduct": [
+    {
+      "id": "34c69720-aac8-3d78-a3ec-9008f47bf77e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b00628b1c7d595ae5b544e059c27b1f5828314b4 <7aa5a19279c3639ae8b758b63f05d0c616a39fa1"
+    },
+    {
+      "id": "49886a39-996a-3a5c-9e8e-ad31d6964c2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b00628b1c7d595ae5b544e059c27b1f5828314b4 <7b27f15cab4c7d4f28c25b94a5284ad6d9d3695d"
+    },
+    {
+      "id": "57cff154-4762-3c41-a439-6c88191b3df4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15"
+    },
+    {
+      "id": "709b42f3-0f74-3282-809c-d52a4a61cbde",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.158"
+    },
+    {
+      "id": "86e239d1-54f9-32de-a5cd-eb0cb3a998fc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b00628b1c7d595ae5b544e059c27b1f5828314b4 <a6fcd19d7eac1335eb76bc16b6a66b7f574d1d69"
+    },
+    {
+      "id": "aef51b94-1fb5-3aa8-bad9-5df8264c369d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b00628b1c7d595ae5b544e059c27b1f5828314b4 <5eaa11c500ed07f505f86cec07d5593a71927e26"
+    },
+    {
+      "id": "b9a9c70b-3b6a-3569-bbde-3290fd56bfa1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "dd064598-9679-31ce-8914-d77b94298990",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.10"
+    },
+    {
+      "id": "e2d5b97b-8dd5-350c-a74c-22c7b28d6826",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "fcb15ee8-52ea-3f80-a3b9-5831e565e93c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "90b35f89-fafe-357d-98c9-2e3baf7ce5f4",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,9 +3,14 @@
   "enisaUuid": "fe9832ae-ddac-3481-90d0-ac4622971ce6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: x86: Use active memslots for the per-vCPU MMIO cache\n\nKVM tags the per-vCPU MMIO cache with a memslot generation so that a\nmemslot update invalidates cached MMIO information.  Both the fill and\nvalidation paths use kvm_memslots(), which unconditionally selects address\nspace 0, even when the vCPU is running in SMM and using address space 1.\n\nCommit 56f17dd3fbc4 (\"kvm: x86: fix stale mmio cache bug\") added the\nmemslot generation to the cache key so that a memslot update could not\nleave a stale entry valid.  When commit 699023e23965 (\"KVM: x86: add SMM\nto the MMU role, support SMRAM address space\") added the SMM address space,\nthese helpers were not converted to use the active memslots.\n\nConsequently, an update to the SMM memslots can leave an entry from the old\nSMM address space apparently valid after the vCPU returns to the normal\naddress space.  A guest can then cause an access to valid RAM at the same\nGFN to be returned to userspace as KVM_EXIT_MMIO.\n\nCompleting that exit through the VMM's RAM address space writes the backing\npage without going through KVM's write-tracking path.  If the page backs a\nnested EPT table, KVM can continue using shadow translations derived from\nthe old contents.  The WARN_ON_ONCE() in kvm_mmu_write_protect_fault()\ncatches this invalid cache and memslot combination.\n\nUse the vCPU's active memslots when caching and validating the entry.\nMemslot generations are unique across address spaces, so the generation\nalso distinguishes the normal and SMM views.  This matches the MMIO SPTE\ncache, which already uses kvm_vcpu_memslots().\n\nOn an unpatched current-mainline kernel, a regression test that fills the\ncache in SMM and updates only the SMM memslots fails the intended RAM write\nand triggers the kvm_mmu_write_protect_fault() warning.  With this change,\nthe same test completes the RAM write without a warning.  The x86/smm_test,\nset_memory_region_test, and memslot_modification_stress_test selftests also\npass.",
   "datePublished": "Oct 23, 2026, 12:45:00 PM",
-  "dateUpdated": "Oct 23, 2026, 12:45:00 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:41:37 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/485a5286675b15b00ee850d90eaa178cc588445f",
+    "https://git.kernel.org/stable/c/445e3369ac8cc1b18aedc8e8f977c68a0a326fa9",
+    "https://git.kernel.org/stable/c/1c77d33d85786d36e56ca1b580fb55347fd65b47",
     "https://git.kernel.org/stable/c/a63f79d9da9468952396af73e1e53330845cf876",
     "https://git.kernel.org/stable/c/7fd4e64f4bbc8c35ae8f0d2a1fb5b77a76d5b4fd",
     "https://git.kernel.org/stable/c/2566780c684c9c21241d409d790087c73070f312",
@@ -13,10 +18,11 @@
     "https://git.kernel.org/stable/c/b3e6212dea2e4328a841ceb37f377583176dc735"
   ],
   "aliases": [
-    "CVE-2026-99082"
+    "CVE-2026-99082",
+    "GHSA-58r9-ch9w-px7w"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "09f9ac23-fed2-3954-91da-f22190f4fe66",
@@ -47,6 +53,16 @@
         }
       },
       "product_version": "699023e239658e62da6f42f47d31b54788521ec1 <e792a9ace39d2812a5b342a1987186c7bc653204"
+    },
+    {
+      "id": "296cdcae-3740-3099-830b-e8c42c0f62c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "699023e239658e62da6f42f47d31b54788521ec1 <485a5286675b15b00ee850d90eaa178cc588445f"
     },
     {
       "id": "2bd2d30a-6ebf-36d8-aacb-5f6b6e89bf50",
@@ -109,6 +125,16 @@
       "product_version": "699023e239658e62da6f42f47d31b54788521ec1 <b3e6212dea2e4328a841ceb37f377583176dc735"
     },
     {
+      "id": "9b45a150-df50-3f7a-9c8a-94c11e69c2e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
       "id": "a05bd661-a88d-3c0c-9fa0-fb324a3ce86d",
       "product": {
         "name": "Linux",
@@ -127,6 +153,46 @@
         }
       },
       "product_version": "699023e239658e62da6f42f47d31b54788521ec1 <2566780c684c9c21241d409d790087c73070f312"
+    },
+    {
+      "id": "e6d96dfe-ce2f-395c-9df7-1c51fe453f02",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "f030810d-8435-3663-8ece-5ef0d276a15b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "699023e239658e62da6f42f47d31b54788521ec1 <1c77d33d85786d36e56ca1b580fb55347fd65b47"
+    },
+    {
+      "id": "f778d8a4-c28a-3b13-97f3-0e04445e8b7f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "fcd998e8-350c-3a74-96a9-b94f589ef1d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "699023e239658e62da6f42f47d31b54788521ec1 <445e3369ac8cc1b18aedc8e8f977c68a0a326fa9"
     },
     {
       "id": "fdd6f268-0f70-3552-bfe5-aece63423a01",

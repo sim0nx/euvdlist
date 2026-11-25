@@ -3,7 +3,7 @@
   "enisaUuid": "a7b723aa-c138-3836-b68c-4e1b8acbc04b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmmc: spi: reset bytes_xfered before retrying CRC failures\n\nmmc_spi_data_do() updates data->bytes_xfered after each block has been\ntransferred successfully.  If a later block in the same data request\nfails with a CRC error, data->bytes_xfered may therefore contain the\nnumber of bytes completed before the failing block.\n\nmmc_spi_request() has a private recovery path for such CRC failures.  It\nsends STOP_TRANSMISSION, clears data->error and jumps back to\ncrc_recover to issue the same command and data request again.  However,\nit does not clear data->bytes_xfered before the retry.\n\nIf the retry succeeds, the request is completed with the bytes from the\nfailed attempt still included in data->bytes_xfered.  For a multi-block\nrequest this can make the completed request report more bytes than were\ntransferred by the successful retry, and can even exceed the request size\nwhen most blocks completed before the CRC error.\n\nThis is most likely to be observed on MMC-over-SPI systems where long\nmulti-block transfers occasionally hit a data CRC error but the\nmmc_spi-internal retry succeeds.  The data itself is retried, but the\ncompletion accounting is not.\n\nClear data->bytes_xfered together with data->error before repeating the\nrequest so the final completion reports only the bytes transferred by the\nsuccessful attempt.",
   "datePublished": "Oct 6, 2026, 8:44:44 AM",
-  "dateUpdated": "Oct 6, 2026, 8:44:44 AM",
+  "dateUpdated": "Oct 19, 2026, 9:15:38 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/7d2f0ec16b300645f20435a6c3827b15e01419af",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/8b0cc8707f65e0f51912e764e1b309b2559db1ec"
   ],
   "aliases": [
+    "GHSA-gx8r-25rx-rh7g",
     "CVE-2026-98207"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0240d9ae-7e9f-3b25-b273-98664f9de357",
@@ -102,16 +103,6 @@
       "product_version": "patch: 7.2.8"
     },
     {
-      "id": "4462f37a-57b1-3647-ab3f-84a0539cc039",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
-    {
       "id": "597eb9e5-3d7e-3931-8257-14a6efa1e79e",
       "product": {
         "name": "Linux",
@@ -150,6 +141,16 @@
         }
       },
       "product_version": "061c6c847eeb11743e489a16e907b41c6f9042b6 <0b8c8504593409954ed1a60db4e437d814e04023"
+    },
+    {
+      "id": "c38475a0-1e8d-38be-a0cf-7e8a468ade77",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "dc297705-d9cd-3e09-b64c-f30ca9249bc6",

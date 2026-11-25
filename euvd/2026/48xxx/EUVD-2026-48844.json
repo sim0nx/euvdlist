@@ -3,7 +3,7 @@
   "enisaUuid": "19987497-8bf1-33bb-adfe-29d1e6b3b158",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niio: adc: lpc32xx: Initialize completion before requesting IRQ\n\nIn the report from Jaeyoung Chung:\n\n\"lpc32xx_adc_probe() in drivers/iio/adc/lpc32xx_adc.c registers its\ninterrupt handler with devm_request_irq() before it initializes\nst->completion with init_completion(). If an interrupt arrives after\ndevm_request_irq() and before init_completion(), the handler calls\ncomplete() on an uninitialized completion, causing a kernel panic.\n\nThe probe path, in lpc32xx_adc_probe():\n\n    iodev = devm_iio_device_alloc(&pdev->dev, sizeof(*st)); /* st kzalloc-zeroed */\n    ...\n    retval = devm_request_irq(&pdev->dev, irq, lpc32xx_adc_isr, 0,\n                              LPC32XXAD_NAME, st);           /* register handler */\n    ...\n    init_completion(&st->completion);                       /* initialize completion */\n\nlpc32xx_adc_isr() calls complete():\n\n    complete(&st->completion);\n\nIf the device raises an interrupt before init_completion() runs,\ncomplete() acquires the uninitialized wait.lock and walks the zeroed\ntask_list in swake_up_locked(). The zeroed task_list makes list_empty()\nreturn false, so swake_up_locked() dereferences a NULL list entry,\ntriggering a KASAN wild-memory-access.\"\n\nFix the chance of a spurious IRQ causing an uninitialized pointer\ndereference by moving init_completion() above devm_request_irq().",
   "datePublished": "Jul 25, 2026, 8:51:56 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:56 AM",
+  "dateUpdated": "Aug 17, 2026, 4:56:49 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/7090c0d29708ee305022d0ea7b37612b33242fa2",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/e561b35633f450ee607e87a6401d97f156a0cd54"
   ],
   "aliases": [
+    "GHSA-h726-jm24-wvqc",
     "CVE-2026-64500"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "03a82e13-becd-3ace-ae73-2bc2ff1e25e4",
@@ -102,6 +103,16 @@
       "product_version": "7901b2a1453e48c9defff2c97c67d3089bf4df7a <0e33587967b356519aa6f220b5b43c6976320397"
     },
     {
+      "id": "51ab2c9e-dae2-37da-b1cb-23a26724e75f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "5ac394a3-0754-34e0-9d21-2a74d78e77f7",
       "product": {
         "name": "Linux",
@@ -140,16 +151,6 @@
         }
       },
       "product_version": "patch: 5.15.212"
-    },
-    {
-      "id": "a271b916-6cff-3647-9dfc-d3732fa1f5f1",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     },
     {
       "id": "af817410-e9ba-3983-9b58-52d66bac6d66",

@@ -3,8 +3,10 @@
   "enisaUuid": "4ad2d3da-010c-3c96-9d65-9a71b704db42",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: skbuff: don't skb_tx_error() the source skb in skb_zerocopy()\n\nskb_zerocopy() copies frags from @from into @to. On an\nskb_orphan_frags() failure it calls skb_tx_error(@from), a destructive\noperation on the source skb the copy helper does not own. That completes\n@from's zerocopy uarg and clears SKBFL_ALL_ZEROCOPY, including the\nSKBFL_SHARED_FRAG page-ownership marker.\n\nBoth callers already report the failure on their own drop path.\nnfnetlink_queue does it at nla_put_failure, and Open vSwitch does it in\nthe flow-miss drop arm of ovs_dp_process_packet(), so nothing is lost by\ndropping it here.\n\nOn Open vSwitch's OVS_ACTION_ATTR_USERSPACE path the skb is not freed on\nthis error: do_execute_actions() ignores output_userspace()'s return\nvalue and, unless the upcall was the last action, keeps forwarding the\nsame skb through the flow's remaining actions. The uarg is completed\nwhile that skb is still in flight, telling the producer its buffers are\nfree, and SKBFL_SHARED_FRAG is cleared on an skb the rest of the stack\nstill handles. That flag is what makes esp_input() call skb_cow_data()\ninstead of decrypting in place, so a later local ESP delivery can\ndecrypt over frags the skb does not own privately.\n\nLeave error reporting to the callers.",
   "datePublished": "Sep 16, 2026, 10:33:45 AM",
-  "dateUpdated": "Sep 16, 2026, 10:33:45 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:57:08 AM",
+  "baseScore": 9.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/849bdb83123760a865bcb2970127f4c0b9423ba3",
     "https://git.kernel.org/stable/c/fb10e0e9b220a2eed08931a60dbaad9a2370c908",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/8ece906150128d5ec2462aabcc978c568433eca4"
   ],
   "aliases": [
+    "GHSA-px64-7mq2-m5mm",
     "CVE-2026-90049"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0b2ead7f-922d-3965-93a3-76ae75fba7c8",
@@ -40,16 +43,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "266b46b4-8409-3dc3-9efd-3da683fc22d5",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "2cd2bd16-0390-3524-b1f4-97487e220039",
@@ -90,6 +83,16 @@
         }
       },
       "product_version": "36d5fe6a000790f56039afe26834265db0a3ad4c <8069643ae64dfdf634b6c78c7f622e5323031436"
+    },
+    {
+      "id": "469c5bb9-a72d-3da1-9b12-edcd43e69105",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "49d040a3-b3e9-31f6-a5bc-32c026a91f8a",

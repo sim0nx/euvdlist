@@ -3,18 +3,22 @@
   "enisaUuid": "2122f9a2-e339-3ee8-9f0d-a5a3212dc036",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nerofs: fix managed cache race for unaligned extents\n\nAfter unaligned compressed extents were introduced, the following race\ncould occur:\n\n[Thread 1]                                   [Thread 2]\n(z_erofs_fill_bio_vec)\n<handle a Z_EROFS_PREALLOCATED_FOLIO folio>\n...\nfilemap_add_folio (1)\n                                             (z_erofs_bind_cache)\n                                             <the same folio is found..>\n                                             ..\n                                             ..\nfolio_attach_private (2)\n                                             filemap_add_folio (3) again\n\nSince (1) is executed but (2) hasn't been executed yet, it's possible\nthat another thread finds the same managed folio in z_erofs_bind_cache()\nfor a different pcluster and calls filemap_add_folio() again since\nfolio->private is still Z_EROFS_PREALLOCATED_FOLIO.\n\nFix this by explicitly clearing folio->private before making the folio\nvisible in the managed cache so that another pcluster can simply wait\non the locked managed folio as what we did for other shared cases [1].\n\nThis only impacts unaligned data compression (`-E48bit` with zstd,\nfor example).\n\n[1] Commit 9e2f9d34dd12 (\"erofs: handle overlapped pclusters out of\n crafted images properly\") was originally introduced to handle crafted\n overlapped extents, but it addresses unaligned extents as well.",
   "datePublished": "Jul 19, 2026, 3:39:21 PM",
-  "dateUpdated": "Jul 19, 2026, 3:39:21 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Sep 14, 2026, 11:58:35 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/2718cdb6db0fdbe375e61f2980aada27bafb323e",
     "https://git.kernel.org/stable/c/425d32d6288d7d845e486af9419bbedccd8c9103",
     "https://git.kernel.org/stable/c/038166f873c4caf6e85cfd4ea0c5a5ba297b4e8b",
     "https://git.kernel.org/stable/c/649932fc3815eda2f24eb4de4b3a5e94886ee0b9"
   ],
   "aliases": [
-    "CVE-2026-64031"
+    "CVE-2026-64031",
+    "GHSA-22cv-hg25-xph5"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.1,
   "enisaIdProduct": [
     {
       "id": "1086ed02-2191-3e17-9b18-55dcc197912f",
@@ -55,6 +59,16 @@
         }
       },
       "product_version": "patch: 7.0.11"
+    },
+    {
+      "id": "318adafb-8881-3e3a-b002-633e470a014f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "722f0fcdb0bb7d12a5c6d9460b9a7de1f735f36d <2718cdb6db0fdbe375e61f2980aada27bafb323e"
     },
     {
       "id": "396cd10c-4585-30a5-b659-997d8a480eb0",

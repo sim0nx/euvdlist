@@ -1,0 +1,90 @@
+{
+  "id": "EUVD-2021-34615",
+  "enisaUuid": "1cbad6ad-1992-3e57-bfff-d5af84a06356",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ni2c: virtio: fix completion handling\n\nThe driver currently assumes that the notify callback is only received\nwhen the device is done with all the queued buffers.\n\nHowever, this is not true, since the notify callback could be called\nwithout any of the queued buffers being completed (for example, with\nvirtio-pci and shared interrupts) or with only some of the buffers being\ncompleted (since the driver makes them available to the device in\nmultiple separate virtqueue_add_sgs() calls).\n\nThis can lead to incorrect data on the I2C bus or memory corruption in\nthe guest if the device operates on buffers which are have been freed by\nthe driver.  (The WARN_ON in the driver is also triggered.)\n\n BUG kmalloc-128 (Tainted: G        W        ): Poison overwritten\n First byte 0x0 instead of 0x6b\n Allocated in i2cdev_ioctl_rdwr+0x9d/0x1de age=243 cpu=0 pid=28\n \tmemdup_user+0x2e/0xbd\n \ti2cdev_ioctl_rdwr+0x9d/0x1de\n \ti2cdev_ioctl+0x247/0x2ed\n \tvfs_ioctl+0x21/0x30\n \tsys_ioctl+0xb18/0xb41\n Freed in i2cdev_ioctl_rdwr+0x1bb/0x1de age=68 cpu=0 pid=28\n \tkfree+0x1bd/0x1cc\n \ti2cdev_ioctl_rdwr+0x1bb/0x1de\n \ti2cdev_ioctl+0x247/0x2ed\n \tvfs_ioctl+0x21/0x30\n \tsys_ioctl+0xb18/0xb41\n\nFix this by calling virtio_get_buf() from the notify handler like other\nvirtio drivers and by actually waiting for all the buffers to be\ncompleted.",
+  "datePublished": "Jun 19, 2024, 2:58:01 PM",
+  "dateUpdated": "Aug 5, 2026, 8:48:37 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/9cbb957441ed8873577d7d313a3d79d69f1dad5c",
+    "https://git.kernel.org/stable/c/b503de239f62eca898cfb7e820d9a35499137d22"
+  ],
+  "aliases": [
+    "GHSA-xpr2-p5g8-h7fq",
+    "CVE-2021-47613"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "088ec8bb-6035-3717-973c-de1d3d33f9dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3cfc88380413d20f777dc6648a38f683962e52bf <9cbb957441ed8873577d7d313a3d79d69f1dad5c"
+    },
+    {
+      "id": "124863a3-bdf1-3256-9e54-03f3cc2c85ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3cfc88380413d20f777dc6648a38f683962e52bf <b503de239f62eca898cfb7e820d9a35499137d22"
+    },
+    {
+      "id": "2d805140-ea79-368b-a141-09378fc0d16b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16"
+    },
+    {
+      "id": "6f39d8c7-21f4-3cb4-9050-71d7349d92c3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "aa00074b-0877-3569-a53f-4cd3dc7389b9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15"
+    },
+    {
+      "id": "dcefd1b8-371e-370b-8f70-0bd07aa8ef7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.10"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "def92361-b6a7-311b-a064-e450e5eb8e89",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

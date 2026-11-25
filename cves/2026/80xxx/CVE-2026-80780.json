@@ -3,7 +3,7 @@
   "enisaUuid": "f56e2f71-2b2e-3d18-a702-0a0ec2084d6e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: pidff: fix OOB write when hid->inputs is empty\n\nhid_pidff_init_with_quirks() derives its input_dev from\n\n\tlist_entry(hid->inputs.next, struct hid_input, list)\n\nwithout first checking that hid->inputs is non-empty.  The list member\nof struct hid_input is at offset 0, so on an empty list list_entry()\nyields &hid->inputs itself and the following hidinput->input load reads\nan unrelated member of struct hid_device.  dev is then a type-confused\npointer, and force-feedback init writes through it: each\nset_bit(FF_*, dev->ffbit) stores 8 bytes at dev + 192, past the end of\nthe object dev actually aliases, and input_ff_create() adds further\nwrites of a heap pointer and two function pointers.\n\nUntil hid-universal-pidff the only caller was hid_pidff_init() from\nusbhid, which runs under HID_CLAIMED_INPUT and therefore always has at\nleast one hid_input.  universal_pidff_probe() starts the device with\nHID_CONNECT_DEFAULT & ~HID_CONNECT_FF and then calls\nhid_pidff_init_with_quirks() directly whenever the descriptor carries a\nPID usage page, bypassing that gate.  A report descriptor whose only\napplication collection is on HID_UP_PID leaves hid->inputs empty while\nhid_connect() still succeeds through the hidraw claim, so probe reaches\nthe unguarded list_entry().\n\nThe write happens in the USB probe path, on the hotplug workqueue, so\nplugging in a malicious device is enough to trigger it; no attacker\nsoftware and no logged-in user are required.  KASAN reports an 8-byte\nout-of-bounds write in hid_pidff_init_with_quirks() reached from\nuniversal_pidff_probe().\n\nCheck for an empty list before deriving dev and return -ENODEV, as the\nother HID force-feedback drivers already do.  universal_pidff_probe()\npropagates the error and unwinds.\n\nDiscovered by XBOW, triaged by Baul Lee <baul.lee@xbow.com>",
   "datePublished": "Sep 4, 2026, 3:12:52 PM",
-  "dateUpdated": "Sep 4, 2026, 3:12:52 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:35 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2e0471bf3ab2a6b7eedcc3b8a2a17286b6a9ae1a",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/67bb1074e3d2d12fa059a9cc707e89398a4e4704"
   ],
   "aliases": [
+    "GHSA-rxff-7rcf-x4wj",
     "CVE-2026-80780"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "02b08782-9cdd-35d1-b27a-993b44fbb66e",
@@ -110,16 +111,6 @@
       "product_version": "c1fde337b317f0a226de92803288741c30799eb0 <2e0471bf3ab2a6b7eedcc3b8a2a17286b6a9ae1a"
     },
     {
-      "id": "5cefe33d-d1f2-34ca-b22a-13e64bcc8e28",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "608edce4-a1e8-3a67-a96e-14c511f264e9",
       "product": {
         "name": "Linux",
@@ -198,6 +189,16 @@
         }
       },
       "product_version": "f45f26a6b3e7260c129c7c6bb0ace63aeb7b3868 <ad9330f7e74a97842815a291a0d7389ed2f34504"
+    },
+    {
+      "id": "cbfa753d-7c89-3e37-bfd0-e4b86f0b2834",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "d6064991-07b7-3119-b748-b01e2d78a2b2",

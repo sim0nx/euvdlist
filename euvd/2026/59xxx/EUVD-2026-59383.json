@@ -2,8 +2,8 @@
   "id": "EUVD-2026-59383",
   "enisaUuid": "c2311edd-968a-30c1-9b55-621a26a5528a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nstaging: most: video: avoid double free on video register failure\n\ncomp_register_videodev() allocates a video_device with\nvideo_device_alloc() and releases it if video_register_device() fails.\n\nThis can double free the video_device when __video_register_device()\nreaches device_register() and that call fails:\n\n  video_register_device()\n    -> __video_register_device()\n       -> device_register() fails\n          -> put_device(&vdev->dev)\n             -> v4l2_device_release()\n                -> vdev->release(vdev)\n                   -> video_device_release(vdev)\n\n  comp_register_videodev()\n    -> video_device_release(mdev->vdev)\n\nUse video_device_release_empty() while registering the device so that\nregistration failure paths do not free mdev->vdev through vdev->release().\ncomp_register_videodev() then releases mdev->vdev exactly once on failure.\nRestore video_device_release() after successful registration so the\nregistered device keeps its normal lifetime handling.\n\nThis issue was found by a static analysis tool I am developing.",
-  "datePublished": "Aug 15, 2026, 6:32:26 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:26 AM",
+  "datePublished": "Aug 15, 2026, 5:57:21 AM",
+  "dateUpdated": "Aug 17, 2026, 5:15:34 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/009d58b73500d0b49f6ae3833f8afcb0ebd9ddbb",
@@ -13,15 +13,14 @@
     "https://git.kernel.org/stable/c/80ed79787da3311f76b4d71d0ce7ab992a9e134d",
     "https://git.kernel.org/stable/c/43078449ad6236d839e4d707954d2e36b10a6706",
     "https://git.kernel.org/stable/c/7fc162453cfb7b8e93edb16287a84ba0130cac38",
-    "https://git.kernel.org/stable/c/7cb1c5b32a2bfde961fff8d5204526b609bcb30a",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72484"
+    "https://git.kernel.org/stable/c/7cb1c5b32a2bfde961fff8d5204526b609bcb30a"
   ],
   "aliases": [
     "GHSA-79gv-9p52-g5cr",
     "CVE-2026-72484"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "19f11615-64c4-3f93-9459-29df786a52b4",
@@ -174,16 +173,6 @@
       "product_version": "eab231c0398a91fbd294672bfe9e0ff45b368246 <009d58b73500d0b49f6ae3833f8afcb0ebd9ddbb"
     },
     {
-      "id": "d3f63b60-619b-3a50-8a73-fa497865b333",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
-    {
       "id": "d57de9c4-71a6-3e4e-bd01-716574a99a0d",
       "product": {
         "name": "Linux",
@@ -202,6 +191,16 @@
         }
       },
       "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "e8dec668-a9f9-32df-a090-00e24defd22e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

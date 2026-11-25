@@ -3,9 +3,14 @@
   "enisaUuid": "6bbf1f7b-9beb-3676-82fd-12207f618ea0",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngeneve: require CAP_NET_ADMIN in the device netns for changelink\n\nA tunnel changelink() operates on at most two netns, dev_net(dev) and\nthe sticky underlay netns geneve->net. They differ once the device is\ncreated in or moved to a netns other than the one the request runs in.\nThe rtnl changelink path checks CAP_NET_ADMIN only against dev_net(dev),\nso a caller privileged there but not in geneve->net can rewrite a geneve\ndevice whose underlay lives in geneve->net.\n\ngeneve_changelink() applies the new configuration against geneve->net:\ngeneve_link_config() and the geneve_quiesce()/geneve_unquiesce() pair\nreopen the underlay sockets in that netns (geneve_sock_add() uses\ngeneve->net), so the same reasoning as the tunnel changelink series\napplies here.\n\nGate geneve_changelink() with rtnl_dev_link_net_capable(), at the top of\nthe op before any attribute is parsed, matching ipgre_changelink() and\nthe rest of the \"require CAP_NET_ADMIN in the device netns for\nchangelink\" series.\n\nFound by 0sec automated security-research tooling (https://0sec.ai).",
   "datePublished": "Aug 10, 2026, 11:59:06 AM",
-  "dateUpdated": "Aug 10, 2026, 11:59:06 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:58:53 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/a5522963c57f12df5f9db804ebfc472b58eef0ae",
+    "https://git.kernel.org/stable/c/278c6a31ee27c931c722202c8c06cc3253923254",
+    "https://git.kernel.org/stable/c/11a7d989d00160481a273eb4f7f05f64b5a6ffdf",
     "https://git.kernel.org/stable/c/2abdacc927c92fa6a9cc8341e8c9b88dcb561553",
     "https://git.kernel.org/stable/c/9de5518fc1fab583526a8f66b8e505c4864dc60a",
     "https://git.kernel.org/stable/c/f8c498585d2a08aa623748353c3e61467b7e9fd2",
@@ -13,10 +18,11 @@
     "https://git.kernel.org/stable/c/8efb8f8bbb353b8f2fdf4f37534c6d96c9f69e01"
   ],
   "aliases": [
-    "CVE-2026-68142"
+    "CVE-2026-68142",
+    "GHSA-2rrg-cg9g-pgvw"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "0348faec-def0-3cd1-8034-4ec6282a7dd0",
@@ -27,6 +33,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "0cc7ab2c-48ba-3321-b55b-8286c69e2ed9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5b861f6baa3a22a48d7a4ad0ce38a223d36c978a <278c6a31ee27c931c722202c8c06cc3253923254"
+    },
+    {
+      "id": "28229042-d28c-37d6-a783-f6997560bd7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "3d908bdd-ae2e-372b-8dc6-dad5f528a83e",
@@ -59,6 +85,16 @@
       "product_version": "5b861f6baa3a22a48d7a4ad0ce38a223d36c978a <9de5518fc1fab583526a8f66b8e505c4864dc60a"
     },
     {
+      "id": "61a2d724-8a3b-3e0c-9cf3-fdb9e7525b59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
       "id": "6f0471e3-d233-31cf-ab2a-9de6790f56c5",
       "product": {
         "name": "Linux",
@@ -79,14 +115,24 @@
       "product_version": "patch: 6.6.148"
     },
     {
-      "id": "a10ccd99-f6da-374b-b270-b9daae56b492",
+      "id": "849277fd-080f-3b7d-a297-236c80b9e6ae",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc5"
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "8e15a98d-570f-3113-80bb-3231323ce7a4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5b861f6baa3a22a48d7a4ad0ce38a223d36c978a <11a7d989d00160481a273eb4f7f05f64b5a6ffdf"
     },
     {
       "id": "a2a249c5-2807-31a4-b8ca-699aaa3e4b1a",
@@ -109,6 +155,16 @@
       "product_version": "4.14"
     },
     {
+      "id": "da90e807-edb5-3ce0-975f-696eee404807",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
+    {
       "id": "dbe33e61-9c99-3f58-ad2a-b4e59087ac12",
       "product": {
         "name": "Linux",
@@ -117,6 +173,16 @@
         }
       },
       "product_version": "5b861f6baa3a22a48d7a4ad0ce38a223d36c978a <f8c498585d2a08aa623748353c3e61467b7e9fd2"
+    },
+    {
+      "id": "ec82412a-c7c0-37c2-b1e7-5a13ccb2538e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5b861f6baa3a22a48d7a4ad0ce38a223d36c978a <a5522963c57f12df5f9db804ebfc472b58eef0ae"
     },
     {
       "id": "f00d6bd1-bdfa-3dbc-bd5a-c0e27b5a56cd",

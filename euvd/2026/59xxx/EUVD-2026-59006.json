@@ -2,8 +2,8 @@
   "id": "EUVD-2026-59006",
   "enisaUuid": "b6a31586-581b-30de-9889-783d67a3f2d2",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nieee802154: ca8210: fix cas_ctl leak on spi_async failure\n\nca8210_spi_transfer() allocates cas_ctl with kzalloc_obj(GFP_ATOMIC)\nand relies entirely on the SPI completion callback\nca8210_spi_transfer_complete() to free it.\n\nThe spi_async() API only invokes the completion callback on successful\nsubmission.  On failure it returns a negative error code without ever\nqueuing the callback, which leaves cas_ctl and its embedded spi_message\nand spi_transfer orphaned.  Every kfree(cas_ctl) in the driver is\ninside the completion callback, so there is no other reclamation path.\n\nca8210_spi_transfer() is called from ca8210_spi_exchange(), the\ninterrupt handler ca8210_interrupt_handler(), and from the retry path\ninside the completion callback itself.  The exchange and interrupt\nhandler paths loop on -EBUSY, so under sustained SPI bus contention\nevery retry iteration leaks a fresh cas_ctl (~600 bytes per\noccurrence).\n\nFix it by freeing cas_ctl on the spi_async() error path.  While here,\ncorrect the misleading error string: the function calls spi_async(),\nnot spi_sync().",
-  "datePublished": "Aug 15, 2026, 6:32:10 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:10 AM",
+  "datePublished": "Aug 15, 2026, 5:52:06 AM",
+  "dateUpdated": "Aug 17, 2026, 5:07:14 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/460c5cd51e4d7d15b317f178f42cfcb666c0fe91",
@@ -13,15 +13,14 @@
     "https://git.kernel.org/stable/c/d4a397fe803c2d157f6ebb068b802ef75fbf109e",
     "https://git.kernel.org/stable/c/cb5cca1d2a908ddd5e357971de0f2009617b8d6a",
     "https://git.kernel.org/stable/c/7e3630fbb6aabb844bbf35746dee0bf3894100c7",
-    "https://git.kernel.org/stable/c/e09390e439bd7cca30dd10893b1f64802961667a",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72048"
+    "https://git.kernel.org/stable/c/e09390e439bd7cca30dd10893b1f64802961667a"
   ],
   "aliases": [
     "GHSA-f7cg-qgjp-phqf",
     "CVE-2026-72048"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "07efda70-74ac-30b3-bd69-3c03ed951049",
@@ -92,6 +91,16 @@
         }
       },
       "product_version": "ded845a781a578dfb0b5b2c138e5a067aa3b1242 <b07aea90dbc6e188c74c100af64b77b9482ffc65"
+    },
+    {
+      "id": "6a800286-034d-30f9-af48-217b07650e9a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "9ad6f980-d43e-3400-98fe-e914d9078647",
@@ -182,16 +191,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "e811b12e-44d2-3e2e-81ba-5ecc4e35e301",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "e95eb90e-372a-3bf2-9fdf-bcfbaee42338",

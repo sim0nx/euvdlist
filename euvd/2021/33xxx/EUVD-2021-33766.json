@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2021-33766",
+  "enisaUuid": "cd0d0cab-93a0-3529-b110-c93d40d8d350",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npid: take a reference when initializing `cad_pid`\n\nDuring boot, kernel_init_freeable() initializes `cad_pid` to the init\ntask's struct pid.  Later on, we may change `cad_pid` via a sysctl, and\nwhen this happens proc_do_cad_pid() will increment the refcount on the\nnew pid via get_pid(), and will decrement the refcount on the old pid\nvia put_pid().  As we never called get_pid() when we initialized\n`cad_pid`, we decrement a reference we never incremented, can therefore\nfree the init task's struct pid early.  As there can be dangling\nreferences to the struct pid, we can later encounter a use-after-free\n(e.g.  when delivering signals).\n\nThis was spotted when fuzzing v5.13-rc3 with Syzkaller, but seems to\nhave been around since the conversion of `cad_pid` to struct pid in\ncommit 9ec52099e4b8 (\"[PATCH] replace cad_pid by a struct pid\") from the\npre-KASAN stone age of v2.6.19.\n\nFix this by getting a reference to the init task's struct pid when we\nassign it to `cad_pid`.\n\nFull KASAN splat below.\n\n   ==================================================================\n   BUG: KASAN: use-after-free in ns_of_pid include/linux/pid.h:153 [inline]\n   BUG: KASAN: use-after-free in task_active_pid_ns+0xc0/0xc8 kernel/pid.c:509\n   Read of size 4 at addr ffff23794dda0004 by task syz-executor.0/273\n\n   CPU: 1 PID: 273 Comm: syz-executor.0 Not tainted 5.12.0-00001-g9aef892b2d15 #1\n   Hardware name: linux,dummy-virt (DT)\n   Call trace:\n    ns_of_pid include/linux/pid.h:153 [inline]\n    task_active_pid_ns+0xc0/0xc8 kernel/pid.c:509\n    do_notify_parent+0x308/0xe60 kernel/signal.c:1950\n    exit_notify kernel/exit.c:682 [inline]\n    do_exit+0x2334/0x2bd0 kernel/exit.c:845\n    do_group_exit+0x108/0x2c8 kernel/exit.c:922\n    get_signal+0x4e4/0x2a88 kernel/signal.c:2781\n    do_signal arch/arm64/kernel/signal.c:882 [inline]\n    do_notify_resume+0x300/0x970 arch/arm64/kernel/signal.c:936\n    work_pending+0xc/0x2dc\n\n   Allocated by task 0:\n    slab_post_alloc_hook+0x50/0x5c0 mm/slab.h:516\n    slab_alloc_node mm/slub.c:2907 [inline]\n    slab_alloc mm/slub.c:2915 [inline]\n    kmem_cache_alloc+0x1f4/0x4c0 mm/slub.c:2920\n    alloc_pid+0xdc/0xc00 kernel/pid.c:180\n    copy_process+0x2794/0x5e18 kernel/fork.c:2129\n    kernel_clone+0x194/0x13c8 kernel/fork.c:2500\n    kernel_thread+0xd4/0x110 kernel/fork.c:2552\n    rest_init+0x44/0x4a0 init/main.c:687\n    arch_call_rest_init+0x1c/0x28\n    start_kernel+0x520/0x554 init/main.c:1064\n    0x0\n\n   Freed by task 270:\n    slab_free_hook mm/slub.c:1562 [inline]\n    slab_free_freelist_hook+0x98/0x260 mm/slub.c:1600\n    slab_free mm/slub.c:3161 [inline]\n    kmem_cache_free+0x224/0x8e0 mm/slub.c:3177\n    put_pid.part.4+0xe0/0x1a8 kernel/pid.c:114\n    put_pid+0x30/0x48 kernel/pid.c:109\n    proc_do_cad_pid+0x190/0x1b0 kernel/sysctl.c:1401\n    proc_sys_call_handler+0x338/0x4b0 fs/proc/proc_sysctl.c:591\n    proc_sys_write+0x34/0x48 fs/proc/proc_sysctl.c:617\n    call_write_iter include/linux/fs.h:1977 [inline]\n    new_sync_write+0x3ac/0x510 fs/read_write.c:518\n    vfs_write fs/read_write.c:605 [inline]\n    vfs_write+0x9c4/0x1018 fs/read_write.c:585\n    ksys_write+0x124/0x240 fs/read_write.c:658\n    __do_sys_write fs/read_write.c:670 [inline]\n    __se_sys_write fs/read_write.c:667 [inline]\n    __arm64_sys_write+0x78/0xb0 fs/read_write.c:667\n    __invoke_syscall arch/arm64/kernel/syscall.c:37 [inline]\n    invoke_syscall arch/arm64/kernel/syscall.c:49 [inline]\n    el0_svc_common.constprop.1+0x16c/0x388 arch/arm64/kernel/syscall.c:129\n    do_el0_svc+0xf8/0x150 arch/arm64/kernel/syscall.c:168\n    el0_svc+0x28/0x38 arch/arm64/kernel/entry-common.c:416\n    el0_sync_handler+0x134/0x180 arch/arm64/kernel/entry-common.c:432\n    el0_sync+0x154/0x180 arch/arm64/kernel/entry.S:701\n\n   The buggy address belongs to the object at ffff23794dda0000\n    which belongs to the cache pid of size 224\n   The buggy address is located 4 bytes inside of\n    224-byte region [ff\n---truncated---",
+  "datePublished": "Mar 15, 2024, 8:14:25 PM",
+  "dateUpdated": "May 11, 2026, 1:48:23 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/764c2e892d1fe895392aff62fb353fdce43bb529",
+    "https://git.kernel.org/stable/c/f86c80515a8a3703e0ca2e56deb50fc2879c5ea4",
+    "https://git.kernel.org/stable/c/4dbd8808a591b49b717862e6e0081bcf14a87788",
+    "https://git.kernel.org/stable/c/d106f05432e60f9f62d456ef017687f5c73cb414",
+    "https://git.kernel.org/stable/c/2cd6eedfa6344f5ef5c3dac3aee57a39b5b46dff",
+    "https://git.kernel.org/stable/c/7178be006d495ffb741c329012da289b62dddfe6",
+    "https://git.kernel.org/stable/c/b8ff869f20152fbe66b6c2e2715d26a2f9897cca",
+    "https://git.kernel.org/stable/c/0711f0d7050b9e07c44bc159bbc64ac0a1022c7f"
+  ],
+  "aliases": [
+    "GHSA-f22j-p6f5-7h8x",
+    "CVE-2021-47118"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "0a15a5e5-abb5-3a45-8d9e-d07a9734d134",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ec52099e4b8678a60e9f93e41ad87885d64f3e6 <2cd6eedfa6344f5ef5c3dac3aee57a39b5b46dff"
+    },
+    {
+      "id": "15f868a7-3990-3b40-9b04-deabd571298a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ec52099e4b8678a60e9f93e41ad87885d64f3e6 <4dbd8808a591b49b717862e6e0081bcf14a87788"
+    },
+    {
+      "id": "1ab1de7a-c41c-3c0b-8d06-ce5e91db9207",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ec52099e4b8678a60e9f93e41ad87885d64f3e6 <b8ff869f20152fbe66b6c2e2715d26a2f9897cca"
+    },
+    {
+      "id": "2de3c574-a7da-3f0d-b441-2fe144b17def",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "336d11ed-d9b6-3704-8aa7-532c173ab125",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ec52099e4b8678a60e9f93e41ad87885d64f3e6 <764c2e892d1fe895392aff62fb353fdce43bb529"
+    },
+    {
+      "id": "512e45e3-439f-3065-8ac3-b601d22562c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.10"
+    },
+    {
+      "id": "542918a3-91ca-37a7-b7fc-1244838cdff7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.19"
+    },
+    {
+      "id": "5466e7f0-c0d8-31b7-81b2-ee3d655e6272",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ec52099e4b8678a60e9f93e41ad87885d64f3e6 <0711f0d7050b9e07c44bc159bbc64ac0a1022c7f"
+    },
+    {
+      "id": "733d49c5-e6b9-355b-9155-c29b01245939",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ec52099e4b8678a60e9f93e41ad87885d64f3e6 <d106f05432e60f9f62d456ef017687f5c73cb414"
+    },
+    {
+      "id": "75e5d8ad-6aa3-3afa-ae7a-2358ddcd5de6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ec52099e4b8678a60e9f93e41ad87885d64f3e6 <f86c80515a8a3703e0ca2e56deb50fc2879c5ea4"
+    },
+    {
+      "id": "7d417c3a-c8da-3478-a61d-454b967b8bdb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.43"
+    },
+    {
+      "id": "8e6117d2-8b4d-3716-8047-c044e72af969",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9ec52099e4b8678a60e9f93e41ad87885d64f3e6 <7178be006d495ffb741c329012da289b62dddfe6"
+    },
+    {
+      "id": "a93faacd-5e9f-3126-a9d6-2eda37cb860e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    },
+    {
+      "id": "b651bbb6-eabc-3cc3-8250-4c145f7b745f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.4.272"
+    },
+    {
+      "id": "c3d26109-35c4-3b7a-a79e-41a75220fac3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.9.272"
+    },
+    {
+      "id": "ca2ed9d0-fe11-3c03-873f-65fc4adaaa8c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.236"
+    },
+    {
+      "id": "d42e831f-292f-32ba-9053-dd5df9a5a504",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.194"
+    },
+    {
+      "id": "ecb98563-8940-3f0f-a729-83cdcaaef97a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.125"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "54a2dcf0-9c50-3f54-a5cb-8d9994d5f5b5",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

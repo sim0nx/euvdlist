@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2022-53676",
+  "enisaUuid": "7c69b364-126b-31f0-ace8-6d14292a4bac",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm: don't try to NUMA-migrate COW pages that have other uses\n\nOded Gabbay reports that enabling NUMA balancing causes corruption with\nhis Gaudi accelerator test load:\n\n \"All the details are in the bug, but the bottom line is that somehow,\n  this patch causes corruption when the numa balancing feature is\n  enabled AND we don't use process affinity AND we use GUP to pin pages\n  so our accelerator can DMA to/from system memory.\n\n  Either disabling numa balancing, using process affinity to bind to\n  specific numa-node or reverting this patch causes the bug to\n  disappear\"\n\nand Oded bisected the issue to commit 09854ba94c6a (\"mm: do_wp_page()\nsimplification\").\n\nNow, the NUMA balancing shouldn't actually be changing the writability\nof a page, and as such shouldn't matter for COW.  But it appears it\ndoes.  Suspicious.\n\nHowever, regardless of that, the condition for enabling NUMA faults in\nchange_pte_range() is nonsensical.  It uses \"page_mapcount(page)\" to\ndecide if a COW page should be NUMA-protected or not, and that makes\nabsolutely no sense.\n\nThe number of mappings a page has is irrelevant: not only does GUP get a\nreference to a page as in Oded's case, but the other mappings migth be\npaged out and the only reference to them would be in the page count.\n\nSince we should never try to NUMA-balance a page that we can't move\nanyway due to other references, just fix the code to use 'page_count()'.\nOded confirms that that fixes his issue.\n\nNow, this does imply that something in NUMA balancing ends up changing\npage protections (other than the obvious one of making the page\ninaccessible to get the NUMA faulting information).  Otherwise the COW\nsimplification wouldn't matter - since doing the GUP on the page would\nmake sure it's writable.\n\nThe cause of that permission change would be good to figure out too,\nsince it clearly results in spurious COW events - but fixing the\nnonsensical test that just happened to work before is obviously the\nCorrectThing(tm) to do regardless.",
+  "datePublished": "Jul 16, 2024, 11:43:51 AM",
+  "dateUpdated": "Aug 5, 2026, 8:52:24 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/254090925e16abd914c87b4ad1b489440d89c4c3",
+    "https://git.kernel.org/stable/c/b3dc4b9d3ca68b370c4aeab5355007eedf948849",
+    "https://git.kernel.org/stable/c/d187eeb02d18446e5e54ed6bcbf8b47e6551daea",
+    "https://git.kernel.org/stable/c/80d47f5de5e311cbc0d01ebb6ee684e8f4c196c6"
+  ],
+  "aliases": [
+    "CVE-2022-48797",
+    "GHSA-8ccr-7w7q-vmr3"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "0d0954f9-8c5f-3c1d-bb69-5fcaeb41a306",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.17"
+    },
+    {
+      "id": "1a32b3b0-da24-39bf-9e90-251789939cf8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "210d4454-146d-3566-aadd-bde51ed969e3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "09854ba94c6aad7886996bfbee2530b3d8a7f4f4 <d187eeb02d18446e5e54ed6bcbf8b47e6551daea"
+    },
+    {
+      "id": "29108ad5-930d-3cb8-9296-f7bed9b77ab1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16.11"
+    },
+    {
+      "id": "666392cf-9727-36dd-b806-2db6513124b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "09854ba94c6aad7886996bfbee2530b3d8a7f4f4 <254090925e16abd914c87b4ad1b489440d89c4c3"
+    },
+    {
+      "id": "816bccb3-210d-3ba6-8af0-3f951865d152",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.9"
+    },
+    {
+      "id": "842fe294-1fec-326b-adf0-2ebc9053af14",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "09854ba94c6aad7886996bfbee2530b3d8a7f4f4 <b3dc4b9d3ca68b370c4aeab5355007eedf948849"
+    },
+    {
+      "id": "854ace7b-4a73-3757-843e-0a378e3c5b0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.102"
+    },
+    {
+      "id": "b8737305-84fa-3a0f-91ae-7cb8e80a5daf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "09854ba94c6aad7886996bfbee2530b3d8a7f4f4 <80d47f5de5e311cbc0d01ebb6ee684e8f4c196c6"
+    },
+    {
+      "id": "f1f71bbb-1a94-3c0b-8ae8-48d1885af27b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.25"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b371f4a7-e09e-37e4-8c8e-75bd004be455",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

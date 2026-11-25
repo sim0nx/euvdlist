@@ -2,22 +2,23 @@
   "id": "EUVD-2026-58909",
   "enisaUuid": "be72e535-64fe-3877-b382-b73a6e14dd2c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ntpm: tpm2-sessions: wait for async KPP completion in tpm_buf_append_salt\n\ntpm_buf_append_salt() in drivers/char/tpm/tpm2-sessions.c calls\ncrypto_kpp_generate_public_key() and crypto_kpp_compute_shared_secret()\nwithout installing a completion callback, discards both return values,\nand immediately frees the kpp_request via kpp_request_free(). When the\nresolved ecdh-nist-p256 KPP backend is asynchronous (atmel-ecc, HPRE,\nkeembay-ocs), either operation returns -EINPROGRESS and the deferred\ncompletion worker dereferences the freed request.\n\nThe path fires automatically from the hwrng_fillfn kernel thread via\ntpm_get_random -> tpm2_get_random -> tpm2_start_auth_session ->\ntpm_buf_append_salt on every entropy poll, without any userland action.\n\nInstall crypto_req_done as the completion callback, wrap both KPP\noperations in crypto_wait_req(), and propagate errors to the caller.\nThe wait is a no-op for synchronous backends.",
-  "datePublished": "Aug 15, 2026, 6:32:14 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:14 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:53:22 AM",
+  "dateUpdated": "Aug 17, 2026, 5:41:00 AM",
+  "baseScore": 8.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/111e520efbe82b324bc42b1999b723c0619eea6d",
     "https://git.kernel.org/stable/c/934d1cd40e2893bf7a041b54f6afd1c008d7a21c",
     "https://git.kernel.org/stable/c/493333f167926c7adab8e7563e21ad71d8af84fa",
-    "https://git.kernel.org/stable/c/73851a7c43dfa52d2ed9415889b33daf85da0ed9",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72151"
+    "https://git.kernel.org/stable/c/73851a7c43dfa52d2ed9415889b33daf85da0ed9"
   ],
   "aliases": [
     "GHSA-53hq-7c43-pvmj",
     "CVE-2026-72151"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "0de4f417-cc38-36de-bcde-2b6156b0fef2",
@@ -60,16 +61,6 @@
       "product_version": "patch: 6.12.97"
     },
     {
-      "id": "42f11a3d-0141-3bb1-9bdf-6e6fd20a3cb1",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
-    {
       "id": "6238a750-8149-3c37-9348-f2bb95776b3f",
       "product": {
         "name": "Linux",
@@ -88,6 +79,16 @@
         }
       },
       "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "8f32a55d-0992-3697-a64f-72fa7a711f01",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "ac55a301-63f5-3a85-a7a3-e7526290a997",

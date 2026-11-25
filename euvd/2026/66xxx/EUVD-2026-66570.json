@@ -3,9 +3,10 @@
   "enisaUuid": "a306528e-4d9f-3110-aeec-5aa0c864ebf8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: act_api: fix TOCTOU NULL deref on a->goto_chain\n\ntcf_action_exec() handles TC_ACT_GOTO_CHAIN by first checking\nrcu_access_pointer(a->goto_chain) and then calling\ntcf_action_goto_chain_exec(), which does a second, independent\nrcu_dereference_bh(a->goto_chain) read and immediately dereferences\nchain->filter_chain. A concurrent tcf_action_set_ctrlact() (e.g. the gact\nreplace path) can clear a->goto_chain between the two reads, so the second\nread returns NULL and tcf_action_goto_chain_exec() dereferences NULL.\n\nFix the race by doing a single rcu_dereference_bh() read of a->goto_chain\nin tcf_action_exec(), checking it once for NULL, and passing the resulting\nchain pointer into tcf_action_goto_chain_exec(). This turns the split\ncheck/use into a single check/use on one value.",
   "datePublished": "Aug 26, 2026, 2:36:52 PM",
-  "dateUpdated": "Aug 26, 2026, 2:36:52 PM",
+  "dateUpdated": "Oct 30, 2026, 12:30:29 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/28aa0c9dd0b1b38436995d4c15621ad3f896c7e3",
     "https://git.kernel.org/stable/c/91d55fd1fdb85c8371ca8793c788ea7d5192383a",
     "https://git.kernel.org/stable/c/1ec48b6715c29b20105e3485206602cff6c51ae5",
     "https://git.kernel.org/stable/c/abceabc4408fca6a9dd52611f5d197dec9390d63",
@@ -13,10 +14,11 @@
     "https://git.kernel.org/stable/c/f60b396ee174206fe08ebf997d16cd3801b77b22"
   ],
   "aliases": [
-    "CVE-2026-74740"
+    "CVE-2026-74740",
+    "GHSA-958g-775q-225w"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0c69e227-09ba-3ac2-84bb-3cc0805abcba",
@@ -37,6 +39,16 @@
         }
       },
       "product_version": "patch: 7.1.10"
+    },
+    {
+      "id": "24971886-a296-3982-9728-43ebd7a21884",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "6135f757-1f92-37bb-9dd3-26b337f8bb19",
@@ -67,6 +79,16 @@
         }
       },
       "product_version": "5.1"
+    },
+    {
+      "id": "8e37ebb3-6c2b-3975-a6df-f936e05c3d30",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ee3bbfe806cdb46b02cda63626cb50a7a7b19fc5 <28aa0c9dd0b1b38436995d4c15621ad3f896c7e3"
     },
     {
       "id": "bf43d80b-f1c8-3e14-854a-ea863e404d56",

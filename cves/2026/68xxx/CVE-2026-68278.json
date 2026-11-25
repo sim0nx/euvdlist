@@ -3,9 +3,12 @@
   "enisaUuid": "50f80863-63e8-352f-8b7d-ffebc090905e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/dp/mst: fix buffer overflows in sideband chunk accumulation\n\ndrm_dp_sideband_append_payload() has three related bugs when processing\ndevice-provided sideband reply data:\n\n1. Zero-length curchunk_len underflow: msg_len is a 6-bit field taken\n   directly from the DP sideband header. If a device sends msg_len=0,\n   curchunk_len is set to zero. The condition (curchunk_idx >= curchunk_len)\n   is immediately true, and curchunk_len-1 wraps to 255 (u8 underflow).\n   drm_dp_msg_data_crc4() reads 255 bytes from chunk[48], then memcpy()\n   writes 255 bytes into msg[], both far out of bounds.\n\n2. chunk[48] overflow: curchunk_len can reach 63 (6-bit field). chunk[] is\n   only 48 bytes. Multi-iteration payload assembly appends 16-byte blocks\n   until curchunk_idx reaches curchunk_len, writing up to 15 bytes past\n   the end of chunk[] into msg[].\n\n3. msg[256] overflow: each chunk contributes (curchunk_len-1) bytes to\n   msg[]. No check ensures curlen + (curchunk_len-1) stays within msg[256],\n   so the memcpy can spill into adjacent struct fields.\n\nAll three are reachable from any DP MST device that can forge sideband\nreply messages on a physical connection.",
   "datePublished": "Aug 10, 2026, 12:01:54 PM",
-  "dateUpdated": "Aug 10, 2026, 12:01:54 PM",
+  "dateUpdated": "Nov 6, 2026, 4:55:11 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/ef2ecb6cf268debf3890df99fea01b6452dcf78e",
+    "https://git.kernel.org/stable/c/d4e05dedb252ed3e540a0c9be511e427f098110a",
+    "https://git.kernel.org/stable/c/4d5109075a787de28c9e89940f9dee45269f91fa",
     "https://git.kernel.org/stable/c/53937a2787d29c7a460e984dc4f20ff6ac91dc65",
     "https://git.kernel.org/stable/c/ef0dbcc200c3389f1f781ab181932a97e54b51af",
     "https://git.kernel.org/stable/c/1e5827839ad0ceb0079d1560c321fa3656b54f21",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/55bd5e685bda455b9b50c835f8c8442d52a344a3"
   ],
   "aliases": [
-    "CVE-2026-68278"
+    "CVE-2026-68278",
+    "GHSA-4w62-3fjj-vmpc"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.24,
   "enisaIdProduct": [
     {
       "id": "0f2d5a03-5f74-3951-8154-687434918452",
@@ -49,6 +53,56 @@
       "product_version": "ad7f8a1f9ced7f049f9b66d588723f243a7034cd <1e5827839ad0ceb0079d1560c321fa3656b54f21"
     },
     {
+      "id": "497c3e07-9a5e-3f23-9f01-6b61b2fb9dd2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ad7f8a1f9ced7f049f9b66d588723f243a7034cd <4d5109075a787de28c9e89940f9dee45269f91fa"
+    },
+    {
+      "id": "57d7a0e2-45bd-3c0a-a1eb-51afd16de5a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "68508d86-c295-3828-abbf-8a74c87ec557",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "802622b5-7bb8-3d59-b27c-043316af9e68",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ad7f8a1f9ced7f049f9b66d588723f243a7034cd <d4e05dedb252ed3e540a0c9be511e427f098110a"
+    },
+    {
+      "id": "88cb8ac3-d4ca-3d20-ae62-75a93bdbca01",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ad7f8a1f9ced7f049f9b66d588723f243a7034cd <ef2ecb6cf268debf3890df99fea01b6452dcf78e"
+    },
+    {
       "id": "88ea2871-e16a-3b7b-9f35-86b4ded8c026",
       "product": {
         "name": "Linux",
@@ -57,6 +111,16 @@
         }
       },
       "product_version": "ad7f8a1f9ced7f049f9b66d588723f243a7034cd <a6366b551079c79bf7bdbadd74c97358bcfe2d58"
+    },
+    {
+      "id": "8f0fc338-5b83-3438-9845-92bd29a84d51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.217"
     },
     {
       "id": "8fd0c682-9856-3531-b53d-ba567c7caba1",
@@ -89,16 +153,6 @@
       "product_version": "patch: 6.18.42"
     },
     {
-      "id": "a0835b7c-ae96-3551-983c-6b897b6ee43b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
-    {
       "id": "a2ede487-b47a-3cdb-b2db-1ae72fbfd2c9",
       "product": {
         "name": "Linux",
@@ -107,6 +161,16 @@
         }
       },
       "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "b7a85cb1-968d-366f-933f-67cf9295414f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.266"
     },
     {
       "id": "ba87ae18-d199-3405-81d9-2b3242047f2d",

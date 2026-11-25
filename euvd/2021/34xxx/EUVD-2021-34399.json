@@ -1,0 +1,90 @@
+{
+  "id": "EUVD-2021-34399",
+  "enisaUuid": "7a54e894-e25e-3ecd-834d-924312b2b670",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: nf_tables: unlink table before deleting it\n\nsyzbot reports following UAF:\nBUG: KASAN: use-after-free in memcmp+0x18f/0x1c0 lib/string.c:955\n nla_strcmp+0xf2/0x130 lib/nlattr.c:836\n nft_table_lookup.part.0+0x1a2/0x460 net/netfilter/nf_tables_api.c:570\n nft_table_lookup net/netfilter/nf_tables_api.c:4064 [inline]\n nf_tables_getset+0x1b3/0x860 net/netfilter/nf_tables_api.c:4064\n nfnetlink_rcv_msg+0x659/0x13f0 net/netfilter/nfnetlink.c:285\n netlink_rcv_skb+0x153/0x420 net/netlink/af_netlink.c:2504\n\nProblem is that all get operations are lockless, so the commit_mutex\nheld by nft_rcv_nl_event() isn't enough to stop a parallel GET request\nfrom doing read-accesses to the table object even after synchronize_rcu().\n\nTo avoid this, unlink the table first and store the table objects in\non-stack scratch space.",
+  "datePublished": "May 21, 2024, 3:03:51 PM",
+  "dateUpdated": "Aug 5, 2026, 8:47:37 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/f65c73d3aabb87d4353e0bc4a718b5ae8c43fd04",
+    "https://git.kernel.org/stable/c/a499b03bf36b0c2e3b958a381d828678ab0ffc5e"
+  ],
+  "aliases": [
+    "CVE-2021-47394",
+    "GHSA-p2qw-28x5-q4gw"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "64076922-eefb-3b63-bb06-acc500176cee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15"
+    },
+    {
+      "id": "715a205c-c69d-3b2c-ab48-140cf7332431",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6001a930ce0378b62210d4f83583fc88a903d89d <f65c73d3aabb87d4353e0bc4a718b5ae8c43fd04"
+    },
+    {
+      "id": "85a088fe-9102-3066-ba10-fdad50f95b25",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "cfa3d74a-bcd1-3185-a9ac-8cf142d8a983",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.12"
+    },
+    {
+      "id": "db1b620b-5a9a-3c3e-9f3d-cf8cb753be3d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.14.10"
+    },
+    {
+      "id": "fd884a45-975f-3fa1-87cd-18efaf1fc805",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6001a930ce0378b62210d4f83583fc88a903d89d <a499b03bf36b0c2e3b958a381d828678ab0ffc5e"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "32477b60-2401-3ec0-b2d9-f38352a1fa66",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

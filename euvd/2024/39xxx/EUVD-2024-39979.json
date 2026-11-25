@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2024-39979",
+  "enisaUuid": "8db04e56-da3f-357b-a4b0-26375db4ac5e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbnx2x: Fix multiple UBSAN array-index-out-of-bounds\n\nFix UBSAN warnings that occur when using a system with 32 physical\ncpu cores or more, or when the user defines a number of Ethernet\nqueues greater than or equal to FP_SB_MAX_E1x using the num_queues\nmodule parameter.\n\nCurrently there is a read/write out of bounds that occurs on the array\n\"struct stats_query_entry query\" present inside the \"bnx2x_fw_stats_req\"\nstruct in \"drivers/net/ethernet/broadcom/bnx2x/bnx2x.h\".\nLooking at the definition of the \"struct stats_query_entry query\" array:\n\nstruct stats_query_entry query[FP_SB_MAX_E1x+\n         BNX2X_FIRST_QUEUE_QUERY_IDX];\n\nFP_SB_MAX_E1x is defined as the maximum number of fast path interrupts and\nhas a value of 16, while BNX2X_FIRST_QUEUE_QUERY_IDX has a value of 3\nmeaning the array has a total size of 19.\nSince accesses to \"struct stats_query_entry query\" are offset-ted by\nBNX2X_FIRST_QUEUE_QUERY_IDX, that means that the total number of Ethernet\nqueues should not exceed FP_SB_MAX_E1x (16). However one of these queues\nis reserved for FCOE and thus the number of Ethernet queues should be set\nto [FP_SB_MAX_E1x -1] (15) if FCOE is enabled or [FP_SB_MAX_E1x] (16) if\nit is not.\n\nThis is also described in a comment in the source code in\ndrivers/net/ethernet/broadcom/bnx2x/bnx2x.h just above the Macro definition\nof FP_SB_MAX_E1x. Below is the part of this explanation that it important\nfor this patch\n\n/*\n  * The total number of L2 queues, MSIX vectors and HW contexts (CIDs) is\n  * control by the number of fast-path status blocks supported by the\n  * device (HW/FW). Each fast-path status block (FP-SB) aka non-default\n  * status block represents an independent interrupts context that can\n  * serve a regular L2 networking queue. However special L2 queues such\n  * as the FCoE queue do not require a FP-SB and other components like\n  * the CNIC may consume FP-SB reducing the number of possible L2 queues\n  *\n  * If the maximum number of FP-SB available is X then:\n  * a. If CNIC is supported it consumes 1 FP-SB thus the max number of\n  *    regular L2 queues is Y=X-1\n  * b. In MF mode the actual number of L2 queues is Y= (X-1/MF_factor)\n  * c. If the FCoE L2 queue is supported the actual number of L2 queues\n  *    is Y+1\n  * d. The number of irqs (MSIX vectors) is either Y+1 (one extra for\n  *    slow-path interrupts) or Y+2 if CNIC is supported (one additional\n  *    FP interrupt context for the CNIC).\n  * e. The number of HW context (CID count) is always X or X+1 if FCoE\n  *    L2 queue is supported. The cid for the FCoE L2 queue is always X.\n  */\n\nHowever this driver also supports NICs that use the E2 controller which can\nhandle more queues due to having more FP-SB represented by FP_SB_MAX_E2.\nLooking at the commits when the E2 support was added, it was originally\nusing the E1x parameters: commit f2e0899f0f27 (\"bnx2x: Add 57712 support\").\nBack then FP_SB_MAX_E2 was set to 16 the same as E1x. However the driver\nwas later updated to take full advantage of the E2 instead of having it be\nlimited to the capabilities of the E1x. But as far as we can tell, the\narray \"stats_query_entry query\" was still limited to using the FP-SB\navailable to the E1x cards as part of an oversignt when the driver was\nupdated to take full advantage of the E2, and now with the driver being\naware of the greater queue size supported by E2 NICs, it causes the UBSAN\nwarnings seen in the stack traces below.\n\nThis patch increases the size of the \"stats_query_entry query\" array by\nreplacing FP_SB_MAX_E1x with FP_SB_MAX_E2 to be large enough to handle\nboth types of NICs.\n\nStack traces:\n\nUBSAN: array-index-out-of-bounds in\n       drivers/net/ethernet/broadcom/bnx2x/bnx2x_stats.c:1529:11\nindex 20 is out of range for type 'stats_query_entry [19]'\nCPU: 12 PID: 858 Comm: systemd-network Not tainted 6.9.0-060900rc7-generic\n\t     #202405052133\nHardware name: HP ProLiant DL360 Gen9/ProLiant DL360 \n---truncated---",
+  "datePublished": "Jul 30, 2024, 7:46:41 AM",
+  "dateUpdated": "May 11, 2026, 8:27:53 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/cfb04472ce33bee2579caf4dc9f4242522f6e26e",
+    "https://git.kernel.org/stable/c/cbe53087026ad929cd3950508397e8892a6a2a0f",
+    "https://git.kernel.org/stable/c/8b17cec33892a66bbd71f8d9a70a45e2072ae84f",
+    "https://git.kernel.org/stable/c/0edae06b4c227bcfaf3ce21208d49191e1009d3b",
+    "https://git.kernel.org/stable/c/9504a1550686f53b0bab4cab31d435383b1ee2ce",
+    "https://git.kernel.org/stable/c/f1313ea92f82451923e28ab45a4aaa0e70e80b98",
+    "https://git.kernel.org/stable/c/b9ea38e767459111a511ed4fb74abc37db95a59d",
+    "https://git.kernel.org/stable/c/134061163ee5ca4759de5c24ca3bd71608891ba7"
+  ],
+  "aliases": [
+    "GHSA-q54v-7fv8-p57r",
+    "CVE-2024-42148"
+  ],
+  "assigner": "Linux",
+  "epss": 0.26,
+  "enisaIdProduct": [
+    {
+      "id": "1b4603bf-a04e-398a-bef2-be237f6277f5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "22dc1809-6803-31d8-9b07-a64d2806a8c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.318"
+    },
+    {
+      "id": "26ea2912-0840-3abe-a00c-4218471029d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "56f2d796-cb90-39f3-818b-9c330ad3173f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "50f0a562f8cc9ed9d9f7f7380434c3c8646172d5 <b9ea38e767459111a511ed4fb74abc37db95a59d"
+    },
+    {
+      "id": "6bca3c4a-19bf-37de-83ab-fe02980ee6bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "50f0a562f8cc9ed9d9f7f7380434c3c8646172d5 <cbe53087026ad929cd3950508397e8892a6a2a0f"
+    },
+    {
+      "id": "71eb41c0-3afd-3ea9-bc3a-8a72a09ca67c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.163"
+    },
+    {
+      "id": "7b1b3b4c-fc7b-35ea-973c-f50c84ca8a08",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.3"
+    },
+    {
+      "id": "896e866f-e9f9-3676-bda5-151ad379ffce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.280"
+    },
+    {
+      "id": "8cb1ff17-14f7-3397-bda8-35f4a37834ce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.39"
+    },
+    {
+      "id": "9526309d-4604-3430-b378-93c63aff1785",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.222"
+    },
+    {
+      "id": "95a20fb4-77d0-3d2b-8814-ef9ad2b9a6a2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "50f0a562f8cc9ed9d9f7f7380434c3c8646172d5 <9504a1550686f53b0bab4cab31d435383b1ee2ce"
+    },
+    {
+      "id": "a0e148bf-a660-3350-a7ed-30227ca1ca85",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.9"
+    },
+    {
+      "id": "ca3beaa0-59b0-3324-b4d8-8f88bb8e578e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "50f0a562f8cc9ed9d9f7f7380434c3c8646172d5 <134061163ee5ca4759de5c24ca3bd71608891ba7"
+    },
+    {
+      "id": "d881a272-868c-325a-99b5-ed71299d7b45",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "50f0a562f8cc9ed9d9f7f7380434c3c8646172d5 <cfb04472ce33bee2579caf4dc9f4242522f6e26e"
+    },
+    {
+      "id": "dd82c0d2-ebd0-348a-93e7-db23422504d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "50f0a562f8cc9ed9d9f7f7380434c3c8646172d5 <0edae06b4c227bcfaf3ce21208d49191e1009d3b"
+    },
+    {
+      "id": "ddf40d71-8c01-367a-a222-4d61ef88fb21",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "50f0a562f8cc9ed9d9f7f7380434c3c8646172d5 <8b17cec33892a66bbd71f8d9a70a45e2072ae84f"
+    },
+    {
+      "id": "eb62313e-3928-3150-b535-4d94b1ec80ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.98"
+    },
+    {
+      "id": "f7cfff9e-4f21-33a1-b204-e0607ba63c21",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "50f0a562f8cc9ed9d9f7f7380434c3c8646172d5 <f1313ea92f82451923e28ab45a4aaa0e70e80b98"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "61d803f9-0e80-34d1-8bc7-6f0955b07c01",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

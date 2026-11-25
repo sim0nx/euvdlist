@@ -3,7 +3,7 @@
   "enisaUuid": "2d4fe3a1-fd6a-3205-a916-6cbb5ec36e2c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfirmware_loader: do not queue completed sysfs fallback requests\n\nfw_load_sysfs_fallback() calls device_add() before adding the fw_priv to\npending_fw_head. device_add() publishes the fallback loading interface, so\na userspace helper which discovers the device by scanning sysfs can write 0\nto the loading attribute and complete the request before it is queued as\npending.\n\nIn that interleaving firmware_loading_store() calls fw_state_done() while\npending_list still points to itself, so it cannot remove an entry from\npending_fw_head. The subsequent unconditional list_add() then queues an\nalready-completed fw_priv. Once the request is released, pending_fw_head\ncan retain a pointer to freed memory and the next fallback request can\nfault while validating the list.\n\nOnly in-flight fallback requests need suspend or reboot abort handling. If\nthe request is already DONE after device_add(), return success from the\nfallback path without sending another uevent, waiting again, or queueing it\nas pending. This preserves the invariant that pending_fw_head contains only\nactive fallback requests.",
   "datePublished": "Sep 17, 2026, 4:08:13 PM",
-  "dateUpdated": "Sep 17, 2026, 4:08:13 PM",
+  "dateUpdated": "Oct 19, 2026, 9:01:02 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/c8b97c5130f27b64fa2cfe1aa4bebb13f724c6c7",
@@ -16,21 +16,12 @@
     "https://git.kernel.org/stable/c/b48373c901951fad1a26bd7c33ad91172b3945b5"
   ],
   "aliases": [
-    "CVE-2026-90284"
+    "CVE-2026-90284",
+    "GHSA-97xh-425q-x269"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
-    {
-      "id": "042ac1eb-8e2a-3f7a-a92d-0b0420863fe1",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
     {
       "id": "0816528b-022f-38a8-9ba9-803d929bb2e1",
       "product": {
@@ -160,6 +151,16 @@
         }
       },
       "product_version": "75d95e2e39b27f733f21e6668af1c9893a97de5e <6eaa632d0ed7bbb84f9cb670e5ec4e2cecf4cc7b"
+    },
+    {
+      "id": "96e8e95a-3f3a-32e0-ae91-813b2d10fc9f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "987cdc81-78bd-343b-90d6-f7dd256c410d",

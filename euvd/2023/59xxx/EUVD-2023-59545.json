@@ -1,0 +1,170 @@
+{
+  "id": "EUVD-2023-59545",
+  "enisaUuid": "41e23f61-4e40-3857-9b8f-4dfcc058499e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncpu/hotplug: Don't offline the last non-isolated CPU\n\nIf a system has isolated CPUs via the \"isolcpus=\" command line parameter,\nthen an attempt to offline the last housekeeping CPU will result in a\nWARN_ON() when rebuilding the scheduler domains and a subsequent panic due\nto and unhandled empty CPU mas in partition_sched_domains_locked().\n\ncpuset_hotplug_workfn()\n  rebuild_sched_domains_locked()\n    ndoms = generate_sched_domains(&doms, &attr);\n      cpumask_and(doms[0], top_cpuset.effective_cpus, housekeeping_cpumask(HK_FLAG_DOMAIN));\n\nThus results in an empty CPU mask which triggers the warning and then the\nsubsequent crash:\n\nWARNING: CPU: 4 PID: 80 at kernel/sched/topology.c:2366 build_sched_domains+0x120c/0x1408\nCall trace:\n build_sched_domains+0x120c/0x1408\n partition_sched_domains_locked+0x234/0x880\n rebuild_sched_domains_locked+0x37c/0x798\n rebuild_sched_domains+0x30/0x58\n cpuset_hotplug_workfn+0x2a8/0x930\n\nUnable to handle kernel paging request at virtual address fffe80027ab37080\n partition_sched_domains_locked+0x318/0x880\n rebuild_sched_domains_locked+0x37c/0x798\n\nAside of the resulting crash, it does not make any sense to offline the last\nlast housekeeping CPU.\n\nPrevent this by masking out the non-housekeeping CPUs when selecting a\ntarget CPU for initiating the CPU unplug operation via the work queue.",
+  "datePublished": "May 21, 2024, 3:31:33 PM",
+  "dateUpdated": "May 23, 2026, 3:27:14 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/3410b702354702b500bde10e3cc1f9db8731d908",
+    "https://git.kernel.org/stable/c/335a47ed71e332c82339d1aec0c7f6caccfcda13",
+    "https://git.kernel.org/stable/c/3073f6df783d9d75f7f69f73e16c7ef85d6cfb63",
+    "https://git.kernel.org/stable/c/38685e2a0476127db766f81b1c06019ddc4c9ffa"
+  ],
+  "aliases": [
+    "CVE-2023-52831",
+    "GHSA-93cv-5m73-q9h8"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "166f203d-25a4-3c29-ba76-db419023ead5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7"
+    },
+    {
+      "id": "190fae46-9c35-3bb7-9f07-dfbfb87cdf27",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.5.3 <6.5.13"
+    },
+    {
+      "id": "22e30bdb-e80b-37cd-95de-c1729c9f35c2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "07f9e0c9987bf1c4ef57611ad2f789ba68978102 <335a47ed71e332c82339d1aec0c7f6caccfcda13"
+    },
+    {
+      "id": "32863413-d12e-3169-bade-4d12ff2d3375",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2b8272ff4a70b866106ae13c36be7ecbef5d5da2 <3073f6df783d9d75f7f69f73e16c7ef85d6cfb63"
+    },
+    {
+      "id": "504b715f-5649-3043-b5c5-e8ba39a3191b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.5.13"
+    },
+    {
+      "id": "6463a08c-6cc9-38cc-ba08-555213c48a8c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.53 <6.1.64"
+    },
+    {
+      "id": "90830f17-d117-3b21-a638-8f02c5d5a030",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6"
+    },
+    {
+      "id": "96a50a6a-9e12-3bf3-95a2-2136296540da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2b8272ff4a70b866106ae13c36be7ecbef5d5da2 <38685e2a0476127db766f81b1c06019ddc4c9ffa"
+    },
+    {
+      "id": "a1d8bd9b-745d-3a8d-9ef3-5b1f5c6895a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fea9dd8653ff39ce383c54e747bde4c39289b4ad <3410b702354702b500bde10e3cc1f9db8731d908"
+    },
+    {
+      "id": "b2ab1bb8-3434-3fae-8f38-1bb9e9dc3ffa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.3"
+    },
+    {
+      "id": "bc519971-8634-3d11-bfe6-98b4e78f11e1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9734e4c0c470258c32b6aa5ea7ef8a86506c0909"
+    },
+    {
+      "id": "dc92bc23-09b5-3452-841c-b7e45b3bc00a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.4.16 <6.5"
+    },
+    {
+      "id": "dcfbcd3d-3299-3ab8-96ff-a98345e25df8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ffa6d251-45af-31ac-b91c-2af9427ac5bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.64"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "ac713918-0773-31f8-9755-322056783030",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

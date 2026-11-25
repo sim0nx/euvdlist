@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2024-23943",
+  "enisaUuid": "3d29f8f1-0361-3b60-900f-564c8fc1f037",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetdevsim: avoid potential loop in nsim_dev_trap_report_work()\n\nMany syzbot reports include the following trace [1]\n\nIf nsim_dev_trap_report_work() can not grab the mutex,\nit should rearm itself at least one jiffie later.\n\n[1]\nSending NMI from CPU 1 to CPUs 0:\nNMI backtrace for cpu 0\nCPU: 0 PID: 32383 Comm: kworker/0:2 Not tainted 6.8.0-rc2-syzkaller-00031-g861c0981648f #0\nHardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 11/17/2023\nWorkqueue: events nsim_dev_trap_report_work\n RIP: 0010:bytes_is_nonzero mm/kasan/generic.c:89 [inline]\n RIP: 0010:memory_is_nonzero mm/kasan/generic.c:104 [inline]\n RIP: 0010:memory_is_poisoned_n mm/kasan/generic.c:129 [inline]\n RIP: 0010:memory_is_poisoned mm/kasan/generic.c:161 [inline]\n RIP: 0010:check_region_inline mm/kasan/generic.c:180 [inline]\n RIP: 0010:kasan_check_range+0x101/0x190 mm/kasan/generic.c:189\nCode: 07 49 39 d1 75 0a 45 3a 11 b8 01 00 00 00 7c 0b 44 89 c2 e8 21 ed ff ff 83 f0 01 5b 5d 41 5c c3 48 85 d2 74 4f 48 01 ea eb 09 <48> 83 c0 01 48 39 d0 74 41 80 38 00 74 f2 eb b6 41 bc 08 00 00 00\nRSP: 0018:ffffc90012dcf998 EFLAGS: 00000046\nRAX: fffffbfff258af1e RBX: fffffbfff258af1f RCX: ffffffff8168eda3\nRDX: fffffbfff258af1f RSI: 0000000000000004 RDI: ffffffff92c578f0\nRBP: fffffbfff258af1e R08: 0000000000000000 R09: fffffbfff258af1e\nR10: ffffffff92c578f3 R11: ffffffff8acbcbc0 R12: 0000000000000002\nR13: ffff88806db38400 R14: 1ffff920025b9f42 R15: ffffffff92c578e8\nFS:  0000000000000000(0000) GS:ffff8880b9800000(0000) knlGS:0000000000000000\nCS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033\nCR2: 000000c00994e078 CR3: 000000002c250000 CR4: 00000000003506f0\nDR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000\nDR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400\nCall Trace:\n <NMI>\n </NMI>\n <TASK>\n  instrument_atomic_read include/linux/instrumented.h:68 [inline]\n  atomic_read include/linux/atomic/atomic-instrumented.h:32 [inline]\n  queued_spin_is_locked include/asm-generic/qspinlock.h:57 [inline]\n  debug_spin_unlock kernel/locking/spinlock_debug.c:101 [inline]\n  do_raw_spin_unlock+0x53/0x230 kernel/locking/spinlock_debug.c:141\n  __raw_spin_unlock_irqrestore include/linux/spinlock_api_smp.h:150 [inline]\n  _raw_spin_unlock_irqrestore+0x22/0x70 kernel/locking/spinlock.c:194\n  debug_object_activate+0x349/0x540 lib/debugobjects.c:726\n  debug_work_activate kernel/workqueue.c:578 [inline]\n  insert_work+0x30/0x230 kernel/workqueue.c:1650\n  __queue_work+0x62e/0x11d0 kernel/workqueue.c:1802\n  __queue_delayed_work+0x1bf/0x270 kernel/workqueue.c:1953\n  queue_delayed_work_on+0x106/0x130 kernel/workqueue.c:1989\n  queue_delayed_work include/linux/workqueue.h:563 [inline]\n  schedule_delayed_work include/linux/workqueue.h:677 [inline]\n  nsim_dev_trap_report_work+0x9c0/0xc80 drivers/net/netdevsim/dev.c:842\n  process_one_work+0x886/0x15d0 kernel/workqueue.c:2633\n  process_scheduled_works kernel/workqueue.c:2706 [inline]\n  worker_thread+0x8b9/0x1290 kernel/workqueue.c:2787\n  kthread+0x2c6/0x3a0 kernel/kthread.c:388\n  ret_from_fork+0x45/0x80 arch/x86/kernel/process.c:147\n  ret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:242\n </TASK>",
+  "datePublished": "Apr 2, 2024, 7:01:44 AM",
+  "dateUpdated": "May 11, 2026, 8:02:08 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/0193e0660cc6689c794794b471492923cfd7bfbc",
+    "https://git.kernel.org/stable/c/6eecddd9c3c8d6e3a097531cdc6d500335b35e46",
+    "https://git.kernel.org/stable/c/d91964cdada76740811b7c621239f9c407820dbc",
+    "https://git.kernel.org/stable/c/ba5e1272142d051dcc57ca1d3225ad8a089f9858"
+  ],
+  "aliases": [
+    "GHSA-968x-w27q-c8fx",
+    "CVE-2024-26681"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "09a03585-2a67-3b1c-8db3-cdb662835494",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.17"
+    },
+    {
+      "id": "2a4a4b2d-1057-3c95-b897-f36694f03a6a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "012ec02ae4410207f796a9b280a60b80b6cc790a <6eecddd9c3c8d6e3a097531cdc6d500335b35e46"
+    },
+    {
+      "id": "5a8495d1-ff09-3704-8c0e-02cced70259b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "012ec02ae4410207f796a9b280a60b80b6cc790a <d91964cdada76740811b7c621239f9c407820dbc"
+    },
+    {
+      "id": "77816b3b-c622-3fbe-b42a-f0451d416998",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "012ec02ae4410207f796a9b280a60b80b6cc790a <ba5e1272142d051dcc57ca1d3225ad8a089f9858"
+    },
+    {
+      "id": "8aee289e-d344-39ba-b14b-691303d7a688",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.0"
+    },
+    {
+      "id": "8fae8bb4-c480-3dc2-a0f3-8a86d8065484",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "012ec02ae4410207f796a9b280a60b80b6cc790a <0193e0660cc6689c794794b471492923cfd7bfbc"
+    },
+    {
+      "id": "99759390-cbe8-3484-a25d-b262be8f379b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "bd0e42f3-c4ef-3718-b402-f1ce836207d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.78"
+    },
+    {
+      "id": "d2d5508e-e768-3509-897b-c0e8a7ddcd05",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "e859e9d2-08b1-366b-93ff-0b0f18bd5b2c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "81e96d69-5bc5-3572-864c-df64f5700e1c",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

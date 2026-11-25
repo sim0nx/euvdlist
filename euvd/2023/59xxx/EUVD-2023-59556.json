@@ -1,0 +1,235 @@
+{
+  "id": "EUVD-2023-59556",
+  "enisaUuid": "b1a0354c-5d33-39fb-ac20-962ec54c81f2",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nllc: verify mac len before reading mac header\n\nLLC reads the mac header with eth_hdr without verifying that the skb\nhas an Ethernet header.\n\nSyzbot was able to enter llc_rcv on a tun device. Tun can insert\npackets without mac len and with user configurable skb->protocol\n(passing a tun_pi header when not configuring IFF_NO_PI).\n\n    BUG: KMSAN: uninit-value in llc_station_ac_send_test_r net/llc/llc_station.c:81 [inline]\n    BUG: KMSAN: uninit-value in llc_station_rcv+0x6fb/0x1290 net/llc/llc_station.c:111\n    llc_station_ac_send_test_r net/llc/llc_station.c:81 [inline]\n    llc_station_rcv+0x6fb/0x1290 net/llc/llc_station.c:111\n    llc_rcv+0xc5d/0x14a0 net/llc/llc_input.c:218\n    __netif_receive_skb_one_core net/core/dev.c:5523 [inline]\n    __netif_receive_skb+0x1a6/0x5a0 net/core/dev.c:5637\n    netif_receive_skb_internal net/core/dev.c:5723 [inline]\n    netif_receive_skb+0x58/0x660 net/core/dev.c:5782\n    tun_rx_batched+0x3ee/0x980 drivers/net/tun.c:1555\n    tun_get_user+0x54c5/0x69c0 drivers/net/tun.c:2002\n\nAdd a mac_len test before all three eth_hdr(skb) calls under net/llc.\n\nThere are further uses in include/net/llc_pdu.h. All these are\nprotected by a test skb->protocol == ETH_P_802_2. Which does not\nprotect against this tun scenario.\n\nBut the mac_len test added in this patch in llc_fixup_skb will\nindirectly protect those too. That is called from llc_rcv before any\nother LLC code.\n\nIt is tempting to just add a blanket mac_len check in llc_rcv, but\nnot sure whether that could break valid LLC paths that do not assume\nan Ethernet header. 802.2 LLC may be used on top of non-802.3\nprotocols in principle. The below referenced commit shows that used\nto, on top of Token Ring.\n\nAt least one of the three eth_hdr uses goes back to before the start\nof git history. But the one that syzbot exercises is introduced in\nthis commit. That commit is old enough (2008), that effectively all\nstable kernels should receive this.",
+  "datePublished": "May 21, 2024, 3:31:41 PM",
+  "dateUpdated": "May 11, 2026, 7:34:05 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/900a4418e3f66a32db6baaf23f92b99c20ae6535",
+    "https://git.kernel.org/stable/c/9a3f9054a5227d7567cba1fb821df48ccecad10c",
+    "https://git.kernel.org/stable/c/cbdcdf42d15dac74c7287679fb2a9d955f8feb1f",
+    "https://git.kernel.org/stable/c/3a2653828ffc6101aef80bf58d5b77484239f779",
+    "https://git.kernel.org/stable/c/352887b3edd007cf9b0abc30fe9d98622acd859b",
+    "https://git.kernel.org/stable/c/f980e9a57dfb9530f1f4ee41a2420f2a256d7b29",
+    "https://git.kernel.org/stable/c/0a720d0259ad3521ec6c9e4199f9f6fc75bac77a",
+    "https://git.kernel.org/stable/c/ff5cb6a4f0c6d7fbdc84858323fb4b7af32cfd79",
+    "https://git.kernel.org/stable/c/7b3ba18703a63f6fd487183b9262b08e5632da1b"
+  ],
+  "aliases": [
+    "GHSA-jm7v-c85h-4vvr",
+    "CVE-2023-52843"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "049c029b-4cd1-385b-b0a0-8c049beaf995",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f83f1768f833cb45bc93429fdc552252a4f55ac3 <900a4418e3f66a32db6baaf23f92b99c20ae6535"
+    },
+    {
+      "id": "0b38c29c-5d8f-3704-93eb-4a2081004f88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.63"
+    },
+    {
+      "id": "42615083-6f0b-3fb5-a5b1-f9ef96254cf2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f83f1768f833cb45bc93429fdc552252a4f55ac3 <7b3ba18703a63f6fd487183b9262b08e5632da1b"
+    },
+    {
+      "id": "4654137e-fbb7-32cc-b185-87d3fd0c5a12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.261"
+    },
+    {
+      "id": "47ae82b4-e15c-3ba3-b2c9-e7f6d843349b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.299"
+    },
+    {
+      "id": "4e9f6d7c-7daf-3002-8bf3-014d9db6c768",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f83f1768f833cb45bc93429fdc552252a4f55ac3 <352887b3edd007cf9b0abc30fe9d98622acd859b"
+    },
+    {
+      "id": "5371f198-39bc-3824-b282-e9554dee10d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.201"
+    },
+    {
+      "id": "601cb076-c42a-337e-bb0b-ddcd82ad6268",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.330"
+    },
+    {
+      "id": "7394c38b-b72e-3b5e-8888-a60215b16311",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f83f1768f833cb45bc93429fdc552252a4f55ac3 <0a720d0259ad3521ec6c9e4199f9f6fc75bac77a"
+    },
+    {
+      "id": "7dab1c09-53ef-3354-9a43-88de8c574553",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.139"
+    },
+    {
+      "id": "88ec9af7-f6a2-3def-95d0-381c6ccf4d94",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.25"
+    },
+    {
+      "id": "9dee2084-8c1e-3644-9821-e33756366644",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.5.12"
+    },
+    {
+      "id": "a5ef173c-3650-3e1e-9e56-7b24fdfc7a6d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f83f1768f833cb45bc93429fdc552252a4f55ac3 <9a3f9054a5227d7567cba1fb821df48ccecad10c"
+    },
+    {
+      "id": "acc03d97-6566-3f03-8355-edf8f3764df6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f83f1768f833cb45bc93429fdc552252a4f55ac3 <cbdcdf42d15dac74c7287679fb2a9d955f8feb1f"
+    },
+    {
+      "id": "b77bc363-8a08-3baf-9725-4f16bc765cff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f83f1768f833cb45bc93429fdc552252a4f55ac3 <ff5cb6a4f0c6d7fbdc84858323fb4b7af32cfd79"
+    },
+    {
+      "id": "b9b4d82a-895e-36fa-9962-b3edf59f5ed6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7"
+    },
+    {
+      "id": "e8e83580-9f1c-386f-a274-7dc1dfd55c75",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f83f1768f833cb45bc93429fdc552252a4f55ac3 <f980e9a57dfb9530f1f4ee41a2420f2a256d7b29"
+    },
+    {
+      "id": "f2c614bf-21a3-36aa-a834-f3038abc92d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "fc3ed92a-7c20-35f2-96d8-4cbc4e3c7086",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.2"
+    },
+    {
+      "id": "fda74533-4c25-3c6e-9727-395d0386f83f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f83f1768f833cb45bc93429fdc552252a4f55ac3 <3a2653828ffc6101aef80bf58d5b77484239f779"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "57402551-aeed-346d-bb47-6b8da5b572c1",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

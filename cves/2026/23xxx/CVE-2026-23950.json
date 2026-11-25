@@ -1,27 +1,30 @@
 {
   "id": "EUVD-2026-3595",
   "enisaUuid": "3d8c56a9-4702-35ef-be4d-124704f432e3",
-  "description": "Race Condition in node-tar Path Reservations via Unicode Ligature Collisions on macOS APFS",
-  "datePublished": "Jan 21, 2026, 1:05:49 AM",
-  "dateUpdated": "Jan 21, 2026, 1:05:49 AM",
+  "description": "node-tar,a Tar for Node.js, has a race condition vulnerability in versions up to and including 7.5.3. This is due to an incomplete handling of Unicode path collisions in the `path-reservations` system. On case-insensitive or normalization-insensitive filesystems (such as macOS APFS, In which it has been tested), the library fails to lock colliding paths (e.g., `\u00df` and `ss`), allowing them to be processed in parallel. This bypasses the library's internal concurrency safeguards and permits Symlink Poisoning attacks via race conditions. The library uses a `PathReservations` system to ensure that metadata checks and file operations for the same path are serialized. This prevents race conditions where one entry might clobber another concurrently. This is a Race Condition which enables Arbitrary File Overwrite. This vulnerability affects users and systems using node-tar on macOS (APFS/HFS+). Because of using `NFD` Unicode normalization (in which `\u00df` and `ss` are different), conflicting paths do not have their order properly preserved under filesystems that ignore Unicode normalization (e.g., APFS (in which `\u00df` causes an inode collision with `ss`)). This enables an attacker to circumvent internal parallelization locks (`PathReservations`) using conflicting filenames within a malicious tar archive. The patch in version 7.5.4 updates `path-reservations.js` to use a normalization form that matches the target filesystem's behavior (e.g., `NFKD`), followed by first `toLocaleLowerCase('en')` and then `toLocaleUpperCase('en')`. As a workaround, users who cannot upgrade promptly, and who are programmatically using `node-tar` to extract arbitrary tarball data should filter out all `SymbolicLink` entries (as npm does) to defend against arbitrary file writes via this file system entry name collision issue.",
+  "datePublished": "Jan 20, 2026, 12:40:48 AM",
+  "dateUpdated": "Sep 1, 2026, 12:04:49 PM",
   "baseScore": 8.8,
   "baseScoreVersion": "3.1",
   "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:H/A:L",
   "references": [
     "https://github.com/isaacs/node-tar/security/advisories/GHSA-r6q2-hw4h-h46w",
-    "https://github.com/isaacs/node-tar/commit/3b1abfae650056edfabcbe0a0df5954d390521e6",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-23950"
+    "https://github.com/isaacs/node-tar/commit/3b1abfae650056edfabcbe0a0df5954d390521e6"
   ],
   "aliases": [
+    "GHSA-r6q2-hw4h-h46w",
     "CVE-2026-23950"
   ],
   "assigner": "GitHub_M",
-  "epss": 0.02,
+  "epss": 0.26,
   "enisaIdProduct": [
     {
       "id": "ca339f3b-5c84-3bca-ac92-053da5b98905",
       "product": {
-        "name": "node-tar"
+        "name": "node-tar",
+        "vendor": {
+          "name": "isaacs"
+        }
       },
       "product_version": "< 7.5.4"
     }

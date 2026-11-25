@@ -3,8 +3,10 @@
   "enisaUuid": "56366f1c-441f-359c-b4ec-0b28b9035088",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfsd: fix dead ACL conflict guard in nfsd4_create\n\nnfsd4_create() steals create->cr_dpacl/cr_pacl into the local\nnfsd_attrs via the designated initializer, then immediately sets the\nsource pointers to NULL. The subsequent conflict guard tests the\nalready-nilled source fields, making it permanently dead code:\n\n    if (create->cr_acl) {\n        if (create->cr_dpacl || create->cr_pacl)  /* always false */\n\nWhen a client encodes both FATTR4_WORD0_ACL and\nFATTR4_WORD2_POSIX_{DEFAULT,ACCESS}_ACL in the same CREATE fattr\nbitmap, nfsd4_acl_to_attr() overwrites attrs.na_pacl/na_dpacl without\nreleasing the originals, leaking two posix_acl slab objects per\nrequest. Repeated requests cause unbounded slab exhaustion.\n\nFix by checking attrs.na_dpacl/na_pacl (the stolen values) instead of\nthe nilled create->cr_dpacl/cr_pacl, matching the correct pattern\nalready used in nfsd4_setattr().",
   "datePublished": "Jul 19, 2026, 12:01:57 PM",
-  "dateUpdated": "Jul 19, 2026, 12:01:57 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:50:47 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/8371cc5c0a2cc2a71b3dcfd47ff1f7fcfc526a5e",
     "https://git.kernel.org/stable/c/a60f25a800846ab8e5a13f8a9d05111f2aee55a7"
@@ -14,7 +16,7 @@
     "CVE-2026-53395"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.49,
   "enisaIdProduct": [
     {
       "id": "14bece84-a3b0-3d45-9a56-23846e2689f4",
@@ -37,14 +39,14 @@
       "product_version": "7.0"
     },
     {
-      "id": "5c3f643b-b928-35d7-8a35-1a71c8d0a533",
+      "id": "34709aa3-200d-38de-9b50-c0a828a1d4f3",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "af959657-f389-39d0-873a-8a11915cad01",

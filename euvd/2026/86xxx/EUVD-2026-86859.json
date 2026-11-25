@@ -3,7 +3,7 @@
   "enisaUuid": "ba0eebca-c7fc-3b29-b397-ddedd60e9895",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfs: initialise args->total for parent pointer updates\n\nxfs_parent_da_args_init() builds an xfs_da_args from a zeroed\nxfs_parent_args (kmem_cache_zalloc), leaving args->total == 0.\nxfs_da_grow_inode_int() treats that field as a running block reservation\nand subtracts from it; because it is an xfs_extlen_t (uint32_t), the\nfirst attr-fork growth wraps it to ~0U.  That defeats the free-space\ncheck in xfs_alloc_space_available(), and when it coincides with an AG\nthat has exactly zero available blocks the allocation is clamped to\nmaxlen 0 and returns -ENOSPC, which xfs_defer_finish_noroll() escalates\nto a filesystem shutdown.\n\nSet args->total the way the log recovery path does\n(xfs_attri_recover_work(), xfs_attr_item.c:706), in the add and replace\npaths that can grow the fork.  Removals and lookups never grow it, so\nthey leave the field alone, matching that switch.",
   "datePublished": "Sep 25, 2026, 10:21:44 AM",
-  "dateUpdated": "Sep 25, 2026, 10:21:44 AM",
+  "dateUpdated": "Oct 19, 2026, 9:09:14 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/9ad85bce62cadfdf4242f6e6bbff2a52e51d30f1",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/8e4ebb6afaa34bd2e8ce52da231003d24111c2d6"
   ],
   "aliases": [
+    "GHSA-hph3-hwfc-67wh",
     "CVE-2026-97551"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "16e9743d-bdee-3db3-b1f3-431ff1045df5",
@@ -36,6 +37,16 @@
         }
       },
       "product_version": "patch: 6.12.111"
+    },
+    {
+      "id": "314fd9f1-7f34-3ba3-a161-90d8438dae61",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "3cb5d0b0-9075-3add-a5a1-2e6cd031af38",
@@ -66,16 +77,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "5ca32275-8b7d-3a24-91cb-6df7a078a761",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc3"
     },
     {
       "id": "6ba73740-e55c-38c3-b441-4c09fb9e4b9d",

@@ -3,18 +3,30 @@
   "enisaUuid": "f4292f6f-6655-3c38-b208-438c19bc640f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsched_ext: Take cgroup_lock() first in scx_cgroup_lock()\n\nscx_cgroup_lock() write-locks scx_cgroup_ops_rwsem and then takes\ncgroup_lock(), which can deadlock through kernfs:\n\n  scx enable/disable         cgroup rmdir           cpu.weight write\n  ------------------         ------------           ----------------\n                             cgroup_lock()\n  percpu_down_write(rwsem)\n  cgroup_lock()\n                                                    kernfs_get_active()\n                                                    percpu_down_read(rwsem)\n                             kernfs_drain()\n\nThe enable path waits for the rmdir to release cgroup_mutex. The rmdir,\ndeactivating the cpu controller's files, waits in kernfs_drain() for the\nwrite's active reference. The write, in scx_group_set_weight(), waits for\nthe rwsem behind the pending writer.\n\nTake cgroup_lock() first. The set_* paths take no cgroup locks inside the\nread side, so a pending write-lock then only waits for read sections that\nalways run to completion, and no dependency from the rwsem back to\ncgroup_mutex remains.",
   "datePublished": "Aug 22, 2026, 3:31:44 PM",
-  "dateUpdated": "Aug 22, 2026, 3:31:44 PM",
+  "dateUpdated": "Aug 23, 2026, 12:47:36 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/2ca6b43edf83f8fc368cc3094ee5f3b1e8e0b0f0",
     "https://git.kernel.org/stable/c/a054c9ffa9b7a0dffb763837b91ac9d381ec6d10",
     "https://git.kernel.org/stable/c/5f8b69642d18e1f3e11996707842ac530444e959"
   ],
   "aliases": [
-    "CVE-2026-74593"
+    "CVE-2026-74593",
+    "GHSA-jp6g-jm55-gwj8"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "0f93302a-5397-3923-b60e-236967f220b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.46"
+    },
     {
       "id": "1568a494-996f-3320-a312-a98f25427d5f",
       "product": {
@@ -64,6 +76,16 @@
         }
       },
       "product_version": "patch: 7.2"
+    },
+    {
+      "id": "d85dedeb-b45f-3dba-9cb6-7115b012dc27",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a5bd6ba30b3364354269b81ac55c2edca9a96d6d <2ca6b43edf83f8fc368cc3094ee5f3b1e8e0b0f0"
     },
     {
       "id": "e8357426-9d7f-318a-b535-081c54c3be2d",

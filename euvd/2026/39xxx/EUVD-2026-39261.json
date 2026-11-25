@@ -3,17 +3,20 @@
   "enisaUuid": "a5f38adb-faf8-357a-8ec5-fcf2e2d4ef09",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\naccel/ethosu: reject DMA commands with uninitialized length\n\ncmd_state_init() initializes the command state with memset(0xff),\nleaving dma->len at U64_MAX to signal missing setup. The only setter\nis NPU_SET_DMA0_LEN; if userspace omits this command and issues\nNPU_OP_DMA_START, dma->len remains U64_MAX.\n\nIn dma_length(), a positive stride added to U64_MAX wraps to a small\nvalue. With size0 == 1, check_mul_overflow() does not trigger and\ndma_length() returns 0 instead of U64_MAX. The caller's U64_MAX check\nthen passes, region_size[] stays 0, and the bounds check in\nethosu_job.c is bypassed, allowing hardware to execute DMA with stale\nphysical addresses.\n\nFix by checking for U64_MAX at the start of dma_length() before any\narithmetic, consistent with the sentinel value used throughout the\ndriver to detect uninitialized fields.",
   "datePublished": "Jun 25, 2026, 8:38:48 AM",
-  "dateUpdated": "Jun 25, 2026, 8:38:48 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:33:39 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/fb25c76a820ca8a547aa478bfb503da0a11494ab",
     "https://git.kernel.org/stable/c/d9d021218162b6c4fe0bdf42b2b340f1aae23a12"
   ],
   "aliases": [
-    "CVE-2026-53170"
+    "CVE-2026-53170",
+    "GHSA-8pg6-rv6x-wjc2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "13e6cc76-016e-3d27-a414-73a79678043e",

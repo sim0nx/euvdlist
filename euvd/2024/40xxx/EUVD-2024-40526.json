@@ -1,0 +1,141 @@
+{
+  "id": "EUVD-2024-40526",
+  "enisaUuid": "a6833735-8387-3e78-be1f-2baa63c50ae1",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nPCI: rcar: Demote WARN() to dev_warn_ratelimited() in rcar_pcie_wakeup()\n\nAvoid large backtrace, it is sufficient to warn the user that there has\nbeen a link problem. Either the link has failed and the system is in need\nof maintenance, or the link continues to work and user has been informed.\nThe message from the warning can be looked up in the sources.\n\nThis makes an actual link issue less verbose.\n\nFirst of all, this controller has a limitation in that the controller\ndriver has to assist the hardware with transition to L1 link state by\nwriting L1IATN to PMCTRL register, the L1 and L0 link state switching\nis not fully automatic on this controller.\n\nIn case of an ASMedia ASM1062 PCIe SATA controller which does not support\nASPM, on entry to suspend or during platform pm_test, the SATA controller\nenters D3hot state and the link enters L1 state. If the SATA controller\nwakes up before rcar_pcie_wakeup() was called and returns to D0, the link\nreturns to L0 before the controller driver even started its transition to\nL1 link state. At this point, the SATA controller did send an PM_ENTER_L1\nDLLP to the PCIe controller and the PCIe controller received it, and the\nPCIe controller did set PMSR PMEL1RX bit.\n\nOnce rcar_pcie_wakeup() is called, if the link is already back in L0 state\nand PMEL1RX bit is set, the controller driver has no way to determine if\nit should perform the link transition to L1 state, or treat the link as if\nit is in L0 state. Currently the driver attempts to perform the transition\nto L1 link state unconditionally, which in this specific case fails with a\nPMSR L1FAEG poll timeout, however the link still works as it is already\nback in L0 state.\n\nReduce this warning verbosity. In case the link is really broken, the\nrcar_pcie_config_access() would fail, otherwise it will succeed and any\nsystem with this controller and ASM1062 can suspend without generating\na backtrace.",
+  "datePublished": "Aug 21, 2024, 12:06:28 AM",
+  "dateUpdated": "May 11, 2026, 8:31:32 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/59c78e8fddc1fe68f14011450a09b3418127d2ad",
+    "https://git.kernel.org/stable/c/2ae4769332dfdb97f4b6f5dc9ac8f46d02aaa3df",
+    "https://git.kernel.org/stable/c/526a877c6273d4cd0d0aede84c1d620479764b1c",
+    "https://git.kernel.org/stable/c/3ff3bdde950f1840df4030726cef156758a244d7",
+    "https://git.kernel.org/stable/c/c93637e6a4c4e1d0e85ef7efac78d066bbb24d96"
+  ],
+  "aliases": [
+    "CVE-2024-43876",
+    "GHSA-88v6-4cm5-82pp"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "05d8559a-fbbc-313b-8838-86ab535b77f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9e14fb714ebf55443dd3449de9ea2ffcf13e562a <59c78e8fddc1fe68f14011450a09b3418127d2ad"
+    },
+    {
+      "id": "097ee279-dc82-36e1-9118-c38f7f23f486",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "84b576146294c2be702cfcd174eaa74167e276f9 <526a877c6273d4cd0d0aede84c1d620479764b1c"
+    },
+    {
+      "id": "0f15ee25-d7c3-3f5b-b8cb-8e29f795c434",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "342e2e1d-9956-36ea-a338-3c75c03a3f90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "84b576146294c2be702cfcd174eaa74167e276f9 <3ff3bdde950f1840df4030726cef156758a244d7"
+    },
+    {
+      "id": "72e82221-bee8-33eb-8d48-4701858e5055",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.3"
+    },
+    {
+      "id": "9a0d705b-a94e-3fbe-8edd-16090adcbc30",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.44"
+    },
+    {
+      "id": "a2b2829c-f6b4-3c1e-b9d6-723b85f47013",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "84b576146294c2be702cfcd174eaa74167e276f9 <c93637e6a4c4e1d0e85ef7efac78d066bbb24d96"
+    },
+    {
+      "id": "bb971ba1-8082-38d0-894a-a743498aa981",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "84b576146294c2be702cfcd174eaa74167e276f9 <2ae4769332dfdb97f4b6f5dc9ac8f46d02aaa3df"
+    },
+    {
+      "id": "c4753dfd-e07c-3e77-9f20-4bc59312ff6a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.103"
+    },
+    {
+      "id": "d4ab4b9e-3a90-3328-a562-595a562429bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "fbb6c2ad-11c7-3b35-9aa5-e340540ffcce",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.18"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d1325979-6b3d-3553-bc5b-9a2c5bd8fbbf",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

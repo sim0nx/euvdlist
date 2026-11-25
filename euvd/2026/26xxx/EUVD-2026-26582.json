@@ -3,60 +3,101 @@
   "enisaUuid": "911546e3-8df7-3722-b539-f7e299d3b2fe",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngpib: fix use-after-free in IO ioctl handlers\n\nThe IBRD, IBWRT, IBCMD, and IBWAIT ioctl handlers use a gpib_descriptor\npointer after board->big_gpib_mutex has been released.  A concurrent\nIBCLOSEDEV ioctl can free the descriptor via close_dev_ioctl() during\nthis window, causing a use-after-free.\n\nThe IO handlers (read_ioctl, write_ioctl, command_ioctl) explicitly\nrelease big_gpib_mutex before calling their handler.  wait_ioctl() is\ncalled with big_gpib_mutex held, but ibwait() releases it internally\nwhen wait_mask is non-zero.  In all four cases, the descriptor pointer\nobtained from handle_to_descriptor() becomes unprotected.\n\nFix this by introducing a kernel-only descriptor_busy reference count\nin struct gpib_descriptor.  Each handler atomically increments\ndescriptor_busy under file_priv->descriptors_mutex before releasing the\nlock, and decrements it when done.  close_dev_ioctl() checks\ndescriptor_busy under the same lock and rejects the close with -EBUSY\nif the count is non-zero.\n\nA reference count rather than a simple flag is necessary because\nmultiple handlers can operate on the same descriptor concurrently\n(e.g. IBRD and IBWAIT on the same handle from different threads).\n\nA separate counter is needed because io_in_progress can be cleared from\nunprivileged userspace via the IBWAIT ioctl (through general_ibstatus()\nwith set_mask containing CMPL), which would allow an attacker to bypass\na check based solely on io_in_progress.  The new descriptor_busy\ncounter is only modified by the kernel IO paths.\n\nThe lock ordering is consistent (big_gpib_mutex -> descriptors_mutex)\nand the handlers only hold descriptors_mutex briefly during the lookup,\nso there is no deadlock risk and no impact on IO throughput.",
   "datePublished": "May 1, 2026, 2:14:58 PM",
-  "dateUpdated": "May 1, 2026, 2:14:58 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:25:02 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/cae26eff1b56d78bed7873cf3e60a2b1bdd4da6c",
     "https://git.kernel.org/stable/c/28c75dd143ead62e0dfac564c79d251e21d5d74b",
     "https://git.kernel.org/stable/c/d1857f8296dceb75d00ab857fc3c61bc00c7f5c6"
   ],
   "aliases": [
+    "GHSA-q8wr-mm46-444g",
     "CVE-2026-31769"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
-      "id": "15ffe58a-d8d4-3575-9d54-be8877e3218d",
+      "id": "0f81043d-1422-319d-a96a-43931c39deb2",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <28c75dd143ead62e0dfac564c79d251e21d5d74b"
+      "product_version": "9dde4559e93955ccc47d588f7fd051684d55c4e7 <d1857f8296dceb75d00ab857fc3c61bc00c7f5c6"
     },
     {
       "id": "2c8daddc-8c24-3ff1-b6e3-4d5b3b5d0ef0",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.19.12"
     },
     {
+      "id": "63a21de5-2af9-3dad-92c7-5c34807ca52e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9dde4559e93955ccc47d588f7fd051684d55c4e7 <cae26eff1b56d78bed7873cf3e60a2b1bdd4da6c"
+    },
+    {
       "id": "6c0a5cba-4c90-37c0-a8d3-3f2d134e5d24",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.18.22"
     },
     {
-      "id": "748e67c2-ab42-313e-9f9c-4bd85f600727",
+      "id": "9604236b-5ca8-3e21-b68b-2b3ed9405b07",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <cae26eff1b56d78bed7873cf3e60a2b1bdd4da6c"
-    },
-    {
-      "id": "8cc578a6-9a7c-387b-a53c-ac62af6791d4",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d1857f8296dceb75d00ab857fc3c61bc00c7f5c6"
+      "product_version": "9dde4559e93955ccc47d588f7fd051684d55c4e7 <28c75dd143ead62e0dfac564c79d251e21d5d74b"
     },
     {
       "id": "971c90a2-37e7-3a54-93a1-8fb58fd805f3",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 7.0"
+    },
+    {
+      "id": "a3334415-8f8e-3c96-8f1b-2f9bc34e2cda",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.13"
+    },
+    {
+      "id": "eab46cc3-ef0d-39c3-8652-858f4d9503af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
     }
   ],
   "enisaIdVendor": [

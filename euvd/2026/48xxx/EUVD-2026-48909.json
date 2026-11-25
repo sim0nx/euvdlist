@@ -3,7 +3,7 @@
   "enisaUuid": "5b9ef2e8-be3e-385a-a93e-f34cf09df0f4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: letsketch: fix UAF on inrange_timer at driver unbind\n\nletsketch_driver does not provide a .remove callback, but\nletsketch_probe() arms a per-device timer:\n\n    timer_setup(&data->inrange_timer, letsketch_inrange_timeout, 0);\n\nThe timer is re-armed from letsketch_raw_event() with a 100 ms\ntimeout on every pen-in-range report, and its callback dereferences\ndata->input_tablet to deliver a synthetic BTN_TOOL_PEN release.\n\nletsketch_data is allocated with devm_kzalloc(), and its input_dev\nfields are devm-allocated via letsketch_setup_input_tablet().  On\ndevice unbind (USB unplug or rmmod), the HID core runs its default\nteardown and devm cleanup frees both letsketch_data and the input\ndevices.  Because no .remove callback exists, nothing drains the\ntimer first: if raw_event armed it within ~100 ms of the unbind,\nthe pending timer fires on freed memory.  This is a UAF read of\ndata and of data->input_tablet, followed by input_report_key() /\ninput_sync() into the freed input_dev.\n\nThe same problem can occur on the probe error path: if\nhid_hw_start() enabled I/O on an always-poll-quirk device and then\nfailed, raw_event may have armed the timer before devm releases\ndata.\n\nFix by adding a .remove callback that calls hid_hw_stop() first.\nhid_hw_stop() synchronously kills the URBs that deliver raw_event(),\nso once it returns no path can re-arm the timer.  timer_shutdown_sync()\nthen drains any in-flight callback and permanently disables further\nmod_timer() calls.  Apply the same timer_shutdown_sync() in the probe\nerror path so the timer is guaranteed not to outlive data.",
   "datePublished": "Jul 25, 2026, 8:50:20 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:20 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:49 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2bb6e7143cf70ed281822d26c1848b2897ac36e9",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/46c8beeccd8ab2c863827254a85ea877654a3534"
   ],
   "aliases": [
-    "CVE-2026-64365"
+    "CVE-2026-64365",
+    "GHSA-8qpm-q6pr-qxf8"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "1771db4b-bd02-3fa9-8800-12dfbcb78108",
@@ -28,16 +29,6 @@
         }
       },
       "product_version": "patch: 6.12.96"
-    },
-    {
-      "id": "1b1ddcce-ef5e-3ed5-bc52-948fe994a6de",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     },
     {
       "id": "2d18eb86-ac4d-359e-b179-957065a4dd53",
@@ -148,6 +139,16 @@
         }
       },
       "product_version": "33a5c2793451770cb6dcf0cc35c76cfd4b045513 <17f5928d7010bc9e002930326b59e60e40c09ee3"
+    },
+    {
+      "id": "fd90ec62-69ec-321b-b1f9-c8b5aa4c84cf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "ff47135c-09b2-349e-9aa2-ecf420a9672f",

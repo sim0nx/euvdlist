@@ -2,8 +2,8 @@
   "id": "EUVD-2026-59493",
   "enisaUuid": "761cc9c2-15e6-326e-adaf-c11f41b5f153",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/irdma: Fix OOB read during CQ MR registration\n\nSashiko pointed out an unrelated bug during a previous patch:\nhttps://sashiko.dev/#/patchset/20260512183852.614045-1-jmoroni%40google.com\n\nThis change fixes the bug by eliminating the cqmr->split field which\nwas not being set properly and instead just checks the CQ resize\nfeature flag directly.\n\nThe cqmr->split field essentially tracks whether IRDMA_FEATURE_CQ_RESIZE\nis set, but it was not being set until CQ creation time, which is _after_\nCQ memory registration (the only other place where it is referenced).\n\nAs a result, it would always be false during MR registration and would\ntherefore cause irdma_handle_q_mem to populate cqmr->shadow even for GEN_2\nHW and beyond:\n\n    cqmr->shadow = (dma_addr_t)arr[req->cq_pages];\n\nThe issue is that for GEN_2 and beyond, req->cq_pages may be exactly equal\nto iwmr->page_cnt and therefore equal to the size of arr, which would cause\nan OOB read by one.",
-  "datePublished": "Aug 15, 2026, 6:32:30 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:30 AM",
+  "datePublished": "Aug 15, 2026, 5:58:34 AM",
+  "dateUpdated": "Nov 6, 2026, 5:05:44 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/a80b3b13786e9ab1c52b31a1f16c7d6708fa9220",
@@ -12,15 +12,14 @@
     "https://git.kernel.org/stable/c/d566002de555b18cc395012c5c1cb8682fc6d2a9",
     "https://git.kernel.org/stable/c/54cab78df0375196aaec4e3109191653d21751df",
     "https://git.kernel.org/stable/c/d5aa82da8f65562da996d184686db9d0ea718b91",
-    "https://git.kernel.org/stable/c/4385ddd654d90245eeb83b3cb539670ab5c85ba4",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-74346"
+    "https://git.kernel.org/stable/c/4385ddd654d90245eeb83b3cb539670ab5c85ba4"
   ],
   "aliases": [
     "GHSA-r8xx-cvrr-fwj4",
     "CVE-2026-74346"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0497519f-2fc3-33ad-9dff-eb70921b93d2",
@@ -73,6 +72,16 @@
       "product_version": "patch: 5.15.212"
     },
     {
+      "id": "1ad0e5ad-a06d-3c2f-b0aa-0d9bcd31bf7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "4850b976-f962-3009-bcb8-01a661d4a203",
       "product": {
         "name": "Linux",
@@ -81,16 +90,6 @@
         }
       },
       "product_version": "b48c24c2d710cf34810c555dcef883a3d35a9c08 <3159c6fac43dc24b34d31971884d98a7a1bf4c4b"
-    },
-    {
-      "id": "5cc7499c-02d9-30b8-9ab3-3d166cecf6cf",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "66b4ea49-8bd3-3e86-8f23-b56cc56e5024",

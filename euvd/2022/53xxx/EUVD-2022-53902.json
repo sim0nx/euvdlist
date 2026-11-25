@@ -1,0 +1,108 @@
+{
+  "id": "EUVD-2022-53902",
+  "enisaUuid": "b2325f30-5397-37ae-857e-1e1cc767a94b",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmptcp: fix sleep in atomic at close time\n\nMatt reported a splat at msk close time:\n\n    BUG: sleeping function called from invalid context at net/mptcp/protocol.c:2877\n    in_atomic(): 1, irqs_disabled(): 0, non_block: 0, pid: 155, name: packetdrill\n    preempt_count: 201, expected: 0\n    RCU nest depth: 0, expected: 0\n    4 locks held by packetdrill/155:\n    #0: ffff888001536990 (&sb->s_type->i_mutex_key#6){+.+.}-{3:3}, at: __sock_release (net/socket.c:650)\n    #1: ffff88800b498130 (sk_lock-AF_INET){+.+.}-{0:0}, at: mptcp_close (net/mptcp/protocol.c:2973)\n    #2: ffff88800b49a130 (sk_lock-AF_INET/1){+.+.}-{0:0}, at: __mptcp_close_ssk (net/mptcp/protocol.c:2363)\n    #3: ffff88800b49a0b0 (slock-AF_INET){+...}-{2:2}, at: __lock_sock_fast (include/net/sock.h:1820)\n    Preemption disabled at:\n    0x0\n    CPU: 1 PID: 155 Comm: packetdrill Not tainted 6.1.0-rc5 #365\n    Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.15.0-1 04/01/2014\n    Call Trace:\n    <TASK>\n    dump_stack_lvl (lib/dump_stack.c:107 (discriminator 4))\n    __might_resched.cold (kernel/sched/core.c:9891)\n    __mptcp_destroy_sock (include/linux/kernel.h:110)\n    __mptcp_close (net/mptcp/protocol.c:2959)\n    mptcp_subflow_queue_clean (include/net/sock.h:1777)\n    __mptcp_close_ssk (net/mptcp/protocol.c:2363)\n    mptcp_destroy_common (net/mptcp/protocol.c:3170)\n    mptcp_destroy (include/net/sock.h:1495)\n    __mptcp_destroy_sock (net/mptcp/protocol.c:2886)\n    __mptcp_close (net/mptcp/protocol.c:2959)\n    mptcp_close (net/mptcp/protocol.c:2974)\n    inet_release (net/ipv4/af_inet.c:432)\n    __sock_release (net/socket.c:651)\n    sock_close (net/socket.c:1367)\n    __fput (fs/file_table.c:320)\n    task_work_run (kernel/task_work.c:181 (discriminator 1))\n    exit_to_user_mode_prepare (include/linux/resume_user_mode.h:49)\n    syscall_exit_to_user_mode (kernel/entry/common.c:130)\n    do_syscall_64 (arch/x86/entry/common.c:87)\n    entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)\n\nWe can't call mptcp_close under the 'fast' socket lock variant, replace\nit with a sock_lock_nested() as the relevant code is already under the\nlistening msk socket lock protection.",
+  "datePublished": "Oct 21, 2024, 8:06:26 PM",
+  "dateUpdated": "May 23, 2026, 3:21:25 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/d8e6c5500dbf0f3e87aace90d4beba6ae928e866",
+    "https://git.kernel.org/stable/c/b4f166651d03b5484fa179817ba8ad4899a5a6ac"
+  ],
+  "aliases": [
+    "CVE-2022-49018",
+    "GHSA-67rw-g94p-phv8"
+  ],
+  "assigner": "Linux",
+  "epss": 0.15,
+  "enisaIdProduct": [
+    {
+      "id": "1851c691-8ed2-383f-bf06-b23a4cde0aff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6aebfecf-4f88-3629-b444-514388bc7947",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b41808bfa049d1bc7ce8ce1ad4d591f7d203ebb9"
+    },
+    {
+      "id": "a7ebc241-0710-3be5-be66-6ea3519fe516",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1"
+    },
+    {
+      "id": "a99043a1-0b8b-3c9e-a14e-f7b2e7ab310b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.19.14 <5.20"
+    },
+    {
+      "id": "b27438fe-9ec1-31ba-af89-b80e4c2382b0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.0.12"
+    },
+    {
+      "id": "c235c002-34aa-3262-868c-a94f48535598",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "30e51b923e436b631e8d5b77fa5e318c6b066dc7 <b4f166651d03b5484fa179817ba8ad4899a5a6ac"
+    },
+    {
+      "id": "ca652379-11f0-3422-bc81-2b2d1f5de621",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.0"
+    },
+    {
+      "id": "e2d8384b-6f97-38d2-801c-eef25217ac1f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "30e51b923e436b631e8d5b77fa5e318c6b066dc7 <d8e6c5500dbf0f3e87aace90d4beba6ae928e866"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4c032ac3-be5b-358f-a0d7-aad9cdca761d",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

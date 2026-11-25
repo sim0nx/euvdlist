@@ -3,18 +3,21 @@
   "enisaUuid": "13bd5b61-d77a-3610-a661-0e0e18e74a58",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: iptfs: reset runtime state when cloning SAs\n\niptfs_clone_state() clones the IPTFS mode data with kmemdup(). This\ncopies runtime objects which must not be shared with the original SA,\nincluding the embedded sk_buff_head, hrtimers, spinlock, and in-flight\nreassembly/reorder state.\n\nIf xfrm_state_migrate() fails after clone_state() but before the later\ninit_state() call has reinitialized those fields, the cloned state can be\ndestroyed by xfrm_state_gc_task() with list and timer state copied from the\noriginal SA. With queued packets this lets the clone splice and free skbs\nowned by the original IPTFS queue, leading to use-after-free and\ndouble-free reports in iptfs_destroy_state() and skb release paths.\n\nReinitialize the clone's runtime state before publishing it through\nx->mode_data. Because clone_state() now publishes a destroyable mode_data\nobject before init_state(), take the mode callback module reference there.\nAvoid taking it again from __iptfs_init_state() for the same object.",
   "datePublished": "Jul 19, 2026, 2:55:16 PM",
-  "dateUpdated": "Jul 19, 2026, 2:55:16 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:37:05 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/9327252e04626d4bb02ca8c0c108fbe8eabf0c5a",
     "https://git.kernel.org/stable/c/dfb9f6cbfa9826655a49698cf90eb800fce2178e",
     "https://git.kernel.org/stable/c/7f83d174073234839aea176f265e517e0d50a1d2"
   ],
   "aliases": [
-    "CVE-2026-63911"
+    "CVE-2026-63911",
+    "GHSA-3gc2-w5w2-ffch"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "05c70cb9-a581-35ff-bf35-f71522d8498e",

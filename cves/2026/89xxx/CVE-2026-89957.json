@@ -3,8 +3,10 @@
   "enisaUuid": "6156fbb9-de1a-35cb-b1c2-4fe58024a25c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ns390/vfio-ap: Fix hot-unplug skipped when last AP adapter or domain removed\n\nThe vfio_ap_mdev_hot_unplug_cfg() function uses the return value of\nbitmap_andnot() to determine whether the guest APCB needs to be updated.\nHowever, bitmap_andnot() returns false when the resulting destination\nbitmap is empty. This means that if the only adapter, domain or control\ndomain assigned to an mdev is removed from the host's AP configuration,\nthe bit is correctly cleared from the shadow APCB, but bitmap_andnot()\nreturns false because the result is an empty bitmap. Consequently,\ndo_hotplug remains 0 and vfio_ap_mdev_update_guest_apcb() is never called,\nleaving the KVM guest with stale hardware access to the unplugged AP\ndevices.\n\nFix this by replacing the bitmap_andnot() return value check with\nbitmap_intersects() to determine whether the shadow APCB actually\noverlaps with the removal mask. If there is an intersection, call\nbitmap_andnot() solely for its side effect of clearing the bits, then\nunconditionally set do_hotplug to trigger the guest APCB update.",
   "datePublished": "Sep 16, 2026, 10:32:40 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:40 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:55:31 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/f58e824de8577fe411f6199d659731a0f86a7275",
     "https://git.kernel.org/stable/c/3a9b049bbdc40165d7f3e20b818eec95e5694d96",
@@ -14,10 +16,11 @@
     "https://git.kernel.org/stable/c/917f509bfb88048094dbb85c4e9dbc4d6fe4a886"
   ],
   "aliases": [
-    "CVE-2026-89957"
+    "CVE-2026-89957",
+    "GHSA-pgcj-5wj3-jcmr"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0ba07f06-45fe-32e9-ac3d-2cbc32f5f4df",
@@ -28,6 +31,16 @@
         }
       },
       "product_version": "patch: 6.18.51"
+    },
+    {
+      "id": "231b30ba-beb2-32fc-95c0-2a13fb3e4d11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "26fae252-033e-325a-a6f0-4106aa3e3656",
@@ -108,16 +121,6 @@
         }
       },
       "product_version": "patch: 6.1.188"
-    },
-    {
-      "id": "baab4367-ed0e-3bb6-a67c-4c8c1cf56a78",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "d2e87b41-6bb3-3305-966f-c0e49eb265ce",

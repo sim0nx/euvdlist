@@ -3,18 +3,51 @@
   "enisaUuid": "3cd4008a-fb44-3424-aa91-48edac317b43",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: reject short SESSION_SETUP responses\n\nsmb2_check_message() accepts frames shorter than struct smb2_pdu when\nthe SMB2 status is non-zero, before the minimum-PDU check added by\nb4694f269e66d. A 64-byte STATUS_MORE_PROCESSING_REQUIRED SESSION_SETUP\nresponse is therefore accepted even though it cannot contain the\nSecurityBufferOffset and SecurityBufferLength fields.\n\nThe parser then reads those fields from stale bytes left in the reused\nreceive buffer by an earlier frame. With a long stale\nSecurityBufferLength, decode_ntlmssp_challenge() copies up to about\n64 KB from beyond the receive object and sends the data back to the\nserver in the NTLMv2 AUTHENTICATE target info.\n\nReject short MPR SESSION_SETUP responses before the short-error path,\nand validate SecurityBufferOffset + SecurityBufferLength against the\nreceived response length before decoding the challenge.\n\nThe ordering bypass is not new: the short-error early return predates\nb4694f269e66d, and the unvalidated SecurityBufferLength read predates\nthe 2016 raw NTLMSSP split in 166cea4dc3a4, so all supported stable\ntrees are affected. Reproduced on 6.6.87.2; the path is unchanged on\nmainline.",
   "datePublished": "Nov 7, 2026, 2:08:46 PM",
-  "dateUpdated": "Nov 7, 2026, 2:08:46 PM",
+  "dateUpdated": "Nov 17, 2026, 10:24:09 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/136128f84f13849b732ffabf24c5ee891a2033d4",
+    "https://git.kernel.org/stable/c/9a0b6567936c3f8fef34c4f4a995f0a1473af7d0",
     "https://git.kernel.org/stable/c/df63e01933886153e40706483b9635b2456ad91f",
     "https://git.kernel.org/stable/c/4d8930afa3446041358a7db33e7b23a0bb9459b5"
   ],
   "aliases": [
+    "GHSA-w3q4-mjfj-h6cq",
     "CVE-2026-99275"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "35f9bbad-49eb-31a8-86a0-4b8cb9d3581f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5478f9ba9a34d660eb3227dcd16314689c51f946 <9a0b6567936c3f8fef34c4f4a995f0a1473af7d0"
+    },
+    {
+      "id": "37d0b19b-4174-31ea-98ed-21ecd49bab16",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5478f9ba9a34d660eb3227dcd16314689c51f946 <136128f84f13849b732ffabf24c5ee891a2033d4"
+    },
+    {
+      "id": "54c6cfb1-546d-3bf4-9d1e-19e31d3675b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.118"
+    },
     {
       "id": "61792e47-084a-3e98-92d7-e5c895ff9abb",
       "product": {
@@ -54,6 +87,16 @@
         }
       },
       "product_version": "5478f9ba9a34d660eb3227dcd16314689c51f946 <4d8930afa3446041358a7db33e7b23a0bb9459b5"
+    },
+    {
+      "id": "bb0790fe-cc02-37b8-a2b6-4b558c2142b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.64"
     },
     {
       "id": "d6303d77-0f41-30d9-82e4-058dade02d9a",

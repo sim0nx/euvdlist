@@ -3,7 +3,7 @@
   "enisaUuid": "59cc1800-00ae-3783-8070-73dcdced5ae4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nudf: Mark LVID buffer as uptodate before marking it dirty\n\nWhen an I/O error occurs while writing the Logical Volume Integrity\nDescriptor (LVID) buffer to the block device, the block layer's completion\nhandler (`end_buffer_write_sync()`) clears the `BH_Uptodate` flag on the\nbuffer. However, the buffer still contains valid LVID data in memory. If\nthe filesystem is subsequently remounted read-write or synced,\n`udf_open_lvid()` or `udf_sync_fs()` will modify the LVID buffer and call\n`mark_buffer_dirty()`. This triggers a spurious\n`WARN_ON_ONCE(!buffer_uptodate(bh))` warning in `mark_buffer_dirty()`\nbecause the buffer is not marked uptodate, even though its in-memory\ncontents are valid and are about to be overwritten.\n\nTo prevent this spurious warning, unconditionally set the `BH_Uptodate`\nflag before calling `mark_buffer_dirty()` in `udf_open_lvid()` and\n`udf_sync_fs()`. This acknowledges that the in-memory buffer is valid and\nmatches the workaround previously applied to `udf_close_lvid()` in commit\n853a0c25baf9 (\"udf: Mark LVID buffer as uptodate before marking it dirty\").\nExtending this workaround ensures consistent behavior across all LVID\nupdates.\n\nBuffer I/O error on dev loop0, logical block 128, lost sync page write\n------------[ cut here ]------------\n!buffer_uptodate(bh)\nWARNING: fs/buffer.c:1087 at mark_buffer_dirty+0x299/0x410 fs/buffer.c:1087\n...\nCall Trace:\n <TASK>\n udf_open_lvid+0x369/0x5b0 fs/udf/super.c:2078\n udf_reconfigure+0x336/0x540 fs/udf/super.c:679\n reconfigure_super+0x232/0x8f0 fs/super.c:1080\n vfs_cmd_reconfigure fs/fsopen.c:268 [inline]\n vfs_fsconfig_locked+0x171/0x320 fs/fsopen.c:297\n __do_sys_fsconfig fs/fsopen.c:463 [inline]\n __se_sys_fsconfig+0x6b9/0x810 fs/fsopen.c:350\n do_syscall_64+0x174/0x580 arch/x86/entry/syscall_64.c:94\n </TASK>",
   "datePublished": "Sep 17, 2026, 4:11:40 PM",
-  "dateUpdated": "Sep 17, 2026, 4:11:40 PM",
+  "dateUpdated": "Oct 19, 2026, 9:06:12 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/e6461ef34f91ad7dbffdf912b3d661a7dd892931",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/fb0601134c7e51728bd098abc6909315de1e5d86"
   ],
   "aliases": [
-    "CVE-2026-93140"
+    "CVE-2026-93140",
+    "GHSA-hwwj-mw3q-359r"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0166d5ea-012c-34d9-8a99-7e8ce3516e84",
@@ -92,16 +93,6 @@
       "product_version": "c005218328597211008a4d33a91e2952798e3556"
     },
     {
-      "id": "354e3f0c-234a-38b7-8dc4-36f7dc214934",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "37c37fa4-2fc0-3de4-a798-6898b98e5780",
       "product": {
         "name": "Linux",
@@ -160,6 +151,16 @@
         }
       },
       "product_version": "patch: 5.15.221"
+    },
+    {
+      "id": "65b235cc-e1e2-3624-a5b2-1e84e9507722",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "6735abfd-d54d-381a-9c5e-d10561827437",

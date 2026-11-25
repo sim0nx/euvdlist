@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2021-33830",
+  "enisaUuid": "8c9a2ad2-6228-3276-bf0e-9270e1a615f6",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: core: Fix scsi_mode_sense() buffer length handling\n\nSeveral problems exist with scsi_mode_sense() buffer length handling:\n\n 1) The allocation length field of the MODE SENSE(10) command is 16-bits,\n    occupying bytes 7 and 8 of the CDB. With this command, access to mode\n    pages larger than 255 bytes is thus possible. However, the CDB\n    allocation length field is set by assigning len to byte 8 only, thus\n    truncating buffer length larger than 255.\n\n 2) If scsi_mode_sense() is called with len smaller than 8 with\n    sdev->use_10_for_ms set, or smaller than 4 otherwise, the buffer length\n    is increased to 8 and 4 respectively, and the buffer is zero filled\n    with these increased values, thus corrupting the memory following the\n    buffer.\n\nFix these 2 problems by using put_unaligned_be16() to set the allocation\nlength field of MODE SENSE(10) CDB and by returning an error when len is\ntoo small.\n\nFurthermore, if len is larger than 255B, always try MODE SENSE(10) first,\neven if the device driver did not set sdev->use_10_for_ms. In case of\ninvalid opcode error for MODE SENSE(10), access to mode pages larger than\n255 bytes are not retried using MODE SENSE(6). To avoid buffer length\noverflows for the MODE_SENSE(10) case, check that len is smaller than 65535\nbytes.\n\nWhile at it, also fix the folowing:\n\n * Use get_unaligned_be16() to retrieve the mode data length and block\n   descriptor length fields of the mode sense reply header instead of using\n   an open coded calculation.\n\n * Fix the kdoc dbd argument explanation: the DBD bit stands for Disable\n   Block Descriptor, which is the opposite of what the dbd argument\n   description was.",
+  "datePublished": "Apr 10, 2024, 6:56:23 PM",
+  "dateUpdated": "May 11, 2026, 1:49:33 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/e15de347faf4a9f494cbd4e9a623d343dc1b5851",
+    "https://git.kernel.org/stable/c/17b49bcbf8351d3dbe57204468ac34f033ed60bc"
+  ],
+  "aliases": [
+    "CVE-2021-47182",
+    "GHSA-qq35-93pf-cxxv"
+  ],
+  "assigner": "Linux",
+  "epss": 0.2,
+  "enisaIdProduct": [
+    {
+      "id": "4ed146d2-5970-3c4a-89ef-6e5555393e8e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16"
+    },
+    {
+      "id": "66c33268-f6bd-37f7-967d-d4504459c2c2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.5"
+    },
+    {
+      "id": "7d516a7a-55b4-3e30-b426-77a5a6b71649",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.12"
+    },
+    {
+      "id": "80b46845-5ef3-3e60-a6f9-86a6d25d889b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <17b49bcbf8351d3dbe57204468ac34f033ed60bc"
+    },
+    {
+      "id": "b554317a-ded5-317e-9f6f-8ca302f48eeb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e15de347faf4a9f494cbd4e9a623d343dc1b5851"
+    },
+    {
+      "id": "dd0331a7-7a01-3733-a8fe-0cc1537cdce8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4d6298c7-90aa-389e-91b6-b661929d8f05",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

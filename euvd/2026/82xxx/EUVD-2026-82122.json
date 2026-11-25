@@ -3,7 +3,7 @@
   "enisaUuid": "9f04c605-6f26-3ff6-a0d2-6fbb9a71835c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\next4: drain in-flight DIO before buffered write fallback\n\ngeneric/746 started failing intermittently on ext3 (no-extent inodes).\nThe test triggers 'Page cache invalidation failure on direct I/O'\nwarnings and subsequent fsync returns -EIO. Adding a 50ms delay\nbetween ext4_buffered_write_iter() and filemap_write_and_wait_range()\nin ext4_dio_write_iter() makes the race almost always reproducible.\n\nOn no-extent inodes, DIO writes to holes cannot use unwritten extents,\nso ext4_iomap_alloc() leaves m_flags=0 and ext4_map_blocks() returns 0.\nThe iomap layer then returns -ENOTBLK, causing fallback to buffered I/O.\n\nThe fallback path in ext4_dio_write_iter() calls\next4_buffered_write_iter() which dirties pages, then does flush and\ninvalidate. However, there's an unprotected window between\next4_buffered_write_iter() returning (with inode lock released) and\nthe subsequent flush+invalidate.\n\nConcurrent async DIO completions from other threads can run\nkiocb_invalidate_post_direct_write() during this window. If pages have\nbeen re-dirtied, post-invalidation finds dirty pages and triggers the\nwarning, setting -EIO in the error sequence.\n\nConsider a file with two 4k extents: [hole][written]. Thread A does\nDIO to the written extent, while thread B does DIO spanning both:\n\n  kworker A (4k DIO, allocated block)    kworker B (8k DIO, fallback)\n  -----------------------------------    ----------------------------\n  inode_lock_shared()                    inode_lock_shared()\n  iomap_dio_rw():                        iomap_dio_rw():\n    kiocb_invalidate_pages -> clean        iomap_begin -> -ENOTBLK\n    submit_bio (async)                     dio->size = 0\n  inode_unlock_shared()                  inode_unlock_shared()\n\n  [bio pending in block layer]           /* fallback: lock released */\n                                         ext4_buffered_write_iter()\n                                           inode_lock(exclusive)\n                                           generic_perform_write()\n                                             -> dirty pages [0, 8k]\n                                           inode_unlock(exclusive)\n\n                                         /* pages dirty, no lock */\n  [bio completes]                        filemap_write_and_wait_range()\n  iomap_dio_complete()                     -> flush dirty pages\n    kiocb_invalidate_post_direct_write() invalidate_mapping_pages()\n      invalidate_inode_pages2_range()\n      -> finds dirty page!\n      -> dio_warn_stale_pagecache()\n      -> errseq_set(-EIO)\n\nThis issue can be triggered through normal I/O paths, not just\nintentionally overlapping DIO writes from userspace. For example,\ngeneric/746 uses a loop device where multiple kworkers issue concurrent\nI/O to the backing file. Additionally, when block_size < folio_size,\nnon-overlapping DIO writes that share a large folio can also trigger\nthe race.\n\nAdd inode_dio_wait() in ext4_buffered_write_iter() before\next4_write_checks() to drain all in-flight DIO. This ensures that\nall DIO clears existing pages before submitting IO (via\nkiocb_invalidate_pages()), all BIO waits for all DIO to complete\n(via inode_dio_wait()), and ext4_write_checks() observes the inode\nsize after all completed DIO so that ext4_block_zero_eof() does not\nrace with in-flight DIO, thus eliminating the race.",
   "datePublished": "Sep 17, 2026, 4:10:14 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:14 PM",
+  "dateUpdated": "Oct 19, 2026, 9:04:07 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/fd7e0dab20837b9ea1eeef7c26f78ace8ac8258c",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/15cdefd0c0522f9d5e12d947fa04f4c11649b699"
   ],
   "aliases": [
-    "CVE-2026-92501"
+    "CVE-2026-92501",
+    "GHSA-h82g-vj5r-m4jv"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "025891a8-78de-38c6-93a9-7007eeaa425d",
@@ -92,16 +93,6 @@
       "product_version": "patch: 6.12.110"
     },
     {
-      "id": "43294fcc-9c7a-3251-b49a-77a99d84371c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "4f4dae08-c9c0-3f06-8d31-7ec692060275",
       "product": {
         "name": "Linux",
@@ -150,6 +141,16 @@
         }
       },
       "product_version": "378f32bab3714f04c4e0c3aee4129f6703805550 <7341e234927ff215f1d5d0bcfe04b74f53af378d"
+    },
+    {
+      "id": "958da616-0731-3f52-be85-1a68dcf26065",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "9f6d726e-3259-3bef-9f47-313343466d5d",

@@ -3,8 +3,10 @@
   "enisaUuid": "e919a432-837c-381a-9e24-45b1e9c18283",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmd/raid10: fix still_degraded being inverted in raid10_sync_request()\n\nCommit fe6a19d40ceb (\"md/md-bitmap: merge md_bitmap_start_sync() into\nbitmap_operations\") converted still_degraded from int to bool, but\ninverted the assignment in the loop that checks whether the array will\nstill be degraded after the current device is recovered:\n\"still_degraded = 1\" became \"still_degraded = false\".\n\nAs a result, recovering a device while another mirror is still missing\ncalls md_bitmap_start_sync() with degraded == false, which clears bitmap\nbits that the still-missing device needs.  When that device is re-added,\nits bitmap-based recovery finds the bits already cleared and skips every\nregion written while the array was degraded, so it is marked In_sync\nwhile holding stale data: silent corruption.\n\nReproducer (raid10 near=2, 4 disks, internal bitmap):\n - fail and remove one disk of each mirror pair\n - write to the degraded array\n - re-add both disks and let recovery finish\n - \"check\" reports mismatch_cnt=262272 after 256 MiB of degraded\n   writes and file contents differ; the second disk's \"recovery\"\n   completes in milliseconds because everything is skipped\n\nThe same conversion in raid1 got it right (still_degraded = true).\nRestore the correct value.",
   "datePublished": "Sep 11, 2026, 7:44:30 PM",
-  "dateUpdated": "Sep 11, 2026, 7:44:30 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:48:51 AM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/9bb8da6ecb330a5b1ac9b96f1e55f134a7aef1d4",
     "https://git.kernel.org/stable/c/0efabe6229dc683dbf6eeebd0f9fddc7971ed420",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/47f1441b281decde6954a2fa82b4131637d685ac"
   ],
   "aliases": [
+    "GHSA-6w6j-fmcg-fgj3",
     "CVE-2026-89558"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.64,
   "enisaIdProduct": [
     {
       "id": "09daa851-72ca-3881-ba45-4595d2667f8f",
@@ -68,16 +71,6 @@
       "product_version": "fe6a19d40ceb44281905485f56dda715e3214e0e <00449d752bee9c8787f42ea1bf533a9fb17f9b6b"
     },
     {
-      "id": "8ef81178-41a6-3ffa-bd68-1713d09f350d",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "b4733900-d892-36c0-9937-9d5cc09107cd",
       "product": {
         "name": "Linux",
@@ -96,6 +89,16 @@
         }
       },
       "product_version": "fe6a19d40ceb44281905485f56dda715e3214e0e <9bb8da6ecb330a5b1ac9b96f1e55f134a7aef1d4"
+    },
+    {
+      "id": "d41e1c5a-2bc3-3c56-a1ea-482c0b6b509a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "f50675fa-fe2e-3e31-9292-ab43400e48b1",

@@ -2,9 +2,11 @@
   "id": "EUVD-2026-59321",
   "enisaUuid": "8d860601-d620-3a7a-8b32-1a5c6bfd0ee4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: fix use-after-free of conn->preauth_info in concurrent SMB2 NEGOTIATE\n\nconn->preauth_info is shared connection state (struct\npreauth_integrity_info, kmalloc-96) that is allocated and freed by the\nSMB2 NEGOTIATE handler and read by the response send path.\n\nsmb2_handle_negotiate() allocates conn->preauth_info, and on a\ndeassemble_neg_contexts() failure kfrees it and sets it to NULL. Both the\nallocation and the free/NULL happen under ksmbd_conn_lock(conn) (the\nconnection srv_mutex), which is held across the whole handler body.\n\nThe response send path smb3_preauth_hash_rsp(), called from the send:\nblock of __handle_ksmbd_work(), reads conn->preauth_info and dereferences\nconn->preauth_info->Preauth_HashValue (via\nksmbd_gen_preauth_integrity_hash()) without taking conn_lock. When a\nclient drives two SMB2 NEGOTIATE requests on the same connection, one\nworker can free conn->preauth_info on the failing-negotiate path while a\nconcurrent send-path worker is reading it, producing a slab\nuse-after-free read (KASAN-confirmed).\n\nThe send-path read tested conn->preauth_info for NULL but raced with the\nfree that occurs between the NULL check and the dereference, so the NULL\nguard alone does not close the window.\n\nSerialize the NEGOTIATE-branch read in smb3_preauth_hash_rsp() under\nksmbd_conn_lock(conn) and re-check conn->preauth_info inside the lock.\nBecause the negotiate handler holds conn_lock across its kfree + NULL\nassignment, a reader that also takes conn_lock either runs fully before\nthe allocation or fully after the NULL store, and can never observe the\nfreed-but-not-yet-NULLed pointer. ksmbd_gen_preauth_integrity_hash()\ntakes no locks itself (it only computes a SHA-512 over the buffer), so\nno lock-ordering inversion is introduced, and conn_lock is a sleepable\nmutex which is safe on this send path (it already performs network I/O).",
-  "datePublished": "Aug 15, 2026, 6:32:24 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:24 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:56:41 AM",
+  "dateUpdated": "Aug 17, 2026, 5:44:02 AM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/c7bef84740d1d57848c74f6f5b996606e43ea4fe",
     "https://git.kernel.org/stable/c/d0a469122e7bf8338fec1949fb1e8e1290ed8caa",
@@ -12,15 +14,14 @@
     "https://git.kernel.org/stable/c/16a1ecf39c217e3d164bd32ef2a4f650abc067fa",
     "https://git.kernel.org/stable/c/77bb0bbfcc4e777ca653174689e5e363f8ee63d1",
     "https://git.kernel.org/stable/c/1c89da3baa2b1f269178afa87dc30479b8535776",
-    "https://git.kernel.org/stable/c/0c054227479ed7e36ebccb3a558bc0ef698264f6",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72422"
+    "https://git.kernel.org/stable/c/0c054227479ed7e36ebccb3a558bc0ef698264f6"
   ],
   "aliases": [
     "GHSA-2r52-5q5c-m3mp",
     "CVE-2026-72422"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.72,
   "enisaIdProduct": [
     {
       "id": "0373267f-b482-3757-9f3f-3437ff08846b",
@@ -91,6 +92,16 @@
         }
       },
       "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "3b63cf3d-5793-31c1-9248-f0e99a388a69",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "3feadc9f-cb5d-3718-945e-70c306c84c0d",
@@ -171,16 +182,6 @@
         }
       },
       "product_version": "ff20f1875889dbe4a67c9298e609d7c88cf6456d"
-    },
-    {
-      "id": "b7dbe16f-5efb-373f-a947-9823c8ae426a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "c069cb00-e65e-333c-88e0-0ef87fca7af1",

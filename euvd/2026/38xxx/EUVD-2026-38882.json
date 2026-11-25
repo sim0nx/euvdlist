@@ -3,7 +3,7 @@
   "enisaUuid": "f018a87d-8404-3996-8b6b-7f21fbd50e56",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: act_mirred: fix wrong device for mac_header_xmit check in tcf_blockcast_redir\n\nIn tcf_blockcast_redir(), when iterating block ports to redirect\npackets to multiple devices, the mac_header_xmit flag is queried\nfrom the wrong device. The loop sends to dev_prev but queries\ndev_is_mac_header_xmit(dev) \u2014 which is the NEXT device in the\niteration, not the one being sent to.\n\nThis causes tcf_mirred_to_dev() to make incorrect decisions about\nwhether to push or pull the MAC header. When the block contains\nmixed device types (e.g., an ethernet veth and a tunnel device),\nintermediate devices get the wrong mac_header_xmit flag, leading to\nskb header corruption. In the worst case, skb_push_rcsum with an\nincorrect mac_len can exhaust headroom and panic.\n\nThe last device in the loop is handled correctly (line 365-366 uses\ndev_is_mac_header_xmit(dev_prev)), confirming this is a copy-paste\noversight for the intermediate devices.\n\nFix by using dev_prev instead of dev for the mac_header_xmit query,\nconsistent with the device actually being sent to.",
   "datePublished": "Jun 24, 2026, 4:29:24 PM",
-  "dateUpdated": "Jun 24, 2026, 4:29:24 PM",
+  "dateUpdated": "Nov 6, 2026, 4:23:55 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/8fda5174286119addd28473fb2ec5bdf521c05a8",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/4510d140524ca7d6e772db962e013f26f09a63b1"
   ],
   "aliases": [
+    "GHSA-x2v8-3q4q-r8g6",
     "CVE-2026-53014"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "0f5420f0-bff0-320d-977a-e87e2865e7d0",

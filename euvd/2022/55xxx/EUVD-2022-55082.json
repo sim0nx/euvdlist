@@ -2,89 +2,262 @@
   "id": "EUVD-2022-55082",
   "enisaUuid": "e9a13445-1374-366f-a5e8-3054cc7b6d4d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: preserve skb_end_offset() in skb_unclone_keeptruesize()\n\nsyzbot found another way to trigger the infamous WARN_ON_ONCE(delta < len)\nin skb_try_coalesce() [1]\n\nI was able to root cause the issue to kfence.\n\nWhen kfence is in action, the following assertion is no longer true:\n\nint size = xxxx;\nvoid *ptr1 = kmalloc(size, gfp);\nvoid *ptr2 = kmalloc(size, gfp);\n\nif (ptr1 && ptr2)\n\tASSERT(ksize(ptr1) == ksize(ptr2));\n\nWe attempted to fix these issues in the blamed commits, but forgot\nthat TCP was possibly shifting data after skb_unclone_keeptruesize()\nhas been used, notably from tcp_retrans_try_collapse().\n\nSo we not only need to keep same skb->truesize value,\nwe also need to make sure TCP wont fill new tailroom\nthat pskb_expand_head() was able to get from a\naddr = kmalloc(...) followed by ksize(addr)\n\nSplit skb_unclone_keeptruesize() into two parts:\n\n1) Inline skb_unclone_keeptruesize() for the common case,\n   when skb is not cloned.\n\n2) Out of line __skb_unclone_keeptruesize() for the 'slow path'.\n\nWARNING: CPU: 1 PID: 6490 at net/core/skbuff.c:5295 skb_try_coalesce+0x1235/0x1560 net/core/skbuff.c:5295\nModules linked in:\nCPU: 1 PID: 6490 Comm: syz-executor161 Not tainted 5.17.0-rc4-syzkaller-00229-g4f12b742eb2b #0\nHardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011\nRIP: 0010:skb_try_coalesce+0x1235/0x1560 net/core/skbuff.c:5295\nCode: bf 01 00 00 00 0f b7 c0 89 c6 89 44 24 20 e8 62 24 4e fa 8b 44 24 20 83 e8 01 0f 85 e5 f0 ff ff e9 87 f4 ff ff e8 cb 20 4e fa <0f> 0b e9 06 f9 ff ff e8 af b2 95 fa e9 69 f0 ff ff e8 95 b2 95 fa\nRSP: 0018:ffffc900063af268 EFLAGS: 00010293\nRAX: 0000000000000000 RBX: 00000000ffffffd5 RCX: 0000000000000000\nRDX: ffff88806fc05700 RSI: ffffffff872abd55 RDI: 0000000000000003\nRBP: ffff88806e675500 R08: 00000000ffffffd5 R09: 0000000000000000\nR10: ffffffff872ab659 R11: 0000000000000000 R12: ffff88806dd554e8\nR13: ffff88806dd9bac0 R14: ffff88806dd9a2c0 R15: 0000000000000155\nFS:  00007f18014f9700(0000) GS:ffff8880b9c00000(0000) knlGS:0000000000000000\nCS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033\nCR2: 0000000020002000 CR3: 000000006be7a000 CR4: 00000000003506f0\nDR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000\nDR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400\nCall Trace:\n <TASK>\n tcp_try_coalesce net/ipv4/tcp_input.c:4651 [inline]\n tcp_try_coalesce+0x393/0x920 net/ipv4/tcp_input.c:4630\n tcp_queue_rcv+0x8a/0x6e0 net/ipv4/tcp_input.c:4914\n tcp_data_queue+0x11fd/0x4bb0 net/ipv4/tcp_input.c:5025\n tcp_rcv_established+0x81e/0x1ff0 net/ipv4/tcp_input.c:5947\n tcp_v4_do_rcv+0x65e/0x980 net/ipv4/tcp_ipv4.c:1719\n sk_backlog_rcv include/net/sock.h:1037 [inline]\n __release_sock+0x134/0x3b0 net/core/sock.c:2779\n release_sock+0x54/0x1b0 net/core/sock.c:3311\n sk_wait_data+0x177/0x450 net/core/sock.c:2821\n tcp_recvmsg_locked+0xe28/0x1fd0 net/ipv4/tcp.c:2457\n tcp_recvmsg+0x137/0x610 net/ipv4/tcp.c:2572\n inet_recvmsg+0x11b/0x5e0 net/ipv4/af_inet.c:850\n sock_recvmsg_nosec net/socket.c:948 [inline]\n sock_recvmsg net/socket.c:966 [inline]\n sock_recvmsg net/socket.c:962 [inline]\n ____sys_recvmsg+0x2c4/0x600 net/socket.c:2632\n ___sys_recvmsg+0x127/0x200 net/socket.c:2674\n __sys_recvmsg+0xe2/0x1a0 net/socket.c:2704\n do_syscall_x64 arch/x86/entry/common.c:50 [inline]\n do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80\n entry_SYSCALL_64_after_hwframe+0x44/0xae",
-  "datePublished": "Oct 15, 2025, 9:31:38 PM",
-  "dateUpdated": "Oct 15, 2025, 9:31:38 PM",
-  "baseScore": 0.0,
+  "datePublished": "Feb 26, 2025, 1:55:12 AM",
+  "dateUpdated": "Oct 3, 2026, 10:54:46 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/91c118727432a5d776d5fe86e0cf8eb1289ac1fc",
     "https://git.kernel.org/stable/c/23629b673b780d967b88a850b1518cf0f0ffc6aa",
     "https://git.kernel.org/stable/c/a9a6d30264327d8ff7f23da33e7a77ffb793fa3f",
     "https://git.kernel.org/stable/c/a903e516f5df44b46d526b403d93e7be1a425538",
-    "https://git.kernel.org/stable/c/2b88cba55883eaafbc9b7cbff0b2c7cdba71ed01",
-    "https://nvd.nist.gov/vuln/detail/CVE-2022-49142"
+    "https://git.kernel.org/stable/c/2b88cba55883eaafbc9b7cbff0b2c7cdba71ed01"
   ],
   "aliases": [
-    "CVE-2022-49142"
+    "CVE-2022-49142",
+    "GHSA-62rq-h65m-5cww"
   ],
   "assigner": "Linux",
-  "epss": 0.05,
+  "epss": 0.64,
   "enisaIdProduct": [
     {
       "id": "0045d0b6-e332-3e4d-afcb-10f924da8cc0",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 0"
     },
     {
+      "id": "0befb5dc-172b-31bc-825b-c460aedd9808",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.4.260 <4.5"
+    },
+    {
+      "id": "184c6383-eb92-3b17-a03e-94b816b183bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "97ff09a7ed484fef2b1bbc103857444b7332fca8"
+    },
+    {
+      "id": "273370b3-229b-34c6-b057-fd7666efc458",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "35ca1748ebf8d3a1025d55c85f4b96add952ed20 <91c118727432a5d776d5fe86e0cf8eb1289ac1fc"
+    },
+    {
+      "id": "3cc0f129-c56f-3a6e-add9-903863a60f6c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e6af7cb64b7b37b8a371acdbe33a636496ffb5a4"
+    },
+    {
       "id": "4029f031-8e76-3ca4-85d9-66de08aef380",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "097b9146c0e26aabaa6ff3e5ea536a53f5254a79 <23629b673b780d967b88a850b1518cf0f0ffc6aa"
     },
     {
+      "id": "4e5a253d-fe6d-33f6-8b78-034f988e6b06",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.19.179 <4.20"
+    },
+    {
+      "id": "519e359f-76bd-3e61-ab09-7e734bfb093d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bf5a58d143d7899d2c89e585be6e98ec81fe9683"
+    },
+    {
+      "id": "718e0bd0-9662-3c3e-a6a3-957aa38fc29d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ec697f7f3f6a89d4dd1af113587d0330b5a033e8"
+    },
+    {
       "id": "74e4a7ea-3128-3bda-abc9-52bd40bf828c",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "097b9146c0e26aabaa6ff3e5ea536a53f5254a79 <2b88cba55883eaafbc9b7cbff0b2c7cdba71ed01"
     },
     {
+      "id": "776f7ac8-aa97-3fe0-bb18-e1a5d1d2898e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5d55a6a46a7f70bc1d270c50200edd3096cb380c"
+    },
+    {
       "id": "7d8d72f2-9644-3a83-9f26-4a82e6183cce",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.15.33"
     },
     {
+      "id": "8d422f39-a8fb-39f6-a092-a6024d12a098",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7582edf28f5d1f0a4d2f7abdb7d9560d09fd41b5"
+    },
+    {
       "id": "8e73d6a2-92da-338d-b0d2-3d7b5ad8934b",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.16.19"
     },
     {
+      "id": "93f6dadc-cc22-379f-bbfc-23662faabee6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.4.103 <5.5"
+    },
+    {
+      "id": "96c25bb7-87dd-317a-a46b-d785e974b8a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.11.4 <5.12"
+    },
+    {
       "id": "9c85696d-29a7-35ee-96ee-b1e7790c9ab3",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "5.12"
     },
     {
       "id": "a6446b9b-acb9-3272-b18f-849fb804bf22",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.17.2"
     },
     {
       "id": "de936e90-f419-3065-a1db-2ca72b4022d3",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.18"
     },
     {
       "id": "e3f5264b-4048-3838-92bf-1e3081d3cf78",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "097b9146c0e26aabaa6ff3e5ea536a53f5254a79 <a9a6d30264327d8ff7f23da33e7a77ffb793fa3f"
     },
     {
+      "id": "eb3fbd6f-5993-33ad-9f8f-42b7140e3660",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7118945cdf0d4b5a76eb4f5f330ac6f48d372025"
+    },
+    {
+      "id": "f2a5bf3e-e205-33cc-881e-b48d20af5519",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.9.260 <4.10"
+    },
+    {
+      "id": "f896bd08-5e03-35dd-a99e-ba174f892a36",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.14.224 <4.15"
+    },
+    {
       "id": "fe825850-3ddc-37fc-bbfc-16a17ede9595",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "097b9146c0e26aabaa6ff3e5ea536a53f5254a79 <a903e516f5df44b46d526b403d93e7be1a425538"
     }

@@ -3,8 +3,10 @@
   "enisaUuid": "6e3b6d0b-1402-3b9e-acf6-a8b92ee18c9d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: L2CAP: reject accept queue add unless BT_LISTEN\n\nNew sk should not be added to parent socket accept queue after last\nl2cap_sock_cleanup_listen() has run in l2cap_sock_teardown_cb() and\nstate set to BT_CLOSED, as that can result to UAF on dereferencing the\ndangling parent reference.\n\nl2cap_sock_new_connection_cb() may race with parent l2cap_chan teardown,\ndue to chan->state accessed without consistent locking:\n\n  [Task 1]                           [Task 2]\n  l2cap_sock_release(parent)         l2cap_connect\n    l2cap_sock_shutdown                pchan = l2cap_global_chan_by_psm\n      l2cap_chan_lock(pchan)\n      l2cap_chan_close\n        l2cap_sock_teardown_cb\n          pchan->state = BT_CLOSED\n      l2cap_chan_unlock(pchan) ------> l2cap_chan_lock(pchan)\n                                       l2cap_new_connection\n                                         l2cap_sock_new_connection_cb\n      l2cap_chan_lock(pchan) <-------- l2cap_chan_unlock(pchan)\n      l2cap_sock_kill(parent)          /* bt_sk(sk)->parent dangling */\n\nFix by adding check for sk_state == BT_LISTEN after acquiring sk lock in\nl2cap_sock_new_connection_cb().  Add lock_sock() around sk_state writes\nwhere missing, to avoid data races.\n\nAlthough the data races on pchan->state should be fixed too, this\ndefensive sk_state check probably makes sense in any case.",
   "datePublished": "Sep 17, 2026, 4:06:06 PM",
-  "dateUpdated": "Sep 17, 2026, 4:06:06 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:57:50 AM",
+  "baseScore": 8.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/bf61a65c6093970e3b50031c4b79ebf3bd411eba",
     "https://git.kernel.org/stable/c/491e4c60017969b053888029998d2a61f298986a",
@@ -14,10 +16,11 @@
     "https://git.kernel.org/stable/c/d4bfa78fd67929b62b02013c107973e0c5b7aa9a"
   ],
   "aliases": [
-    "CVE-2026-90092"
+    "CVE-2026-90092",
+    "GHSA-6f8j-3px9-h4jj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.36,
   "enisaIdProduct": [
     {
       "id": "02dcf4ff-53d6-3139-8589-8f2bd8473a50",
@@ -90,16 +93,6 @@
       "product_version": "5.10.258 <5.11"
     },
     {
-      "id": "5c837af8-657c-3fea-9101-496d28abd4a5",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "5f88d470-39ce-3749-a9fa-b61eb882cf75",
       "product": {
         "name": "Linux",
@@ -108,6 +101,16 @@
         }
       },
       "product_version": "7.0.7 <7.1"
+    },
+    {
+      "id": "6426725d-afb8-35f1-8d92-71167ce97159",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "6f2b19f7-9e3a-39eb-9428-7bcb010b03ab",

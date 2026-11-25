@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2024-38715",
+  "enisaUuid": "e92d6611-bbe2-3bd8-8219-3a55247979aa",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nUSB: class: cdc-wdm: Fix CPU lockup caused by excessive log messages\n\nThe syzbot fuzzer found that the interrupt-URB completion callback in\nthe cdc-wdm driver was taking too long, and the driver's immediate\nresubmission of interrupt URBs with -EPROTO status combined with the\ndummy-hcd emulation to cause a CPU lockup:\n\ncdc_wdm 1-1:1.0: nonzero urb status received: -71\ncdc_wdm 1-1:1.0: wdm_int_callback - 0 bytes\nwatchdog: BUG: soft lockup - CPU#0 stuck for 26s! [syz-executor782:6625]\nCPU#0 Utilization every 4s during lockup:\n\t#1:  98% system,\t  0% softirq,\t  3% hardirq,\t  0% idle\n\t#2:  98% system,\t  0% softirq,\t  3% hardirq,\t  0% idle\n\t#3:  98% system,\t  0% softirq,\t  3% hardirq,\t  0% idle\n\t#4:  98% system,\t  0% softirq,\t  3% hardirq,\t  0% idle\n\t#5:  98% system,\t  1% softirq,\t  3% hardirq,\t  0% idle\nModules linked in:\nirq event stamp: 73096\nhardirqs last  enabled at (73095): [<ffff80008037bc00>] console_emit_next_record kernel/printk/printk.c:2935 [inline]\nhardirqs last  enabled at (73095): [<ffff80008037bc00>] console_flush_all+0x650/0xb74 kernel/printk/printk.c:2994\nhardirqs last disabled at (73096): [<ffff80008af10b00>] __el1_irq arch/arm64/kernel/entry-common.c:533 [inline]\nhardirqs last disabled at (73096): [<ffff80008af10b00>] el1_interrupt+0x24/0x68 arch/arm64/kernel/entry-common.c:551\nsoftirqs last  enabled at (73048): [<ffff8000801ea530>] softirq_handle_end kernel/softirq.c:400 [inline]\nsoftirqs last  enabled at (73048): [<ffff8000801ea530>] handle_softirqs+0xa60/0xc34 kernel/softirq.c:582\nsoftirqs last disabled at (73043): [<ffff800080020de8>] __do_softirq+0x14/0x20 kernel/softirq.c:588\nCPU: 0 PID: 6625 Comm: syz-executor782 Tainted: G        W          6.10.0-rc2-syzkaller-g8867bbd4a056 #0\nHardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 04/02/2024\n\nTesting showed that the problem did not occur if the two error\nmessages -- the first two lines above -- were removed; apparently adding\nmaterial to the kernel log takes a surprisingly large amount of time.\n\nIn any case, the best approach for preventing these lockups and to\navoid spamming the log with thousands of error messages per second is\nto ratelimit the two dev_err() calls.  Therefore we replace them with\ndev_err_ratelimited().",
+  "datePublished": "Jul 12, 2024, 12:20:45 PM",
+  "dateUpdated": "May 11, 2026, 8:22:04 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/217d1f44fff560b3995a685a60aa66e55a7f0f56",
+    "https://git.kernel.org/stable/c/05b2cd6d33f700597e6f081b53c668a226a96d28",
+    "https://git.kernel.org/stable/c/c0747d76eb05542b5d49f67069b64ef5ff732c6c",
+    "https://git.kernel.org/stable/c/53250b54c92fe087fd4b0c48f85529efe1ebd879",
+    "https://git.kernel.org/stable/c/02a4c0499fc3a02e992b4c69a9809912af372d94",
+    "https://git.kernel.org/stable/c/72a3fe36cf9f0d030865e571f45a40f9c1e07e8a",
+    "https://git.kernel.org/stable/c/82075aff7ffccb1e72b0ac8aa349e473624d857c",
+    "https://git.kernel.org/stable/c/22f00812862564b314784167a89f27b444f82a46"
+  ],
+  "aliases": [
+    "GHSA-jjjh-v5hm-j72m",
+    "CVE-2024-40904"
+  ],
+  "assigner": "Linux",
+  "epss": 0.29,
+  "enisaIdProduct": [
+    {
+      "id": "0d44405a-730f-30eb-9623-13607d40cda1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9908a32e94de2141463e104c9924279ed3509447 <02a4c0499fc3a02e992b4c69a9809912af372d94"
+    },
+    {
+      "id": "1c303026-8f8e-3d4e-9c96-b94d18dd7368",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9908a32e94de2141463e104c9924279ed3509447 <05b2cd6d33f700597e6f081b53c668a226a96d28"
+    },
+    {
+      "id": "1fe9bd80-31d4-3720-94ee-35d1fa72429f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9908a32e94de2141463e104c9924279ed3509447 <82075aff7ffccb1e72b0ac8aa349e473624d857c"
+    },
+    {
+      "id": "2bf872d9-e548-3ab9-a25d-390e14e98b01",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "2d401b5b-3d48-3f78-b243-f2d9760f3403",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9908a32e94de2141463e104c9924279ed3509447 <72a3fe36cf9f0d030865e571f45a40f9c1e07e8a"
+    },
+    {
+      "id": "30b8f5e8-3631-3b02-b117-fb06c904f519",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.95"
+    },
+    {
+      "id": "3189e05a-610f-31c5-89c7-8c3dd8edb471",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.279"
+    },
+    {
+      "id": "49723645-84dd-38d0-9526-b1563c9237ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.28"
+    },
+    {
+      "id": "56a236b1-a1bd-3c5f-bf4e-b25241a01851",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "68209e47-ed60-34c4-9451-1d1413720009",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.317"
+    },
+    {
+      "id": "80da61d9-9441-36fb-9c64-4d25c0114ab3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9908a32e94de2141463e104c9924279ed3509447 <22f00812862564b314784167a89f27b444f82a46"
+    },
+    {
+      "id": "85c3365a-82ea-35d0-9b52-1bc2064d6f9c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.221"
+    },
+    {
+      "id": "8e6a0014-fcc9-3958-914a-483e610e26a6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.6"
+    },
+    {
+      "id": "90ce2644-15cb-391d-b670-38ff4e7aaa26",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9908a32e94de2141463e104c9924279ed3509447 <217d1f44fff560b3995a685a60aa66e55a7f0f56"
+    },
+    {
+      "id": "cbff5f9f-49d4-3ab2-b7a8-301f39142d39",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9908a32e94de2141463e104c9924279ed3509447 <53250b54c92fe087fd4b0c48f85529efe1ebd879"
+    },
+    {
+      "id": "d52d7aec-301b-30a9-b1b1-8b5ed450bb8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.162"
+    },
+    {
+      "id": "e2168c0f-27db-3bd0-8dd1-672bf0815d44",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9908a32e94de2141463e104c9924279ed3509447 <c0747d76eb05542b5d49f67069b64ef5ff732c6c"
+    },
+    {
+      "id": "e43c2b00-b376-311c-b181-2bc15711a789",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.35"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "d59763eb-4c09-323d-a4ec-ca9a79e434cf",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

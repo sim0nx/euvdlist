@@ -1,9 +1,9 @@
 {
   "id": "EUVD-2025-21918",
   "enisaUuid": "36fde758-713f-3a65-b085-a9072bb26d1a",
-  "description": "Wasmtime CLI  is vulnerable to host panic through its fd_renumber function",
-  "datePublished": "Jul 18, 2025, 7:50:58 PM",
-  "dateUpdated": "Jul 21, 2025, 4:06:01 PM",
+  "description": "Wasmtime is a runtime for WebAssembly. Prior to versions 24.0.4, 33.0.2, and 34.0.2, a bug in Wasmtime's implementation of the WASIp1 set of import functions can lead to a WebAssembly guest inducing a panic in the host (embedder). The specific bug is triggered by calling `path_open` after calling `fd_renumber` with either two equal argument values or a second argument being equal to a previously-closed file descriptor number value. The corrupt state introduced in `fd_renumber` will lead to the subsequent opening of a file descriptor to panic. This panic cannot introduce memory unsafety or allow WebAssembly to break outside of its sandbox, however. There is no possible heap corruption or memory unsafety from this panic. This bug is in the implementation of Wasmtime's `wasmtime-wasi` crate which provides an implementation of WASIp1. The bug requires a specially crafted call to `fd_renumber` in addition to the ability to open a subsequent file descriptor. Opening a second file descriptor is only possible when a preopened directory was provided to the guest, and this is common amongst embeddings. A panic in the host is considered a denial-of-service vector for WebAssembly embedders and is thus a security issue in Wasmtime. This bug does not affect WASIp2 and embedders using components. In accordance with Wasmtime's release process, patch releases are available as 24.0.4, 33.0.2, and 34.0.2. Users of other release of Wasmtime are recommended to move to a supported release of Wasmtime. Embedders who are using components or are not providing guest access to create more file descriptors (e.g. via a preopened filesystem directory) are not affected by this issue. Otherwise, there is no workaround at this time, and affected embeddings are recommended to update to a patched version which will not cause a panic in the host.",
+  "datePublished": "Jul 18, 2025, 5:10:11 PM",
+  "dateUpdated": "Jul 18, 2025, 5:31:45 PM",
   "baseScore": 3.5,
   "baseScoreVersion": "3.1",
   "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:N/I:N/A:L",
@@ -12,38 +12,42 @@
     "https://docs.wasmtime.dev/security-what-is-considered-a-security-vulnerability.html",
     "https://docs.wasmtime.dev/stability-release.html",
     "https://github.com/WebAssembly/WASI/blob/e1aa1cae4dda4c1f70f23fe11e922aae92f240a8/legacy/preview1/witx/wasi_snapshot_preview1.witx#L245-L260",
-    "https://github.com/bytecodealliance/wasmtime/blob/037a6edadbc225decbea00a551aabf04203717d9/crates/wasi/src/preview1.rs#L1824-L1836",
-    "https://nvd.nist.gov/vuln/detail/CVE-2025-53901",
-    "https://github.com/bytecodealliance/wasmtime/pull/11277",
-    "https://github.com/bytecodealliance/wasmtime/pull/11278",
-    "https://github.com/bytecodealliance/wasmtime/pull/11279",
-    "https://github.com/bytecodealliance/wasmtime/pull/11281",
-    "https://rustsec.org/advisories/RUSTSEC-2025-0046.html"
+    "https://github.com/bytecodealliance/wasmtime/blob/037a6edadbc225decbea00a551aabf04203717d9/crates/wasi/src/preview1.rs#L1824-L1836"
   ],
   "aliases": [
-    "CVE-2025-53901"
+    "CVE-2025-53901",
+    "GHSA-fm79-3f68-h2fc"
   ],
   "assigner": "GitHub_M",
-  "epss": 0.08,
+  "epss": 0.39,
   "enisaIdProduct": [
     {
       "id": "5e3578ee-473e-38b7-95bb-c7ff9eb1e090",
       "product": {
-        "name": "wasmtime"
+        "name": "wasmtime",
+        "vendor": {
+          "name": "bytecodealliance"
+        }
       },
       "product_version": "34.0.0, < 34.0.2"
     },
     {
       "id": "bbc77b1d-fd2e-3b75-bcbe-cd902b997d78",
       "product": {
-        "name": "wasmtime"
+        "name": "wasmtime",
+        "vendor": {
+          "name": "bytecodealliance"
+        }
       },
       "product_version": "33.0.0, < 33.0.2"
     },
     {
       "id": "f9cb26d5-be81-3763-8ea8-e914923eacbf",
       "product": {
-        "name": "wasmtime"
+        "name": "wasmtime",
+        "vendor": {
+          "name": "bytecodealliance"
+        }
       },
       "product_version": "< 24.0.4"
     }

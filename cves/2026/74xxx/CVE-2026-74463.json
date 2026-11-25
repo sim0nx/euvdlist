@@ -3,9 +3,12 @@
   "enisaUuid": "45be7cd0-7879-3c07-a8de-2dbf838b5d1a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ni2c: jz4780: Cache host clock rate at probe to prevent CCF prepare_lock deadlock\n\nFix a severe AB/BA deadlock between the Common Clock Framework (CCF)\nand the I2C adapter lock, which triggers when an I2C-controlled clock\ngenerator client (like the Si5351) is registered or modified under the CCF.\n\nDuring an i2c client clock (generator) frequency change, the CCF acquires its global\n'prepare_lock' mutex and the driver calls i2c_transfer() to update the client's\nchip registers, stalling for the adapter's I2C bus lock.\n\nConcurrently, an independent, parallel transfer on the same bus (e.g., a GPIO\nexpander handling LEDs) can hold the I2C adapter lock. Inside this parallel\ntransfer path, jz4780_i2c_set_speed() calls clk_get_rate() on the host\ncontroller's input clock to calculate bus timings. This call attempts to acquire\nthe blocked CCF 'prepare_lock', creating a circular dependency that freezes\nthe system.\n\nThe jz4780 host controller clock itself is static and never changes at runtime.\n\nHowever, calling clk_get_rate() inside the active transfer path introduces\nan unnecessary dependency on the CCF internal locks.\n\nEliminate this synchronous clk_get_rate() call from the active transfer\npath by caching the static host peripheral clock rate once - inside the private\njz4780_i2c structure during jz4780_i2c_probe(). Update jz4780_i2c_set_speed()\nto use this cached value, safely decoupling active I2C transactions from the\nCCF internal locks without any risk of stale timings.\n\nAssisted-by web based Google AI (pinpointing the bug and writing the message).",
   "datePublished": "Aug 15, 2026, 12:27:03 PM",
-  "dateUpdated": "Aug 15, 2026, 12:27:03 PM",
+  "dateUpdated": "Aug 19, 2026, 4:37:02 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/cc111696ef420f6bb552b2526530067977f0b406",
+    "https://git.kernel.org/stable/c/f96a719d9f8a797105ec5cacf568ab128e33391f",
+    "https://git.kernel.org/stable/c/deffad5bb4f8b4f09e46252f24754ddc9960b244",
     "https://git.kernel.org/stable/c/14429dc1c756c35e106f01ff09cadccb82f5531d",
     "https://git.kernel.org/stable/c/b6cb47e186abba85a3b08aa3023067ab82577286",
     "https://git.kernel.org/stable/c/19b783335d62e7a2367436a6e1f1b37da1878360",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/d99607c888f26e8a4e9fe9772860cef4aff86bb4"
   ],
   "aliases": [
+    "GHSA-2xgc-rc56-qqm7",
     "CVE-2026-74463"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0f033271-124f-32e1-8853-143d800423b1",
@@ -49,6 +53,16 @@
       "product_version": "patch: 6.12.103"
     },
     {
+      "id": "35989c25-6dd1-3f06-ad2a-f890f56b45a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
+    {
       "id": "3aaae638-4511-3d34-80b7-cd3b6d9f87dc",
       "product": {
         "name": "Linux",
@@ -57,6 +71,16 @@
         }
       },
       "product_version": "ba92222ed63a12d09120df9b92f56cc990abac19 <d99607c888f26e8a4e9fe9772860cef4aff86bb4"
+    },
+    {
+      "id": "5c358a08-fe20-3361-b2ac-123cbbf2cdac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba92222ed63a12d09120df9b92f56cc990abac19 <f96a719d9f8a797105ec5cacf568ab128e33391f"
     },
     {
       "id": "5ff07361-a1d3-3bb3-b666-3f345221edca",
@@ -69,6 +93,36 @@
       "product_version": "4.1"
     },
     {
+      "id": "77549ce0-9270-3de6-ac36-8f5dc5b83dd0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "7bf197ec-9c7e-3c00-b6be-ebe3a054d96b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba92222ed63a12d09120df9b92f56cc990abac19 <deffad5bb4f8b4f09e46252f24754ddc9960b244"
+    },
+    {
+      "id": "7d0f7db5-c660-3136-8a9c-ba3621c74147",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
       "id": "92cb5b30-f0ea-3b53-982e-afe68711154e",
       "product": {
         "name": "Linux",
@@ -79,16 +133,6 @@
       "product_version": "patch: 6.6.151"
     },
     {
-      "id": "a1274624-bd17-3c71-a70a-44c20ac3aa75",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc6"
-    },
-    {
       "id": "bbc25098-854a-3449-820a-c47c57520e8f",
       "product": {
         "name": "Linux",
@@ -97,6 +141,16 @@
         }
       },
       "product_version": "patch: 7.1.8"
+    },
+    {
+      "id": "c84bceef-21c0-329f-b5eb-75784ff4c55e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ba92222ed63a12d09120df9b92f56cc990abac19 <cc111696ef420f6bb552b2526530067977f0b406"
     },
     {
       "id": "d1003d25-85bb-3082-9b51-3550cb98056b",
@@ -137,6 +191,16 @@
         }
       },
       "product_version": "patch: 6.18.44"
+    },
+    {
+      "id": "fca5caea-f24b-3265-9266-6af5c6655588",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     }
   ],
   "enisaIdVendor": [

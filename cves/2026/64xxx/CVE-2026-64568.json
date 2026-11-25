@@ -3,8 +3,10 @@
   "enisaUuid": "fe11a3e7-fd71-38e8-986e-1318e47f0a86",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: mac80211: fix unsol_bcast_probe_resp double free on alloc failure\n\nieee80211_set_unsol_bcast_probe_resp() calls kfree_rcu() on the old\ntemplate before allocating the replacement. If the kzalloc() then fails,\nit returns -ENOMEM while link->u.ap.unsol_bcast_probe_resp still points\nat the object already queued for freeing. A later update or AP teardown\nre-queues that same rcu_head; the second free is caught by KASAN when the\nRCU sheaf is processed in softirq:\n\n  BUG: KASAN: double-free in rcu_free_sheaf (mm/slub.c:5850)\n  Free of addr ffff88800d06f300 by task exploit/145\n   ...\n   __rcu_free_sheaf_prepare (mm/slub.c:2634 mm/slub.c:2940)\n   rcu_free_sheaf (mm/slub.c:5850)\n   rcu_core (kernel/rcu/tree.c:2617 kernel/rcu/tree.c:2869)\n   handle_softirqs (kernel/softirq.c:622)\n  The buggy address belongs to the cache kmalloc-128 of size 128\n\nQueue the old object for kfree_rcu() only after the new one is published,\nmatching ieee80211_set_probe_resp() and ieee80211_set_s1g_short_beacon().",
   "datePublished": "Aug 5, 2026, 8:08:06 AM",
-  "dateUpdated": "Aug 5, 2026, 8:08:06 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 17, 2026, 4:57:46 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ca27a81cd77b698e5eb586a011bee6800c7ee4bd",
     "https://git.kernel.org/stable/c/d62b55b7c7dc62887d7fd5648fb38f0bfaef53ae",
@@ -12,21 +14,12 @@
     "https://git.kernel.org/stable/c/1d067abcd37062426c59ec73dbc4e87a63f33fea"
   ],
   "aliases": [
+    "GHSA-c46h-f4qf-6cmr",
     "CVE-2026-64568"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
-    {
-      "id": "3897a737-c03c-3afa-b806-76a8e40d817d",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
-    },
     {
       "id": "4c8dd454-2f31-3222-9d56-b3a9fd5325a8",
       "product": {
@@ -106,6 +99,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "bd77ab65-91ea-3f45-89ac-88637b1bc15b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "eec854cf-026f-37d8-b7e9-e55fc715d029",

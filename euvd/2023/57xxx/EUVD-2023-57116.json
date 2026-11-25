@@ -1,0 +1,174 @@
+{
+  "id": "EUVD-2023-57116",
+  "enisaUuid": "dfcd37c0-9cbb-34bc-81d8-99ed88be2e93",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: mtk-jpeg: Fix use after free bug due to error path handling in mtk_jpeg_dec_device_run\n\nIn mtk_jpeg_probe, &jpeg->job_timeout_work is bound with\nmtk_jpeg_job_timeout_work.\n\nIn mtk_jpeg_dec_device_run, if error happens in\nmtk_jpeg_set_dec_dst, it will finally start the worker while\nmark the job as finished by invoking v4l2_m2m_job_finish.\n\nThere are two methods to trigger the bug. If we remove the\nmodule, it which will call mtk_jpeg_remove to make cleanup.\nThe possible sequence is as follows, which will cause a\nuse-after-free bug.\n\nCPU0                  CPU1\nmtk_jpeg_dec_...    |\n  start worker\t    |\n                    |mtk_jpeg_job_timeout_work\nmtk_jpeg_remove     |\n  v4l2_m2m_release  |\n    kfree(m2m_dev); |\n                    |\n                    | v4l2_m2m_get_curr_priv\n                    |   m2m_dev->curr_ctx //use\n\nIf we close the file descriptor, which will call mtk_jpeg_release,\nit will have a similar sequence.\n\nFix this bug by starting timeout worker only if started jpegdec worker\nsuccessfully. Then v4l2_m2m_job_finish will only be called in\neither mtk_jpeg_job_timeout_work or mtk_jpeg_dec_device_run.",
+  "datePublished": "Feb 29, 2024, 3:52:09 PM",
+  "dateUpdated": "Aug 5, 2026, 9:10:13 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/43872f44eee6c6781fea1348b38885d8e78face9",
+    "https://git.kernel.org/stable/c/1b1036c60a37a30caf6759a90fe5ecd06ec35590",
+    "https://git.kernel.org/stable/c/9fec4db7fff54d9b0306a332bab31eac47eeb5f6",
+    "https://git.kernel.org/stable/c/8254d54d00eb6cdb8367399c7f912eb8d354ecd7",
+    "https://git.kernel.org/stable/c/6e2f37022f0fc0893da4d85a0500c9d547fffd4c",
+    "https://git.kernel.org/stable/c/206c857dd17d4d026de85866f1b5f0969f2a109e"
+  ],
+  "aliases": [
+    "CVE-2023-52491",
+    "GHSA-2vrm-jm55-jg94"
+  ],
+  "assigner": "Linux",
+  "epss": 0.28,
+  "enisaIdProduct": [
+    {
+      "id": "0d9e6930-1efe-350b-8832-9d5e23c64e4e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b2f0d2724ba477d326e9d654d4db1c93e98f8b93 <1b1036c60a37a30caf6759a90fe5ecd06ec35590"
+    },
+    {
+      "id": "305958f6-f8f2-368d-bd7d-9cec8f97facf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b2f0d2724ba477d326e9d654d4db1c93e98f8b93 <6e2f37022f0fc0893da4d85a0500c9d547fffd4c"
+    },
+    {
+      "id": "45e3317b-655f-3f0b-beee-232a9f507fa4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.149"
+    },
+    {
+      "id": "4aa6517d-3af4-325b-8acc-9876047be556",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b2f0d2724ba477d326e9d654d4db1c93e98f8b93 <43872f44eee6c6781fea1348b38885d8e78face9"
+    },
+    {
+      "id": "575599f1-ea61-39d7-ad16-0ad31ecb05d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b2f0d2724ba477d326e9d654d4db1c93e98f8b93 <206c857dd17d4d026de85866f1b5f0969f2a109e"
+    },
+    {
+      "id": "6722c5d8-68a9-3d86-8675-e1b35c753e12",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "8537a601-1cbf-393b-ae74-08ac45249959",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.12"
+    },
+    {
+      "id": "882ff9bc-53b7-3001-9268-2a31bcc3a61d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b2f0d2724ba477d326e9d654d4db1c93e98f8b93 <9fec4db7fff54d9b0306a332bab31eac47eeb5f6"
+    },
+    {
+      "id": "99006399-1cd6-320f-9d07-28f4a8410f0d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.210"
+    },
+    {
+      "id": "a283f2ca-6a89-36a9-bcb2-1212d0e72b9d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.76"
+    },
+    {
+      "id": "ac59c1e6-703c-3861-8ce9-2d63fabdb6f8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "b38ec6ac-f885-3efa-a959-ddd9ca935329",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.15"
+    },
+    {
+      "id": "c05d18c8-425b-34c0-94c4-1c2303d5478b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.3"
+    },
+    {
+      "id": "d8abf7be-04ea-3d6b-828e-6fc73e314081",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b2f0d2724ba477d326e9d654d4db1c93e98f8b93 <8254d54d00eb6cdb8367399c7f912eb8d354ecd7"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "0ac69b94-e377-3b61-a08b-25e5baa199df",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

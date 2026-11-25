@@ -3,29 +3,22 @@
   "enisaUuid": "b5ccf42b-4ac7-3642-8468-98a0c4b1a424",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm: Set old handle to NULL before prime swap in change_handle\n\nThere was a potential race condition in change_handle. The ioctl\nbriefly had a single object with two idr entries; a concurrent\ngem_close could delete the object and remove one of the handles\nwhile leaving the other one dangling, which could subsequently\nbe dereferenced for a use-after-free.\n\nTo fix this, do the same dance that gem_close itself does.\n(f6cd7daecff5 drm: Release driver references to handle before making it available again)\nFirst idr_replace the old handle to NULL. Later, if the prime\noperations are successful, actually close it.\n\ncreate_tail required a similar dance to avoid a similar problem.\n(bd46cece51a3 drm/gem: Fix race in drm_gem_handle_create_tail())\nIt idr_allocs the new handle with NULL, then swaps in the correct\nobject later to avoid races. We don't need to do that here, since\nthe only operations that could race are drm_prime, and\nchange_handle holds the prime lock for the entire duration.\n\nv2: cleanups of error paths",
   "datePublished": "May 28, 2026, 9:40:32 AM",
-  "dateUpdated": "May 28, 2026, 9:40:32 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:30:33 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/672464dd53231509c9c771110798c56d4660e19e",
     "https://git.kernel.org/stable/c/61bd96d3e5472c253f9c1ab77608f0c8aaa9d025",
     "https://git.kernel.org/stable/c/5e28b7b94408897e41c63477aabc9e1db439bc8c"
   ],
   "aliases": [
-    "CVE-2026-46215"
+    "CVE-2026-46215",
+    "GHSA-gm2j-59pp-6cxj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.23,
   "enisaIdProduct": [
-    {
-      "id": "04f4d958-2ae5-3061-8cd7-4a0ac9cc2f8e",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc3"
-    },
     {
       "id": "13230598-e32d-357c-8263-59f43856d180",
       "product": {
@@ -85,6 +78,16 @@
         }
       },
       "product_version": "patch: 7.0.9"
+    },
+    {
+      "id": "841c533b-2f19-386b-9509-3901f48f0157",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "94273563-aa7d-38b3-90dd-126e8763b267",

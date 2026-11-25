@@ -3,7 +3,7 @@
   "enisaUuid": "fdffa4d5-db74-381b-ab3e-5bd27623060c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncrypto: atmel-sha204a - fix heap info leak on I2C transfer failure\n\nThe nonblocking RNG path allocates a work_data structure to track the\nstate of an in-flight asynchronous I2C request. This pointer is stored\nin rng->priv and later consumed by the read path once the transaction\ncompletes.\n\nIf the underlying I2C transfer fails, the completion callback is invoked\nwith a non-zero status. In this case, the allocated work_data is not\nusable for producing RNG output and must not remain associated with the\nhwrng state.\n\nPreviously, the failure path only logged a warning but left the pointer\nstate uncleared, which can result in subsequent read attempts observing\nstale state and interpreting it as valid completion data.\n\nFix this by freeing the pending work_data. The I2C transaction reports\nan error. This ensures that failed requests do not leave residual state\nbehind that could be interpreted as valid RNG data on later reads.\nClearing rng->priv is done at the subsequent call to nonblocking read.",
   "datePublished": "Sep 17, 2026, 4:11:53 PM",
-  "dateUpdated": "Sep 17, 2026, 4:11:53 PM",
+  "dateUpdated": "Oct 19, 2026, 9:06:31 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/a430b5b6d2ddd2b266330f8507a655be1148347d",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/72bbf11ba14bd7d5fbf31a1ec42fff608b657f74"
   ],
   "aliases": [
+    "GHSA-4wj4-h74m-5rjv",
     "CVE-2026-93159"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "151a2795-abff-3419-9ee9-69bcef2f4460",
@@ -72,14 +73,14 @@
       "product_version": "patch: 6.6.157"
     },
     {
-      "id": "544ca6e0-8bba-35e5-8554-78de4897a7bf",
+      "id": "4cf473c9-cf1b-3ea4-bee2-2f7ffdcaa1c4",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "55b09c8a-d9ff-3745-81c0-4096c68a57e2",

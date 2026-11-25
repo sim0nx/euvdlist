@@ -3,18 +3,23 @@
   "enisaUuid": "1a2e3e6c-8533-3bff-a216-1f82ecb6d8b8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: zero the FS_OBJECT_ID_INFORMATION buffer before filling it in\n\nsmb2_get_info_filesystem() reports 64 bytes for FS_OBJECT_ID_INFORMATION,\nthat is the whole of struct object_id_info, but writes only 46 of them:\n\n - objid[] is 16 bytes, and when the volume UUID is not available only\n   sizeof(stfs.f_fsid) (8) bytes are copied into it;\n - extended_info.version_string[] is STRING_LENGTH (28) bytes, and only\n   strlen(\"1.1.0\") (5) bytes are copied into it.\n\nThe response buffer is zeroed on allocation (kvzalloc() in\nsmb2_allocate_rsp_buf()), so for a standalone request the remaining 31\nbytes are zero.  In a compound request they need not be.  The offset of\nthe next response is advanced by the length pinned for the previous one,\nso if a preceding command wrote its reply into the buffer and then\nfailed, smb2_set_err_rsp() pins only the short error response and the\nnext reply lands inside the area that has already been written.  Only\nthe header is cleared there:\n\n\tmemset((char *)rsp_hdr, 0, sizeof(struct smb2_hdr) + 2);\n\nThe client then receives up to 31 bytes of a response it was not meant\nto see, including one that failed with an access denied error.\n\nClear the structure before filling it in.  As a side effect\nversion_string is now NUL terminated.",
   "datePublished": "Oct 28, 2026, 10:34:30 AM",
-  "dateUpdated": "Oct 28, 2026, 10:34:30 AM",
+  "dateUpdated": "Oct 30, 2026, 12:41:51 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/dbd0f13de153d7094b85034daffa7533d7c2b17a",
+    "https://git.kernel.org/stable/c/90898571fb2c6813c007a62833dd65c00481d44e",
+    "https://git.kernel.org/stable/c/1a35a81c302b36fe4acd35b47b51d5d73e89ba0a",
+    "https://git.kernel.org/stable/c/3fc33ac2125b60f103592b83821f69f3f9aa23ba",
     "https://git.kernel.org/stable/c/898cb4f2e12a5ddea1b2d821cc642c3100f46da7",
     "https://git.kernel.org/stable/c/015fffa48e96ca8d73a627445341ccff86b02251",
     "https://git.kernel.org/stable/c/399aa12450a61a5c73dc77e73f069ece9687c95d"
   ],
   "aliases": [
-    "CVE-2026-99113"
+    "CVE-2026-99113",
+    "GHSA-3hcx-97mc-6xww"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0f23ff85-db38-3074-889c-802ed94bbb05",
@@ -37,6 +42,26 @@
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <898cb4f2e12a5ddea1b2d821cc642c3100f46da7"
     },
     {
+      "id": "4971feaa-506e-3bf4-9fb8-c8388837a083",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
+    },
+    {
+      "id": "4bcad884-3393-3ada-9497-2ca625f0ec07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <90898571fb2c6813c007a62833dd65c00481d44e"
+    },
+    {
       "id": "57d99ff8-0b3c-335b-b3a6-f411d46325b4",
       "product": {
         "name": "Linux",
@@ -45,6 +70,16 @@
         }
       },
       "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <015fffa48e96ca8d73a627445341ccff86b02251"
+    },
+    {
+      "id": "5b4482d2-1195-3904-b8bb-866bfa6dfcf4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "660de2ca-9fb4-3869-bb32-95e3a9359d24",
@@ -67,6 +102,36 @@
       "product_version": "patch: 6.18.59"
     },
     {
+      "id": "7f3c4279-890a-3cb6-b4e0-15f41df566f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <1a35a81c302b36fe4acd35b47b51d5d73e89ba0a"
+    },
+    {
+      "id": "8c0b8c38-65fb-30c5-92f2-cde7e0c799d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <3fc33ac2125b60f103592b83821f69f3f9aa23ba"
+    },
+    {
+      "id": "93929c49-f446-3c47-bd1a-3cfdefb7e7ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e2f34481b24db2fd634b5edb0a5bd0e4d38cc6e9 <dbd0f13de153d7094b85034daffa7533d7c2b17a"
+    },
+    {
       "id": "9b38b42a-325c-3af9-a3ef-3def13e32f18",
       "product": {
         "name": "Linux",
@@ -75,6 +140,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "c72e58a4-cc8a-3fad-90e7-d8676976fe6d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.161"
+    },
+    {
+      "id": "c7d60925-e3ce-3b0d-a8b8-9f33a8238971",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
     },
     {
       "id": "cf98f8ef-47a5-31d6-bb2d-8644b8c78087",

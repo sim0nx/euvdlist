@@ -3,8 +3,10 @@
   "enisaUuid": "ba2fe28d-10cc-3ff4-a21b-d057089494e6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nNFSv4.2: fix LAYOUTSTATS send buffer exhaustion\n\nencode_layoutstats_maxsz budgets XDR_QUADLEN(PNFS_LAYOUTSTATS_MAXSIZE),\ni.e. 256 bytes, for the layoutupdate4 body written by the layout driver.\nThe flexfiles record can exceed that.\n\nff_layout_encode_ff_layoutupdate() emits, per data server, a netaddr4,\nan nfs_fh4, two ff_io_latency4, an nfstime4 and a bool.  A data server\nwhose filehandle is NFS_MAXFHSIZE bytes long already accounts for 132 of\nthose bytes, and the two ff_io_latency4 at 64 bytes each, the nfstime4\nand the bool add a further 144, so the body passes 256 bytes before the\nnetaddr4 is encoded at all.  encode_layoutstats() additionally writes\nthe deviceid4 and the layoutupdate4 lou_type word, neither of which the\nmacro accounts for.\n\nThe filehandle and the address are both chosen by the server, through\nLAYOUTGET and GETDEVICEINFO, so it can drive the encoder past the\nend of the send buffer.  xdr_reserve_space() returns NULL once that\nhappens, and the two ff_layout_encode_io_latency() calls run with\ndss_info->mirror->lock held, so a NULL return there leaves the lock\npermanently held.\n\nRaise PNFS_LAYOUTSTATS_MAXSIZE to 384 so that the record fits inside the\nreservation.",
   "datePublished": "Sep 17, 2026, 4:06:13 PM",
-  "dateUpdated": "Sep 17, 2026, 4:06:13 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:58:01 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/842ac26615424577f24f0486b9d3bf97f28fad9c",
     "https://git.kernel.org/stable/c/397aa7000bbf6b6a0d32e66a544e978fb478c8e4",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/c75ef2137e749f2673f0617cfdaae53b2bb7195a"
   ],
   "aliases": [
-    "CVE-2026-90103"
+    "CVE-2026-90103",
+    "GHSA-qgw9-h34w-h93j"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.7,
   "enisaIdProduct": [
     {
       "id": "04ca1175-53dd-346e-beb2-33eca3d865fc",
@@ -60,6 +63,16 @@
         }
       },
       "product_version": "27c430644369ccd9a2272492ba6d0e85e2e4800b <e82d7d999fe9f893f84bf332fd39cb5d9de7128f"
+    },
+    {
+      "id": "37020078-08a3-3986-9654-0c0f72d624cd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "37ff315a-4b9a-3bb9-b2c1-8fbc5b018af8",
@@ -160,16 +173,6 @@
         }
       },
       "product_version": "patch: 5.15.221"
-    },
-    {
-      "id": "ce3c1af5-ac04-38c7-904d-a325589661b7",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "dcccf544-fa7f-3281-a5de-4d12424a37c1",

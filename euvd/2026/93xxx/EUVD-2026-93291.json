@@ -3,7 +3,7 @@
   "enisaUuid": "77ff80fa-17b8-3c3e-a3f9-ba8d5b066de4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nseg6: set IPSKB_L3SLAVE from IP6SKB_L3SLAVE on IPIP decapsulation\n\nWhen an SRv6 packet arrives on an interface enslaved to a VRF,\nvrf_ip6_rcv() sets IP6SKB_L3SLAVE in IP6CB, but decap_and_validate()\nhas never set IPSKB_L3SLAVE in IPCB. The bit stayed clear in the\ncommon case, and with CONFIG_IPV6_MIP6 the leftover frag_max_size of\na reassembled outer packet could even set it, with no VRF involved.\nCommit 44930446dde4 (\"ipv6: seg6: clear IPv4 control block on IPIP\ndecapsulation\") then made the unreliable bit reliably clear.\n\nThe effect of the missing flag is visible with End.DX4 when a\ndelivery to a local address of the node reaches the socket lookup.\nFor example, a UDP socket bound to the enslaved ingress interface\ndoes not receive any of the decapsulated packets, while an unbound\nsocket outside the VRF does.\nThis contradicts Documentation/networking/vrf.rst: by default the\nscope of an unbound UDP or TCP socket is limited to the default VRF.\n\nSet IPSKB_L3SLAVE for IPv4 in decap_and_validate(), which already does\nthe same for IPv6. The socket lookup then matches the decapsulated\npacket like any other packet received on that enslaved interface. Such\na packet matches an unbound UDP or TCP socket only when\nudp_l3mdev_accept or tcp_l3mdev_accept is set.",
   "datePublished": "Oct 6, 2026, 8:46:03 AM",
-  "dateUpdated": "Oct 6, 2026, 8:46:03 AM",
+  "dateUpdated": "Oct 19, 2026, 9:17:17 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1d9f5c78903dd25a3556229eb716dd465c5f3573",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/7616242a2b37883f7322aaa1d2bd6cd0fed28315"
   ],
   "aliases": [
+    "GHSA-8vq5-3gc9-33qh",
     "CVE-2026-98306"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0521e4e3-291e-3fdb-aee3-ee21e9d2abd1",
@@ -102,6 +103,16 @@
       "product_version": "patch: 6.12.112"
     },
     {
+      "id": "5775db54-5040-3eec-9dfa-9fb212bc1a2a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "66d60cd2-cd80-37c5-ae80-f36beb357937",
       "product": {
         "name": "Linux",
@@ -170,16 +181,6 @@
         }
       },
       "product_version": "patch: 6.1.189"
-    },
-    {
-      "id": "f1e27421-5609-3623-84f2-774518adf0e7",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "f2363fd0-2363-3625-b0cb-c00b3786b22b",

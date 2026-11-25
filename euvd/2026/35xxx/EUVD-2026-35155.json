@@ -3,8 +3,10 @@
   "enisaUuid": "6554c881-70ac-3403-84cd-d471bc4e52ec",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nlib/scatterlist: fix length calculations in extract_kvec_to_sg\n\nPatch series \"Fix bugs in extract_iter_to_sg()\", v3.\n\nFix bugs in the kvec and user variants of extract_iter_to_sg.  This series\nis growing due to useful remarks made by sashiko.dev.\n\nThe main bugs are:\n- The length for an sglist entry when extracting from\n  a kvec can exceed the number of bytes in the page. This\n  is obviously not intended.\n- When extracting a user buffer the sglist is temporarily\n  used as a scratch buffer for extracted page pointers.\n  If the sglist already contains some elements this scratch\n  buffer could overlap with existing entries in the sglist.\n\nThe series adds test cases to the kunit_iov_iter test that demonstrate all\nof these bugs.  Additionally, there is a memory leak fix for the test\nitself.\n\nThe bugs were orignally introduced into kernel v6.3 where the function\nlived in fs/netfs/iterator.c.  It was later moved to lib/scatterlist.c in\nv6.5.  Thus the actual fix is only marked for backports to v6.5+.\n\n\nThis patch (of 5):\n\nWhen extracting from a kvec to a scatterlist, do not cross page\nboundaries.  The required length was already calculated but not used as\nintended.\n\nAdjust the copied length if the loop runs out of sglist entries without\nextracting everything.\n\nWhile there, return immediately from extract_iter_to_sg if there are no\nsglist entries at all.\n\nA subsequent commit will add kunit test cases that demonstrate that the\npatch is necessary.",
   "datePublished": "Jun 8, 2026, 3:46:15 PM",
-  "dateUpdated": "Jun 8, 2026, 3:46:15 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:31:03 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/3f17500e86d730c76db638bb3ae52f9b5e496c76",
     "https://git.kernel.org/stable/c/e5e22fc9963469e678c4f4bb38d26adcec107f1e",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/07b7d66e65d9cfe6b9c2c34aa22cfcaac37a5c45"
   ],
   "aliases": [
-    "CVE-2026-46289"
+    "CVE-2026-46289",
+    "GHSA-qp34-4r23-mcwx"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.46,
   "enisaIdProduct": [
     {
       "id": "2ff7ebec-637a-3e49-b5b3-3ad95bcdf83a",
@@ -89,6 +92,16 @@
       "product_version": "6.3"
     },
     {
+      "id": "bd0a6de7-d8f1-3e08-80cd-7e053f0dfc71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
+    },
+    {
       "id": "c44abcfb-51e7-3072-86c5-4fdb818c3993",
       "product": {
         "name": "Linux",
@@ -127,16 +140,6 @@
         }
       },
       "product_version": "0185846975339a5c348373aa450a977f5242366b <e5e22fc9963469e678c4f4bb38d26adcec107f1e"
-    },
-    {
-      "id": "f7505d0c-ed64-3966-b2c9-3db2a237dfd1",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.1-rc1"
     }
   ],
   "enisaIdVendor": [

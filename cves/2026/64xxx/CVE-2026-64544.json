@@ -3,7 +3,7 @@
   "enisaUuid": "a714c788-e0d9-3ef0-b7e9-f7c801a1479a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncrypto: asymmetric_keys - fix OOB read in pefile_digest_pe_contents\n\npefile_digest_pe_contents() computes the trailing-data hash length as\npelen - (hashed_bytes + certs_size). A crafted PE can make the addition\nexceed pelen, causing the unsigned subtraction to underflow to ~4 GiB.\nThis is passed to crypto_shash_update() which reads out of bounds and\npanics on unmapped vmalloc guard pages.\n\n BUG: unable to handle page fault for address: ffffc900038d8000\n Oops: Oops: 0000 [#1] SMP KASAN NOPTI\n RIP: 0010:sha256_blocks_generic (lib/crypto/sha256.c:152)\n Call Trace:\n  <TASK>\n  __sha256_update (lib/crypto/sha256.c:208)\n  crypto_sha256_update (crypto/sha256.c:142)\n  verify_pefile_signature (crypto/asymmetric_keys/verify_pefile.c:436)\n  kexec_kernel_verify_pe_sig (kernel/kexec_file.c:151)\n  __do_sys_kexec_file_load (kernel/kexec_file.c:406)\n  do_syscall_64 (arch/x86/entry/syscall_64.c:94)\n  entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:121)\n  </TASK>\n Kernel panic - not syncing: Fatal exception\n\nValidate that the addition does not overflow and the result does not\nexceed pelen before the subtraction. Return -ELIBBAD on failure.",
   "datePublished": "Jul 27, 2026, 8:10:36 PM",
-  "dateUpdated": "Jul 27, 2026, 8:10:36 PM",
+  "dateUpdated": "Nov 6, 2026, 4:44:56 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/89efd998470a93284b7ad5a20d4e0e3c6858ae8e",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/f7dd32c5179d7755de18e21d5674b08f9e5cb180"
   ],
   "aliases": [
-    "CVE-2026-64544"
+    "CVE-2026-64544",
+    "GHSA-4qp2-jghx-88mp"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "057923e6-6977-300e-80f2-13a0e668e0fd",
@@ -52,6 +53,16 @@
       "product_version": "patch: 5.15.212"
     },
     {
+      "id": "59b79357-d612-3b6b-b4f5-fee8a1988fc4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "63516475-daf2-3a61-9961-146aa2d61b87",
       "product": {
         "name": "Linux",
@@ -60,16 +71,6 @@
         }
       },
       "product_version": "patch: 5.10.261"
-    },
-    {
-      "id": "642a5b0d-1264-36bb-a961-594aecd4b50f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "64ee461a-09ce-3f64-aeb1-dad8b138ad10",

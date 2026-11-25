@@ -1,0 +1,132 @@
+{
+  "id": "EUVD-2021-34470",
+  "enisaUuid": "bcee8f08-47b4-3f89-8159-78f7ce841e0c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: PPC: Book3S HV: Fix stack handling in idle_kvm_start_guest()\n\nIn commit 10d91611f426 (\"powerpc/64s: Reimplement book3s idle code in\nC\") kvm_start_guest() became idle_kvm_start_guest(). The old code\nallocated a stack frame on the emergency stack, but didn't use the\nframe to store anything, and also didn't store anything in its caller's\nframe.\n\nidle_kvm_start_guest() on the other hand is written more like a normal C\nfunction, it creates a frame on entry, and also stores CR/LR into its\ncallers frame (per the ABI). The problem is that there is no caller\nframe on the emergency stack.\n\nThe emergency stack for a given CPU is allocated with:\n\n  paca_ptrs[i]->emergency_sp = alloc_stack(limit, i) + THREAD_SIZE;\n\nSo emergency_sp actually points to the first address above the emergency\nstack allocation for a given CPU, we must not store above it without\nfirst decrementing it to create a frame. This is different to the\nregular kernel stack, paca->kstack, which is initialised to point at an\ninitial frame that is ready to use.\n\nidle_kvm_start_guest() stores the backchain, CR and LR all of which\nwrite outside the allocation for the emergency stack. It then creates a\nstack frame and saves the non-volatile registers. Unfortunately the\nframe it creates is not large enough to fit the non-volatiles, and so\nthe saving of the non-volatile registers also writes outside the\nemergency stack allocation.\n\nThe end result is that we corrupt whatever is at 0-24 bytes, and 112-248\nbytes above the emergency stack allocation.\n\nIn practice this has gone unnoticed because the memory immediately above\nthe emergency stack happens to be used for other stack allocations,\neither another CPUs mc_emergency_sp or an IRQ stack. See the order of\ncalls to irqstack_early_init() and emergency_stack_init().\n\nThe low addresses of another stack are the top of that stack, and so are\nonly used if that stack is under extreme pressue, which essentially\nnever happens in practice - and if it did there's a high likelyhood we'd\ncrash due to that stack overflowing.\n\nStill, we shouldn't be corrupting someone else's stack, and it is purely\nluck that we aren't corrupting something else.\n\nTo fix it we save CR/LR into the caller's frame using the existing r1 on\nentry, we then create a SWITCH_FRAME_SIZE frame (which has space for\npt_regs) on the emergency stack with the backchain pointing to the\nexisting stack, and then finally we switch to the new frame on the\nemergency stack.",
+  "datePublished": "May 22, 2024, 6:23:25 AM",
+  "dateUpdated": "Aug 5, 2026, 8:47:58 AM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/80bbb0bc3a0288442f7fe6fc514f4ee1cb06ccb7",
+    "https://git.kernel.org/stable/c/fbd724c49bead048ae9fc1a5b7bff2fb3e54f855",
+    "https://git.kernel.org/stable/c/6d077c37c4643394b1bae9682da48164fc147ea8",
+    "https://git.kernel.org/stable/c/9b4416c5095c20e110c82ae602c254099b83b72f"
+  ],
+  "aliases": [
+    "GHSA-r7pj-34j8-6jgg",
+    "CVE-2021-47465"
+  ],
+  "assigner": "Linux",
+  "epss": 0.22,
+  "enisaIdProduct": [
+    {
+      "id": "3f274630-1030-3847-a43f-d69d4bbfd2d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "10d91611f426d4bafd2a83d966c36da811b2f7ad <fbd724c49bead048ae9fc1a5b7bff2fb3e54f855"
+    },
+    {
+      "id": "54860b89-6bb7-3ae5-8d43-1b506901fc83",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "10d91611f426d4bafd2a83d966c36da811b2f7ad <9b4416c5095c20e110c82ae602c254099b83b72f"
+    },
+    {
+      "id": "58c24ef5-d9f9-3a28-8e52-98493e9d4433",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.76"
+    },
+    {
+      "id": "7282f076-0ac3-3a67-b5b4-44494c2b1550",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "8687e318-760d-3dab-b75b-3f2ceae33b05",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.14.15"
+    },
+    {
+      "id": "a4b665db-368f-3200-b0ba-dba22c599ea8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15"
+    },
+    {
+      "id": "cccc207a-ad70-30f7-b3c4-534a532cca73",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.2"
+    },
+    {
+      "id": "d81456f8-e27f-3b47-b8c6-44305918a901",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "10d91611f426d4bafd2a83d966c36da811b2f7ad <6d077c37c4643394b1bae9682da48164fc147ea8"
+    },
+    {
+      "id": "f237953b-eec6-3c70-8d99-2b41c90babc0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "10d91611f426d4bafd2a83d966c36da811b2f7ad <80bbb0bc3a0288442f7fe6fc514f4ee1cb06ccb7"
+    },
+    {
+      "id": "f512b175-82b9-39d1-8bae-f8f8e2f40984",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.156"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "cfc37f15-de47-35f2-9faa-3b4a945d0291",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

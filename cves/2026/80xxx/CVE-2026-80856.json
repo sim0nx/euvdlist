@@ -3,9 +3,10 @@
   "enisaUuid": "cc375473-d81e-383f-a94b-58eb89b37cc7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfuse: fix invalidate lock leak on setattr writeback failure\n\nfuse_do_setattr() takes filemap_invalidate_lock() for a DAX truncate\n(fault_blocked = true) and releases it at the out:/error: labels.  But\nwhen a writeback flush is also needed, a write_inode_now() failure\nreturns directly and leaks the lock, so any later fault or truncate on\nthe file stalls on the stale rwsem.\n\nFor example, truncate(2) on a setuid file reaches fuse_do_setattr()\nwith both ATTR_SIZE and ATTR_MODE set:\n\n  truncate(2)\n  \u2514\u2500 do_truncate()\n     \u251c\u2500 dentry_needs_remove_privs()         # S_ISUID\n     \u2514\u2500 notify_change()                     # KILL_SUID -> ATTR_MODE\n        \u2514\u2500 fuse_setattr()                   # no killpriv:\n           \u2502                                #   ia_valid |= ATTR_MODE\n           \u2514\u2500 fuse_do_setattr()\n              \u251c\u2500 filemap_invalidate_lock()  # IS_DAX && is_truncate\n              \u2514\u2500 write_inode_now()          # is_wb && ATTR_MODE\n                 \u2514\u2500 if (err)                # e.g. daemon -> -EIO\n                    return err              # <- lock leaked\n\nFix this by adding an unlock label that releases the lock before\nreturning the error, and use it for the fuse_dax_break_layouts()\nfailure path as well.",
   "datePublished": "Sep 4, 2026, 3:55:09 PM",
-  "dateUpdated": "Sep 4, 2026, 3:55:09 PM",
+  "dateUpdated": "Oct 30, 2026, 12:31:18 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/92faaee1b108c6e4b07730d20896a6593a85f675",
     "https://git.kernel.org/stable/c/8f14906ce9103ab8f2f1ebda45935a0d61b9d763",
     "https://git.kernel.org/stable/c/03cfeeb135428fa83f0791d3f8f94d9298cae695",
     "https://git.kernel.org/stable/c/92588d187ba4697a322e7aefe5d9e538a87d1cd2",
@@ -16,11 +17,22 @@
     "https://git.kernel.org/stable/c/9afeca0d569c9fc89d758fe7a9339d1e8afb1546"
   ],
   "aliases": [
-    "CVE-2026-80856"
+    "CVE-2026-80856",
+    "GHSA-4jx3-fh7f-pxhw"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
+    {
+      "id": "02fd2e51-714c-3707-9a4e-1fa14d711f90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
     {
       "id": "0c46b832-0cf5-386b-95f3-c0744185707d",
       "product": {
@@ -40,6 +52,16 @@
         }
       },
       "product_version": "patch: 6.18.49"
+    },
+    {
+      "id": "314b7451-11b7-3be6-8f75-dfa9afce27a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "396f483e-6349-3459-ab83-80515f585cf0",
@@ -192,14 +214,14 @@
       "product_version": "patch: 7.1.13"
     },
     {
-      "id": "f5dddf28-1989-37c6-b568-e447c6902f87",
+      "id": "efc9e185-c97c-326f-bcb7-4b7772716832",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "6ae330cad6ef22ab8347ea9e0707dc56a7c7363f <92faaee1b108c6e4b07730d20896a6593a85f675"
     }
   ],
   "enisaIdVendor": [

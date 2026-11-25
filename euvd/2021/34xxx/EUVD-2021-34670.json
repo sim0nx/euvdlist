@@ -2,9 +2,11 @@
   "id": "EUVD-2021-34670",
   "enisaUuid": "7bc2e234-bdf2-3735-abe2-2b051e592d3c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nubi: Fix race condition between ctrl_cdev_ioctl and ubi_cdev_ioctl\n\nHulk Robot reported a KASAN report about use-after-free:\n ==================================================================\n BUG: KASAN: use-after-free in __list_del_entry_valid+0x13d/0x160\n Read of size 8 at addr ffff888035e37d98 by task ubiattach/1385\n [...]\n Call Trace:\n  klist_dec_and_del+0xa7/0x4a0\n  klist_put+0xc7/0x1a0\n  device_del+0x4d4/0xed0\n  cdev_device_del+0x1a/0x80\n  ubi_attach_mtd_dev+0x2951/0x34b0 [ubi]\n  ctrl_cdev_ioctl+0x286/0x2f0 [ubi]\n\n Allocated by task 1414:\n  device_add+0x60a/0x18b0\n  cdev_device_add+0x103/0x170\n  ubi_create_volume+0x1118/0x1a10 [ubi]\n  ubi_cdev_ioctl+0xb7f/0x1ba0 [ubi]\n\n Freed by task 1385:\n  cdev_device_del+0x1a/0x80\n  ubi_remove_volume+0x438/0x6c0 [ubi]\n  ubi_cdev_ioctl+0xbf4/0x1ba0 [ubi]\n [...]\n ==================================================================\n\nThe lock held by ctrl_cdev_ioctl is ubi_devices_mutex, but the lock held\nby ubi_cdev_ioctl is ubi->device_mutex. Therefore, the two locks can be\nconcurrent.\n\nctrl_cdev_ioctl contains two operations: ubi_attach and ubi_detach.\nubi_detach is bug-free because it uses reference counting to prevent\nconcurrency. However, uif_init and uif_close in ubi_attach may race with\nubi_cdev_ioctl.\n\nuif_init will race with ubi_cdev_ioctl as in the following stack.\n           cpu1                   cpu2                  cpu3\n_______________________|________________________|______________________\nctrl_cdev_ioctl\n ubi_attach_mtd_dev\n  uif_init\n                           ubi_cdev_ioctl\n                            ubi_create_volume\n                             cdev_device_add\n   ubi_add_volume\n   // sysfs exist\n   kill_volumes\n                                                    ubi_cdev_ioctl\n                                                     ubi_remove_volume\n                                                      cdev_device_del\n                                                       // first free\n    ubi_free_volume\n     cdev_del\n     // double free\n   cdev_device_del\n\nAnd uif_close will race with ubi_cdev_ioctl as in the following stack.\n           cpu1                   cpu2                  cpu3\n_______________________|________________________|______________________\nctrl_cdev_ioctl\n ubi_attach_mtd_dev\n  uif_init\n                           ubi_cdev_ioctl\n                            ubi_create_volume\n                             cdev_device_add\n  ubi_debugfs_init_dev\n  //error goto out_uif;\n  uif_close\n   kill_volumes\n                                                    ubi_cdev_ioctl\n                                                     ubi_remove_volume\n                                                      cdev_device_del\n                                                       // first free\n    ubi_free_volume\n    // double free\n\nThe cause of this problem is that commit 714fb87e8bc0 make device\n\"available\" before it becomes accessible via sysfs. Therefore, we\nroll back the modification. We will fix the race condition between\nubi device creation and udev by removing ubi_get_device in\nvol_attribute_show and dev_attribute_show.This avoids accessing\nuninitialized ubi_devices[ubi_num].\n\nubi_get_device is used to prevent devices from being deleted during\nsysfs execution. However, now kernfs ensures that devices will not\nbe deleted before all reference counting are released.\nThe key process is shown in the following stack.\n\ndevice_del\n  device_remove_attrs\n    device_remove_groups\n      sysfs_remove_groups\n        sysfs_remove_group\n          remove_files\n            kernfs_remove_by_name\n              kernfs_remove_by_name_ns\n                __kernfs_remove\n                  kernfs_drain",
-  "datePublished": "Feb 27, 2025, 9:32:09 PM",
-  "dateUpdated": "Feb 27, 2025, 9:32:09 PM",
-  "baseScore": 0.0,
+  "datePublished": "Feb 26, 2025, 1:54:09 AM",
+  "dateUpdated": "May 23, 2026, 3:20:22 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/f149b1bd213820363731aa119e5011ca892a2aac",
     "https://git.kernel.org/stable/c/a8ecee49259f8f78d91ddb329ab2be7e6fd01974",
@@ -13,138 +15,372 @@
     "https://git.kernel.org/stable/c/1a3f1cf87054833242fcd0218de0481cf855f888",
     "https://git.kernel.org/stable/c/c32fe764191b8ae8b128588beb96e3718d9179d8",
     "https://git.kernel.org/stable/c/5f9e9c223e48c264241d2f34d0bfc29e5fcb5c1b",
-    "https://git.kernel.org/stable/c/3cbf0e392f173ba0ce425968c8374a6aa3e90f2e",
-    "https://nvd.nist.gov/vuln/detail/CVE-2021-47634"
+    "https://git.kernel.org/stable/c/3cbf0e392f173ba0ce425968c8374a6aa3e90f2e"
   ],
   "aliases": [
+    "GHSA-j4hc-7ppm-rrh4",
     "CVE-2021-47634"
   ],
   "assigner": "Linux",
-  "epss": 0.08,
+  "epss": 0.29,
   "enisaIdProduct": [
+    {
+      "id": "01f98a2e-4162-3a15-a566-8f8e595e4fd3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.12.63 <3.13"
+    },
     {
       "id": "0459497d-3b72-3a53-9285-7cc3c1a2ddae",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "714fb87e8bc05ff78255afc0dca981e8c5242785 <432b057f8e847ae5a2306515606f8d2defaca178"
     },
     {
+      "id": "057f8c9c-fbe8-3293-b5a5-3c112c816eb9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "31b0fca8ab9b9786fe6e5027c4a8587b47db5abf"
+    },
+    {
       "id": "1bea5455-eac6-31b6-82db-97cb020ef70a",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "714fb87e8bc05ff78255afc0dca981e8c5242785 <c32fe764191b8ae8b128588beb96e3718d9179d8"
     },
     {
       "id": "211e4fd6-449c-3d05-b3b0-662935d3099c",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.10.110"
     },
     {
+      "id": "2419a777-601a-3c67-a32d-b9c811eaf10e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ae32d1b98ba29408df87c0ed47877ca0f248eae7"
+    },
+    {
+      "id": "28286ee5-db39-31bc-bfca-986e4bda93c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.7.2 <4.8"
+    },
+    {
       "id": "303c399c-6307-3b33-a4a2-0304d67a7a14",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "714fb87e8bc05ff78255afc0dca981e8c5242785 <5f9e9c223e48c264241d2f34d0bfc29e5fcb5c1b"
     },
     {
+      "id": "3f8376b6-fd92-3e06-9140-9f43bc348f49",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4056337b1e81a1b137aa562133dc5430cd2fd19e"
+    },
+    {
+      "id": "4907c43a-d911-3aff-9413-ee2efe9a03ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.4.19 <4.5"
+    },
+    {
+      "id": "4bbdd61c-c0f8-38b9-b386-4393ac3b4bcd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "12f567db822241090b90c5645ea9146f6cf8fa42"
+    },
+    {
+      "id": "4c1f49d8-90c8-3885-9d85-f6287c25ae31",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.10.103 <3.11"
+    },
+    {
+      "id": "5a8912f1-bd84-39ae-9daf-60bc63d5b3d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6117840dec60344167038f9511c3770d4c096eaa"
+    },
+    {
+      "id": "63a03b9c-1a96-3aef-a676-9e58adaa34f0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.1.31 <4.2"
+    },
+    {
       "id": "6fb9fa1e-9d14-3f1d-ae83-60745fc38517",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.17.2"
     },
     {
+      "id": "76577770-b0f6-345f-90fa-64a29604e0b0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.18.40 <3.19"
+    },
+    {
       "id": "7bccf0ab-a646-35c1-b7c7-b6a56ded68c0",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.18"
     },
     {
+      "id": "82cfb4f9-4604-3b4c-9b98-23af336285f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.2.84 <3.3"
+    },
+    {
+      "id": "8b3f1ca7-4733-3834-86a5-28de33d003a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "f3db4c640b32485105554e0bfd16bbde585f6fb0"
+    },
+    {
+      "id": "917a655c-a5b4-3784-b2c4-72f365c215a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cdf25333b42fb889f086ef65d0734d0dbdc49f4e"
+    },
+    {
       "id": "945012a3-6a77-3862-9cb8-8d4c714eabd3",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "714fb87e8bc05ff78255afc0dca981e8c5242785 <a8ecee49259f8f78d91ddb329ab2be7e6fd01974"
     },
     {
       "id": "9dc0dcd5-34a8-3688-8815-b3e73b5404d0",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.15.33"
     },
     {
+      "id": "a193f318-8fba-353f-b4be-77567d67819c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.16.39 <3.17"
+    },
+    {
+      "id": "a2a6c539-29ff-3e05-bd36-6f487f7ce7d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "016820bde3f0895d09fcad370415085ba0d1bd4a"
+    },
+    {
       "id": "a89d3672-0907-35d0-81d4-57a0c39bf09d",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "4.8"
     },
     {
+      "id": "aa3749a3-bc43-338e-a511-69234233c99c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.14.77 <3.15"
+    },
+    {
       "id": "b18976c5-32cd-35db-ae0b-14b320b3faa7",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "714fb87e8bc05ff78255afc0dca981e8c5242785 <1a3f1cf87054833242fcd0218de0481cf855f888"
     },
     {
+      "id": "b2ea04d1-5ab1-3fe9-81a0-8be99bfd1d1f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bd7d3de27e7e1acce2e276074a498a82e0834663"
+    },
+    {
       "id": "b8935789-267e-349b-8feb-e295bbabfaee",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "714fb87e8bc05ff78255afc0dca981e8c5242785 <f149b1bd213820363731aa119e5011ca892a2aac"
     },
     {
       "id": "bd1794ff-9ef8-3240-8cd1-238a5bbd7e66",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.4.189"
     },
     {
       "id": "cab84fa8-a9fe-3ddf-b06a-e029643c8b77",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 0"
     },
     {
       "id": "d5f037b0-8dee-3f92-8b05-de68d206fd85",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 4.19.238"
     },
     {
       "id": "ec32cb57-6243-37a2-9b1d-46f2bfd437de",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "714fb87e8bc05ff78255afc0dca981e8c5242785 <3cbf0e392f173ba0ce425968c8374a6aa3e90f2e"
     },
     {
       "id": "eddd9528-d3a6-31c6-bcc4-e7bc112bb650",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 4.14.276"
     },
     {
       "id": "f303c435-239c-30bc-9503-917966ee6c4f",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 5.16.19"
     },
     {
       "id": "f48a9068-3da3-3a1a-8cb8-4f5ea256df03",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "714fb87e8bc05ff78255afc0dca981e8c5242785 <d727fd32cbd1abf3465f607021bc9c746f17b5a8"
     }

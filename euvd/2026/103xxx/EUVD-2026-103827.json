@@ -3,19 +3,24 @@
   "enisaUuid": "e63205fd-9b6d-37c9-99d0-330cb397bac9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: seq: Serialize compat port-info ioctls\n\nThe native sequencer ioctl path serializes handler calls with\nclient->ioctl_mutex, but the translated port-info compat path invokes the\nsame handlers through snd_seq_kernel_client_ctl() without taking that\nmutex.\n\nThis lets concurrent compat CREATE_PORT requests pass the port-count\ncheck before any request reaches the serialized insertion. The computed\ninteger port index can then exceed the address field range and wrap to an\nexisting index. Subsequent subscriber teardown can resolve the duplicate\naddress to the wrong port and access a freed subscriber.\n\nTake ioctl_mutex while dispatching converted port-info requests, matching\nthe native ioctl path. All translated port-info commands share this\nhelper, so their accesses to the client port state are serialized as\nwell.",
   "datePublished": "Oct 18, 2026, 3:47:27 PM",
-  "dateUpdated": "Oct 18, 2026, 3:47:27 PM",
+  "dateUpdated": "Oct 30, 2026, 12:39:16 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/14e178c60ba1cea49186fcfccac93d66aa94e9e0",
+    "https://git.kernel.org/stable/c/4980768c5d092493be0deb20d1ee86aa661466f8",
+    "https://git.kernel.org/stable/c/2c0cce3a5a660270d65729b0f318d4e01470479d",
+    "https://git.kernel.org/stable/c/2db234e163f0d211b69a4eebbec8aacc5a54a80e",
     "https://git.kernel.org/stable/c/413211dd31cb2ef2fc99fb0aa1a037a97509502c",
     "https://git.kernel.org/stable/c/fc5c52848e405b6efb073db5035bb9ebaed11ec4",
     "https://git.kernel.org/stable/c/702d92f361f65d9698c473c7599d471395dc4341",
     "https://git.kernel.org/stable/c/95b2e0361c88753afa030c10698be0a1a5b67650"
   ],
   "aliases": [
-    "CVE-2026-98742"
+    "CVE-2026-98742",
+    "GHSA-qq2g-8h6m-jjjf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0306be32-6979-3327-a98c-7949fb1521d8",
@@ -68,6 +73,36 @@
       "product_version": "3.2.99 <3.3"
     },
     {
+      "id": "1ded8282-5c5a-3c26-b8c4-bb7fb9450880",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "29c35820-0045-3d0e-a7a4-29145b40ba3e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "2f8eb0ab-07a3-36b1-bfa3-ba97325e301d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "37025afe-db87-371f-9dc5-bf921862ff47",
       "product": {
         "name": "Linux",
@@ -76,6 +111,16 @@
         }
       },
       "product_version": "e4ff9f294629b65df3f7982cd4faf86b2856b9d7"
+    },
+    {
+      "id": "37425c3c-e363-35ac-a750-2ccf40c9be52",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
     },
     {
       "id": "43f7cd5d-db1a-3a89-b177-b6ebc2c12daa",
@@ -108,6 +153,16 @@
       "product_version": "4.15"
     },
     {
+      "id": "64b0700e-54fc-3e74-b174-7445bfde3d11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b3defb791b26ea0683a93a4f49c77ec45ec96f10 <2c0cce3a5a660270d65729b0f318d4e01470479d"
+    },
+    {
       "id": "64b35dcf-1802-31d7-8fae-de7465fe1c57",
       "product": {
         "name": "Linux",
@@ -116,6 +171,16 @@
         }
       },
       "product_version": "02cbce8576a31df8fca54aaec91ee081076bd79d"
+    },
+    {
+      "id": "76dc5e11-ac06-345c-9ab8-3540beb075ee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     },
     {
       "id": "8bf00d1b-25c6-31f8-b0b9-e82bdba45980",
@@ -146,6 +211,16 @@
         }
       },
       "product_version": "patch: 6.12.113"
+    },
+    {
+      "id": "9eebe19c-6be6-3880-9e22-dca6fde5a113",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b3defb791b26ea0683a93a4f49c77ec45ec96f10 <4980768c5d092493be0deb20d1ee86aa661466f8"
     },
     {
       "id": "acd120d4-0a4e-3dce-815c-2fd3d93c8c44",
@@ -218,14 +293,24 @@
       "product_version": "b3defb791b26ea0683a93a4f49c77ec45ec96f10 <702d92f361f65d9698c473c7599d471395dc4341"
     },
     {
-      "id": "e4b2bfc0-a445-304b-819c-9d87f3bb1776",
+      "id": "e189535f-e5a2-3e1a-8049-47f69d1ab4a8",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc6"
+      "product_version": "b3defb791b26ea0683a93a4f49c77ec45ec96f10 <2db234e163f0d211b69a4eebbec8aacc5a54a80e"
+    },
+    {
+      "id": "e7633f0b-44e3-3182-9d24-2a8e26abfde4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b3defb791b26ea0683a93a4f49c77ec45ec96f10 <14e178c60ba1cea49186fcfccac93d66aa94e9e0"
     },
     {
       "id": "f1e174b6-f29d-320e-a0f3-76e1b37608c8",

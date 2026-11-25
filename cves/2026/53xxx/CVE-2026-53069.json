@@ -3,8 +3,10 @@
   "enisaUuid": "5f8bad9e-4a97-3144-b9c3-028c8f86c88d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet, bpf: fix null-ptr-deref in xdp_master_redirect() for down master\n\nsyzkaller reported a kernel panic in bond_rr_gen_slave_id() reached via\nxdp_master_redirect(). Full decoded trace:\n\n  https://syzkaller.appspot.com/bug?extid=80e046b8da2820b6ba73\n\nbond_rr_gen_slave_id() dereferences bond->rr_tx_counter, a per-CPU\ncounter that bonding only allocates in bond_open() when the mode is\nround-robin. If the bond device was never brought up, rr_tx_counter\nstays NULL.\n\nThe XDP redirect path can still reach that code on a bond that was\nnever opened: bpf_master_redirect_enabled_key is a global static key,\nso as soon as any bond device has native XDP attached, the\nXDP_TX -> xdp_master_redirect() interception is enabled for every\nslave system-wide. The path xdp_master_redirect() ->\nbond_xdp_get_xmit_slave() -> bond_xdp_xmit_roundrobin_slave_get() ->\nbond_rr_gen_slave_id() then runs against a bond that has no\nrr_tx_counter and crashes.\n\nFix this in the generic xdp_master_redirect() by refusing to call into\nthe master's ->ndo_xdp_get_xmit_slave() when the master device is not\nup. IFF_UP is only set after ->ndo_open() has successfully returned,\nso this reliably excludes masters whose XDP state has not been fully\ninitialized. Drop the frame with XDP_ABORTED so the exception is\nvisible via trace_xdp_exception() rather than silently falling through.\nThis is not specific to bonding: any current or future master that\ndefers XDP state allocation to ->ndo_open() is protected.",
   "datePublished": "Jun 24, 2026, 4:30:10 PM",
-  "dateUpdated": "Jun 24, 2026, 4:30:10 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:47:14 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/3128b294b426533c8d9162187446d93a8a160359",
     "https://git.kernel.org/stable/c/acbf45bd584d924b320bee2a7fe2a26f64904d95",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/1921f91298d1388a0bb9db8f83800c998b649cb3"
   ],
   "aliases": [
+    "GHSA-cc9g-3x8w-qfw5",
     "CVE-2026-53069"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.38,
   "enisaIdProduct": [
     {
       "id": "0a2b08f1-723e-3ffe-bb61-22d0bc4c9e1e",

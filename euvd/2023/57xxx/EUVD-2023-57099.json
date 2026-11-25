@@ -1,0 +1,174 @@
+{
+  "id": "EUVD-2023-57099",
+  "enisaUuid": "a5dd4733-5ece-3fee-b0f3-792381038d71",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nIB/hfi1: Fix bugs with non-PAGE_SIZE-end multi-iovec user SDMA requests\n\nhfi1 user SDMA request processing has two bugs that can cause data\ncorruption for user SDMA requests that have multiple payload iovecs\nwhere an iovec other than the tail iovec does not run up to the page\nboundary for the buffer pointed to by that iovec.a\n\nHere are the specific bugs:\n1. user_sdma_txadd() does not use struct user_sdma_iovec->iov.iov_len.\n   Rather, user_sdma_txadd() will add up to PAGE_SIZE bytes from iovec\n   to the packet, even if some of those bytes are past\n   iovec->iov.iov_len and are thus not intended to be in the packet.\n2. user_sdma_txadd() and user_sdma_send_pkts() fail to advance to the\n   next iovec in user_sdma_request->iovs when the current iovec\n   is not PAGE_SIZE and does not contain enough data to complete the\n   packet. The transmitted packet will contain the wrong data from the\n   iovec pages.\n\nThis has not been an issue with SDMA packets from hfi1 Verbs or PSM2\nbecause they only produce iovecs that end short of PAGE_SIZE as the tail\niovec of an SDMA request.\n\nFixing these bugs exposes other bugs with the SDMA pin cache\n(struct mmu_rb_handler) that get in way of supporting user SDMA requests\nwith multiple payload iovecs whose buffers do not end at PAGE_SIZE. So\nthis commit fixes those issues as well.\n\nHere are the mmu_rb_handler bugs that non-PAGE_SIZE-end multi-iovec\npayload user SDMA requests can hit:\n1. Overlapping memory ranges in mmu_rb_handler will result in duplicate\n   pinnings.\n2. When extending an existing mmu_rb_handler entry (struct mmu_rb_node),\n   the mmu_rb code (1) removes the existing entry under a lock, (2)\n   releases that lock, pins the new pages, (3) then reacquires the lock\n   to insert the extended mmu_rb_node.\n\n   If someone else comes in and inserts an overlapping entry between (2)\n   and (3), insert in (3) will fail.\n\n   The failure path code in this case unpins _all_ pages in either the\n   original mmu_rb_node or the new mmu_rb_node that was inserted between\n   (2) and (3).\n3. In hfi1_mmu_rb_remove_unless_exact(), mmu_rb_node->refcount is\n   incremented outside of mmu_rb_handler->lock. As a result, mmu_rb_node\n   could be evicted by another thread that gets mmu_rb_handler->lock and\n   checks mmu_rb_node->refcount before mmu_rb_node->refcount is\n   incremented.\n4. Related to #2 above, SDMA request submission failure path does not\n   check mmu_rb_node->refcount before freeing mmu_rb_node object.\n\n   If there are other SDMA requests in progress whose iovecs have\n   pointers to the now-freed mmu_rb_node(s), those pointers to the\n   now-freed mmu_rb nodes will be dereferenced when those SDMA requests\n   complete.",
+  "datePublished": "Feb 26, 2024, 5:20:22 PM",
+  "dateUpdated": "Aug 5, 2026, 9:10:07 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/9c4c6512d7330b743c4ffd18bd999a86ca26db0d",
+    "https://git.kernel.org/stable/c/a2bd706ab63509793b5cd5065e685b7ef5cba678",
+    "https://git.kernel.org/stable/c/dce59b5443700fbd0d2433ec6e4d4cf063448844",
+    "https://git.kernel.org/stable/c/c76cb8f4bdf26d04cfa5485a93ce297dba5e6a80",
+    "https://git.kernel.org/stable/c/7e6010f79b58f45b204cf18aa58f4b73c3f30adc",
+    "https://git.kernel.org/stable/c/00cbce5cbf88459cd1aa1d60d0f1df15477df127"
+  ],
+  "aliases": [
+    "CVE-2023-52474",
+    "GHSA-7r53-r6j6-q893"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "01ad38f1-bc04-3575-9e96-2e19fa765c99",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "1067e648-5c86-36b7-9223-2eed5a3d27f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.111"
+    },
+    {
+      "id": "1c367fd3-bbbf-3f22-90c0-56b962aaeaeb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.3"
+    },
+    {
+      "id": "1ea212e4-3d46-3ec5-bba8-9d404f620e76",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7724105686e718ac476a6ad3304fea2fbcfcffde <9c4c6512d7330b743c4ffd18bd999a86ca26db0d"
+    },
+    {
+      "id": "3f2c5426-087d-37ea-8b4e-3f6c04b4a28a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7724105686e718ac476a6ad3304fea2fbcfcffde <c76cb8f4bdf26d04cfa5485a93ce297dba5e6a80"
+    },
+    {
+      "id": "7d0d80f7-cd3d-3b91-975b-8969d08f0148",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.28"
+    },
+    {
+      "id": "8697ec83-d1ab-3c77-9931-93787e09f88e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.4"
+    },
+    {
+      "id": "b6715dbb-fb29-3519-94a1-fba4d91b9ff0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7724105686e718ac476a6ad3304fea2fbcfcffde <dce59b5443700fbd0d2433ec6e4d4cf063448844"
+    },
+    {
+      "id": "bcd5c4f2-fe2a-3464-9e72-4eced884ee7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7724105686e718ac476a6ad3304fea2fbcfcffde <00cbce5cbf88459cd1aa1d60d0f1df15477df127"
+    },
+    {
+      "id": "d1e399c4-c1fe-38ec-989e-906b454bf83f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.2.15"
+    },
+    {
+      "id": "d40f14e9-0a3f-3666-95e2-6e2d9df60a5c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.3.2"
+    },
+    {
+      "id": "d919b3e5-5089-32ff-953e-978b5e31019b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.180"
+    },
+    {
+      "id": "e45965cc-0072-359c-8814-534001587590",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7724105686e718ac476a6ad3304fea2fbcfcffde <7e6010f79b58f45b204cf18aa58f4b73c3f30adc"
+    },
+    {
+      "id": "e649d3a4-7ce4-367d-aa33-b05271e3382c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7724105686e718ac476a6ad3304fea2fbcfcffde <a2bd706ab63509793b5cd5065e685b7ef5cba678"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c995d402-d41a-3a9a-9888-04612bc8d319",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

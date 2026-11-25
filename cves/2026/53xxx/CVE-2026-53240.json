@@ -3,18 +3,21 @@
   "enisaUuid": "154f9251-cc27-3ed9-ba5b-8357b06eb78a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: iptfs: fix use-after-free on first_skb in __input_process_payload\n\n__input_process_payload() stores first_skb into xtfs->ra_newskb under\ndrop_lock when starting partial reassembly, then unlocks and breaks out\nof the processing loop. The post-loop check reads xtfs->ra_newskb\nwithout the lock to decide whether first_skb is still owned:\n\n    if (first_skb && first_iplen && !defer && first_skb != xtfs->ra_newskb)\n\nBetween spin_unlock and this read, a concurrent CPU running\niptfs_reassem_cont() (or the drop_timer hrtimer) can complete\nreassembly, NULL xtfs->ra_newskb, and free the skb. The check then\nevaluates first_skb != NULL as true, and pskb_trim/ip_summed/consume_skb\noperate on the freed skb \u2014 a use-after-free in skbuff_head_cache.\n\nReplace the unlocked read with a local bool that records whether\nfirst_skb was handed to the reassembly state in the current call. The\nflag is set after the existing spin_unlock, before the break, using the\npointer equality that is stable at that point (first_skb == skb iff\nfirst_skb was stored in ra_newskb).",
   "datePublished": "Jun 25, 2026, 8:39:35 AM",
-  "dateUpdated": "Jun 25, 2026, 8:39:35 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:34:26 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/8d9a79fbf5172d9c4c0146057af2360913265a11",
     "https://git.kernel.org/stable/c/ff2ee35b6ce5fa8a8e24ea50b15733d5c8780198",
     "https://git.kernel.org/stable/c/eb48730bb827d1550401a5d391903f9d90b493c8"
   ],
   "aliases": [
-    "CVE-2026-53240"
+    "CVE-2026-53240",
+    "GHSA-5m64-3x43-vxjx"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.57,
   "enisaIdProduct": [
     {
       "id": "0a9ab907-c1b6-3387-bf9b-a14ebfd3fa17",

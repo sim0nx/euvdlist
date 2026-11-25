@@ -3,7 +3,7 @@
   "enisaUuid": "790f80f2-1645-3b12-9851-9bacca232b0e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nfuse: avoid 32-bit prune notification count wrap\n\nFUSE_NOTIFY_PRUNE validates the nodeid payload length with:\n\n    size - sizeof(outarg) != outarg.count * sizeof(u64)\n\nOn 32-bit kernels, size_t is also 32 bits, so the daemon-controlled\ncount multiplication can wrap.  A prune notification with count\n0x20000000 and no nodeid payload passes the check, enters the copy\nloop, and asks the device copy path to read nodeids that are not\npresent in the userspace write buffer.  In QEMU this reaches the\nfuse_copy_fill() BUG_ON(!err) path.\n\nValidate the payload length with array_size() instead.  That accepts\nexactly the same valid messages, but avoids wrapping arithmetic before\nthe copy loop consumes the count.",
   "datePublished": "Jul 25, 2026, 8:49:15 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:15 AM",
+  "dateUpdated": "Aug 17, 2026, 4:52:21 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/6e2d84fdeac05bfd858e84a76353fdb84f23a43e",
@@ -11,11 +11,22 @@
     "https://git.kernel.org/stable/c/54243797cedf55447b4c5d560e8cd709900061ae"
   ],
   "aliases": [
+    "GHSA-pj3g-7699-4m62",
     "CVE-2026-64267"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
+    {
+      "id": "108a6f60-df82-381f-a042-6e0df08a86cc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "3bc82b57-d5ea-35a8-9e62-86d4f2c5b7d0",
       "product": {
@@ -85,16 +96,6 @@
         }
       },
       "product_version": "patch: 6.18.39"
-    },
-    {
-      "id": "fa1bbe4a-d6e5-31d5-8265-e43a935ff63f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     }
   ],
   "enisaIdVendor": [

@@ -1,0 +1,111 @@
+{
+  "id": "EUVD-2023-59621",
+  "enisaUuid": "ffbdb56a-b817-37f6-b253-b4c9bbbf5d9c",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niommu/iova: Fix alloc iova overflows issue\n\nIn __alloc_and_insert_iova_range, there is an issue that retry_pfn\noverflows. The value of iovad->anchor.pfn_hi is ~0UL, then when\niovad->cached_node is iovad->anchor, curr_iova->pfn_hi + 1 will\noverflow. As a result, if the retry logic is executed, low_pfn is\nupdated to 0, and then new_pfn < low_pfn returns false to make the\nallocation successful.\n\nThis issue occurs in the following two situations:\n1. The first iova size exceeds the domain size. When initializing\niova domain, iovad->cached_node is assigned as iovad->anchor. For\nexample, the iova domain size is 10M, start_pfn is 0x1_F000_0000,\nand the iova size allocated for the first time is 11M. The\nfollowing is the log information, new->pfn_lo is smaller than\niovad->cached_node.\n\nExample log as follows:\n[  223.798112][T1705487] sh: [name:iova&]__alloc_and_insert_iova_range\nstart_pfn:0x1f0000,retry_pfn:0x0,size:0xb00,limit_pfn:0x1f0a00\n[  223.799590][T1705487] sh: [name:iova&]__alloc_and_insert_iova_range\nsuccess start_pfn:0x1f0000,new->pfn_lo:0x1efe00,new->pfn_hi:0x1f08ff\n\n2. The node with the largest iova->pfn_lo value in the iova domain\nis deleted, iovad->cached_node will be updated to iovad->anchor,\nand then the alloc iova size exceeds the maximum iova size that can\nbe allocated in the domain.\n\nAfter judging that retry_pfn is less than limit_pfn, call retry_pfn+1\nto fix the overflow issue.",
+  "datePublished": "Aug 21, 2024, 6:10:51 AM",
+  "dateUpdated": "Aug 5, 2026, 9:11:57 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/c929a230c84441e400c32e7b7b4ab763711fb63e",
+    "https://git.kernel.org/stable/c/61cbf790e7329ed78877560be7136f0b911bba7f",
+    "https://git.kernel.org/stable/c/dcdb3ba7e2a8caae7bfefd603bc22fd0ce9a389c"
+  ],
+  "aliases": [
+    "GHSA-f5pw-c669-x4x7",
+    "CVE-2023-52910"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "1c7d1e7d-94d2-3eea-9028-9a1ef795560a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.11"
+    },
+    {
+      "id": "4a89d6fb-fc7b-356d-9bc9-241b6a376272",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "6d3f446b-7ee0-3559-9b77-69a9af5be61d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4e89dce725213d3d0b0475211b500eda4ef4bf2f <dcdb3ba7e2a8caae7bfefd603bc22fd0ce9a389c"
+    },
+    {
+      "id": "754f539e-e6e2-3778-8507-a6ab7d0edd6a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4e89dce725213d3d0b0475211b500eda4ef4bf2f <61cbf790e7329ed78877560be7136f0b911bba7f"
+    },
+    {
+      "id": "8e02c28f-2005-35fd-9cac-d7a85ece1cba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4e89dce725213d3d0b0475211b500eda4ef4bf2f <c929a230c84441e400c32e7b7b4ab763711fb63e"
+    },
+    {
+      "id": "a8cded7f-8114-388a-9084-25f3869a5875",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.2"
+    },
+    {
+      "id": "b1331737-548d-39f5-99cc-2fa0a72ee33f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.89"
+    },
+    {
+      "id": "ddada86b-0a8d-3d76-9f4e-bb77c1504d2e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.7"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "20980caa-5aec-3cf1-88b5-4163641fd603",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

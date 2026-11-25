@@ -1,0 +1,216 @@
+{
+  "id": "EUVD-2024-24220",
+  "enisaUuid": "98912fb4-8bdb-3a54-ab24-6dda606b1f4e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfs: fix UAF in direct writes\n\nIn production we have been hitting the following warning consistently\n\n------------[ cut here ]------------\nrefcount_t: underflow; use-after-free.\nWARNING: CPU: 17 PID: 1800359 at lib/refcount.c:28 refcount_warn_saturate+0x9c/0xe0\nWorkqueue: nfsiod nfs_direct_write_schedule_work [nfs]\nRIP: 0010:refcount_warn_saturate+0x9c/0xe0\nPKRU: 55555554\nCall Trace:\n <TASK>\n ? __warn+0x9f/0x130\n ? refcount_warn_saturate+0x9c/0xe0\n ? report_bug+0xcc/0x150\n ? handle_bug+0x3d/0x70\n ? exc_invalid_op+0x16/0x40\n ? asm_exc_invalid_op+0x16/0x20\n ? refcount_warn_saturate+0x9c/0xe0\n nfs_direct_write_schedule_work+0x237/0x250 [nfs]\n process_one_work+0x12f/0x4a0\n worker_thread+0x14e/0x3b0\n ? ZSTD_getCParams_internal+0x220/0x220\n kthread+0xdc/0x120\n ? __btf_name_valid+0xa0/0xa0\n ret_from_fork+0x1f/0x30\n\nThis is because we're completing the nfs_direct_request twice in a row.\n\nThe source of this is when we have our commit requests to submit, we\nprocess them and send them off, and then in the completion path for the\ncommit requests we have\n\nif (nfs_commit_end(cinfo.mds))\n\tnfs_direct_write_complete(dreq);\n\nHowever since we're submitting asynchronous requests we sometimes have\none that completes before we submit the next one, so we end up calling\ncomplete on the nfs_direct_request twice.\n\nThe only other place we use nfs_generic_commit_list() is in\n__nfs_commit_inode, which wraps this call in a\n\nnfs_commit_begin();\nnfs_commit_end();\n\nWhich is a common pattern for this style of completion handling, one\nthat is also repeated in the direct code with get_dreq()/put_dreq()\ncalls around where we process events as well as in the completion paths.\n\nFix this by using the same pattern for the commit requests.\n\nBefore with my 200 node rocksdb stress running this warning would pop\nevery 10ish minutes.  With my patch the stress test has been running for\nseveral hours without popping.",
+  "datePublished": "May 1, 2024, 5:19:04 AM",
+  "dateUpdated": "Oct 15, 2026, 12:39:35 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/6cd3f13aaa62970b5169d990e936b2e96943bc6a",
+    "https://git.kernel.org/stable/c/4595d90b5d2ea5fa4d318d13f59055aa4bf3e7f5",
+    "https://git.kernel.org/stable/c/80d24b308b7ee7037fc90d8ac99f6f78df0a256f",
+    "https://git.kernel.org/stable/c/3abc2d160ed8213948b147295d77d44a22c88fa3",
+    "https://git.kernel.org/stable/c/e25447c35f8745337ea8bc0c9697fcac14df8605",
+    "https://git.kernel.org/stable/c/1daf52b5ffb24870fbeda20b4967526d8f9e12ab",
+    "https://git.kernel.org/stable/c/cf54f66e1dd78990ec6b32177bca7e6ea2144a95",
+    "https://git.kernel.org/stable/c/17f46b803d4f23c66cacce81db35fef3adb8f2af"
+  ],
+  "aliases": [
+    "CVE-2024-26958",
+    "GHSA-5xmm-chg9-ppmr"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "229aef46-db82-37df-8070-95c795ae30c0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af7cf057933f01dc7f33ddfb5e436ad598ed17ad <1daf52b5ffb24870fbeda20b4967526d8f9e12ab"
+    },
+    {
+      "id": "39eb2152-d048-3808-83c8-6d030bc0a3e7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.12"
+    },
+    {
+      "id": "3ba1e557-386c-32a9-a7dc-6c477b025fca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af7cf057933f01dc7f33ddfb5e436ad598ed17ad <3abc2d160ed8213948b147295d77d44a22c88fa3"
+    },
+    {
+      "id": "3c1013ab-7d5f-3971-96a0-f12e3aecff86",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.5"
+    },
+    {
+      "id": "438a68fd-57e4-3e0f-ba05-e34aa9732154",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "5029a65a-b221-3416-95f8-f9792e2df27e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "57010197-3317-3503-a332-f5e91d8b4c69",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.154"
+    },
+    {
+      "id": "617d2604-537d-3be1-a156-537cb090763e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af7cf057933f01dc7f33ddfb5e436ad598ed17ad <17f46b803d4f23c66cacce81db35fef3adb8f2af"
+    },
+    {
+      "id": "81d587c9-9a99-3afc-92b7-81321ca113cb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af7cf057933f01dc7f33ddfb5e436ad598ed17ad <80d24b308b7ee7037fc90d8ac99f6f78df0a256f"
+    },
+    {
+      "id": "85cc6128-909b-31ca-a46f-28d913cf01ea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af7cf057933f01dc7f33ddfb5e436ad598ed17ad <4595d90b5d2ea5fa4d318d13f59055aa4bf3e7f5"
+    },
+    {
+      "id": "8e3b0243-5388-308a-b31a-8f80e01b544d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af7cf057933f01dc7f33ddfb5e436ad598ed17ad <e25447c35f8745337ea8bc0c9697fcac14df8605"
+    },
+    {
+      "id": "9185e9e1-1bc3-31ec-be74-4f37bef297f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.297"
+    },
+    {
+      "id": "a63d7dea-e349-309f-a5be-158795f00790",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.24"
+    },
+    {
+      "id": "d167dd37-9146-3204-a848-3ee0d290232d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.215"
+    },
+    {
+      "id": "df54bcd4-586f-3b68-b253-8473376027da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af7cf057933f01dc7f33ddfb5e436ad598ed17ad <6cd3f13aaa62970b5169d990e936b2e96943bc6a"
+    },
+    {
+      "id": "f070e451-cb6d-3390-9234-b623e83f3bd8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "af7cf057933f01dc7f33ddfb5e436ad598ed17ad <cf54f66e1dd78990ec6b32177bca7e6ea2144a95"
+    },
+    {
+      "id": "f65ea5a9-05f8-3410-aec6-40a2e068ce45",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.3"
+    },
+    {
+      "id": "f9846a44-c76d-3242-8554-c7be50b8680a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.84"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e7188d9a-e4bc-3f65-8e34-82ffd568cce3",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

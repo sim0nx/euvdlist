@@ -3,19 +3,35 @@
   "enisaUuid": "420e3bc9-e138-3244-8732-3f411339f9f9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetlink: avoid hashing the network namespace pointer\n\nThe netlink rhashtable key includes a raw struct net pointer and a\nuser-controlled port ID. Both /proc/net/netlink and socket diagnostics\nexpose the table's bucket order. By binding and rebinding chosen\nNETLINK_USERSOCK port IDs, an unprivileged reader can distinguish equal\nbuckets and recover the low bits of the Jenkins hash. Its 32-bit seed\nand the limited set of kernel-image slides can then be searched offline\nto recover the address of init_net.\n\nUse the namespace's unique, non-address net_cookie in the comparison\nkey instead. It is assigned before the per-net initializers run and\nremains unchanged for the namespace's lifetime. The lookup key and\nobject hash are still built by netlink_compare_arg_init(), keeping\nlookup, insertion, removal and rehashing consistent while preserving\nnamespace separation. Neither public table walker needs to change.\n\nReading the socket's namespace cookie in netlink_compare() is safe\nunder RCU, including during namespace teardown. netlink_release()\nremoves the socket from the hash table and defers its final put with\ncall_rcu(). cleanup_net() runs the per-net exit methods and waits for\noutstanding RCU callbacks with rcu_barrier() before freeing namespace\nstorage.\n\nUnlike ns.ns_id, net_cookie is also available and initialized during\nsetup_net() in older stable kernels, making the change straightforward\nto backport to v5.15 and later.",
   "datePublished": "Oct 28, 2026, 10:35:56 AM",
-  "dateUpdated": "Oct 28, 2026, 10:35:56 AM",
+  "dateUpdated": "Oct 30, 2026, 12:42:51 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/c61431f3b8c9824e9848a0308054f92b27fa7794",
+    "https://git.kernel.org/stable/c/f8d2690f3c5dfad1fc306f6d5d84a1d3176c3af9",
+    "https://git.kernel.org/stable/c/c03fb9c4be3b2dd0996d91e54f65407f7f475238",
+    "https://git.kernel.org/stable/c/41a2f69f091b0765f17890d8ac04852c12f25cf6",
+    "https://git.kernel.org/stable/c/18edcb9945118beb7a1b64a31a7370ecab485a79",
     "https://git.kernel.org/stable/c/bdd55b8a8acbf6b4840ab420eb6a63774bf4593b",
     "https://git.kernel.org/stable/c/078deff25f8a849ecd1c3fe17b1e473b1cf44f28",
     "https://git.kernel.org/stable/c/f88bb3606e4bd11ee035b682cddc2999e604609a"
   ],
   "aliases": [
+    "GHSA-q237-q634-6984",
     "CVE-2026-99201"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "08031deb-32a5-3ea8-b139-8d670fdc711a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.115"
+    },
     {
       "id": "23a85c3a-8898-3ba7-a913-9e582cf7161d",
       "product": {
@@ -57,6 +73,46 @@
       "product_version": "c428ecd1a21f1457ca3beb4df71b8a079c410e41 <bdd55b8a8acbf6b4840ab420eb6a63774bf4593b"
     },
     {
+      "id": "41b9c779-b268-3208-b859-68b5ec22a827",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "5f6920d2-91cf-3822-8b96-1928751ec8ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "70e03594-f4c1-395e-ab6e-eacbc7e029e4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c428ecd1a21f1457ca3beb4df71b8a079c410e41 <18edcb9945118beb7a1b64a31a7370ecab485a79"
+    },
+    {
+      "id": "76ff89b6-c5d7-3a7c-bc10-bc9046f85720",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c428ecd1a21f1457ca3beb4df71b8a079c410e41 <41a2f69f091b0765f17890d8ac04852c12f25cf6"
+    },
+    {
       "id": "7bc6fc51-8c24-3064-ad59-2b49c3e5cc20",
       "product": {
         "name": "Linux",
@@ -65,6 +121,16 @@
         }
       },
       "product_version": "c428ecd1a21f1457ca3beb4df71b8a079c410e41 <078deff25f8a849ecd1c3fe17b1e473b1cf44f28"
+    },
+    {
+      "id": "80d3b5e3-a6bd-3efe-bd02-fadf1788bbb6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "861183ae-87f3-3428-b730-e4167ad306f1",
@@ -87,6 +153,16 @@
       "product_version": "patch: 6.18.59"
     },
     {
+      "id": "959de3aa-0668-3313-8847-dffa66b08f8a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c428ecd1a21f1457ca3beb4df71b8a079c410e41 <c61431f3b8c9824e9848a0308054f92b27fa7794"
+    },
+    {
       "id": "a295ffc2-a222-3403-a777-d2e1da2995b9",
       "product": {
         "name": "Linux",
@@ -95,6 +171,36 @@
         }
       },
       "product_version": "patch: 7.3"
+    },
+    {
+      "id": "c8b15f34-6969-39e0-83a8-26b6d25a3148",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c428ecd1a21f1457ca3beb4df71b8a079c410e41 <c03fb9c4be3b2dd0996d91e54f65407f7f475238"
+    },
+    {
+      "id": "df714a07-54c8-3ea8-8ab9-db74f2d726dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.161"
+    },
+    {
+      "id": "e63ab65e-12f7-3ebf-bfa7-1987bc6656b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c428ecd1a21f1457ca3beb4df71b8a079c410e41 <f8d2690f3c5dfad1fc306f6d5d84a1d3176c3af9"
     }
   ],
   "enisaIdVendor": [

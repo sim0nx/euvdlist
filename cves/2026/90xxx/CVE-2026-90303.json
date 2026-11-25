@@ -3,7 +3,7 @@
   "enisaUuid": "968389ca-0833-3fef-b194-3f79a72538d4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nARM: 9485/1: mm: acquire mmap write lock around show_pte() for user faults\n\nWhen CONFIG_DEBUG_USER=y, and cmdline \"user_debug=31\" is set,\na user fault may trigger show_pte() without any lock.\nIf another thread in the same process concurrently calls munmap(),\nthe page table pages may be freed while show_pte() is still traversing\nthem, causing a use-after-free in show_pte().\n\nIf CONFIG_ARM_LPAE=y, this may cause a kernel panic if the pages table\nof PMD are freed when show_pte() is running.\n\nAcquire mmap_write_lock() around show_pte() for user faults to fix the\ncontention.\n\nFor user faults, additionally restrict that show_pte() is called only\nwhen the addr is a user-space address (addr < TASK_SIZE). This is because\nthe lock of tsk->mm only protects the virtual memory of user address space,\nfurthermore, dumping the page tables of a kernel-space address for user\nfaults is unnecessary and may have security implications.\n\nKeep everything unchanged for kernel faults, because the kernel is\nalready in the \"oops\" state, acquiring a lock may risk a deadlock.",
   "datePublished": "Sep 17, 2026, 4:08:26 PM",
-  "dateUpdated": "Sep 17, 2026, 4:08:26 PM",
+  "dateUpdated": "Oct 19, 2026, 9:01:21 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/ab14f07952adfe735d86a53518f8cd576dfd5892",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/1039bffd6ae9c75b42b7d148d6c1106134107b66"
   ],
   "aliases": [
+    "GHSA-3rvr-4rpw-5w37",
     "CVE-2026-90303"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "08747765-8069-35f5-add5-f44a5d257a50",
@@ -132,6 +133,16 @@
       "product_version": "6d021b724481fbb908eb29384898deb9f00dfe70 <1039bffd6ae9c75b42b7d148d6c1106134107b66"
     },
     {
+      "id": "a98796ae-e03d-34fe-be59-e8dfe524cb68",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "aadb916e-f73d-304b-a068-9a2a29bbbcda",
       "product": {
         "name": "Linux",
@@ -190,16 +201,6 @@
         }
       },
       "product_version": "patch: 6.18.52"
-    },
-    {
-      "id": "fc71b824-a6e7-3a11-abfc-f94250761614",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     }
   ],
   "enisaIdVendor": [

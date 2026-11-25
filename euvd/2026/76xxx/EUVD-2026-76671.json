@@ -3,20 +3,33 @@
   "enisaUuid": "8e0fbd4b-aa36-3bae-b4b7-7415e56c03ec",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/kmemleak: avoid soft lockup when scanning task stacks\n\nPatch series \"mm/kmemleak: avoid soft lockup when scanning task\", v3.\n\nkmemleak_scan() scans every task stack under one rcu_read_lock() with no\nreschedule point, which can trip the soft lockup watchdog on hosts with\nvery many threads.\n\nThat prints the following message, depending on the workload+host\nconfiguration:\n\n      watchdog: BUG: soft lockup - CPU#35 stuck for 22s! [kmemleak:537]\n       scan_block\n       kmemleak_scan\n       kmemleak_scan_thread\n       kthread\n\nPatch 1 walks the tasks with find_ge_pid() so the scan reschedules between\ntasks\n\nPatches 2-3 let the scan loops stop early once a scan is interrupted.\n\n\nThis patch (of 3):\n\nkmemleak_scan() walks every thread and scans its kernel stack under a\nsingle rcu_read_lock() with no reschedule point.  On a host with very many\nthreads -- amplified by KASAN/lockdep in debug builds -- this loop can hog\na CPU long enough to trip the soft lockup watchdog:\n\n  watchdog: BUG: soft lockup - CPU#35 stuck for 22s! [kmemleak:537]\n   scan_block\n   kmemleak_scan\n   kmemleak_scan_thread\n   kthread\n\nA cond_resched() cannot be added directly: the loop runs inside an RCU\nread-side critical section.\n\nWalk the tasks one PID at a time with find_ge_pid(), taking the RCU read\nlock only to look up and pin each task.  The stack is then scanned with no\nlock held, so cond_resched() runs between tasks and the scan stops early\non scan_should_stop().  This follows the next_tgid()/task_seq_get_next()\niteration pattern and keeps each RCU critical section short.",
   "datePublished": "Sep 11, 2026, 7:47:01 PM",
-  "dateUpdated": "Sep 11, 2026, 7:47:01 PM",
+  "dateUpdated": "Oct 30, 2026, 12:32:57 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/2567818c2776d0a820506c3612261d9e24af7164",
+    "https://git.kernel.org/stable/c/f1cd6c4c35243377882c47236281d03ee3be6eeb",
     "https://git.kernel.org/stable/c/9a1b12c06c192290b8479de48f66f1e75d89c4b7",
     "https://git.kernel.org/stable/c/3fc8044251de21555fb02c365fa681bab8b0db55",
     "https://git.kernel.org/stable/c/1838c704bcb4fd3556cf67513c6f97a39099e35c",
     "https://git.kernel.org/stable/c/5d10d4e19e6daa487f0cd0ea6cba472325de92f9"
   ],
   "aliases": [
+    "GHSA-cr6x-j7pj-fq6g",
     "CVE-2026-89759"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
+    {
+      "id": "04dab84b-b923-35f1-b116-c421680c8222",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "1b0e4147-7e22-38af-83b2-2ad974ea441c",
       "product": {
@@ -58,6 +71,16 @@
       "product_version": "patch: 6.12.109"
     },
     {
+      "id": "57d9d848-2dcc-306a-90c4-ba3f0fd3af56",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
       "id": "628e438a-174a-34ba-931a-f9bce8dc3b16",
       "product": {
         "name": "Linux",
@@ -66,6 +89,16 @@
         }
       },
       "product_version": "c4b28963fd79457315783b3b0f21c01eb88cfdc1 <5d10d4e19e6daa487f0cd0ea6cba472325de92f9"
+    },
+    {
+      "id": "71658730-448d-3b02-9e2f-8d4ece8d8404",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c4b28963fd79457315783b3b0f21c01eb88cfdc1 <f1cd6c4c35243377882c47236281d03ee3be6eeb"
     },
     {
       "id": "80213e9e-6c76-39ab-a495-81092b40cefa",
@@ -88,16 +121,6 @@
       "product_version": "c4b28963fd79457315783b3b0f21c01eb88cfdc1 <9a1b12c06c192290b8479de48f66f1e75d89c4b7"
     },
     {
-      "id": "b46a1d21-9b63-3379-a5e5-5166d676d4f3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "b4b0fc51-ec44-314a-aca9-6fc561386e3a",
       "product": {
         "name": "Linux",
@@ -106,6 +129,26 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "cbada6be-0914-36bf-ac95-e7ee129ad31e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "e78b93e9-8366-3ee8-a2ac-974985ae83b6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c4b28963fd79457315783b3b0f21c01eb88cfdc1 <2567818c2776d0a820506c3612261d9e24af7164"
     },
     {
       "id": "fe6df804-3a1e-380d-b0eb-b76eb831d7be",

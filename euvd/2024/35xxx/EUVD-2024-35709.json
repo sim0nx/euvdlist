@@ -1,0 +1,109 @@
+{
+  "id": "EUVD-2024-35709",
+  "enisaUuid": "15386dd8-b728-3e3e-87ac-17d613a03d60",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndmaengine: idxd: Convert spinlock to mutex to lock evl workqueue\n\ndrain_workqueue() cannot be called safely in a spinlocked context due to\npossible task rescheduling. In the multi-task scenario, calling\nqueue_work() while drain_workqueue() will lead to a Call Trace as\npushing a work on a draining workqueue is not permitted in spinlocked\ncontext.\n    Call Trace:\n    <TASK>\n    ? __warn+0x7d/0x140\n    ? __queue_work+0x2b2/0x440\n    ? report_bug+0x1f8/0x200\n    ? handle_bug+0x3c/0x70\n    ? exc_invalid_op+0x18/0x70\n    ? asm_exc_invalid_op+0x1a/0x20\n    ? __queue_work+0x2b2/0x440\n    queue_work_on+0x28/0x30\n    idxd_misc_thread+0x303/0x5a0 [idxd]\n    ? __schedule+0x369/0xb40\n    ? __pfx_irq_thread_fn+0x10/0x10\n    ? irq_thread+0xbc/0x1b0\n    irq_thread_fn+0x21/0x70\n    irq_thread+0x102/0x1b0\n    ? preempt_count_add+0x74/0xa0\n    ? __pfx_irq_thread_dtor+0x10/0x10\n    ? __pfx_irq_thread+0x10/0x10\n    kthread+0x103/0x140\n    ? __pfx_kthread+0x10/0x10\n    ret_from_fork+0x31/0x50\n    ? __pfx_kthread+0x10/0x10\n    ret_from_fork_asm+0x1b/0x30\n    </TASK>\n\nThe current implementation uses a spinlock to protect event log workqueue\nand will lead to the Call Trace due to potential task rescheduling.\n\nTo address the locking issue, convert the spinlock to mutex, allowing\nthe drain_workqueue() to be called in a safe mutex-locked context.\n\nThis change ensures proper synchronization when accessing the event log\nworkqueue, preventing potential Call Trace and improving the overall\nrobustness of the code.",
+  "datePublished": "May 20, 2024, 9:47:56 AM",
+  "dateUpdated": "May 11, 2026, 8:15:11 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/758071a35d9f3ffd84ff12169d081412a2f5f098",
+    "https://git.kernel.org/stable/c/c9b732a9f73eadc638abdcf0a6d39bc7a0c1af5f",
+    "https://git.kernel.org/stable/c/d5638de827cff0fce77007e426ec0ffdedf68a44"
+  ],
+  "aliases": [
+    "CVE-2024-35991",
+    "GHSA-g55p-876w-v4vx"
+  ],
+  "assigner": "Linux",
+  "epss": 0.16,
+  "enisaIdProduct": [
+    {
+      "id": "01842947-64d3-34e8-9573-6573a397e668",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "3648fa96-29dd-3c10-b11c-92bd85830355",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.4"
+    },
+    {
+      "id": "5ea3b8af-1f4f-3a5c-b410-fa9463d9a623",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.9"
+    },
+    {
+      "id": "899fe9b9-c1b9-3ad9-b825-7f8419518094",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c40bd7d9737bdcfb02d42765bc6c59b338151123 <d5638de827cff0fce77007e426ec0ffdedf68a44"
+    },
+    {
+      "id": "92e9b7eb-2444-309c-bbcf-763dc97b0b37",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.30"
+    },
+    {
+      "id": "c3656de1-fc46-3561-827d-82d6345364d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c40bd7d9737bdcfb02d42765bc6c59b338151123 <c9b732a9f73eadc638abdcf0a6d39bc7a0c1af5f"
+    },
+    {
+      "id": "e94eb3c8-80f9-3ef5-a82d-8b9b418894e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "f13fed0d-cbc2-3443-9d80-a4b4260bac9e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c40bd7d9737bdcfb02d42765bc6c59b338151123 <758071a35d9f3ffd84ff12169d081412a2f5f098"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b2e0b8b2-6628-34a3-bfad-3263f31e8f14",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

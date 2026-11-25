@@ -1,0 +1,306 @@
+{
+  "id": "EUVD-2024-39527",
+  "enisaUuid": "5975a097-aa58-38ea-a933-fef509333ccd",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\next4: make sure the first directory block is not a hole\n\nThe syzbot constructs a directory that has no dirblock but is non-inline,\ni.e. the first directory block is a hole. And no errors are reported when\ncreating files in this directory in the following flow.\n\n    ext4_mknod\n     ...\n      ext4_add_entry\n        // Read block 0\n        ext4_read_dirblock(dir, block, DIRENT)\n          bh = ext4_bread(NULL, inode, block, 0)\n          if (!bh && (type == INDEX || type == DIRENT_HTREE))\n          // The first directory block is a hole\n          // But type == DIRENT, so no error is reported.\n\nAfter that, we get a directory block without '.' and '..' but with a valid\ndentry. This may cause some code that relies on dot or dotdot (such as\nmake_indexed_dir()) to crash.\n\nTherefore when ext4_read_dirblock() finds that the first directory block\nis a hole report that the filesystem is corrupted and return an error to\navoid loading corrupted data from disk causing something bad.",
+  "datePublished": "Aug 17, 2024, 9:09:10 AM",
+  "dateUpdated": "Oct 15, 2026, 12:48:16 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/d81d7e347d1f1f48a5634607d39eb90c161c8afe",
+    "https://git.kernel.org/stable/c/e02f9941e8c011aa3eafa799def6a134ce06bcfa",
+    "https://git.kernel.org/stable/c/de2a011a13a46468a6e8259db58b1b62071fe136",
+    "https://git.kernel.org/stable/c/9771e3d8365ae1dd5e8846a204cb9af14e3e656a",
+    "https://git.kernel.org/stable/c/b609753cbbd38f8c0affd4956c0af178348523ac",
+    "https://git.kernel.org/stable/c/c3893d9de8ee153baac56d127d844103488133b5",
+    "https://git.kernel.org/stable/c/299bc6ffa57e04e74c6cce866d6c0741fb4897a1",
+    "https://git.kernel.org/stable/c/f9ca51596bbfd0f9c386dd1c613c394c78d9e5e6"
+  ],
+  "aliases": [
+    "CVE-2024-42304",
+    "GHSA-v546-2fcj-rwvx"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "12679de8-744e-393d-be89-568f933d759f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7f1f86276515f6816a98f6ca3ef99c827d54642f"
+    },
+    {
+      "id": "159e88cf-d610-35bd-92e8-e81266278aa1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.14.135 <4.15"
+    },
+    {
+      "id": "16f8f12d-84a0-3f41-8006-fb16e05f8d59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5021b7a5bdd6bb859eb648c3da71cdd6aae1d133"
+    },
+    {
+      "id": "1c6ca4a0-d302-3977-9ea2-ee7b6a176d09",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4e19d6b65fb4fc42e352ce9883649e049da14743 <299bc6ffa57e04e74c6cce866d6c0741fb4897a1"
+    },
+    {
+      "id": "248485e4-e9a0-358c-8dba-d416a59f5427",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.9.187 <4.10"
+    },
+    {
+      "id": "435a5048-7730-3d6b-81da-74d484bf5220",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.103"
+    },
+    {
+      "id": "456d2df9-a32a-394d-9227-9147d8dd9260",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3a17ca864baffc0c6f6e8aad525aa4365775a193 <d81d7e347d1f1f48a5634607d39eb90c161c8afe"
+    },
+    {
+      "id": "4f48e471-570c-3779-9503-b0c828d1a150",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.1.21 <5.2"
+    },
+    {
+      "id": "51fc7a3f-8146-3636-80c6-9c3337e0f49a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.3"
+    },
+    {
+      "id": "53dcc43c-f24e-3523-93f0-33d9c448015c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4e19d6b65fb4fc42e352ce9883649e049da14743 <b609753cbbd38f8c0affd4956c0af178348523ac"
+    },
+    {
+      "id": "57946fb7-8e5d-3341-bd63-34569d85a73b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4e19d6b65fb4fc42e352ce9883649e049da14743 <de2a011a13a46468a6e8259db58b1b62071fe136"
+    },
+    {
+      "id": "5956dc59-2092-329c-ab43-5c46824f6591",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.2.4 <5.3"
+    },
+    {
+      "id": "6823c70d-ba47-3f07-a19c-37d5023556da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.320"
+    },
+    {
+      "id": "726df5de-d807-391b-a492-962d360faa6b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.44"
+    },
+    {
+      "id": "7c4fc024-5e29-379e-8a09-f3db64e43cd2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.282"
+    },
+    {
+      "id": "80c4dcc7-a0c9-3327-a6cc-944ba5d6e7eb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4e19d6b65fb4fc42e352ce9883649e049da14743 <f9ca51596bbfd0f9c386dd1c613c394c78d9e5e6"
+    },
+    {
+      "id": "84418606-55ff-3bc0-9950-e6fe6160d270",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "87d3ac8c-a6bf-3606-9322-edf6eb79c916",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3f0307b0d2d8b333a6964fc4c820dc86896fd1cf"
+    },
+    {
+      "id": "8b6679a6-d6d6-3b2e-a72f-b8dbdae529a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.165"
+    },
+    {
+      "id": "91c67b85-0759-3c24-b85e-58b0457793ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "a1832a5d-62a6-3b0e-93db-c1b31bcf6fe3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.224"
+    },
+    {
+      "id": "be2eca9b-81e2-3fcb-b428-ebef51610047",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.3"
+    },
+    {
+      "id": "d07d559f-0049-3cb1-8d8e-99f2f7127359",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4e19d6b65fb4fc42e352ce9883649e049da14743 <9771e3d8365ae1dd5e8846a204cb9af14e3e656a"
+    },
+    {
+      "id": "dea6e6a0-9ca9-33eb-8c14-7e3a1595acc5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.19.62 <4.19.320"
+    },
+    {
+      "id": "f01d5d6c-27e0-394d-ab00-c9b5cee475fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "514631c2225c1fd556c799cc1893fb27b0f48f00"
+    },
+    {
+      "id": "fc03bab8-a002-3ebf-a384-c42f82e7d8c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4e19d6b65fb4fc42e352ce9883649e049da14743 <e02f9941e8c011aa3eafa799def6a134ce06bcfa"
+    },
+    {
+      "id": "fe6b2fcd-ac9e-3cc4-84cf-353213cd8f20",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4e19d6b65fb4fc42e352ce9883649e049da14743 <c3893d9de8ee153baac56d127d844103488133b5"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "3a155c92-c77f-3d04-91f2-b03de6b741a4",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

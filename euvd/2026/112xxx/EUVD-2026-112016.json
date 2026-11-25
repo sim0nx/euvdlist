@@ -3,18 +3,21 @@
   "enisaUuid": "dfbecb91-e271-3fcf-b9c6-9493225cc522",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: psp: do not inherit the Rx association on clone\n\nsk->psp_assoc sits past sk_dontcopy_end, so sock_copy() copies it into\nevery socket accepted from a listener without taking a reference, while\ninet_sock_destruct() puts for every inet socket. psp_twsk_init() does\nrefcount_inc() for the timewait socket, so a child closing through\nTIME_WAIT cancels its own put and leaves the association with one\nreference and N timewait sockets holding the same pointer. Closing the\nlistener frees it, and the timewait timers then put freed memory.\n\nRejecting the association on a listening socket is not sufficient: a socket\ncan acquire one while established and then be turned back into a listener,\nbecause tcp_disconnect() leaves sk->psp_assoc in place.\n\n  BUG: KASAN: slab-use-after-free in psp_twsk_assoc_free+0x6f/0xf0\n  Write of size 4 at addr ffff888110f9255c by task swapper/7/0\n   psp_twsk_assoc_free+0x6f/0xf0\n   inet_twsk_put+0xda/0x1b0\n   call_timer_fn+0x53/0x2e0\n   __run_timers+0x764/0xa80\n  Freed by task 99:\n   kfree+0x1a7/0x500\n   process_one_work+0x7ec/0x1100\n\nAn association carries a per-connection SPI and key, so a child must not\ninherit the parent's. Clear it on clone.",
   "datePublished": "Oct 28, 2026, 10:34:33 AM",
-  "dateUpdated": "Oct 28, 2026, 10:34:33 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 31, 2026, 12:43:13 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/a9f14ea73e82db743f0acf4219f499d594589288",
     "https://git.kernel.org/stable/c/c962695467d3ab9738a6508279827ec33a7d2bdf",
     "https://git.kernel.org/stable/c/1d2929d0850fff683b8aff051275945e65f082c8"
   ],
   "aliases": [
-    "CVE-2026-99116"
+    "CVE-2026-99116",
+    "GHSA-7x5j-pq24-445m"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "1c8df31a-0fb3-3268-9b08-78efc3139f23",

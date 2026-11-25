@@ -1,0 +1,153 @@
+{
+  "id": "EUVD-2021-34355",
+  "enisaUuid": "d100165e-2cab-3d99-a45c-fca6bbb621d4",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\npowerpc/mm: Fix lockup on kernel exec fault\n\nThe powerpc kernel is not prepared to handle exec faults from kernel.\nEspecially, the function is_exec_fault() will return 'false' when an\nexec fault is taken by kernel, because the check is based on reading\ncurrent->thread.regs->trap which contains the trap from user.\n\nFor instance, when provoking a LKDTM EXEC_USERSPACE test,\ncurrent->thread.regs->trap is set to SYSCALL trap (0xc00), and\nthe fault taken by the kernel is not seen as an exec fault by\nset_access_flags_filter().\n\nCommit d7df2443cd5f (\"powerpc/mm: Fix spurious segfaults on radix\nwith autonuma\") made it clear and handled it properly. But later on\ncommit d3ca587404b3 (\"powerpc/mm: Fix reporting of kernel execute\nfaults\") removed that handling, introducing test based on error_code.\nAnd here is the problem, because on the 603 all upper bits of SRR1\nget cleared when the TLB instruction miss handler bails out to ISI.\n\nUntil commit cbd7e6ca0210 (\"powerpc/fault: Avoid heavy\nsearch_exception_tables() verification\"), an exec fault from kernel\nat a userspace address was indirectly caught by the lack of entry for\nthat address in the exception tables. But after that commit the\nkernel mainly relies on KUAP or on core mm handling to catch wrong\nuser accesses. Here the access is not wrong, so mm handles it.\nIt is a minor fault because PAGE_EXEC is not set,\nset_access_flags_filter() should set PAGE_EXEC and voila.\nBut as is_exec_fault() returns false as explained in the beginning,\nset_access_flags_filter() bails out without setting PAGE_EXEC flag,\nwhich leads to a forever minor exec fault.\n\nAs the kernel is not prepared to handle such exec faults, the thing to\ndo is to fire in bad_kernel_fault() for any exec fault taken by the\nkernel, as it was prior to commit d3ca587404b3.",
+  "datePublished": "May 21, 2024, 2:35:55 PM",
+  "dateUpdated": "May 11, 2026, 1:53:00 PM",
+  "baseScore": 5.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/a82471a14aad90f79d1608d2bcbb019f0ffb53f0",
+    "https://git.kernel.org/stable/c/d2e52d4664097a6c1f591d869ec594bd7a0d4925",
+    "https://git.kernel.org/stable/c/500f81cec9f1bfa5210aa9dd5ba9a06e22f62a35",
+    "https://git.kernel.org/stable/c/8a96ec5ebf96ad8e2ba7b1b34103a0be5140fc70",
+    "https://git.kernel.org/stable/c/cd5d5e602f502895e47e18cd46804d6d7014e65c"
+  ],
+  "aliases": [
+    "GHSA-5hmx-w727-fqq7",
+    "CVE-2021-47350"
+  ],
+  "assigner": "Linux",
+  "epss": 0.18,
+  "enisaIdProduct": [
+    {
+      "id": "3894a1fe-34de-32f4-a092-2f3c1344a2ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.133"
+    },
+    {
+      "id": "54e2d13b-132e-3c52-a0c4-bbbf214a7207",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d3ca587404b36943b02df87406054ce73cc49500 <500f81cec9f1bfa5210aa9dd5ba9a06e22f62a35"
+    },
+    {
+      "id": "5a07c82b-2793-30df-8687-4679b3a21f07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "5c9f6bf0-ae1f-37ca-91f4-cb9eac999371",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d3ca587404b36943b02df87406054ce73cc49500 <cd5d5e602f502895e47e18cd46804d6d7014e65c"
+    },
+    {
+      "id": "5e4e0c58-0dc1-3179-b8d4-da2e8e7bd9e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d3ca587404b36943b02df87406054ce73cc49500 <a82471a14aad90f79d1608d2bcbb019f0ffb53f0"
+    },
+    {
+      "id": "707da3e0-bd53-3db6-83a6-bcea4c984419",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.14"
+    },
+    {
+      "id": "72429a84-74b7-3c7d-8339-f9ffbf61da3b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.18"
+    },
+    {
+      "id": "8fe503eb-3217-3fcd-a8bb-08f99248fb29",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.51"
+    },
+    {
+      "id": "b57eb8b4-ab66-3577-b30f-4a0eb586f482",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d3ca587404b36943b02df87406054ce73cc49500 <8a96ec5ebf96ad8e2ba7b1b34103a0be5140fc70"
+    },
+    {
+      "id": "cbe7986c-fda6-37ec-bc86-b7fd155f60ed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d3ca587404b36943b02df87406054ce73cc49500 <d2e52d4664097a6c1f591d869ec594bd7a0d4925"
+    },
+    {
+      "id": "d46744d9-bc46-3eb2-a6fb-7e6381328a4a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.14"
+    },
+    {
+      "id": "f3e9ddc3-b702-37d7-ae12-730769b4614e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4e65efe7-1d1b-3547-8861-0d13bf506514",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

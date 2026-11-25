@@ -3,9 +3,13 @@
   "enisaUuid": "c1aa309c-d4b4-370b-9c63-ebbb1f3d1943",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsmb: client: fix potential OOB read in smb3_enum_snapshots()\n\nIf snapshot_array_size is smaller than GMT_TOKEN_SIZE,\nsmb3_enum_snapshots() sets ret_data_len to\nsizeof(struct smb_snapshot_array) without verifying the actual length\nof the server's reply.\n\nBecause SMB2_ioctl() places no lower bound on the server-supplied\nOutputCount and allocates retbuf to exactly that length, a short reply\nresults in ret_data_len exceeding the size of retbuf. The subsequent\ncopy_to_user() then reads past the end of retbuf, leaking adjacent slab\nmemory to userspace.  The subsequent clamp check is ineffective as it\nonly reduces ret_data_len.\n\nFix this by rejecting replies shorter than\nsizeof(struct smb_snapshot_array) with -EIO. Note that the bound is set\nto the 12-byte struct size rather than the 16-byte\nMIN_SNAPSHOT_ARRAY_SIZE defined in MS-SMB2 3.3.5.15.1, because 12 bytes\nis exactly what copy_to_user() attempts to read.",
   "datePublished": "Oct 6, 2026, 8:44:14 AM",
-  "dateUpdated": "Oct 6, 2026, 8:44:14 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:37:47 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/67ef1d6da00f4f39eb5fcebe7a44fe494b645059",
+    "https://git.kernel.org/stable/c/5edf5b398d49b881c0df79d6e4f6df251236c533",
     "https://git.kernel.org/stable/c/15a221c734b9d044ab769e7e3606b2cab96fb65a",
     "https://git.kernel.org/stable/c/74995ee8305a7c4d76ee70d6acd996a75eda3c03",
     "https://git.kernel.org/stable/c/210f0f1f67817e7d2348b86b5115a9b85ef5c98b",
@@ -14,10 +18,11 @@
     "https://git.kernel.org/stable/c/4775c3b7a597907e0b97556c7986fda238a377ae"
   ],
   "aliases": [
-    "CVE-2026-98169"
+    "CVE-2026-98169",
+    "GHSA-2c6m-5vjc-xqc6"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.45,
   "enisaIdProduct": [
     {
       "id": "0ae99093-f934-38fe-9ea9-83227ee87292",
@@ -100,6 +105,26 @@
       "product_version": "e02789a53d71334b067ad72eee5d4e88a0158083 <1cdf0d304d820fb13bf0faf532c3459600f9ea43"
     },
     {
+      "id": "980f0cc4-a294-3499-b5a4-7787aaae6533",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "99704ad1-ffe8-3870-8243-7f486eedaeb4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e02789a53d71334b067ad72eee5d4e88a0158083 <5edf5b398d49b881c0df79d6e4f6df251236c533"
+    },
+    {
       "id": "9c82f5e6-888c-32f1-9126-1262133680e8",
       "product": {
         "name": "Linux",
@@ -140,6 +165,16 @@
       "product_version": "4.9.125 <4.10"
     },
     {
+      "id": "b8168a6c-6ba6-3934-b1e1-23a1af73e31a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
       "id": "b958dfad-d3e8-31b6-a0ed-1e6657a81f3a",
       "product": {
         "name": "Linux",
@@ -148,6 +183,16 @@
         }
       },
       "product_version": "e02789a53d71334b067ad72eee5d4e88a0158083 <dbe452a905dfe2804647530a9ff3d7e3826ed04d"
+    },
+    {
+      "id": "b96d540e-511c-332b-9e9d-a4b46f327223",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
     },
     {
       "id": "c1b893a2-e019-300f-bc64-d4de362f50e7",
@@ -190,6 +235,16 @@
       "product_version": "25b981bfe192fd208ba04c81f4aa30ffb5141660"
     },
     {
+      "id": "dbdffe7f-b4fb-3565-b0d0-fdf2d394cc59",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "e02789a53d71334b067ad72eee5d4e88a0158083 <67ef1d6da00f4f39eb5fcebe7a44fe494b645059"
+    },
+    {
       "id": "eef6ebb0-fd5e-3e82-90d3-ee5699a20881",
       "product": {
         "name": "Linux",
@@ -198,16 +253,6 @@
         }
       },
       "product_version": "patch: 7.2.8"
-    },
-    {
-      "id": "f95ca127-76c0-3ed4-a612-a797041050ea",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "ff2bc6cd-ae7f-3f18-b7ff-bf0712f3ce42",

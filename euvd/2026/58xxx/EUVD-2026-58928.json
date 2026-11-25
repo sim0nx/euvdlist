@@ -2,23 +2,27 @@
   "id": "EUVD-2026-58928",
   "enisaUuid": "8353a478-26a8-3f7b-bed5-15bb2a98824f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\n9p: skip nlink update in cacheless mode to fix WARN_ON\n\nv9fs_dec_count() unconditionally calls drop_nlink() on regular files,\neven when the inode's nlink is already zero. In cacheless mode the\nclient refetches inode metadata from the server (the source of truth)\non every operation, so by the time v9fs_remove() returns, the locally\ncached nlink may already reflect the post-unlink value:\n\n  1. Client initiates unlink, server processes it and sets nlink to 0\n  2. Client refetches inode metadata (nlink=0) before unlink returns\n  3. Client's v9fs_remove() completes successfully\n  4. Client calls v9fs_dec_count() which calls drop_nlink() on nlink=0\n\nThis race is easily triggered under heavy unlink workloads, such as\nstress-ng's unlink stressor, producing the following warning:\n\n  WARNING: fs/inode.c:417 at drop_nlink+0x4c/0xc8\n  Call trace:\n   drop_nlink+0x4c/0xc8\n   v9fs_remove+0x1e0/0x250 [9p]\n   v9fs_vfs_unlink+0x20/0x38 [9p]\n   vfs_unlink+0x13c/0x258\n   ...\n\nIn cacheless mode the server is authoritative and the inode is on its\nway out, so locally adjusting nlink buys nothing. Skip v9fs_dec_count()\nentirely when neither CACHE_META nor CACHE_LOOSE is set, which both\navoids the warning and removes a class of nlink races (two concurrent\nunlinkers observing nlink > 0 and both calling drop_nlink()) that an\nnlink == 0 guard alone would only narrow rather than close.",
-  "datePublished": "Aug 15, 2026, 6:32:14 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:14 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:53:36 AM",
+  "dateUpdated": "Oct 16, 2026, 6:45:00 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/6086469f7d469549bfd070348b717a6e43736200",
+    "https://git.kernel.org/stable/c/ab257019cb72f467b55c95384d99c94e3908b928",
+    "https://git.kernel.org/stable/c/4ec4ebe40c82cb4c60756732f6593055d010c59c",
     "https://git.kernel.org/stable/c/a5a682b016ef5b5384e28f6d652d47a8f8e73d37",
     "https://git.kernel.org/stable/c/de79c3f3643841b8659a71958df7cf2a66bfd409",
     "https://git.kernel.org/stable/c/8d610017c992de705b304d3d727a6e3a86af6149",
     "https://git.kernel.org/stable/c/8faccac11e1369adddf5d80f4a45af93f13b2e1a",
-    "https://git.kernel.org/stable/c/574aa0b4799470ac814479f1138d19efe6262255",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72170"
+    "https://git.kernel.org/stable/c/574aa0b4799470ac814479f1138d19efe6262255"
   ],
   "aliases": [
     "CVE-2026-72170",
     "GHSA-g6rc-qhh9-wvwv"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "05e340be-9ba3-363e-8300-8047555038f9",
@@ -51,6 +55,16 @@
       "product_version": "4.17"
     },
     {
+      "id": "0b9ccbc7-90fa-3bae-ba2c-4f2c36bb07fb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ac89b2ef9b55924bcf922251f043ba73a32d05bb <ab257019cb72f467b55c95384d99c94e3908b928"
+    },
+    {
       "id": "12176459-c213-3859-9547-3ed13b817d96",
       "product": {
         "name": "Linux",
@@ -69,6 +83,16 @@
         }
       },
       "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "28530134-494a-3617-beba-8771d9e6e509",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ac89b2ef9b55924bcf922251f043ba73a32d05bb <6086469f7d469549bfd070348b717a6e43736200"
     },
     {
       "id": "7d1a6d6f-37dd-3356-add1-f0806fd9b769",
@@ -101,14 +125,34 @@
       "product_version": "ac89b2ef9b55924bcf922251f043ba73a32d05bb <a5a682b016ef5b5384e28f6d652d47a8f8e73d37"
     },
     {
-      "id": "9874e18b-4017-3a1e-b708-0217d8f2d995",
+      "id": "932d8097-657e-3b97-affd-2095d59f1f7b",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "ac89b2ef9b55924bcf922251f043ba73a32d05bb <4ec4ebe40c82cb4c60756732f6593055d010c59c"
+    },
+    {
+      "id": "abd9ddb6-be81-3af2-bd08-43c5716ef507",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.184"
+    },
+    {
+      "id": "c3001250-832c-34f0-a43f-48d5da44e90a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.266"
     },
     {
       "id": "d4acf74c-c489-315a-9017-004d73095751",
@@ -119,6 +163,26 @@
         }
       },
       "product_version": "patch: 6.6.145"
+    },
+    {
+      "id": "ec478dea-c741-3167-8634-b3c5026c4698",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.217"
+    },
+    {
+      "id": "ed97dd46-b5e1-380a-8212-372e83297229",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "f432f02a-9f69-3932-9668-9b9c9e9f4228",

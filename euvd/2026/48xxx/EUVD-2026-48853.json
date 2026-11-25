@@ -3,7 +3,7 @@
   "enisaUuid": "c945bf04-ca2f-333b-b12f-7f01188db731",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrust: block: fix GenDisk cleanup paths\n\nGenDiskBuilder::build() still has fallible work after\n__blk_mq_alloc_disk(), but its error path only recovers the\nforeign queue data. That leaks the temporary gendisk and\nrequest_queue until later teardown. If the caller moved the last\nArc<TagSet<T>> into build(), the leaked queue can retain blk-mq\nstate after the tag set is dropped.\n\nFix the pre-registration failure path by dropping the temporary\ngendisk reference with put_disk() before recovering queue_data,\nso disk_release() can tear down the owned queue.\n\nAlso pair GenDisk::drop() with put_disk() after del_gendisk().\nOnce a Rust GenDisk has been added with device_add_disk(),\ndel_gendisk() only unregisters it; the final gendisk reference\nstill has to be dropped to complete the release path.",
   "datePublished": "Jul 25, 2026, 8:52:02 AM",
-  "dateUpdated": "Jul 25, 2026, 8:52:02 AM",
+  "dateUpdated": "Aug 17, 2026, 4:56:59 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/d1dcaa5229a63a6b6df7e0f673fe576cf3d6e8cb",
@@ -12,11 +12,22 @@
     "https://git.kernel.org/stable/c/2957771379fa335103a4b539db57bb2271e12142"
   ],
   "aliases": [
-    "CVE-2026-64509"
+    "CVE-2026-64509",
+    "GHSA-5653-8mcx-7p26"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.11,
   "enisaIdProduct": [
+    {
+      "id": "01f4e273-de89-3134-a58d-83a142bede55",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "08a44251-eddd-3330-813c-1503dbd0cdb8",
       "product": {
@@ -36,16 +47,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "42365c5d-c7ac-3a58-b6ac-e111fdcf452e",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "58eda9c1-4fbb-3d7c-a6f1-4bc1a2305a57",

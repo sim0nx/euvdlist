@@ -2,9 +2,11 @@
   "id": "EUVD-2026-59041",
   "enisaUuid": "83a146fa-78aa-33fd-bd4f-bf565401ccb3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: target: core: Fix iSCSI ISID use-after-free in REGISTER AND MOVE\n\ncore_scsi3_emulate_pro_register_and_move() maps the PERSISTENT RESERVE OUT\nparameter list with transport_kmap_data_sg() and parses the destination\nTransportID with target_parse_pr_out_transport_id(). For an iSCSI\nTransportID (FORMAT CODE 01b), iscsi_parse_pr_out_transport_id() returns\nthe ISID in iport_ptr as a raw pointer into that mapped buffer.\n\nThe function then unmaps the buffer with transport_kunmap_data_sg() before\ndereferencing iport_ptr in strcmp(), __core_scsi3_locate_pr_reg() and\ncore_scsi3_alloc_registration(). When the parameter list spans more than\none page (PARAMETER LIST LENGTH > 4096), transport_kmap_data_sg() uses\nvmap() and transport_kunmap_data_sg() does vunmap(), so the kernel virtual\naddress backing iport_ptr is torn down and every subsequent dereference is\na use-after-free read of the unmapped region.\n\nKeep the parameter list mapped until iport_ptr is no longer needed: drop\nthe early transport_kunmap_data_sg() and unmap once on the success path,\nright before returning. The error paths already unmap through the existing\n\"if (buf) transport_kunmap_data_sg(cmd)\" at the out: label, which now runs\non every post-map error exit because buf is no longer cleared early. Only\nreads of the mapping happen while spinlocks are held; the map and unmap\ncalls remain outside any lock. The sibling caller\ncore_scsi3_decode_spec_i_port() already uses the buffer before unmapping it\nand is left unchanged.",
-  "datePublished": "Aug 15, 2026, 6:32:11 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:11 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:52:32 AM",
+  "dateUpdated": "Oct 19, 2026, 9:19:26 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/7d56f5c868d92c9d504a34a3ea450bce481c7f63",
     "https://git.kernel.org/stable/c/59a2a5a37dc49a641ad6bc64aee34e5a61025ffd",
@@ -13,15 +15,14 @@
     "https://git.kernel.org/stable/c/05b3e37433cf2eaf8867f1c16528aa347bb212ab",
     "https://git.kernel.org/stable/c/cb7bdae7fba404852ade34b0c1445fbaf3e54fbb",
     "https://git.kernel.org/stable/c/ef2ee18fec92088c7d8877baf7674e89389ccd66",
-    "https://git.kernel.org/stable/c/fda6a1f3c3d7047b5ce5654487649c2daa738bfc",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72083"
+    "https://git.kernel.org/stable/c/fda6a1f3c3d7047b5ce5654487649c2daa738bfc"
   ],
   "aliases": [
     "CVE-2026-72083",
     "GHSA-4wvq-w7j8-wrfm"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.72,
   "enisaIdProduct": [
     {
       "id": "0fbdc7d0-3e99-33ac-a5f7-665f0956701c",
@@ -144,6 +145,16 @@
       "product_version": "patch: 6.1.178"
     },
     {
+      "id": "c2b0f28d-a551-39fe-a2a1-f56aafc00667",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "c500aa7d-6839-3ccd-89ae-40501ab4a139",
       "product": {
         "name": "Linux",
@@ -172,16 +183,6 @@
         }
       },
       "product_version": "patch: 5.10.261"
-    },
-    {
-      "id": "dec4ce81-f24a-34a1-8385-57c856f73f09",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
     },
     {
       "id": "df95ba94-b444-3a2a-84ab-086f70ec61db",

@@ -1,9 +1,9 @@
 {
   "id": "EUVD-2025-209860",
   "enisaUuid": "c2c5ad11-a98e-3222-a5f5-32e8c9024b04",
-  "description": "Strapi has a rate limit bypass on users-permissions plugin via attacker-controlled email keying",
-  "datePublished": "May 13, 2026, 8:02:15 PM",
-  "dateUpdated": "May 13, 2026, 8:02:15 PM",
+  "description": "Strapi is an open source headless content management system. In Strapi versions prior to 5.45.0, the rate-limit middleware in the users-permissions plugin derived its rate-limit key in part from `ctx.request.body.email`, including on routes whose body schema does not contain an `email` field (`/auth/local`, `/auth/reset-password`, `/auth/change-password`). An unauthenticated attacker could include an arbitrary `email` value in the request body to obtain a fresh rate-limit key per request, effectively bypassing per-IP throttling on those routes and enabling high-volume credential brute-force, password-reset code brute-force, and credential-stuffing attempts. The rate-limit key was constructed as `${userIdentifier}:${requestPath}:${ctx.request.ip}`, where `userIdentifier = ctx.request.body.email`. On routes that legitimately use email as their identifier (e.g. `/auth/forgot-password`, `/auth/local/register`), this scoping is correct. On routes that use a different identifier (`identifier` for login, `code` for password reset, `currentPassword` for password change), the email field was not part of the route contract, but the middleware still incorporated it into the key, allowing a caller to rotate the value and obtain a unique key on every request. The patch in version 5.45.0 maintains an allow-list of routes that legitimately key on the email field and excludes that key component on every other route the middleware is mounted on. OAuth callback paths (`/connect/*`) are treated identifier-less. On routes outside the allow-list, the middleware now falls back to a fixed identifier-less key, ensuring per-IP throttling remains effective even when the request body is attacker-controlled.",
+  "datePublished": "May 14, 2026, 6:32:01 PM",
+  "dateUpdated": "May 16, 2026, 12:49:25 AM",
   "baseScore": 6.9,
   "baseScoreVersion": "4.0",
   "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N",
@@ -18,26 +18,25 @@
     "GHSA-7mqx-wwh4-f9fw"
   ],
   "assigner": "GitHub_M",
-  "epss": 0.0,
+  "epss": 0.49,
   "enisaIdProduct": [
     {
       "id": "487f7211-e9be-301f-b236-996decc01e3e",
       "product": {
-        "name": "Strapi"
+        "name": "Strapi",
+        "vendor": {
+          "name": "strapi"
+        }
       },
       "product_version": "< 5.45.0"
     },
     {
       "id": "8280008c-3117-3ef4-8997-2100d20ee3f6",
       "product": {
-        "name": "@strapi/plugin-users-permissions"
-      },
-      "product_version": "< 5.45.0"
-    },
-    {
-      "id": "8bf97f59-1590-3441-8fad-b33d12444144",
-      "product": {
-        "name": "Strapi"
+        "name": "@strapi/plugin-users-permissions",
+        "vendor": {
+          "name": "strapi"
+        }
       },
       "product_version": "< 5.45.0"
     }

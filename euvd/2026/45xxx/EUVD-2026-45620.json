@@ -3,8 +3,10 @@
   "enisaUuid": "51165241-204a-3533-9348-29013a74b408",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: tls: fix off-by-one in sg_chain entry count for wrapped sk_msg ring\n\nWhen an sk_msg scatterlist ring wraps (sg.end < sg.start),\ntls_push_record() chains the tail portion of the ring to the head\nusing sg_chain(). An extra entry in the sg array is reserved for\nthis:\n\n  struct sk_msg_sg {\n        [...]\n        /* The extra two elements:\n         * 1) used for chaining the front and sections when the list becomes\n         *    partitioned (e.g. end < start). The crypto APIs require the\n         *    chaining;\n         * 2) to chain tailer SG entries after the message.\n         */\n        struct scatterlist              data[MAX_MSG_FRAGS + 2];\n\nThe current code uses MAX_SKB_FRAGS + 1 as the ring size:\n\n    sg_chain(&msg_pl->sg.data[msg_pl->sg.start],\n             MAX_SKB_FRAGS - msg_pl->sg.start + 1,\n             msg_pl->sg.data);\n\nThis places the chain pointer at\n\n  sg_chain(data[start], (MAX_SKB_FRAGS - msg_start + 1) .. =\n  &data[start] + (MAX_SKB_FRAGS - msg_start + 1) - 1 =\n  data[start + (MAX_SKB_FRAGS - start + 1) - 1] =\n  data[MAX_SKB_FRAGS]\n\ninstead of the true last entry. This is likely due to a \"race\" of\nthe commit under Fixes landing close to\ncommit 031097d9e079 (\"bpf: sk_msg, zap ingress queue on psock down\")\n\nConvert to ARRAY_SIZE and drop the data[start] / - start (as suggested\nby Sabrina).",
   "datePublished": "Jul 19, 2026, 3:39:31 PM",
-  "dateUpdated": "Jul 19, 2026, 3:39:31 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:28:10 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/73963a375885d5ccb7def39fd0b4f542e0f343dd",
     "https://git.kernel.org/stable/c/47110c3a9ac247b688657337f5981efcfcb240dc",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/285943c6e7ca309bbea84b253745154241d9788a"
   ],
   "aliases": [
+    "GHSA-25cm-2563-466g",
     "CVE-2026-64047"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.51,
   "enisaIdProduct": [
     {
       "id": "03e70bd9-a502-336c-be5d-c9476ac3ae7a",

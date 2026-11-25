@@ -3,7 +3,7 @@
   "enisaUuid": "6921e7be-7ecc-32ff-b146-67991ba02237",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/i915: fix incorrect RCU teardown order\n\ni915_gem_busy_ioctl uses dma_resv_for_each_fence_unlocked() to iterate\nover the fences in an GEM object without holding a reference but only\nthe RCU read side lock.\n\nWhat can happen here is that the GEM object is destroyed concurrently\nwhile i915_gem_busy_ioctl is still running. This won't free the GEM\nobjects memory, but still drops all the dma_fence references.\n\nNow when dma_resv_for_each_fence_unlocked() sees a destroyed dma_fence it\nassumes that a new fence list was installed and re-starts the loop.\n\nBut in the case of a destroyed GEM object a new fence list is never\ninstalled, only the old one freed and therefore the iteration never\nfinishes resulting in an endless loop.\n\nThe solution is to drop the fence references only after the RCU grace\nperiod.\n\nThe fixes tag is not necessary the patch introducing the problem, but the\none making it so worse that we need to address it.\n\nThis problem was pointed out by Sashiko-bot.\n\n(cherry picked from commit 5113479556025093bf8133bb2dcaa33be2d50921)",
   "datePublished": "Oct 18, 2026, 3:17:38 PM",
-  "dateUpdated": "Oct 18, 2026, 3:17:38 PM",
+  "dateUpdated": "Oct 19, 2026, 9:21:03 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/4d4ca84213327da1f84ef7af3946dea6b14c5d88",
@@ -14,10 +14,11 @@
     "https://git.kernel.org/stable/c/d2da6696e0c4e60414706e607029d0bb0330c67e"
   ],
   "aliases": [
-    "CVE-2026-98521"
+    "CVE-2026-98521",
+    "GHSA-7hvf-3rfm-fg86"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "01e5a185-becd-31bb-b9d3-c7993a02b47c",
@@ -48,16 +49,6 @@
         }
       },
       "product_version": "patch: 6.18.55"
-    },
-    {
-      "id": "2989a4a2-f9be-3816-b4d8-3ac12e53a3aa",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "2ac86364-1195-32fd-86a3-114c68871782",
@@ -158,6 +149,16 @@
         }
       },
       "product_version": "912ff2ebd695c582ca4cebf833ad73a378a99f23 <c53db9cc245219af6b528ca022a17ebfa91d80ba"
+    },
+    {
+      "id": "fa456516-c57d-3edc-bd2e-618b77077767",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

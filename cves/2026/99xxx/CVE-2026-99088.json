@@ -2,24 +2,46 @@
   "id": "EUVD-2026-109894",
   "enisaUuid": "f06141cd-52cf-35dd-81bf-38659e09ceed",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: openvswitch: validate transport header presence in set_ipv6_addr\n\nWhen executing IPv6 address rewrite actions on IPv6 fragments,\nset_ipv6_addr() calls update_ipv6_checksum(). If parse_ipv6hdr()\nprocesses a non-first IPv6 fragment, it sets key->ip.proto to\nNEXTHDR_FRAGMENT and returns early without calling\nskb_set_transport_header().\n\nupdate_ipv6_checksum() unconditionally evaluates skb_transport_offset()\non entry before checking l4_proto.  Because skb->transport_header is\nuninitialized, this triggers a warning under CONFIG_DEBUG_NET=y although\nit is completely harmless.\n\nFix this by returning early in update_ipv6_checksum() if l4_proto is\nNEXTHDR_FRAGMENT. This avoids reading the uninitialized transport offset\nfor fragments while preserving the debug warning for any other protocol\nwhere the transport header is unexpectedly missing.\n\nSee the syzbot trace:\n\n!skb_transport_header_was_set(skb)\nWARNING: ./include/linux/skbuff.h:3075 at skb_transport_header include/linux/skbuff.h:3075 [inline], CPU#1: syz-executor463/5635\nWARNING: ./include/linux/skbuff.h:3075 at skb_transport_offset include/linux/skbuff.h:3250 [inline], CPU#1: syz-executor463/5635\nWARNING: ./include/linux/skbuff.h:3075 at update_ipv6_checksum net/openvswitch/actions.c:361 [inline], CPU#1: syz-executor463/5635\nWARNING: ./include/linux/skbuff.h:3075 at set_ipv6_addr+0x462/0x660 net/openvswitch/actions.c:399, CPU#1: syz-executor463/5635\n[...]\nRIP: 0010:skb_transport_header include/linux/skbuff.h:3075 [inline]\nRIP: 0010:skb_transport_offset include/linux/skbuff.h:3250 [inline]\nRIP: 0010:update_ipv6_checksum net/openvswitch/actions.c:361 [inline]\nRIP: 0010:set_ipv6_addr+0x462/0x660 net/openvswitch/actions.c:399\n[...]\nCall Trace:\n <TASK>\n set_ipv6 net/openvswitch/actions.c:531 [inline]\n do_execute_actions+0x557e/0x8600 net/openvswitch/actions.c:1366\n ovs_execute_actions+0xde/0x520 net/openvswitch/actions.c:1592\n ovs_packet_cmd_execute+0xb4f/0xf10 net/openvswitch/datapath.c:705\n genl_family_rcv_msg_doit+0x233/0x340 net/netlink/genetlink.c:1114\n genl_rcv_msg+0x614/0x7a0 net/netlink/genetlink.c:1209\n netlink_rcv_skb+0x226/0x4a0 net/netlink/af_netlink.c:2572\n genl_rcv+0x28/0x40 net/netlink/genetlink.c:1218\n netlink_unicast+0x7bd/0x940 net/netlink/af_netlink.c:1361\n netlink_sendmsg+0x813/0xb40 net/netlink/af_netlink.c:1916\n sock_sendmsg_nosec+0x14e/0x190 net/socket.c:800",
-  "datePublished": "Oct 26, 2026, 3:34:49 PM",
-  "dateUpdated": "Oct 26, 2026, 3:34:49 PM",
+  "datePublished": "Oct 26, 2026, 2:51:58 PM",
+  "dateUpdated": "Oct 30, 2026, 12:41:39 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/1efa6842e94aa70237446b31fbe2bc16586809c3",
+    "https://git.kernel.org/stable/c/ad4258db21e801a7aae614afca89a2e39283080d",
+    "https://git.kernel.org/stable/c/54cb98ed23866205926298621e04169f50665b59",
     "https://git.kernel.org/stable/c/b7b80d204abdc258006f9e17c92b363ab13bb599",
     "https://git.kernel.org/stable/c/6774af7cd17be8f0d0f70de3a749d381b4f2e9da",
     "https://git.kernel.org/stable/c/2594795fd832f0253826d64ff8976b8ff5fbfe9f",
     "https://git.kernel.org/stable/c/6b8897ba0733f88f0360ea48a970f373f9142de0",
-    "https://git.kernel.org/stable/c/3c6a4b11330fe424557538a98fca9f0a4c5bf313",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-99088"
+    "https://git.kernel.org/stable/c/3c6a4b11330fe424557538a98fca9f0a4c5bf313"
   ],
   "aliases": [
     "CVE-2026-99088",
     "GHSA-hwf6-223w-r64q"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
+    {
+      "id": "09769114-501f-3090-8cfd-c2af00d35b88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3fdbd1ce11e5c0d7cafbe44c942c5cad61113d7b <54cb98ed23866205926298621e04169f50665b59"
+    },
+    {
+      "id": "17b68f90-9f60-39aa-b4e8-a7919983f855",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3fdbd1ce11e5c0d7cafbe44c942c5cad61113d7b <1efa6842e94aa70237446b31fbe2bc16586809c3"
+    },
     {
       "id": "3986bd4b-ba4e-3b59-8ae2-4855905b883b",
       "product": {
@@ -81,6 +103,26 @@
       "product_version": "3.8"
     },
     {
+      "id": "76b6a2ab-6125-3492-bd48-8d6277497b13",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3fdbd1ce11e5c0d7cafbe44c942c5cad61113d7b <ad4258db21e801a7aae614afca89a2e39283080d"
+    },
+    {
+      "id": "9b40cacb-3a40-3a36-beba-0971ffae23d2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "b5705863-b1dd-390b-b963-0f6433970b60",
       "product": {
         "name": "Linux",
@@ -99,6 +141,26 @@
         }
       },
       "product_version": "3fdbd1ce11e5c0d7cafbe44c942c5cad61113d7b <3c6a4b11330fe424557538a98fca9f0a4c5bf313"
+    },
+    {
+      "id": "c43f4d8c-24ff-35a6-b549-0eb4cf08c2c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "cc07f53a-6ebd-3f6a-9bb1-29fa8347c6fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
     },
     {
       "id": "e4c7351b-9bd8-3194-b967-1353ea944999",

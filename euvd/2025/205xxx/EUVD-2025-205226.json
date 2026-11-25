@@ -2,59 +2,142 @@
   "id": "EUVD-2025-205226",
   "enisaUuid": "e885fe27-8092-3235-9edd-06b969169183",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nlandlock: Fix handling of disconnected directories\n\nDisconnected files or directories can appear when they are visible and\nopened from a bind mount, but have been renamed or moved from the source\nof the bind mount in a way that makes them inaccessible from the mount\npoint (i.e. out of scope).\n\nPreviously, access rights tied to files or directories opened through a\ndisconnected directory were collected by walking the related hierarchy\ndown to the root of the filesystem, without taking into account the\nmount point because it couldn't be found. This could lead to\ninconsistent access results, potential access right widening, and\nhard-to-debug renames, especially since such paths cannot be printed.\n\nFor a sandboxed task to create a disconnected directory, it needs to\nhave write access (i.e. FS_MAKE_REG, FS_REMOVE_FILE, and FS_REFER) to\nthe underlying source of the bind mount, and read access to the related\nmount point.   Because a sandboxed task cannot acquire more access\nrights than those defined by its Landlock domain, this could lead to\ninconsistent access rights due to missing permissions that should be\ninherited from the mount point hierarchy, while inheriting permissions\nfrom the filesystem hierarchy hidden by this mount point instead.\n\nLandlock now handles files and directories opened from disconnected\ndirectories by taking into account the filesystem hierarchy when the\nmount point is not found in the hierarchy walk, and also always taking\ninto account the mount point from which these disconnected directories\nwere opened.  This ensures that a rename is not allowed if it would\nwiden access rights [1].\n\nThe rationale is that, even if disconnected hierarchies might not be\nvisible or accessible to a sandboxed task, relying on the collected\naccess rights from them improves the guarantee that access rights will\nnot be widened during a rename because of the access right comparison\nbetween the source and the destination (see LANDLOCK_ACCESS_FS_REFER).\nIt may look like this would grant more access on disconnected files and\ndirectories, but the security policies are always enforced for all the\nevaluated hierarchies.  This new behavior should be less surprising to\nusers and safer from an access control perspective.\n\nRemove a wrong WARN_ON_ONCE() canary in collect_domain_accesses() and\nfix the related comment.\n\nBecause opened files have their access rights stored in the related file\nsecurity properties, there is no impact for disconnected or unlinked\nfiles.",
-  "datePublished": "Dec 24, 2025, 3:30:43 PM",
-  "dateUpdated": "Dec 24, 2025, 3:30:43 PM",
-  "baseScore": 0.0,
+  "datePublished": "Dec 24, 2025, 12:09:35 PM",
+  "dateUpdated": "Oct 16, 2026, 3:09:43 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/4f5cdc82a6c7e22cfd9a92d203cec13a52a3f363",
+    "https://git.kernel.org/stable/c/fbf718d5afe21057694a0c0223a18b0c7a5960b6",
+    "https://git.kernel.org/stable/c/426d5b681b2f3339ff04da39b81d71176dc8c87c",
     "https://git.kernel.org/stable/c/cadb28f8b3fd6908e3051e86158c65c3a8e1c907",
-    "https://git.kernel.org/stable/c/49c9e09d961025b22e61ef9ad56aa1c21b6ce2f1",
-    "https://nvd.nist.gov/vuln/detail/CVE-2025-68736"
+    "https://git.kernel.org/stable/c/49c9e09d961025b22e61ef9ad56aa1c21b6ce2f1"
   ],
   "aliases": [
+    "GHSA-pxr4-9wxh-g3jr",
     "CVE-2025-68736"
   ],
   "assigner": "Linux",
-  "epss": 0.02,
+  "epss": 0.14,
   "enisaIdProduct": [
+    {
+      "id": "02e7b5bb-9f62-31e4-8633-03b47a871890",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.19"
+    },
     {
       "id": "046f3323-33a3-31ea-b0dc-db4ba8ff9675",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.18.2"
     },
     {
+      "id": "0c3ca6c7-8044-3304-8d87-2a8d7f6d6d34",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.189"
+    },
+    {
       "id": "14fa9373-c1e9-3cb3-a25a-8d19944c5d0a",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 0"
     },
     {
-      "id": "4ef18f65-ef4e-3cf0-a9f0-ce75f6d4236f",
+      "id": "6cac077a-d81c-364c-baf1-2a5dfb81b106",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "patch: 6.19-rc1"
+      "product_version": "cb2c7d1a1776057c9a1f48ed1250d85e94d4850d <fbf718d5afe21057694a0c0223a18b0c7a5960b6"
     },
     {
       "id": "75bcca17-0486-30ed-bb0b-ac9bdfa58f1f",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "cb2c7d1a1776057c9a1f48ed1250d85e94d4850d <cadb28f8b3fd6908e3051e86158c65c3a8e1c907"
     },
     {
       "id": "846d969c-55fb-3f9f-97a1-e3274d038bf3",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "5.13"
     },
     {
+      "id": "849e0db8-bca2-33c5-955a-6e7f88858a10",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.143"
+    },
+    {
+      "id": "9b9c5424-91e5-37d2-815a-23a62e2163e0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cb2c7d1a1776057c9a1f48ed1250d85e94d4850d <4f5cdc82a6c7e22cfd9a92d203cec13a52a3f363"
+    },
+    {
+      "id": "d74fdcb1-c6fe-3ce0-997c-9a9df059dda0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.80"
+    },
+    {
+      "id": "f2cc3363-d828-331d-a1b0-6f1b259cca07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cb2c7d1a1776057c9a1f48ed1250d85e94d4850d <426d5b681b2f3339ff04da39b81d71176dc8c87c"
+    },
+    {
       "id": "fdc8b1d1-1bd3-3450-8c30-a379b4f9adee",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "cb2c7d1a1776057c9a1f48ed1250d85e94d4850d <49c9e09d961025b22e61ef9ad56aa1c21b6ce2f1"
     }

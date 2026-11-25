@@ -3,7 +3,7 @@
   "enisaUuid": "b1ba474b-1462-302e-9c2a-fdf31221c394",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndm-pcache: validate on-media seg_num against the cache device size\n\nseg_num is read from the crc32c-only superblock, so whoever supplies the\ncache device on a table load (CAP_SYS_ADMIN) controls it. It sizes\ncache->segments[] and is the value every later on-media segment id is\nbounded against, yet it is never checked against the device. Because\ncache_dev->mapping is the direct map of the pmem, CACHE_DEV_SEGMENT() for\na segment id past the device resolves to ordinary kernel memory beyond\nthe mapping; a new-cache init reaching such an id has cache_seg_init() ->\ncache_dev_zero_range() memset() 12 KiB over that memory -- an\nout-of-bounds write into the kernel heap at table load. A zero seg_num\nmakes the segment allocations ZERO_SIZE_PTR.\n\nReject a seg_num that is zero, larger than the device can hold, or larger\nthan PCACHE_CACHE_SEGS_MAX before it is used.",
   "datePublished": "Sep 11, 2026, 7:42:27 PM",
-  "dateUpdated": "Sep 11, 2026, 7:42:27 PM",
+  "dateUpdated": "Oct 19, 2026, 8:45:44 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/91b93fe5cf4d62d5ecc642a6c8f15a3c11b00e3c",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/62d92e45abe9e087370f9fc5d876b95673aced34"
   ],
   "aliases": [
+    "GHSA-5phx-c495-rgx5",
     "CVE-2026-80960"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "080bb295-e00a-3cf3-91fb-f811f07de7e6",
@@ -27,14 +28,14 @@
       "product_version": "patch: 7.2.4"
     },
     {
-      "id": "17aef4f4-fa43-3591-9b95-fbe5326bea9d",
+      "id": "08501c20-019b-3caa-a65a-2c18efcc45c3",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "1cbffbc9-81fb-3a3e-8ce5-fccbf8277722",

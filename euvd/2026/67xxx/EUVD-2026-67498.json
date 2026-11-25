@@ -3,8 +3,10 @@
   "enisaUuid": "ea7fc7fd-b177-3ec2-9136-e12339bc23a1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nchar: tlclk: fix use-after-free in tlclk_cleanup()\n\nThis patch improves the module cleanup process in the tlclk driver to\nprevent potential use-after-free and race conditions.\n\nCurrently, the file_operations structure does not specify the .owner\nfield, which could allow the module to be unloaded while user-space\nprocesses are still interacting with the device. Additionally, the\ntlclk_cleanup() function frees the alarm_events memory before ensuring\nthat blocked processes in the waitqueue are fully awakened and that the\nswitchover_timer has completed.\n\nTo address these cases, this patch:\n- Sets '.owner = THIS_MODULE' in tlclk_fops to safely defer module\n  unloading while the device is in use.\n- Updates tlclk_cleanup() to explicitly wake up all blocked readers\n  (wake_up_all), properly release hardware I/O regions, and safely\n  delete the timer (timer_delete_sync) prior to freeing memory.",
   "datePublished": "Aug 28, 2026, 6:48:41 AM",
-  "dateUpdated": "Aug 28, 2026, 6:48:41 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:26:30 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/09d8d2a46a9ec9ff728f3159a174a2ab25dd0f0a",
     "https://git.kernel.org/stable/c/96902299a22d126ef5eb3f45cd5d8ceea9e6a735",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/bbf003b7794d6ad6f939fdd29f1f1bde8ac554c1"
   ],
   "aliases": [
+    "GHSA-hhvf-97x6-wjfh",
     "CVE-2026-80622"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "26853f0d-3a05-3153-8c2d-4beaec000a37",

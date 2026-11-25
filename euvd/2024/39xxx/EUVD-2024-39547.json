@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2024-39547",
+  "enisaUuid": "b23ea2c5-8dc2-38c6-8fbc-87dc9e69c167",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmailbox: mtk-cmdq: Move devm_mbox_controller_register() after devm_pm_runtime_enable()\n\nWhen mtk-cmdq unbinds, a WARN_ON message with condition\npm_runtime_get_sync() < 0 occurs.\n\nAccording to the call tracei below:\n  cmdq_mbox_shutdown\n  mbox_free_channel\n  mbox_controller_unregister\n  __devm_mbox_controller_unregister\n  ...\n\nThe root cause can be deduced to be calling pm_runtime_get_sync() after\ncalling pm_runtime_disable() as observed below:\n1. CMDQ driver uses devm_mbox_controller_register() in cmdq_probe()\n   to bind the cmdq device to the mbox_controller, so\n   devm_mbox_controller_unregister() will automatically unregister\n   the device bound to the mailbox controller when the device-managed\n   resource is removed. That means devm_mbox_controller_unregister()\n   and cmdq_mbox_shoutdown() will be called after cmdq_remove().\n2. CMDQ driver also uses devm_pm_runtime_enable() in cmdq_probe() after\n   devm_mbox_controller_register(), so that devm_pm_runtime_disable()\n   will be called after cmdq_remove(), but before\n   devm_mbox_controller_unregister().\n\nTo fix this problem, cmdq_probe() needs to move\ndevm_mbox_controller_register() after devm_pm_runtime_enable() to make\ndevm_pm_runtime_disable() be called after\ndevm_mbox_controller_unregister().",
+  "datePublished": "Aug 17, 2024, 9:09:31 AM",
+  "dateUpdated": "May 11, 2026, 8:30:09 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/1403991a40b94438a2acc749bf05c117abdb34f9",
+    "https://git.kernel.org/stable/c/d00df6700ad10974a7e20646956f4ff22cdbe0ec",
+    "https://git.kernel.org/stable/c/11fa625b45faf0649118b9deaf2d31c86ac41911",
+    "https://git.kernel.org/stable/c/a8bd68e4329f9a0ad1b878733e0f80be6a971649"
+  ],
+  "aliases": [
+    "GHSA-58m4-2cjm-4j54",
+    "CVE-2024-42319"
+  ],
+  "assigner": "Linux",
+  "epss": 0.21,
+  "enisaIdProduct": [
+    {
+      "id": "1a6f33db-3914-3969-a259-339d23bb23dd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.64"
+    },
+    {
+      "id": "40ec2ad2-5f3a-366d-a115-692ceeeda4b5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.120"
+    },
+    {
+      "id": "53fe4374-a11e-3116-a90d-f890466cd0c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "62e07c13-84aa-37dd-9c10-6dad66b11f69",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "623a6143a845bd485b00ba684f0ccef11835edab <11fa625b45faf0649118b9deaf2d31c86ac41911"
+    },
+    {
+      "id": "62e0a71a-cb23-36c7-bbaa-f04cfbc97d73",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.19"
+    },
+    {
+      "id": "78fee4e0-f0d1-3b94-81ce-77a1855140ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "9aad2390-ae31-36f8-8034-36dfc845a215",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "623a6143a845bd485b00ba684f0ccef11835edab <a8bd68e4329f9a0ad1b878733e0f80be6a971649"
+    },
+    {
+      "id": "e03966ee-c6f1-32ad-b3d9-5b228f8d17b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "623a6143a845bd485b00ba684f0ccef11835edab <1403991a40b94438a2acc749bf05c117abdb34f9"
+    },
+    {
+      "id": "e1c6b20d-f696-3e48-8802-84d4bb4069e1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "623a6143a845bd485b00ba684f0ccef11835edab <d00df6700ad10974a7e20646956f4ff22cdbe0ec"
+    },
+    {
+      "id": "f59de2d6-7b35-3073-9856-144b5acbd54c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.3"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "17400604-21fb-33ad-8e7d-d7903f8867aa",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

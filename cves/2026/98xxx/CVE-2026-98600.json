@@ -3,7 +3,7 @@
   "enisaUuid": "dbb58b84-b14a-3148-bd25-024c7dcd1025",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: RFCOMM: Reject short EA=0 frames in rfcomm_recv_frame()\n\nWhile rfcomm_recv_frame() verifies that skb->len is at least\nsizeof(*hdr) + 1 (4 bytes: 3-byte header + 1-byte FCS), an RFCOMM frame\nwith an extended 2-byte length field (!__test_ea(hdr->len)) has a 4-byte\nheader plus a 1-byte FCS (5 bytes minimum, sizeof(*hdr) + 2).\n\nWhen a 4-byte RFCOMM frame with EA == 0 arrives:\n1. The initial skb->len < sizeof(*hdr) + 1 check passes (4 < 4 is false).\n2. Trimming the FCS byte decrements skb->len to 3.\n3. If __check_fcs() succeeds, skb_pull(skb, 4) fails (4 > 3) and returns\n   NULL without advancing skb->data.\n4. Because the return value of skb_pull() is ignored, the un-pulled\n   3-byte struct rfcomm_hdr remains at skb->data and is either queued as\n   application payload via rfcomm_recv_data() or parsed as a multiplexer\n   control command via rfcomm_recv_mcc() on DLCI 0.\n\nFix this by extending the length check in rfcomm_recv_frame() to also\nrequire skb->len >= sizeof(*hdr) + 2 when !__test_ea(hdr->len).",
   "datePublished": "Oct 18, 2026, 3:19:12 PM",
-  "dateUpdated": "Oct 18, 2026, 3:19:12 PM",
+  "dateUpdated": "Oct 19, 2026, 9:22:26 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/76876fd26569302d26d91cbe8b75fa8e66cf8969",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/6d91041bb38b97e2feb625123cc0529d7b83a0e1"
   ],
   "aliases": [
+    "GHSA-hpgr-cqmv-php2",
     "CVE-2026-98600"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "1511822f-6e4e-344a-9309-0278eb8393f3",
@@ -82,6 +83,16 @@
       "product_version": "30d1d9f3495463f7c026e4c553127f79b486fcd6 <c25587fa26761e623198b4f47151fe79d09ccde6"
     },
     {
+      "id": "3ad18074-c3f0-39d6-94a5-3786b9470f9d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "3c86ec1a-9d10-36f1-98da-72ee18db4a5a",
       "product": {
         "name": "Linux",
@@ -100,16 +111,6 @@
         }
       },
       "product_version": "b230e5bf501c5edaf2eb0991cb862ac142031d4b <6d91041bb38b97e2feb625123cc0529d7b83a0e1"
-    },
-    {
-      "id": "6aa7afef-211d-31fe-ab39-afb3a7103129",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "763646c4-77fd-3f57-8f84-3f37aef6666a",

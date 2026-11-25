@@ -3,18 +3,32 @@
   "enisaUuid": "da09d6c0-1076-3584-ae54-5e1926d3b1be",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niommu/vt-d: Fix race condition during PASID entry replacement\n\nThe Intel VT-d PASID table entry is 512 bits (64 bytes). When replacing\nan active PASID entry (e.g., during domain replacement), the current\nimplementation calculates a new entry on the stack and copies it to the\ntable using a single structure assignment.\n\n        struct pasid_entry *pte, new_pte;\n\n        pte = intel_pasid_get_entry(dev, pasid);\n        pasid_pte_config_first_level(iommu, &new_pte, ...);\n        *pte = new_pte;\n\nBecause the hardware may fetch the 512-bit PASID entry in multiple\n128-bit chunks, updating the entire entry while it is active (Present\nbit set) risks a \"torn\" read. In this scenario, the IOMMU hardware\ncould observe an inconsistent state \u2014 partially new data and partially\nold data \u2014 leading to unpredictable behavior or spurious faults.\n\nFix this by removing the unsafe \"replace\" helpers and following the\n\"clear-then-update\" flow, which ensures the Present bit is cleared and\nthe required invalidation handshake is completed before the new\nconfiguration is applied.",
   "datePublished": "May 27, 2026, 12:18:01 PM",
-  "dateUpdated": "May 27, 2026, 12:18:01 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:26:40 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/4718007870547e1efebbdd6745d9fce58f008fef",
     "https://git.kernel.org/stable/c/66a7aff480a82b8642b3991fed5fdc9780022157",
     "https://git.kernel.org/stable/c/c3b1edea3791fa91ab7032faa90355913ad9451b"
   ],
   "aliases": [
-    "CVE-2026-45945"
+    "CVE-2026-45945",
+    "GHSA-3f6r-v6w8-rw99"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
+    {
+      "id": "29d65219-55f4-3531-ae97-083d4b40b210",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7543ee63e8113aa34b07df3b16b3b9d2c5f73939 <4718007870547e1efebbdd6745d9fce58f008fef"
+    },
     {
       "id": "5735fa15-9698-3e7e-bddc-5779d6cd949f",
       "product": {
@@ -74,6 +88,16 @@
         }
       },
       "product_version": "7543ee63e8113aa34b07df3b16b3b9d2c5f73939 <c3b1edea3791fa91ab7032faa90355913ad9451b"
+    },
+    {
+      "id": "dab620f4-b6b3-3597-9328-d01a92358161",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.39"
     }
   ],
   "enisaIdVendor": [

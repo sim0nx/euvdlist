@@ -3,18 +3,21 @@
   "enisaUuid": "f2955ec1-dcb2-35a2-bdda-2af2a074d1de",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmemcg: use round-robin victim selection in refill_stock\n\nHarry Yoo reported that get_random_u32_below() is not safe to call in the\nnmi context and memcg charge draining can happen in nmi context.\n\nMore specifically get_random_u32_below() is neither reentrant- nor\nNMI-safe: it acquires a per-cpu local_lock via local_lock_irqsave() on the\nbatched_entropy_u32 state.  An NMI that lands on a CPU mid-update of the\nChaCha batch state and recurses into the random subsystem would corrupt\nthat state.  The memcg_stock local_trylock prevents re-entry on the percpu\nstock itself, but cannot protect an unrelated subsystem's per-cpu lock.\n\nReplace the random pick with a per-cpu round-robin counter stored in\nmemcg_stock_pcp and serialized by the same local_trylock that already\nguards cached[] and nr_pages[].  No atomics, no random calls, no extra\nlocks needed.",
   "datePublished": "Jun 25, 2026, 8:38:43 AM",
-  "dateUpdated": "Jun 25, 2026, 8:38:43 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:33:37 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/89bd8215e25aa6999cc51696da418e0d422bc5e0",
     "https://git.kernel.org/stable/c/00731bd7e18f182a32ca54d6b176eaa470b51ed7",
     "https://git.kernel.org/stable/c/c0cafe24d3f6534294c4b2bc2d47734ff7cbd313"
   ],
   "aliases": [
-    "CVE-2026-53162"
+    "CVE-2026-53162",
+    "GHSA-9mhf-2p25-mwm3"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "7e155823-17f8-33a0-b534-92497debed88",

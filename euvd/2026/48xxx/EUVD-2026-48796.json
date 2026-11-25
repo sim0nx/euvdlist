@@ -3,8 +3,10 @@
   "enisaUuid": "76d6a5e4-64cc-3487-ab18-5580d72a77a8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\n6lowpan: fix NHC entry use-after-free on error path\n\nlowpan_nhc_do_uncompression() looks up an NHC descriptor while holding\nlowpan_nhc_lock.  If the descriptor has no uncompress callback, the error\npath drops the lock before printing nhc->name.\n\nlowpan_nhc_del() removes descriptors under the same lock and then relies\non synchronize_net() before the owning module can be unloaded.  That only\nwaits for net RX RCU readers.  lowpan_header_decompress() is also exported\nand can be reached from callers that are not necessarily covered by the net\ncore RX critical section, for example the Bluetooth 6LoWPAN L2CAP receive\npath.\n\nThis leaves a race where one task drops lowpan_nhc_lock in the error path,\nanother task unregisters and frees the matching descriptor after\nsynchronize_net() returns, and the first task then dereferences nhc->name\nfor the warning.\n\nWith the post-unlock window widened, KASAN reports:\n\n  BUG: KASAN: slab-use-after-free in lowpan_nhc_do_uncompression+0x1f4/0x220\n  Read of size 8\n  lowpan_nhc_do_uncompression\n  lowpan_header_decompress\n\nFix this by printing the warning before dropping lowpan_nhc_lock, so the\ndescriptor name is read while unregister is still excluded.  The malformed\npacket is still rejected with -ENOTSUPP.",
   "datePublished": "Jul 25, 2026, 8:51:21 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:21 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:38:30 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/9c2f5c0829a8c8b904dae36be6d8056b719ac605",
     "https://git.kernel.org/stable/c/80b5c8779acee0550845394fb3e5176a398aa24c",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/1720db928e5a58ca7d75ac1d514c3b73fd7061a7"
   ],
   "aliases": [
-    "CVE-2026-64452"
+    "CVE-2026-64452",
+    "GHSA-c2hf-fh99-25vq"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "02658ad9-fa98-3db9-a75c-f4ff9f6d8f15",
@@ -40,16 +43,6 @@
         }
       },
       "product_version": "4.1"
-    },
-    {
-      "id": "3bfc34e5-5e97-318e-b16a-48a96d04e10f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "3ca3f292-fb58-3647-b59c-bbdc28658bc6",
@@ -130,6 +123,16 @@
         }
       },
       "product_version": "patch: 6.1.178"
+    },
+    {
+      "id": "99681233-123e-3d6d-b9b2-bf6640548f0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "b70fd610-906c-3292-bfef-d8b6c92d6517",

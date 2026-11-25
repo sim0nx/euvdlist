@@ -3,9 +3,12 @@
   "enisaUuid": "b230dd6a-0aed-3483-a7cd-3bfd03398da3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnamespace: check a submount for references right before unmounting it\n\nshrink_submounts() and mark_mounts_for_expiry() first collect all the\nmounts they are allowed to unmount and then unmount them.\n\nWhether a mount is busy is decided by propagate_mount_busy() on the\ntree. But unmounting the first mount changes the tree that the second\none propagates into. propagate_umount()\nmoves a surviving overmount off a copy it unmounts and mounts it where\nthe copy was mounted. If that's where the propagated copy of the second\nvictim is looked up the overmount becomes a candidate of the second\numount_tree(). It's childless and so trim_one() commits it without\nlooking at its reference count.\n\nSo a synchronous umount pulls out a busy mount that is in use somewhere\nelse and marks it MNT_SYNC_UMOUNT while it has users:\n\n  umount2(/tmp/plshrink/p1, 0) = 0 errno 0\n  cwd is (unreachable)\n\nThe same two umounts requested one after the other fail with EBUSY.\nThis needs a mount with MNT_SHRINKABLE, i.e., automounted submounts of\nNFS, AFS and CIFS or the tracefs mount below debugfs. Bind mounts\ninherit the flag.\n\nCheck each mount right before it is unmounted under the same hold of\nnamespace_sem and mount_lock as the umount itself. Make sure that the\nalgorithm stays linear.",
   "datePublished": "Oct 23, 2026, 12:20:09 PM",
-  "dateUpdated": "Oct 23, 2026, 12:20:09 PM",
+  "dateUpdated": "Oct 30, 2026, 12:40:44 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/cda0c4e502a0f74a191471ce100fb061e5ab35d6",
+    "https://git.kernel.org/stable/c/3f55f71291e4332983cd63b288d1f2be3c9c08fc",
+    "https://git.kernel.org/stable/c/361f59e7f3f9a219fb5567bf9abc8482a154a399",
     "https://git.kernel.org/stable/c/f6394281834492c6516a405a348b545ae698a331",
     "https://git.kernel.org/stable/c/6e4012e571867868b545c91ca9d6095fdb709907",
     "https://git.kernel.org/stable/c/d73f04e92c1aab78d96ac6cadb234c8a3a373d22",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/32bf92416614a1e3ff3524fc6b780259c7aad3ef"
   ],
   "aliases": [
+    "GHSA-5v88-6pxr-8v5g",
     "CVE-2026-98990"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "016cac2e-8ee1-3901-b36b-57adbd8d55bb",
@@ -49,6 +53,16 @@
       "product_version": "patch: 7.2.11"
     },
     {
+      "id": "2b0e8f37-1011-37f3-af7e-914f5f98f49c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
       "id": "2facb59f-d74b-336b-b202-1457051ec3cb",
       "product": {
         "name": "Linux",
@@ -79,6 +93,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "5b184108-71d4-3a0f-93cd-db7f9d9f0154",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1064f874abc0d05eeed8993815f584d847b72486 <3f55f71291e4332983cd63b288d1f2be3c9c08fc"
+    },
+    {
       "id": "62e0e75d-4563-349d-b33c-2af14390d7af",
       "product": {
         "name": "Linux",
@@ -97,6 +121,16 @@
         }
       },
       "product_version": "4.9.15 <4.10"
+    },
+    {
+      "id": "707d2ebf-c9a9-3b8d-ada4-72591717ccab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "83b7a377-4d14-3be5-8d77-75e55b92528a",
@@ -137,6 +171,16 @@
         }
       },
       "product_version": "patch: 6.18.57"
+    },
+    {
+      "id": "904f3036-03f3-378e-a136-93c0256ca846",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1064f874abc0d05eeed8993815f584d847b72486 <cda0c4e502a0f74a191471ce100fb061e5ab35d6"
     },
     {
       "id": "92a576f9-a1e5-366d-80dc-18b0d5966d78",
@@ -189,6 +233,16 @@
       "product_version": "839d42687dfce0ed0ea2c6bd8d707cc0e276fbe7"
     },
     {
+      "id": "d9ddf0c8-e8c4-3cc0-87b4-ab647bb90bf3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
+    },
+    {
       "id": "da2a9e5a-ee8a-34ac-bc6e-1bc8392578c6",
       "product": {
         "name": "Linux",
@@ -217,6 +271,16 @@
         }
       },
       "product_version": "5e6ef5ef6eaf690faad3a7c6c665ebf45d7b6ccf"
+    },
+    {
+      "id": "f8e2c28b-6661-3a82-af3a-7a22dee46e1c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1064f874abc0d05eeed8993815f584d847b72486 <361f59e7f3f9a219fb5567bf9abc8482a154a399"
     }
   ],
   "enisaIdVendor": [

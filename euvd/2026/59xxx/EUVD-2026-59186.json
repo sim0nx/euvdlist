@@ -2,20 +2,21 @@
   "id": "EUVD-2026-59186",
   "enisaUuid": "cdb499ee-8856-3775-8818-1f59052cbb4e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: nVMX: Move vTPR vs. TPR Threshold consistency check into \"normal\" checks\n\nMove the off-by-default consistency check for vmcs12.tpr_threshold vs.\nthe virtual APIC vTPR into the \"normal\" controls checks, as waiting until\nKVM has loaded some amount of state is unnecessary and actively dangerous.\nSpecifically, failure to unwind vmcs01.GUEST_CR3 to KVM's value when EPT\nis disabled results in KVM running L1 with an L1-controlled CR3, not with\nKVM's CR3!\n\nAlternatively, KVM could simply reset the MMU to force a reload of\nvmcs01.GUEST_CR3, but the _only_ reason the check was shoved into a \"late\"\nflow was to wait until the vmcs12 pages were retrieved.  Rather than build\nup more crusty code, simply access vTPR using a regular guest memory access\n(performance isn't a concern).  To circumvent the restrictions that led to\nKVM deferring nested_get_vmcs12_pages(), (a) use a VM-scoped API to read\nguest memory so that it always hits non-SMM memslots (for RSM), and (b)\nskip the check (since its off-by-default anyways) when the vCPU doesn't\nwant to run, i.e. when userspace is restoring/stuffing state.\n\nIf reading guest memory fails, simply skip the consistency check, as KVM's\nde facto ABI is that VMX instruction accesses to non-existent memory get\nPCI Bus Error semantics, where reads return 0xFFs.  And if vTPR=0xFF, then\nthe vTPR is guaranteed to be greater than or equal to TPR_THRESHOLD.",
-  "datePublished": "Aug 15, 2026, 6:32:18 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:18 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:55:09 AM",
+  "dateUpdated": "Aug 17, 2026, 5:42:22 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/7d066368f72e6192af7e21c5817626f6da666991",
-    "https://git.kernel.org/stable/c/ebdac7554abb347ca4197be241116842161acd9b",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72287"
+    "https://git.kernel.org/stable/c/ebdac7554abb347ca4197be241116842161acd9b"
   ],
   "aliases": [
     "CVE-2026-72287",
     "GHSA-2q48-vx2q-99r7"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "1fef3005-d63a-3d77-8414-184f1aad2cd0",
@@ -48,16 +49,6 @@
       "product_version": "patch: 7.1.5"
     },
     {
-      "id": "ae89acaf-3fe9-3c77-92f1-6752ce454177",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
-    },
-    {
       "id": "b0590456-1017-3a8f-8f85-f71795d7a46d",
       "product": {
         "name": "Linux",
@@ -66,6 +57,16 @@
         }
       },
       "product_version": "1100e4910ad207bc00aedc8dfdb228dd1b81f310 <7d066368f72e6192af7e21c5817626f6da666991"
+    },
+    {
+      "id": "b72af292-e0af-3710-bbba-8ddf3d0bb150",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "e23ffed2-a024-3519-a09c-2613c251cd36",

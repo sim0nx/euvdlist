@@ -3,19 +3,24 @@
   "enisaUuid": "8e06a5f2-ccb5-32c6-9013-2e79830d14db",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: line6: reject oversized playback packets\n\nEach playback URB is handed a slice of out.buffer that is exactly\nLINE6_ISO_PACKETS * max_packet_size_out bytes, sized from the OUT\nendpoint, but the number of bytes written into that slice is never\ncompared against it.\n\nsubmit_audio_out_urb() takes the frame count from prev_fsize, which\naudio_in_callback() derived from the *IN* endpoint's received packet\nlength, and rescales it with the playback frame size; when prev_fsize is\nstill zero it synthesizes a length from the sample rate instead.  On a\ndevice declaring a large IN wMaxPacketSize and a small OUT\nwMaxPacketSize, the resulting memcpy(), or the memset() when the\nplayback stream is idle, runs past its slice and, as the reproducer\nbelow shows, beyond the allocation.\n\nusb_submit_urb() is not a backstop.  max_packet_size_out comes from\nusb_maxpacket(), which returns only the low 11 bits of wMaxPacketSize,\nwhile USB core validates a high-speed isochronous length against that\nbase scaled by usb_endpoint_maxp_mult().  A length of up to three times\nthe allocated slice is therefore accepted, and even a rejected URB is\nonly rejected after the write.\n\nReject a packet that does not fit the slice the driver allocated for it.\nClamping it instead would silently shorten the capture-derived rate\nfeedback and desynchronize the two streams.\n\n  BUG: KASAN: slab-out-of-bounds in submit_audio_out_urb (sound/usb/line6/playback.c:229)\n  Write of size 1024 at addr ffff888100bbd400 by task kworker/1:2/5002\n  Workqueue: events line6_startup_work\n  Call Trace:\n   __asan_memcpy (mm/kasan/shadow.c:106)\n   submit_audio_out_urb (sound/usb/line6/playback.c:229)\n   line6_submit_audio_out_all_urbs (sound/usb/line6/playback.c:291)\n   line6_stream_start (sound/usb/line6/pcm.c:194)\n   line6_pcm_acquire (sound/usb/line6/pcm.c:337)\n   line6_startup_work (sound/usb/line6/driver.c:728)\n   process_one_work (kernel/workqueue.c:3396)\n   worker_thread (kernel/workqueue.c:3479 kernel/workqueue.c:3560)\n   kthread (kernel/kthread.c:436)\n   ret_from_fork (arch/x86/kernel/process.c:158)\n   ret_from_fork_asm (arch/x86/entry/entry_64.S:245)\n\n  The buggy address belongs to the object at ffff888100bbd400\n   which belongs to the cache kmalloc-256 of size 256\n  The buggy address is located 0 bytes inside of\n   allocated 256-byte region [ffff888100bbd400, ffff888100bbd500)",
   "datePublished": "Oct 18, 2026, 3:49:51 PM",
-  "dateUpdated": "Oct 18, 2026, 3:49:51 PM",
+  "dateUpdated": "Oct 30, 2026, 12:40:05 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/48c76820dd8858ce60a6e42519141ebcf3dfeebf",
+    "https://git.kernel.org/stable/c/7f31587e26e1d4735924bc324e7fa506d85de150",
+    "https://git.kernel.org/stable/c/e3b68b1d92f279e203923dc8bf45c8860e5b5985",
+    "https://git.kernel.org/stable/c/933d8ac23388eb208ea195231d682dce0bec86ca",
     "https://git.kernel.org/stable/c/a84371be89c39ccc46c7af8b9eb15c448df9265f",
     "https://git.kernel.org/stable/c/3f75da1e4ee699f6650d23d6897cf443b01856c7",
     "https://git.kernel.org/stable/c/b78748424f29f07d310484b2b36afdececa74389",
     "https://git.kernel.org/stable/c/61b0a5a114fa4552892da5c0ff2f42e63bf08c6b"
   ],
   "aliases": [
+    "GHSA-xfm3-rq9f-jfc7",
     "CVE-2026-98836"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "0c4dc2b8-783c-31af-ae86-9b180498a2e7",
@@ -38,6 +43,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "2aef3b2c-fc3d-3bff-b0c4-19d9193a3434",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7a0f55aeeb8f1fa32a119d34ddfefc6100936692 <933d8ac23388eb208ea195231d682dce0bec86ca"
+    },
+    {
       "id": "2c54b38e-b902-3530-9e84-81e000ba7cdb",
       "product": {
         "name": "Linux",
@@ -46,6 +61,26 @@
         }
       },
       "product_version": "patch: 7.2.10"
+    },
+    {
+      "id": "3279a943-5754-364d-9b03-7e459523d8ae",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "4aece667-1715-34f4-be52-c6c0d7e07366",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     },
     {
       "id": "54f488c2-3f5e-3340-81f8-90269aa881fa",
@@ -68,14 +103,44 @@
       "product_version": "7a0f55aeeb8f1fa32a119d34ddfefc6100936692 <a84371be89c39ccc46c7af8b9eb15c448df9265f"
     },
     {
-      "id": "6ba642b2-c139-348c-b2e3-b13c002bee27",
+      "id": "5bf79bb8-3b12-39f9-a62a-9895c407aa81",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc6"
+      "product_version": "7a0f55aeeb8f1fa32a119d34ddfefc6100936692 <e3b68b1d92f279e203923dc8bf45c8860e5b5985"
+    },
+    {
+      "id": "6948ec53-91c6-3167-ade9-76ffba96cbac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7a0f55aeeb8f1fa32a119d34ddfefc6100936692 <7f31587e26e1d4735924bc324e7fa506d85de150"
+    },
+    {
+      "id": "6a157d25-140b-3f80-a918-6580111afb8c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "6f1fc5ba-fcb8-3c9b-a4d8-d6c6da75367f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
     },
     {
       "id": "a6f0f96f-eff0-3c40-a8b5-5294651f52a3",
@@ -108,6 +173,16 @@
       "product_version": "7a0f55aeeb8f1fa32a119d34ddfefc6100936692 <61b0a5a114fa4552892da5c0ff2f42e63bf08c6b"
     },
     {
+      "id": "f31ca30d-099b-3381-bfec-51c613efb731",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "f94d967a-5d77-3349-bb07-94977535a8a3",
       "product": {
         "name": "Linux",
@@ -116,6 +191,16 @@
         }
       },
       "product_version": "4.9"
+    },
+    {
+      "id": "fd144564-ff19-324c-bbd3-07b9046d8f0a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7a0f55aeeb8f1fa32a119d34ddfefc6100936692 <48c76820dd8858ce60a6e42519141ebcf3dfeebf"
     }
   ],
   "enisaIdVendor": [

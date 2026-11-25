@@ -3,7 +3,7 @@
   "enisaUuid": "33dc7547-0d47-3a6a-b2aa-92ad93040796",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nkeys: Protect the read method check against type removal\n\nkeyctl_read_key() checks key->type->read without holding key->sem.\nA reference keeps the key alive, but does not pin the module containing\nits type. A surviving RxRPC key can therefore be read while AF_RXRPC\nis being unloaded:\n\n  KEYCTL_READ task                    Module unload and key GC\n  ----------------                   ------------------------\n  lookup_user_key()\n  permission / possession checks\n  load key->type\n                                     af_rxrpc_exit()\n                                       unregister_key_type()\n                                         GC: down_write(key->sem)\n                                         GC: retype to key_type_dead\n                                         GC: up_write(key->sem)\n                                       unregister_key_type() returns\n                                     free_module()\n  read saved type's read member\n\nThe final access can read freed module storage. The read invocation in\n__keyctl_read_key() is already protected by key->sem, but the earlier\nmethod check is outside that critical section.\n\nMove the method check into __keyctl_read_key(), after key_validate() and\nunder its existing read hold on key->sem. The check and invocation then\nuse the same protected type for length queries and every read retry.\nThe GC cannot retype the key until the semaphore is released, and type\nunregistration waits for that GC pass before the module can be freed.\n\nReturn -EOPNOTSUPP when validation succeeds and the type has no read\nmethod. A temporary buffer may now be allocated before this result;\nallocation and copying to userspace remain outside the semaphore.",
   "datePublished": "Nov 2, 2026, 4:06:32 PM",
-  "dateUpdated": "Nov 2, 2026, 4:06:32 PM",
+  "dateUpdated": "Nov 3, 2026, 7:12:56 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/e5f830ae6611cddbfc504c43f14155f60b63206a",
@@ -13,13 +13,15 @@
     "https://git.kernel.org/stable/c/6a36e2a1a017c51f8a8ad2a094566bad97c46a9b",
     "https://git.kernel.org/stable/c/3edc064069d07e7d37359fcb4d03d3bab15ee3ab",
     "https://git.kernel.org/stable/c/cf1af7df80e38bf58bd74c2cccce32fcbd1a596a",
-    "https://git.kernel.org/stable/c/e2a2deda08d91644f5e30c17d267b1cdc5f124b2"
+    "https://git.kernel.org/stable/c/e2a2deda08d91644f5e30c17d267b1cdc5f124b2",
+    "https://git.kernel.org/stable/c/925c84e3cc21caf09de92d9bcafab0147790debf"
   ],
   "aliases": [
-    "CVE-2026-99222"
+    "CVE-2026-99222",
+    "GHSA-j4rg-4w46-639c"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "02d0f961-9111-3982-8355-398a1e1330be",
@@ -172,6 +174,16 @@
       "product_version": "5.7"
     },
     {
+      "id": "a86be511-d98b-3209-9105-a1f2bbb2ff37",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d3ec10aa95819bff18a0d936b18884c7816d0914 <925c84e3cc21caf09de92d9bcafab0147790debf"
+    },
+    {
       "id": "ac80cc3b-2d51-337d-a859-12b6c5ed65bc",
       "product": {
         "name": "Linux",
@@ -280,6 +292,16 @@
         }
       },
       "product_version": "patch: 7.3.1"
+    },
+    {
+      "id": "fa58a1ec-be26-37dd-b0be-a05a121c2c0f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.4-rc1"
     }
   ],
   "enisaIdVendor": [

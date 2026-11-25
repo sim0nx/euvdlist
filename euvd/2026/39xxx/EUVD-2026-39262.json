@@ -3,17 +3,20 @@
   "enisaUuid": "2691b99e-1157-3203-8cde-f04079c7b9c3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\naccel/ethosu: fix arithmetic issues in dma_length()\n\ndma_length() derives DMA region usage from command stream values and\nupdates region_size[]:\n\n    len = ((len + stride[0]) * size0 + stride[1]) * size1\n    region_size[region] = max(..., len + dma->offset)\n\nSeveral arithmetic issues can corrupt the derived region size:\n\n- signed stride values may underflow when added to len\n- intermediate multiplications may overflow\n- len + dma->offset may overflow during region_size updates\n- dma_length() error returns were not validated by the caller\n\nregion_size[] is later used by ethosu_job.c to validate command stream\naccesses against GEM buffer sizes. Arithmetic wraparound can therefore\nunder-report region usage and bypass the bounds validation.\n\nFix by validating signed additions, using overflow helpers for\nmultiplications and offset updates, and propagating dma_length()\nfailures to the caller.",
   "datePublished": "Jun 25, 2026, 8:38:49 AM",
-  "dateUpdated": "Jun 25, 2026, 8:38:49 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:33:40 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/6bb73845d1855ceaf50e397175e5979a7bdf69bc",
     "https://git.kernel.org/stable/c/ee6d9b6e51626f259c6f0e38d94f91be4fd14754"
   ],
   "aliases": [
+    "GHSA-vp3v-wxjh-fcp5",
     "CVE-2026-53171"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "088ded18-b7e4-3b51-a6fe-adb1af0300a0",

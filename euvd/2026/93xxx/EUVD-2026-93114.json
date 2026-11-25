@@ -3,7 +3,7 @@
   "enisaUuid": "be1f50e9-5605-320e-861f-e5d2f04297bc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: mwifiex: bound the pairwise-cipher OUI walk to the IE length\n\nmwifiex_search_oui_in_ie() reads a pairwise-cipher (PTK) count from a\nbeacon/probe-response RSN or WPA information element and then walks that\nmany 4-byte OUIs, comparing each with memcmp(). The count comes straight\nfrom the (attacker-supplied) IE and is never checked against the\nelement's own length, and the callers admit the element on element_id\nalone (has_ieee_hdr() / has_vendor_hdr(), no length check). A crafted\nRSN/WPA IE with a large pairwise count therefore makes the walk read up\nto 255 * 4 bytes past the element -- an out-of-bounds read of the\nkmemdup()'d beacon buffer, reachable from any AP whose beacon/probe\nresponse is processed during scan-result parsing.\n\nPass the number of IE bytes available at the OUI list and bound the walk\nto the element. Keep the length signed and reject a negative value\nbefore any unsigned arithmetic, so a small or zero IE length cannot\nunderflow to a large size_t and defeat the bound.\n\nFound by 0sec automated security-research tooling (https://0sec.ai).",
   "datePublished": "Oct 6, 2026, 8:44:28 AM",
-  "dateUpdated": "Oct 6, 2026, 8:44:28 AM",
+  "dateUpdated": "Oct 19, 2026, 9:15:17 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/77e642af7f2f6029e12a35c847c56cbd0466e799",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/e667aee1c192d67d27c803007bfa9c6e0873e959"
   ],
   "aliases": [
-    "CVE-2026-98186"
+    "CVE-2026-98186",
+    "GHSA-vmvq-5qrr-gvg2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "1c168735-de05-326b-b718-8f2c8099fcc4",
@@ -152,16 +153,6 @@
       "product_version": "patch: 7.2.8"
     },
     {
-      "id": "9315109a-86d2-38d8-a19e-1c2a8b6e67ec",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
-    {
       "id": "938de29a-9c5c-377c-bcc0-a36606d68212",
       "product": {
         "name": "Linux",
@@ -200,6 +191,16 @@
         }
       },
       "product_version": "5e6e3a92b9a4c9416b17f468fa5c7fa2233b8b4e <2402c9e2644b7e10c7aaaf87bf12743d7e363559"
+    },
+    {
+      "id": "ccf2dca7-9f61-30ab-aca2-e67b7b35d453",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

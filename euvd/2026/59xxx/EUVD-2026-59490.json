@@ -2,31 +2,22 @@
   "id": "EUVD-2026-59490",
   "enisaUuid": "dd0e099f-1548-37e8-9d0e-978ae3c2369d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nkernfs: fix xattr race condition with multiple superblocks\n\nMultiple superblocks with different namespaces can share the same\nkernfs_node when kernfs_test_super() finds a matching root but\ndifferent namespace. This means multiple inodes from different\nsuperblocks can reference the same kernfs_node->iattr->xattrs\nstructure.\n\nThe VFS layer only holds per-inode locks during xattr operations,\nwhich is insufficient to serialize concurrent xattr modifications on\nthe shared kernfs_node. This can lead to race conditions in\nsimple_xattr_set() where the lookup->replace/remove sequence is not\natomic with respect to operations from other superblocks.\n\nFix this by protecting xattr operations with the existing hashed\nkernfs_locks->open_file_mutex[] array, which is already used to\nprotect per-node open file data. The hashed mutex array provides\nscalable per-node serialization (scaled by CPU count, up to 1024 locks\non 32+ CPU systems) with zero memory overhead.\n\nChanges:\n- Rename open_file_mutex[] to node_mutex[] to reflect dual purpose\n- Add kernfs_node_lock_ptr() and kernfs_node_lock() helpers\n- Protect simple_xattr_set() calls in kernfs_xattr_set() and\n  kernfs_vfs_user_xattr_set() with the hashed mutex\n- Update file.c to use new helpers via compatibility wrappers\n- Update documentation to explain the extended lock usage",
-  "datePublished": "Aug 15, 2026, 6:32:30 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:30 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:58:32 AM",
+  "dateUpdated": "Aug 17, 2026, 5:46:08 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/bf53db51359939755084d08156684ed649489592",
-    "https://git.kernel.org/stable/c/6a07814ff643b5c8e1353d8c6229f52fde205cde",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-74343"
+    "https://git.kernel.org/stable/c/6a07814ff643b5c8e1353d8c6229f52fde205cde"
   ],
   "aliases": [
     "GHSA-rxfr-7h9v-g4vx",
     "CVE-2026-74343"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
-    {
-      "id": "100b4eb1-6093-374d-8a31-18af74a5c196",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
     {
       "id": "4bc6dd8a-4e46-30bc-8203-a581c2252cc1",
       "product": {
@@ -76,6 +67,16 @@
         }
       },
       "product_version": "patch: 7.1.5"
+    },
+    {
+      "id": "fdc73759-bbb5-31f2-a65a-80bba82ee5ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

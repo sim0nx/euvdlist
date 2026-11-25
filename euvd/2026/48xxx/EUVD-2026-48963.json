@@ -3,7 +3,7 @@
   "enisaUuid": "50640171-1506-38be-a2a3-4f964c1c0487",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/shrinker: do not hold RCU lock in shrinker_debugfs_count_show()\n\nReading the debugfs \"count\" file of a memcg-aware shrinker can sleep\ninside an RCU read-side critical section:\n\n  BUG: sleeping function called from invalid context at kernel/cgroup/rstat.c:421\n  RCU nest depth: 1, expected: 0\n   css_rstat_flush\n   mem_cgroup_flush_stats\n   zswap_shrinker_count\n   shrinker_debugfs_count_show\n\nshrinker_debugfs_count_show() invokes the ->count_objects() callback under\nrcu_read_lock().  The zswap callback flushes memcg stats via\ncss_rstat_flush(), which may sleep, so it must not run under RCU.\n\nThe RCU lock is not needed here.  mem_cgroup_iter() takes RCU internally\nand returns a memcg holding a css reference (dropped on the next iteration\nor by mem_cgroup_iter_break()), so the memcg stays alive without it.  The\nshrinker is kept alive by the open debugfs file: shrinker_free() removes\nthe debugfs entries via debugfs_remove_recursive(), which waits for\nin-flight readers to drain, before call_rcu(..., shrinker_free_rcu_cb). \nThe sibling \"scan\" handler already invokes the sleeping ->scan_objects()\ncallback with no RCU section.\n\nDrop the rcu_read_lock()/rcu_read_unlock().",
   "datePublished": "Jul 25, 2026, 8:50:58 AM",
-  "dateUpdated": "Jul 25, 2026, 8:50:58 AM",
+  "dateUpdated": "Aug 17, 2026, 4:55:18 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/de5f69b8dae8698ac5e48dfcd30017887cdf4e5a",
@@ -14,21 +14,12 @@
     "https://git.kernel.org/stable/c/b902890c62d200b3509cb5e09cf1e0a66553c128"
   ],
   "aliases": [
+    "GHSA-h85j-5g9p-ppj5",
     "CVE-2026-64419"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
-    {
-      "id": "25fddc90-8775-3aae-8c1f-6ddc65edab9b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
     {
       "id": "3de24a4b-f9d1-3aec-a231-24e91018f084",
       "product": {
@@ -48,6 +39,16 @@
         }
       },
       "product_version": "5035ebc644aec92d55d1bbfe042f35341e4bffb5 <e441cbfbd0eaa6404278e985033c33caba4db767"
+    },
+    {
+      "id": "744ba444-4eb2-3e33-8db3-75c34084ad2b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "78f5938c-33f9-3651-b763-a873c883dc17",

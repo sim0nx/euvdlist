@@ -3,8 +3,10 @@
   "enisaUuid": "90dcd471-7c59-3163-a0a1-c1245ec02091",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/edid: fix OOB read in drm_parse_tiled_block()\n\ndrm_parse_tiled_block() casts the DisplayID block to a\nstruct displayid_tiled_block and reads the full fixed layout up to\ntile->topology_id[7] without checking block->num_bytes. The DisplayID\niterator only validates the declared payload length, so a crafted EDID\ncan advertise a tiled-display block (tag DATA_BLOCK_TILED_DISPLAY, or\nDATA_BLOCK_2_TILED_DISPLAY_TOPOLOGY for v2.0) with a small num_bytes at\nthe end of a DisplayID extension. The read then runs past the end of the\nexact-sized kmemdup()'d EDID allocation, a heap out-of-bounds read.\n\nReject blocks shorter than the spec's 22-byte tiled payload before\nreading the fixed struct, as drm_parse_vesa_mso_data() already does.\n\n  BUG: KASAN: slab-out-of-bounds in drm_edid_connector_update\n  Read of size 2 at addr ffff888010077700 by task exploit/147\n   dump_stack_lvl (lib/dump_stack.c:94 ...)\n   print_report (mm/kasan/report.c:378 ...)\n   kasan_report (mm/kasan/report.c:595)\n   drm_edid_connector_update (drivers/gpu/drm/drm_edid.c:7581)\n   bochs_connector_helper_get_modes (drivers/gpu/drm/tiny/bochs.c:574)\n   drm_helper_probe_single_connector_modes (drivers/gpu/drm/drm_probe_helper.c:426)\n   status_store (drivers/gpu/drm/drm_sysfs.c:219)\n   ...\n   vfs_write (fs/read_write.c:595 fs/read_write.c:688)\n   ksys_write (fs/read_write.c:740)",
   "datePublished": "Jul 27, 2026, 8:10:37 PM",
-  "dateUpdated": "Jul 27, 2026, 8:10:37 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:48:40 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/c4ab04ca1bbf87eefa9fec5c80e1880450d2e7c0",
     "https://git.kernel.org/stable/c/9acd5c1ddc17ca4c5ffa0c373e3fdf480506e061",
@@ -16,21 +18,12 @@
     "https://git.kernel.org/stable/c/faaa1e1155833e7d4ce7e3cfaf64c0d636b190db"
   ],
   "aliases": [
-    "CVE-2026-64546"
+    "CVE-2026-64546",
+    "GHSA-7h2w-78jh-69gr"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
-    {
-      "id": "12f172a4-c933-3f0a-b630-ff2cd6413105",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
     {
       "id": "28f4a921-5762-347c-b9cf-e41d643326da",
       "product": {
@@ -40,6 +33,16 @@
         }
       },
       "product_version": "3.19"
+    },
+    {
+      "id": "297ed002-1871-3faf-84b1-74d9150a5e88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "4537e171-f2a8-350c-95f7-ca244bfc1ad4",

@@ -1,9 +1,9 @@
 {
   "id": "EUVD-2026-21422",
   "enisaUuid": "b1e81c87-f1f1-3d69-9514-c27845798542",
-  "description": "Vikunja Vulnerable to TOTP Brute-Force Due to Non-Functional Account Lockout",
-  "datePublished": "Apr 10, 2026, 3:34:14 PM",
-  "dateUpdated": "Apr 10, 2026, 3:34:14 PM",
+  "description": "Vikunja is an open-source self-hosted task management platform. Prior to 2.3.0, the TOTP failed-attempt lockout mechanism is non-functional due to a database transaction handling bug. When a TOTP validation fails, the login handler in pkg/routes/api/v1/login.go calls HandleFailedTOTPAuth and then unconditionally rolls back. HandleFailedTOTPAuth in pkg/user/totp.go uses an in-memory counter (key-value store) to track failed attempts. When the counter reaches 10, it calls user.SetStatus(s, StatusAccountLocked) on the same database session s. Because the login handler always rolls back after a TOTP failure, the StatusAccountLocked write is undone. The in-memory counter correctly increments past 10, so the lockout code executes on every subsequent attempt, but the database write is rolled back every time. This allows unlimited brute-force attempts against TOTP codes. This vulnerability is fixed in 2.3.0.",
+  "datePublished": "Apr 10, 2026, 4:03:19 PM",
+  "dateUpdated": "Apr 13, 2026, 3:37:11 PM",
   "baseScore": 5.9,
   "baseScoreVersion": "3.1",
   "baseScoreVector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
@@ -17,12 +17,15 @@
     "CVE-2026-35597"
   ],
   "assigner": "GitHub_M",
-  "epss": 0.0,
+  "epss": 0.31,
   "enisaIdProduct": [
     {
       "id": "ec3fc393-185f-33d4-a837-25afe7cc691e",
       "product": {
-        "name": "vikunja"
+        "name": "vikunja",
+        "vendor": {
+          "name": "go-vikunja"
+        }
       },
       "product_version": "< 2.3.0"
     }

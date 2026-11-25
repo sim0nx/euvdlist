@@ -1,0 +1,172 @@
+{
+  "id": "EUVD-2024-24168",
+  "enisaUuid": "064a0a8b-6410-32f5-89f5-49c9f7cb0f07",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nx86/mm: Disallow vsyscall page read for copy_from_kernel_nofault()\n\nWhen trying to use copy_from_kernel_nofault() to read vsyscall page\nthrough a bpf program, the following oops was reported:\n\n  BUG: unable to handle page fault for address: ffffffffff600000\n  #PF: supervisor read access in kernel mode\n  #PF: error_code(0x0000) - not-present page\n  PGD 3231067 P4D 3231067 PUD 3233067 PMD 3235067 PTE 0\n  Oops: 0000 [#1] PREEMPT SMP PTI\n  CPU: 1 PID: 20390 Comm: test_progs ...... 6.7.0+ #58\n  Hardware name: QEMU Standard PC (i440FX + PIIX, 1996) ......\n  RIP: 0010:copy_from_kernel_nofault+0x6f/0x110\n  ......\n  Call Trace:\n   <TASK>\n   ? copy_from_kernel_nofault+0x6f/0x110\n   bpf_probe_read_kernel+0x1d/0x50\n   bpf_prog_2061065e56845f08_do_probe_read+0x51/0x8d\n   trace_call_bpf+0xc5/0x1c0\n   perf_call_bpf_enter.isra.0+0x69/0xb0\n   perf_syscall_enter+0x13e/0x200\n   syscall_trace_enter+0x188/0x1c0\n   do_syscall_64+0xb5/0xe0\n   entry_SYSCALL_64_after_hwframe+0x6e/0x76\n   </TASK>\n  ......\n  ---[ end trace 0000000000000000 ]---\n\nThe oops is triggered when:\n\n1) A bpf program uses bpf_probe_read_kernel() to read from the vsyscall\npage and invokes copy_from_kernel_nofault() which in turn calls\n__get_user_asm().\n\n2) Because the vsyscall page address is not readable from kernel space,\na page fault exception is triggered accordingly.\n\n3) handle_page_fault() considers the vsyscall page address as a user\nspace address instead of a kernel space address. This results in the\nfix-up setup by bpf not being applied and a page_fault_oops() is invoked\ndue to SMAP.\n\nConsidering handle_page_fault() has already considered the vsyscall page\naddress as a userspace address, fix the problem by disallowing vsyscall\npage read for copy_from_kernel_nofault().",
+  "datePublished": "Apr 17, 2024, 10:27:53 AM",
+  "dateUpdated": "Oct 15, 2026, 12:39:19 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/6e4694e65b6db4c3de125115dd4f55848cc48381",
+    "https://git.kernel.org/stable/c/e8a67fe34b76a49320b33032228a794f40b0316b",
+    "https://git.kernel.org/stable/c/f175de546a3eb77614d94d4c02550181c0a8493e",
+    "https://git.kernel.org/stable/c/57f78c46f08198e1be08ffe99c4c1ccc12855bf5",
+    "https://git.kernel.org/stable/c/29bd6f86904682adafe9affbc7f79b14defcaff8",
+    "https://git.kernel.org/stable/c/32019c659ecfe1d92e3bf9fcdfbb11a7c70acd58"
+  ],
+  "aliases": [
+    "CVE-2024-26906",
+    "GHSA-h4jh-5vqp-vw3p"
+  ],
+  "assigner": "Linux",
+  "epss": 0.25,
+  "enisaIdProduct": [
+    {
+      "id": "05a4a173-4e32-3f0f-ab57-b0458402b7c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.11"
+    },
+    {
+      "id": "1ba22169-1a83-3fa8-9adc-c04e1d87aa8a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.5"
+    },
+    {
+      "id": "245096c1-05fc-3772-85fd-7548c11e733d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "4e78386a-0d4d-3199-8495-16205ce80013",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "75a1a607bb7e6d918be3aca11ec2214a275392f4 <6e4694e65b6db4c3de125115dd4f55848cc48381"
+    },
+    {
+      "id": "6c64131f-4480-380f-a54d-30b5d68fd484",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "75a1a607bb7e6d918be3aca11ec2214a275392f4 <29bd6f86904682adafe9affbc7f79b14defcaff8"
+    },
+    {
+      "id": "7d33154f-89e8-3a18-952f-c47631c14e51",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.23"
+    },
+    {
+      "id": "97d02d28-7675-3ec1-8110-6ad989549466",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "75a1a607bb7e6d918be3aca11ec2214a275392f4 <57f78c46f08198e1be08ffe99c4c1ccc12855bf5"
+    },
+    {
+      "id": "9899cce8-0b90-31a5-a305-543bff4245da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.83"
+    },
+    {
+      "id": "aa6af298-ce0f-36e8-98b7-4048e6438b6e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "bfa487d5-1b2f-356b-95f6-579b62938ee9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.214"
+    },
+    {
+      "id": "c393d9e7-e1d2-3c99-9a28-9daef41caf8f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "75a1a607bb7e6d918be3aca11ec2214a275392f4 <32019c659ecfe1d92e3bf9fcdfbb11a7c70acd58"
+    },
+    {
+      "id": "d2976ff4-c5a8-3c07-b68e-b3f894be2dc3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.153"
+    },
+    {
+      "id": "dc800bea-5122-3b75-84f7-f58ed2ca8606",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "75a1a607bb7e6d918be3aca11ec2214a275392f4 <f175de546a3eb77614d94d4c02550181c0a8493e"
+    },
+    {
+      "id": "ee3543a3-2dbd-3a3b-af90-82025fa673d7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "75a1a607bb7e6d918be3aca11ec2214a275392f4 <e8a67fe34b76a49320b33032228a794f40b0316b"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "8a3f6620-ec15-38cd-b0a7-6b23cd22081a",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

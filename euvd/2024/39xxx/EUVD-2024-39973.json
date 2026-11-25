@@ -1,0 +1,129 @@
+{
+  "id": "EUVD-2024-39973",
+  "enisaUuid": "a408577f-5ba5-367a-aa2a-f59b52c90b4a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: ISO: Check socket flag instead of hcon\n\nThis fixes the following Smatch static checker warning:\n\nnet/bluetooth/iso.c:1364 iso_sock_recvmsg()\nerror: we previously assumed 'pi->conn->hcon' could be null (line 1359)\n\nnet/bluetooth/iso.c\n1347 static int iso_sock_recvmsg(struct socket *sock, struct msghdr *msg,\n1348                             size_t len, int flags)\n1349 {\n1350         struct sock *sk = sock->sk;\n1351         struct iso_pinfo *pi = iso_pi(sk);\n1352\n1353         BT_DBG(\"sk %p\", sk);\n1354\n1355         if (test_and_clear_bit(BT_SK_DEFER_SETUP,\n                                      &bt_sk(sk)->flags)) {\n1356                 lock_sock(sk);\n1357                 switch (sk->sk_state) {\n1358                 case BT_CONNECT2:\n1359                         if (pi->conn->hcon &&\n                                     ^^^^^^^^^^^^^^ If ->hcon is NULL\n\n1360                             test_bit(HCI_CONN_PA_SYNC,\n                                         &pi->conn->hcon->flags)) {\n1361                                 iso_conn_big_sync(sk);\n1362                                 sk->sk_state = BT_LISTEN;\n1363                         } else {\n--> 1364                         iso_conn_defer_accept(pi->conn->hcon);\n                                                       ^^^^^^^^^^^^^^\n                                                       then we're toast\n\n1365                                 sk->sk_state = BT_CONFIG;\n1366                         }\n1367                         release_sock(sk);\n1368                         return 0;\n1369                 case BT_CONNECTED:\n1370                         if (test_bit(BT_SK_PA_SYNC,",
+  "datePublished": "Jul 30, 2024, 7:46:35 AM",
+  "dateUpdated": "May 23, 2026, 3:52:23 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/045669710464a21c67e690ef14698fd71857cb11",
+    "https://git.kernel.org/stable/c/33fabef489169c6db87843ef23351ed0d5e51ad8",
+    "https://git.kernel.org/stable/c/596b6f081336e77764ca35cfeab66d0fcdbe544e"
+  ],
+  "aliases": [
+    "GHSA-3q8w-82vq-p7rq",
+    "CVE-2024-42141"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "3eea32f1-b878-38f8-be38-49cd52c9f2e9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbdc4bc47268953c80853489f696e02d61f9a2c6 <33fabef489169c6db87843ef23351ed0d5e51ad8"
+    },
+    {
+      "id": "46b2d50f-0a1d-3f0c-91f4-41f36e072573",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.6"
+    },
+    {
+      "id": "4e4e291e-22b0-3a8a-974b-3d47ce9b1e62",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "7381a468-37a1-3176-b7bd-90e52855b5b2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbdc4bc47268953c80853489f696e02d61f9a2c6 <596b6f081336e77764ca35cfeab66d0fcdbe544e"
+    },
+    {
+      "id": "a0aa6503-0019-387b-bea5-dc7ef88fd69e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9.9"
+    },
+    {
+      "id": "b541761a-7564-344e-8709-070223b749b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fbdc4bc47268953c80853489f696e02d61f9a2c6 <045669710464a21c67e690ef14698fd71857cb11"
+    },
+    {
+      "id": "c8608b7c-277c-3441-9c7e-5203e1a79f03",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10"
+    },
+    {
+      "id": "dc11ddee-9550-3fc2-ae21-75392f033f94",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.39"
+    },
+    {
+      "id": "f119d517-47a6-32e6-8aa4-8bad783512de",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.5.12 <6.6"
+    },
+    {
+      "id": "fd0f1d78-58ef-3f59-a830-dcda050cdc8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "c03a10bd5b6ccb22921e04bcddc987410df7e7a9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "7f3896b2-3419-3e9b-8907-b64648085f42",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

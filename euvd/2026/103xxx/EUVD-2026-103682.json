@@ -3,20 +3,34 @@
   "enisaUuid": "1ec10ca7-a4f5-3e46-89c9-845cdb5e2b1e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: act_ct: fix helper UAF due to extensions realloc\n\nWhile calling the helpers, a raw pointer to the extensions area is\nwired into expectations list:\n\n  -> nf_ct_helper()\n   -> helper->help()\n    -> nf_ct_expect_related_report()\n     -> nf_ct_expect_insert()\n      -> hlist_add_head_rcu(&exp->lnode, &master_help->expectations)\n\nIn case the connection is not confirmed yet, more extensions can be\nadded afterwards with *_ext_add() calls reallocating the extension\nspace and leaving the now invalid pointer in the expectations list\nthat is later accessed while removing the expectation.\n\nMake sure that helpers are called at the end after all the other\nextensions are already added.\n\nNote that the helper rejection now leaves the mark and labels set,\nbut that's not different from how the NAT was handled before or how\nthe mark and the labels were handled on confirmation failure.  And\nthere are no atomicity guarantees provided by the API anyway.",
   "datePublished": "Oct 18, 2026, 3:14:52 PM",
-  "dateUpdated": "Oct 18, 2026, 3:14:52 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 24, 2026, 2:08:50 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/31f5fe29a572037ee19c233dfe506849940c484b",
     "https://git.kernel.org/stable/c/1679bbf5fbeac52a310b1a58b2b301bbf388bdbf",
     "https://git.kernel.org/stable/c/812c16a255e7773a544e88b39ae6daed25544d30",
     "https://git.kernel.org/stable/c/8988f4d11f3fba0ab38122178836c683ad516a05",
     "https://git.kernel.org/stable/c/dad19b59da050cb60d3f7023dac2a042a84bf0bd"
   ],
   "aliases": [
-    "CVE-2026-98442"
+    "CVE-2026-98442",
+    "GHSA-cqvg-rqhw-9mqj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
+    {
+      "id": "21363925-3294-3166-9c98-54f81e6da4b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "a21b06e7319129994f339ed47f512bbe57b77f5b <31f5fe29a572037ee19c233dfe506849940c484b"
+    },
     {
       "id": "2615de1a-c093-38d2-a8fd-d35279a7abde",
       "product": {
@@ -36,6 +50,16 @@
         }
       },
       "product_version": "6.2"
+    },
+    {
+      "id": "34208d4a-d1f9-32a0-a06c-c0f2d197c240",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     },
     {
       "id": "55977bd3-e848-3729-83e8-ff32d88f928d",
@@ -98,14 +122,14 @@
       "product_version": "a21b06e7319129994f339ed47f512bbe57b77f5b <dad19b59da050cb60d3f7023dac2a042a84bf0bd"
     },
     {
-      "id": "e53f34de-e976-3ab9-9a5d-15d99c70d34a",
+      "id": "e0753025-e2ff-3614-912e-27901c2ee3bc",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc5"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "f4e6ee33-12ce-3d01-bd3b-777acfe6a44f",

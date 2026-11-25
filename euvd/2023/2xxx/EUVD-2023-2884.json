@@ -1,0 +1,50 @@
+{
+  "id": "EUVD-2023-2884",
+  "enisaUuid": "ca2172ab-484a-32a2-af5b-a64820730694",
+  "description": "Once an user is authenticated on Jolokia, he can potentially trigger arbitrary code execution.\u00a0\n\nIn details, in ActiveMQ configurations, jetty allows\norg.jolokia.http.AgentServlet to handler request to /api/jolokia\n\norg.jolokia.http.HttpRequestHandler#handlePostRequest is able to\ncreate JmxRequest through JSONObject. And calls to\norg.jolokia.http.HttpRequestHandler#executeRequest.\n\nInto deeper calling stacks,\norg.jolokia.handler.ExecHandler#doHandleRequest can be invoked\nthrough refection. This could lead to RCE through via\nvarious mbeans. One example is unrestricted deserialization in jdk.management.jfr.FlightRecorderMXBeanImpl which exists on Java version above 11.\n\n1 Call newRecording.\n\n2 Call setConfiguration. And a webshell data hides in it.\n\n3 Call startRecording.\n\n4 Call copyTo method. The webshell will be written to a .jsp file.\n\nThe mitigation is to restrict (by default) the actions authorized on Jolokia, or disable Jolokia.\nA more restrictive Jolokia configuration has been defined in default ActiveMQ distribution. We encourage users to upgrade to ActiveMQ distributions version including updated Jolokia configuration: 5.16.6, 5.17.4, 5.18.0, 6.0.0.\n",
+  "datePublished": "Nov 28, 2023, 3:08:38 PM",
+  "dateUpdated": "Nov 3, 2025, 9:46:33 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://activemq.apache.org/security-advisories.data/CVE-2022-41678-announcement.txt",
+    "https://lists.apache.org/thread/7g17kwbtjl011mm4tr8bn1vnoq9wh4sl",
+    "https://www.openwall.com/lists/oss-security/2023/11/28/1",
+    "https://security.netapp.com/advisory/ntap-20240216-0004/"
+  ],
+  "aliases": [
+    "GHSA-53v4-42fg-g287",
+    "CVE-2022-41678"
+  ],
+  "assigner": "apache",
+  "epss": 86.58,
+  "enisaIdProduct": [
+    {
+      "id": "026306e9-6278-34b5-b5fb-d97b91be64ec",
+      "product": {
+        "name": "Apache ActiveMQ",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "0 <5.16.6"
+    },
+    {
+      "id": "a2140d7f-770c-30c7-b561-90643f10356d",
+      "product": {
+        "name": "Apache ActiveMQ",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "5.17.0 <5.17.4"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5227dc0d-6498-363a-9335-749de22a26a1",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}

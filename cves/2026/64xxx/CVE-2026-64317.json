@@ -3,8 +3,10 @@
   "enisaUuid": "aa00678c-f070-3d4a-8091-a6d3afc8cd62",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nisofs: bound Rock Ridge symlink components to the SL record\n\nget_symlink_chunk() and the SL handling in\nparse_rock_ridge_inode_internal() walk the variable-length components of\na Rock Ridge \"SL\" (symbolic link) record.  Each component is a two-byte\nheader (flags, len) followed by len bytes of text, so it occupies\nslp->len + 2 bytes.  Both loops read slp->len and advance to the next\ncomponent, and get_symlink_chunk() additionally does\nmemcpy(rpnt, slp->text, slp->len), but neither checks that the component\nlies within the SL record before dereferencing it.\n\nA crafted SL record whose component declares a len that runs past the\nrecord (rr->len) therefore triggers an out-of-bounds read of up to 255\nbytes.  When the record sits at the tail of its backing buffer - for\nexample a small kmalloc()ed continuation block reached through a CE\nrecord - the read crosses the allocation; get_symlink_chunk() then\ncopies the out-of-bounds bytes into the symlink body returned to user\nspace by readlink(), disclosing adjacent kernel memory.\n\nISO 9660 images are routinely mounted from untrusted removable media -\ndesktop environments auto-mount them (e.g. via udisks2) without\nCAP_SYS_ADMIN - so the record contents are attacker-controlled.\n\nReject any component that does not fit in the remaining record bytes\nbefore using it.  In get_symlink_chunk() return NULL, like the existing\noutput-buffer (plimit) checks, so a malformed record makes readlink()\nfail with -EIO rather than silently returning a truncated target; in\nparse_rock_ridge_inode_internal() stop the inode-size walk.",
   "datePublished": "Jul 25, 2026, 8:49:47 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:47 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 10, 2026, 12:49:06 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/1015e1c4b2fadd9c09704e24738e46598778c869",
     "https://git.kernel.org/stable/c/36fe7d25dbc40da0c6b1dd4513a4f69ac6164eee",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/5fa1d6a5ec2356d2107dead614437c66fa7138b1"
   ],
   "aliases": [
+    "GHSA-qvx5-h96v-vv5j",
     "CVE-2026-64317"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "0dd93c84-8afb-33f1-b64a-806236ece177",
@@ -112,6 +115,16 @@
       "product_version": "patch: 6.12.96"
     },
     {
+      "id": "5836248c-ab4f-363f-8eee-18a0274c3bf6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "690ffd4f-2e53-3fd6-863a-e3824e2f0694",
       "product": {
         "name": "Linux",
@@ -180,16 +193,6 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6bf41db09ef935d76fcc84ccf213b42c18de95ee"
-    },
-    {
-      "id": "dac0dd57-b127-334e-a3d5-2687499a2f4c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "ec46eda3-c243-3375-b94a-3181bf75c252",

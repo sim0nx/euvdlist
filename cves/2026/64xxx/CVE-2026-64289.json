@@ -3,7 +3,7 @@
   "enisaUuid": "87be7f73-a694-3905-82f0-171eb830468a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niommufd: Set upper bounds on cache invalidation entry_num and entry_len\n\niommufd_hwpt_invalidate() takes a user-controlled entry_num and entry_len,\neach bounded only by U32_MAX. An entry_len beyond the kernel's struct size\nmakes the copy helper verify the extra bytes are zero, scanning that excess\nin one uninterruptible pass; a multi-gigabyte value over zeroed user memory\ntrips the soft-lockup watchdog.\n\nA large entry_num is the other half, driving the backend invalidation loop\nwith no reschedule. The VT-d nested handler, for one, copies each entry and\nflushes caches per iteration, pinning the CPU on a non-preemptible kernel.\n\nCap both in the ioctl. entry_len is held under PAGE_SIZE, above any request\nstruct, and entry_num under 1 << 19, the order of a hardware invalidation\nqueue and well beyond any real batch, bounding the per-call loop length.",
   "datePublished": "Jul 25, 2026, 8:49:29 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:29 AM",
+  "dateUpdated": "Nov 6, 2026, 4:34:32 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/d2bd041e0efaf7d81789779b135279d18b33d6d5",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/4d70986002f2f3eaaed89124fb2522bded38b016"
   ],
   "aliases": [
-    "CVE-2026-64289"
+    "CVE-2026-64289",
+    "GHSA-m7qh-p3gf-gcv8"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "318a28b5-cd0e-30a3-a5db-d5fc270fc45e",
@@ -26,16 +27,6 @@
         }
       },
       "product_version": "patch: 6.12.96"
-    },
-    {
-      "id": "3e5cfcfc-dc53-3b70-9991-0f9e2357bf05",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "6cbdb492-b7c7-320c-a0a2-5d92d653d35b",
@@ -96,6 +87,16 @@
         }
       },
       "product_version": "6.8"
+    },
+    {
+      "id": "ddf06be6-24eb-3da3-b9df-98bb53b753fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "e89dadfa-8177-34a4-9615-b4f32df4dcd6",

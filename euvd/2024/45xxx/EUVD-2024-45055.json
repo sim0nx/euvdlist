@@ -1,0 +1,151 @@
+{
+  "id": "EUVD-2024-45055",
+  "enisaUuid": "c6f983c5-9363-3b44-a0a8-213236ed6397",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: xtables: avoid NFPROTO_UNSPEC where needed\n\nsyzbot managed to call xt_cluster match via ebtables:\n\n WARNING: CPU: 0 PID: 11 at net/netfilter/xt_cluster.c:72 xt_cluster_mt+0x196/0x780\n [..]\n ebt_do_table+0x174b/0x2a40\n\nModule registers to NFPROTO_UNSPEC, but it assumes ipv4/ipv6 packet\nprocessing.  As this is only useful to restrict locally terminating\nTCP/UDP traffic, register this for ipv4 and ipv6 family only.\n\nPablo points out that this is a general issue, direct users of the\nset/getsockopt interface can call into targets/matches that were only\nintended for use with ip(6)tables.\n\nCheck all UNSPEC matches and targets for similar issues:\n\n- matches and targets are fine except if they assume skb_network_header()\n  is valid -- this is only true when called from inet layer: ip(6) stack\n  pulls the ip/ipv6 header into linear data area.\n- targets that return XT_CONTINUE or other xtables verdicts must be\n  restricted too, they are incompatbile with the ebtables traverser, e.g.\n  EBT_CONTINUE is a completely different value than XT_CONTINUE.\n\nMost matches/targets are changed to register for NFPROTO_IPV4/IPV6, as\nthey are provided for use by ip(6)tables.\n\nThe MARK target is also used by arptables, so register for NFPROTO_ARP too.\n\nWhile at it, bail out if connbytes fails to enable the corresponding\nconntrack family.\n\nThis change passes the selftests in iptables.git.",
+  "datePublished": "Oct 21, 2024, 7:39:38 PM",
+  "dateUpdated": "May 11, 2026, 8:44:17 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/85ff9a0f793ca52c527e75cd40a69c948627ebde",
+    "https://git.kernel.org/stable/c/8f482bb7e27b37f1f734bb9a8eeb28b23d59d189",
+    "https://git.kernel.org/stable/c/997f67d813ce0cf5eb3cdb8f124da68141e91b6c",
+    "https://git.kernel.org/stable/c/4cdc55ec6222bb195995cc58f7cb46e4d8907056",
+    "https://git.kernel.org/stable/c/0bfcb7b71e735560077a42847f69597ec7dcc326"
+  ],
+  "aliases": [
+    "CVE-2024-50038",
+    "GHSA-7428-67h9-qj3r"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "08781034-a4f9-3c3d-9077-7ac6ab3ddd60",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "10192b53-1cf4-33d5-9777-43e054f97885",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.30"
+    },
+    {
+      "id": "1fcbb647-4c07-3f9c-a4b6-af90f446782b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0269ea4937343536ec7e85649932bc8c9686ea78 <4cdc55ec6222bb195995cc58f7cb46e4d8907056"
+    },
+    {
+      "id": "260b3591-de2c-3e5b-8b0a-3922ebd31af8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0269ea4937343536ec7e85649932bc8c9686ea78 <8f482bb7e27b37f1f734bb9a8eeb28b23d59d189"
+    },
+    {
+      "id": "4b5ce241-34c9-36d9-821b-8fc032a3156b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0269ea4937343536ec7e85649932bc8c9686ea78 <85ff9a0f793ca52c527e75cd40a69c948627ebde"
+    },
+    {
+      "id": "53299186-c3ce-3028-b41d-831ca75e7d9b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0269ea4937343536ec7e85649932bc8c9686ea78 <0bfcb7b71e735560077a42847f69597ec7dcc326"
+    },
+    {
+      "id": "5f82b02e-e993-34ed-a107-5521dca78114",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.113"
+    },
+    {
+      "id": "601d6249-1aab-3353-98b0-ad1071d034be",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0269ea4937343536ec7e85649932bc8c9686ea78 <997f67d813ce0cf5eb3cdb8f124da68141e91b6c"
+    },
+    {
+      "id": "8c8e2f2a-fc11-3611-9e8b-220b02c9460b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.57"
+    },
+    {
+      "id": "ee71ad0b-4226-3eff-8298-96a0886b8e20",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.4"
+    },
+    {
+      "id": "ee7bea54-467f-3ca9-9567-92fc7db68c73",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.168"
+    },
+    {
+      "id": "fd81260f-8116-3f32-974e-52a2d5731bb6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "5bd8ba5b-74be-3dd2-8337-19b6f63f6274",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

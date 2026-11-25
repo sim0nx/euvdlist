@@ -2,23 +2,25 @@
   "id": "EUVD-2026-59075",
   "enisaUuid": "39a1c03a-e9f1-32f3-815a-5632d177a58e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncan: bcm: fix data race on rx_stamp/rx_ifindex in bcm_rx_handler()\n\nFor an rx op subscribed on all interfaces (ifindex == 0), the same op\nis registered once in the shared per-netns wildcard filter list, so\nbcm_rx_handler() can run concurrently on different CPUs for frames\narriving on different net devices.\n\nop->rx_stamp and op->rx_ifindex were written before bcm_rx_update_lock was\ntaken, allowing concurrent writers to race each other - including a torn\nstore of the 64-bit rx_stamp on 32-bit platforms.\n\nBeyond a torn store bcm_send_to_user() must report the timestamp/ifindex\nof the very same frame whose content it is delivering. So the assignment\nis placed in the same unbroken bcm_rx_update_lock section as the content\ncomparison.\n\nAs a side effect, the RTR-request frame feature (which never reach\nbcm_send_to_user()) no longer updates rx_stamp/rx_ifindex, since only\nthe notification path needs them.",
-  "datePublished": "Aug 15, 2026, 6:32:12 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:12 AM",
+  "datePublished": "Aug 15, 2026, 5:52:56 AM",
+  "dateUpdated": "Nov 6, 2026, 4:55:20 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/b64f60c468d149aca22ea56bb842b9730215aaa5",
+    "https://git.kernel.org/stable/c/c8a5d7cb095d3b12bd9dcf752d6ca0ff50872ac5",
+    "https://git.kernel.org/stable/c/4b97410f4bba18d2ee2784c8e089104f387bc27c",
     "https://git.kernel.org/stable/c/5f246b96ab47523ec9b8ea870b5c567a3cb1eb1c",
     "https://git.kernel.org/stable/c/656ff69ef235699035e57d9e1ae417e62a38aa7f",
     "https://git.kernel.org/stable/c/136de17f38630307991c59aa7080012a99451783",
     "https://git.kernel.org/stable/c/c312b750bb5ac3348cfc85dab25e90937bd4d251",
-    "https://git.kernel.org/stable/c/58fd6cbc8541216af1d7ed272ea7ac2b66d50fd8",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72117"
+    "https://git.kernel.org/stable/c/58fd6cbc8541216af1d7ed272ea7ac2b66d50fd8"
   ],
   "aliases": [
     "CVE-2026-72117",
     "GHSA-rcrc-h682-pmgg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "007b2b26-ec6e-30b2-8edb-bbd3ef00e538",
@@ -49,16 +51,6 @@
         }
       },
       "product_version": "patch: 6.6.148"
-    },
-    {
-      "id": "5672438d-cce9-3a77-8416-c8953b00cf97",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
     },
     {
       "id": "623203ef-858a-3a83-94a9-636af8157c77",
@@ -101,6 +93,66 @@
       "product_version": "patch: 6.12.101"
     },
     {
+      "id": "874a7212-33a6-3a83-ae6b-2da239cae530",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
+    {
+      "id": "8cd9c32c-fa21-3a3c-9d53-a11d64b6eecc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
+      "id": "9b111d51-b24c-3b74-a2ed-69568547c393",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ffd980f976e7fd666c2e61bf8ab35107efd11828 <4b97410f4bba18d2ee2784c8e089104f387bc27c"
+    },
+    {
+      "id": "a2e50680-5892-3125-a9a2-8e8ea08e23d0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ffd980f976e7fd666c2e61bf8ab35107efd11828 <b64f60c468d149aca22ea56bb842b9730215aaa5"
+    },
+    {
+      "id": "a3122425-c9b1-3eda-8141-aafaea34c89d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "c03b6f85-7c3d-3860-b7cb-411bd2b7c3e2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "c05a8f8a-5dd8-3999-9db4-7d2e03873e05",
       "product": {
         "name": "Linux",
@@ -139,6 +191,16 @@
         }
       },
       "product_version": "ffd980f976e7fd666c2e61bf8ab35107efd11828 <c312b750bb5ac3348cfc85dab25e90937bd4d251"
+    },
+    {
+      "id": "fff285b8-af8f-3d22-959b-57703915874b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ffd980f976e7fd666c2e61bf8ab35107efd11828 <c8a5d7cb095d3b12bd9dcf752d6ca0ff50872ac5"
     }
   ],
   "enisaIdVendor": [

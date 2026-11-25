@@ -3,8 +3,10 @@
   "enisaUuid": "80e19032-1537-3c46-b8af-1aaec214a6b3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nf2fs: fix incorrect FI_NO_EXTENT handling in __destroy_extent_node()\n\nWhen __destroy_extent_node() sets the inode flag FI_NO_EXTENT, it does\nnot reset the length of the largest extent to 0 and update the inode\nfolio. Since modifications to the extent tree are disallowed afterward,\nthe cached largest extent may become stale. This can trigger the\nfollowing error in xfstests generic/388:\n\nF2FS-fs (dm-0): sanity_check_extent_cache: inode (ino=1761) extent info [220057, 57, 6] is incorrect, run fsck to fix\n\nIn the f2fs_drop_inode path, __destroy_extent_node() does not need to\nguarantee that et->node_cnt is 0, because concurrency with writeback\nis expected in this path, and writeback may update the extent cache.\n\nThis patch reverts commit ed78aeebef05 (\"f2fs: fix node_cnt race between\nextent node destroy and writeback\"), and remove the unnecessary zero\ncheck of et->node_cnt.",
   "datePublished": "Jul 19, 2026, 12:02:13 PM",
-  "dateUpdated": "Jul 19, 2026, 12:02:13 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:27:08 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/7e4d8f98be63f98856a5176b9188dada6e7ba9ee",
     "https://git.kernel.org/stable/c/58a5deb220bcac4c73bf58954c0845644c997487",
@@ -17,7 +19,7 @@
     "CVE-2026-63812"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "01953242-d206-316f-8a1d-30fd857dcb44",
@@ -80,6 +82,16 @@
       "product_version": "42dd1c91f993431d0b399502479d00e6ad1bca71 <7e4d8f98be63f98856a5176b9188dada6e7ba9ee"
     },
     {
+      "id": "1f66a645-b01d-3d0a-b294-12447001d28f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.1.191 <6.2"
+    },
+    {
       "id": "5418845c-54d8-364a-bb62-c6fd7775de95",
       "product": {
         "name": "Linux",
@@ -130,14 +142,14 @@
       "product_version": "6.12.88 <6.12.95"
     },
     {
-      "id": "a2d39b09-65f1-38af-a176-994834653316",
+      "id": "8e9df2cd-1102-355e-b399-dff9c111cb34",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "b08c4c7d-5fa7-31d2-a920-6e5972910232",
@@ -188,6 +200,16 @@
         }
       },
       "product_version": "7.1"
+    },
+    {
+      "id": "e6310e07-7f82-333d-be44-c1cf0679ddd4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "b00e6950da9c0e4986f6e93c875d2b9184bdb220"
     }
   ],
   "enisaIdVendor": [

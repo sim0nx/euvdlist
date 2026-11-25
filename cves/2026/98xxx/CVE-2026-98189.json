@@ -3,7 +3,7 @@
   "enisaUuid": "0030b888-d3fa-31ab-bace-ee506c323139",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: wilc1000: fix RX buffer OOB-write in wilc_wlan_handle_isr_ext()\n\nwilc_wlan_handle_isr_ext() takes the RX transfer size from the\ndevice-reported interrupt status register (a 15-bit field shifted left by 2,\nup to 131068 bytes) and reads that many bytes from the device into\nrx_buffer, which is only WILC_RX_BUFF_SIZE (96K) large. The wrap\ncheck only handles the current offset; the size itself is never\ncompared against the buffer, so a bogus SDIO device can make the driver\nOOB-write rx_buffer by up to ~32K with data it controls.\n\nThe oversized transfer also leaves rx_buffer_offset past the end of\nthe buffer, after which the unsigned wrap check stops working and\nthe overflow can repeat.\n\nDrop any transfer whose size exceeds the RX buffer, acknowledging\nthe data interrupt and re-arming the RX engine so the bogus frame is\ndiscarded and reception can continue. This also restores the\nrx_buffer_offset <= WILC_RX_BUFF_SIZE invariant the wrap check\nrelies on.\n\nThis is not expected to change driver behavior in most cases:\nwithout this check, an oversized transfer would most likely\ncorrupt neighboring kernel memory instead of completing anyway, and\nthe drop path performs the same interrupt acknowledgment and RX\nengine re-arming as the normal path, so subsequent transfers are\nreceived unaffected.\n\nDiscovered by Atuin - Automated Vulnerability Discovery Engine.",
   "datePublished": "Oct 6, 2026, 8:44:30 AM",
-  "dateUpdated": "Oct 6, 2026, 8:44:30 AM",
+  "dateUpdated": "Oct 19, 2026, 9:15:20 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/3ddb88e237bc1e59fd37b1cf369f3b6c2dedae26",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/c1ba7f7f18465e259cf1b4d9c73fc73853d7f790"
   ],
   "aliases": [
+    "GHSA-75q8-f2q5-cqqg",
     "CVE-2026-98189"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "14a2ec52-8290-36e2-a71d-7bd3d3f436d4",
@@ -92,6 +93,16 @@
       "product_version": "patch: 7.2.8"
     },
     {
+      "id": "6c573da2-ab75-3e49-b7f9-278bbb3ce1fd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "73b97707-5997-3eab-8264-fdf983f357f2",
       "product": {
         "name": "Linux",
@@ -140,16 +151,6 @@
         }
       },
       "product_version": "c5c77ba18ea66aa05441c71e38473efb787705a4 <9f6a276ade936a8803f9f3df217c2368944dc321"
-    },
-    {
-      "id": "bcf66f61-b2ae-3690-bd84-0264c9b8f59b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "c0058214-b803-35ad-ad96-9d493e8cb5c9",

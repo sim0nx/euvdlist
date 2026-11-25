@@ -3,16 +3,19 @@
   "enisaUuid": "fa739ebf-540d-30ab-b8ca-c98c0a8e5353",
   "description": "Improper Input Validation, Exposure of Sensitive Information to an Unauthorized Actor, Server-Side Request Forgery (SSRF) vulnerability in Apache Camel in Iggy component.\n\nThe camel-iggy consumer mapped the user-headers of inbound Iggy messages into the Camel Exchange header map without applying any HeaderFilterStrategy (IggyFetchRecords copied the message user-headers straight into the Exchange). Because nothing blocked the Camel header namespace, an actor able to publish to the consumed Iggy stream/topic could set Camel-internal control headers - including CamelHttpUri (Exchange.HTTP_URI) - simply by supplying them as message user-headers. In a route where the Iggy consumer feeds a downstream HTTP producer, the injected CamelHttpUri redirects the server-side HTTP request to an attacker-chosen destination (server-side request forgery - for example to an internal service or a cloud metadata endpoint). In addition, the HTTP producer resolves Camel property placeholders on the resulting (attacker-controlled) URI, so placeholders embedded in the injected value - such as an environment-variable reference, an application property, or a vault reference - are resolved to their real values and sent to the attacker, disclosing environment variables, application properties and vault secrets.\nThis issue affects Apache Camel: from 4.17.0 before 4.18.3, from 4.19.0 before 4.21.0.\n\nUsers are recommended to upgrade to version 4.21.0, which fixes the issue. If users are on the 4.18.x releases stream, then they are suggested to upgrade to 4.18.3. The fix adds a dedicated IggyHeaderFilterStrategy (and a headerFilterStrategy endpoint option) that filters the Camel header namespace case-insensitively on inbound mapping, so externally-supplied Camel* / camel* headers are no longer copied into the Exchange. For deployments that cannot upgrade immediately, strip the Camel control headers from the inbound message before they reach any downstream producer (for example removeHeaders('Camel*') and removeHeaders('camel*') at the start of the route), restrict who can publish to the consumed Iggy stream/topic, and avoid bridging an untrusted consumer directly into an HTTP producer whose target URI can be driven from message headers.",
   "datePublished": "Jul 6, 2026, 8:13:59 AM",
-  "dateUpdated": "Jul 6, 2026, 8:13:59 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Jul 6, 2026, 9:13:45 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
   "references": [
     "https://camel.apache.org/security/CVE-2026-55994.html"
   ],
   "aliases": [
+    "GHSA-pw9q-pq7c-rfqw",
     "CVE-2026-55994"
   ],
   "assigner": "apache",
-  "epss": 0.0,
+  "epss": 0.63,
   "enisaIdProduct": [
     {
       "id": "748e8104-9923-3ce8-9482-c24893d9d914",

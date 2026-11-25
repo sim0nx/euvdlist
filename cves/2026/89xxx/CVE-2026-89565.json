@@ -3,20 +3,43 @@
   "enisaUuid": "0f1d0c3c-d7fc-361a-ae57-9ad0de84c7ba",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipip: fix skb leak in collect_md mode when metadata_dst allocation fails\n\nIn collect_md mode ipip_tunnel_rcv() returns 0 without freeing the skb\nwhen ip_tun_rx_dst() fails to allocate the metadata_dst. ipip_rcv() and\nmplsip_rcv() are registered as xfrm_tunnel handlers, so tunnel4_rcv()\nand tunnelmpls4_rcv() read the zero return as \"the packet has been\nconsumed\" and do not free it either. The skb is leaked.\n\nThe other tunnel drivers all dispose of the packet at this point:\nip6_tunnel.c jumps to its drop label, ip_gre.c and ip6_gre.c return\nPACKET_REJECT, which makes gre_rcv() free the skb. Only ipip returns 0.\n\nJump to the existing drop label instead. It frees the skb and still\nreturns 0, so the packet keeps being reported as consumed, which is what\nwe want here: the outer header has already been pulled, and neither the\nremaining handlers nor an ICMP unreachable have any use for it.\n\nTriggering this needs an ipip or mplsip tunnel in collect_md mode and an\natomic allocation failure, which is why it has gone unnoticed.",
   "datePublished": "Sep 11, 2026, 7:44:35 PM",
-  "dateUpdated": "Sep 11, 2026, 7:44:35 PM",
+  "dateUpdated": "Oct 19, 2026, 8:48:58 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/1909df2d066424767429e13053eb9701263430ef",
+    "https://git.kernel.org/stable/c/c4dc23de4cc75e4e304170b31bb8aeeacd5cb990",
     "https://git.kernel.org/stable/c/6d8c5b266d0035a061573843a7243be068eb6118",
     "https://git.kernel.org/stable/c/31e4be21dacee49395013caae28576484a049a4f",
     "https://git.kernel.org/stable/c/fd01f1a3ed4a189a784654f7c69eb565872f2e12",
     "https://git.kernel.org/stable/c/6776efe4a52f289a3fc18f8adf19b035a7d8e1bb"
   ],
   "aliases": [
+    "GHSA-x2xj-xv7g-fj5c",
     "CVE-2026-89565"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "1564d7c8-1a4f-33e1-b1d7-400a6165feba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.188"
+    },
+    {
+      "id": "204387be-7950-3dc6-8ada-b00baba838ef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.157"
+    },
     {
       "id": "3193acfa-7265-305c-9eb1-f71cf4853e50",
       "product": {
@@ -28,6 +51,16 @@
       "product_version": "patch: 6.12.109"
     },
     {
+      "id": "4bd79f07-b8dc-3de2-a6f3-98207d2e8714",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cfc7381b3002756b1dcada32979e942aa3126e31 <1909df2d066424767429e13053eb9701263430ef"
+    },
+    {
       "id": "5aac4b2f-4769-31a6-a7a0-ed975ace2334",
       "product": {
         "name": "Linux",
@@ -36,6 +69,26 @@
         }
       },
       "product_version": "cfc7381b3002756b1dcada32979e942aa3126e31 <fd01f1a3ed4a189a784654f7c69eb565872f2e12"
+    },
+    {
+      "id": "7a7a18d9-ee15-361b-a755-c9b20d25a04a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "81d3c230-3d18-3c1d-a580-1bcca4ea63f6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cfc7381b3002756b1dcada32979e942aa3126e31 <c4dc23de4cc75e4e304170b31bb8aeeacd5cb990"
     },
     {
       "id": "86be7ec6-67ad-3a0b-9e87-d30802edb6c7",
@@ -76,16 +129,6 @@
         }
       },
       "product_version": "cfc7381b3002756b1dcada32979e942aa3126e31 <31e4be21dacee49395013caae28576484a049a4f"
-    },
-    {
-      "id": "d3701d4c-20e3-3212-860b-f5e74a3e2272",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "da8042f3-6016-3739-86c0-99b1de3ee643",

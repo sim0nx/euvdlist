@@ -2,8 +2,8 @@
   "id": "EUVD-2026-59005",
   "enisaUuid": "53841a0b-4fd9-3e39-bcef-12fcbcd5457a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nieee802154: ca8210: fix pointer truncation in kfifo on 64-bit\n\nca8210_test_int_driver_write() and ca8210_test_int_user_read() exchange\na kmalloc'd buffer pointer through a struct kfifo, but pass a literal\n'4' as the byte count to kfifo_in()/kfifo_out().\n\nThis is correct on 32-bit (pointer = 4 bytes), but on 64-bit only the\nlow 4 bytes of the 8-byte pointer are written into the FIFO. The reader\nthen reads back 4 bytes into an 8-byte local pointer variable, leaving\nthe upper 4 bytes uninitialized stack data. The first dereference of\nthe reconstructed pointer (fifo_buffer[1]) accesses an arbitrary kernel\naddress and generally results in an oops.\n\nUse sizeof(fifo_buffer) so the byte count matches pointer width on every\narchitecture.\n\nThe driver has no architecture restriction in Kconfig, so any 64-bit\nbuild with CONFIG_IEEE802154_CA8210_DEBUGFS=y is exposed. Issue has\nbeen latent since the driver was added in 2017 because it is most\ncommonly deployed on 32-bit MCUs.\n\nFound via a custom Coccinelle semantic patch hunting for short-byte\nkfifo I/O on byte-mode kfifos used to shuttle pointers.",
-  "datePublished": "Aug 15, 2026, 6:32:10 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:10 AM",
+  "datePublished": "Aug 15, 2026, 5:52:05 AM",
+  "dateUpdated": "Aug 17, 2026, 5:07:12 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2c1664ccfae653979b38788211240b5a1ee317ed",
@@ -13,15 +13,14 @@
     "https://git.kernel.org/stable/c/65dc342274a01616f5c17105f7360a3b4bfd7a3d",
     "https://git.kernel.org/stable/c/2059c28bd725beded01277cdf1f67be33e714323",
     "https://git.kernel.org/stable/c/d8ce67fa6a5e6929f5414e933ff9665176c2bce6",
-    "https://git.kernel.org/stable/c/6d7f7bcf225b2d566176bf6229dbd1252940cb3c",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72047"
+    "https://git.kernel.org/stable/c/6d7f7bcf225b2d566176bf6229dbd1252940cb3c"
   ],
   "aliases": [
     "CVE-2026-72047",
     "GHSA-r4v9-gf4r-42ww"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "36dee74e-9111-3902-9b7a-123e95cccaa5",
@@ -34,14 +33,14 @@
       "product_version": "patch: 6.12.97"
     },
     {
-      "id": "3707a6a4-78cf-327f-bd95-eb63406fbf6c",
+      "id": "3c3e38a0-810a-3304-8213-9e28133b5cd6",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "4aa7af8b-2f31-30a7-9a50-a2d04bbded7f",

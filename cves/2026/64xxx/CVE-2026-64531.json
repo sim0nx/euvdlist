@@ -3,8 +3,10 @@
   "enisaUuid": "0cb51d8d-c292-3c8d-a255-1fbdc280fcb6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: openvswitch: reject oversized nested action attrs\n\nOpen vSwitch stores generated flow actions as nlattrs, whose nla_len\nfield is u16. Commit a1e64addf3ff (\"net: openvswitch: remove\nmisbehaving actions length check\") allowed the total sw_flow_actions\nstream to grow beyond 64 KiB, which is valid, but also removed the last\nguard preventing a generated nested action attribute from exceeding\nU16_MAX.\n\nAn oversized generated container can thus be closed with a truncated\nnla_len. A later dump or teardown then walks a structurally different\nstream than the one that was validated. In particular, an oversized\nnested CLONE/CT action may cause subsequent bytes in the generated\nstream to be interpreted as independent actions.\n\nKeep the larger total-action-stream behavior, but make nested action\nclose reject generated containers that do not fit in nla_len, and return\nthe error through all callers. For recursive SAMPLE, CLONE, DEC_TTL, and\nCHECK_PKT_LEN builders, trim resource-owning action-list tails in reverse\nconstruction order before discarding failed wrappers, so resources copied\ninto the rejected tails are released before the wrappers are removed.\n\nMost failed outer wrappers are discarded by truncating actions_len after\nchild resources have been released. CHECK_PKT_LEN also trims its parent\nafter branch resources are gone. SET/TUNNEL close failures unwind their\nknown tun_dst ownership directly, and SET_TO_MASKED has no external\nownership and truncates on close failure.",
   "datePublished": "Jul 27, 2026, 6:32:32 AM",
-  "dateUpdated": "Jul 27, 2026, 6:32:32 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:48:38 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ab855641241387db062a5e41d9ad6b8561542572",
     "https://git.kernel.org/stable/c/c66bd2626c2764f23764ff0f8277f44a9cfe8349",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/3f1f755366687d051174739fb99f7d560202f60b"
   ],
   "aliases": [
+    "GHSA-4pwv-pmm4-fw4r",
     "CVE-2026-64531"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.44,
   "enisaIdProduct": [
     {
       "id": "0634acde-39aa-333c-9200-13799b2ce884",
@@ -99,16 +102,6 @@
         }
       },
       "product_version": "6.14"
-    },
-    {
-      "id": "80ebff1b-0846-3e84-8cbb-6ea2183930af",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
     },
     {
       "id": "89078269-5948-3b44-9ca9-a386f4ef4ba5",
@@ -219,6 +212,16 @@
         }
       },
       "product_version": "e6610f9c08b4c04cf7949c10fc246c071d00e935 <f1efff8858403191361a01269c6fe8dd7f55a385"
+    },
+    {
+      "id": "eb33d740-06db-3a3f-b9ee-ed9c31b0c8a9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "fdb5d133-7146-3e1a-a6c2-2cc3d29ca839",

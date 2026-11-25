@@ -3,9 +3,12 @@
   "enisaUuid": "3e868fd2-da8d-3918-86f0-bbbbc2551e22",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nopenvswitch: fix soft lockup in the netlink flow dump\n\nA production compute node carrying a few thousand datapath flows hit a\nsoft lockup inside a single netlink flow dump and panicked.\n\novs_flow_cmd_dump() calls ovs_flow_stats_get() for every flow it\nemits, and that releases stats->lock with spin_unlock_bh() once per\nCPU that has touched the flow. Every release is a local_bh_enable(),\nand each one runs the pending softirq backlog in the dumping thread's\nown context.\n\nThe skb bounds the flows one callback emits, but not the softirq work\nit absorbs. On a CPU that carries the box's packet load the backlog\nrefills as fast as it drains, so the dumping thread becomes that CPU's\nsoftirq engine. It never sleeps and it has no reschedule point, so\nunder voluntary preemption nothing can take the CPU away from it:\nneither the ksoftirqd the kernel woke to take the work over, nor the\nstopper thread the softlockup detector dispatches to refresh its\ntimestamp.\n\nHold BH off across the whole callback instead, the way\nctnetlink_dump_table() does, so the nested spin_unlock_bh() stop\ndraining softirqs. The loop already runs under rcu_read_lock() and\ncannot sleep. What it gives up is preemption under CONFIG_PREEMPT,\nsince a BH-off region is not preemptible outside PREEMPT_RT. The\nregion stays short: the skb caps the flows one callback emits, and\nempty buckets cost no skb space but are each visited once per dump, as\nthe cursor only moves forward. The table grows on insert and shrinks\nonly on flush, so the walk is bounded by the largest flow count the\ndatapath has held. The softirq backlog the callback used to absorb has\nno bound at all.",
   "datePublished": "Oct 23, 2026, 12:21:12 PM",
-  "dateUpdated": "Oct 23, 2026, 12:21:12 PM",
+  "dateUpdated": "Oct 30, 2026, 12:41:01 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/ef77dd59cb7b7b0ac0bedd3fe9ee7a8acd8a58f2",
+    "https://git.kernel.org/stable/c/9ffb9897b39037a688ae01d0b3aea4ccce27dd75",
+    "https://git.kernel.org/stable/c/5b6a8bbdcdd7d0fddee466c1c7fe5b7f30aa392c",
     "https://git.kernel.org/stable/c/c995c52eba1926a5e82823fa5573a6f1b1010e5d",
     "https://git.kernel.org/stable/c/b872de585edff534056c65ba30970b68499fca14",
     "https://git.kernel.org/stable/c/55f12552b00a34ca7ab5cf2d2b5ed02f8f06a965",
@@ -13,11 +16,22 @@
     "https://git.kernel.org/stable/c/aaaaf87ea99b8766c9a8aa0e71aa42e6bc8a5320"
   ],
   "aliases": [
+    "GHSA-25wv-6mrm-3cpw",
     "CVE-2026-99025"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "070d5872-a375-31b8-9be1-5ea8a443c6bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63e7959c4b9bd6f791061c460a22d9ee32ae2240 <5b6a8bbdcdd7d0fddee466c1c7fe5b7f30aa392c"
+    },
     {
       "id": "08875a2b-2739-38bd-8632-eec9a4e68e93",
       "product": {
@@ -49,6 +63,16 @@
       "product_version": "patch: 7.2.11"
     },
     {
+      "id": "22ffea08-f504-3765-8f36-829fcb84b8f3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
       "id": "440ad68d-e211-3b5e-b0f0-5d30a6eaca4a",
       "product": {
         "name": "Linux",
@@ -57,6 +81,16 @@
         }
       },
       "product_version": "patch: 6.18.57"
+    },
+    {
+      "id": "4c4b71f1-092b-3f2b-8e9f-859699fd9a11",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "7a626675-7d2d-3a2a-a64a-0087df74cc59",
@@ -99,6 +133,26 @@
       "product_version": "63e7959c4b9bd6f791061c460a22d9ee32ae2240 <55f12552b00a34ca7ab5cf2d2b5ed02f8f06a965"
     },
     {
+      "id": "bb7abb88-38d3-3d75-8e1a-5026e82f0592",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63e7959c4b9bd6f791061c460a22d9ee32ae2240 <ef77dd59cb7b7b0ac0bedd3fe9ee7a8acd8a58f2"
+    },
+    {
+      "id": "cbebd802-9260-33ca-97df-9a6eea1f18c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "63e7959c4b9bd6f791061c460a22d9ee32ae2240 <9ffb9897b39037a688ae01d0b3aea4ccce27dd75"
+    },
+    {
       "id": "d0d8021d-7a9a-3752-be56-80d4bb0baf2c",
       "product": {
         "name": "Linux",
@@ -117,6 +171,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "e82b8f53-e0ca-3671-bacf-40091cae1f0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
     },
     {
       "id": "e9053bab-9ce7-35e8-b5ee-153e7437be85",

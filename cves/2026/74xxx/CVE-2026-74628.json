@@ -3,18 +3,26 @@
   "enisaUuid": "ab82f625-fd84-3757-9051-dbf0454eb149",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/x25: fix use-after-free of the socket by its timers\n\nThe x25 timers are armed with mod_timer() and cancelled with\ntimer_delete(), so a pending timer holds no reference on the socket and a\ncancel does not wait for a callback already running on another CPU.\n\nx25_heartbeat_expiry() also rearms unconditionally, so it can reinstall\nsk->sk_timer after __x25_destroy_socket() has passed its cancel point.\nThe following __sock_put() frees the socket while the timer is still\nqueued, and the next expiry uses freed memory.  KASAN reports a\nslab-use-after-free on the kmalloc-2k object freed by close().\n\ntimer_delete_sync() cannot be used here: x25_heartbeat_expiry() and\nx25_timer_expiry() both reach the cancels from inside the timer they\nwould wait on, through __x25_destroy_socket() and x25_disconnect().\n\nArm the timers with sk_reset_timer() and cancel them with sk_stop_timer()\nso that an armed timer owns a reference, and release it in both expiry\nhandlers.  Rearm the heartbeat only while sk_hashed(sk) is still true,\nsince __x25_destroy_socket() unlinks the socket before dropping it.  Arm\nthe deferred destroy timer the same way and drop its reference in\nx25_destroy_timer().\n\nReproduced on net with KASAN, with the heartbeat period shortened so the\nwindow recurs.  With this patch the reproducer no longer triggers a\nreport and /proc/net/x25 drains.\n\nDiscovered by XBOW, triaged by Baul Lee <baul.lee@xbow.com>",
   "datePublished": "Aug 22, 2026, 3:32:10 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:10 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 27, 2026, 12:39:49 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/ba925a2e98ce967a0e71c5bcbcf5dbd3facaf0c8",
+    "https://git.kernel.org/stable/c/6b79659590f0f82a9b8efd2ffd55ec6399ebfc33",
+    "https://git.kernel.org/stable/c/fdd9ac50b9b61ef2b2d52c5156aff788be91454d",
+    "https://git.kernel.org/stable/c/1fc9f6d2c7c9fdb341bfe8ca449c990632299ea6",
+    "https://git.kernel.org/stable/c/3c4919be5d910db4beebca420953858606fba7d8",
     "https://git.kernel.org/stable/c/4bc522b33438fefc3272840ae5988771863a4f1f",
     "https://git.kernel.org/stable/c/e92c7e2b41d1528a830bc64c5e4e46dfa8133dda",
     "https://git.kernel.org/stable/c/2195424c3da2ef1829a63b807e3a900a90e57d85"
   ],
   "aliases": [
+    "GHSA-fp3m-qh7p-hcj7",
     "CVE-2026-74628"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.5,
   "enisaIdProduct": [
     {
       "id": "07e61634-a927-3c3c-baac-0e8a4bae93ed",
@@ -37,6 +45,26 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <e92c7e2b41d1528a830bc64c5e4e46dfa8133dda"
     },
     {
+      "id": "4c3b2def-883e-3092-ac05-b6c65c935df9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <1fc9f6d2c7c9fdb341bfe8ca449c990632299ea6"
+    },
+    {
+      "id": "5071e568-e2fc-349a-8dea-33a9cd1a6ba9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.153"
+    },
+    {
       "id": "54746cbc-5a39-3597-b852-28051e060ea8",
       "product": {
         "name": "Linux",
@@ -57,6 +85,16 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2195424c3da2ef1829a63b807e3a900a90e57d85"
     },
     {
+      "id": "6ce478b5-481a-3af2-98c6-76f3d62feb91",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <fdd9ac50b9b61ef2b2d52c5156aff788be91454d"
+    },
+    {
       "id": "7321eb6a-7c02-3d05-a03a-0592f1c07eb7",
       "product": {
         "name": "Linux",
@@ -65,6 +103,36 @@
         }
       },
       "product_version": "patch: 7.2"
+    },
+    {
+      "id": "82c75c9c-c7ae-3022-9aa4-88c934f57e7f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.184"
+    },
+    {
+      "id": "85a59994-84dc-3a5a-a192-2c70cb45dab7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6b79659590f0f82a9b8efd2ffd55ec6399ebfc33"
+    },
+    {
+      "id": "8813aeff-71bf-3916-b536-629f679759c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.105"
     },
     {
       "id": "b74a9e95-65ae-39b5-a2b9-dccff3049559",
@@ -87,6 +155,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "cb44f0b6-07c7-31e3-9743-dc5c327357ca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <3c4919be5d910db4beebca420953858606fba7d8"
+    },
+    {
       "id": "ce263b99-4485-3393-ae6e-8a5e06df1c2c",
       "product": {
         "name": "Linux",
@@ -95,6 +173,36 @@
         }
       },
       "product_version": "patch: 6.18.45"
+    },
+    {
+      "id": "e8eb0fe4-5f82-3b3e-bcd6-2edb1f31fc61",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.217"
+    },
+    {
+      "id": "e907915b-32fa-3f50-b52e-4dfeab510465",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.267"
+    },
+    {
+      "id": "ec230000-f8d2-3d7e-b1dd-d3df610fa664",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <ba925a2e98ce967a0e71c5bcbcf5dbd3facaf0c8"
     }
   ],
   "enisaIdVendor": [

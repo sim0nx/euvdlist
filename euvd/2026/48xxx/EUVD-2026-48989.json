@@ -3,8 +3,10 @@
   "enisaUuid": "e9485ff6-a060-3fa3-b0e6-f4fe0810a3aa",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nInput: synaptics-rmi4 - bound the F3A keymap to the GPIO count\n\nrmi_f3a_initialize() takes the GPIO count from the device query register\n(f3a->gpio_count = buf & RMI_F3A_GPIO_COUNT, range 0..127).\nrmi_f3a_map_gpios() then allocates gpio_key_map with\nmin(gpio_count, TRACKSTICK_RANGE_END) == at most 6 entries, but\nrmi_f3a_attention() iterates the full gpio_count and dereferences\ngpio_key_map[i], and input->keycodemax is set to the full gpio_count\nwhile input->keycode points at the 6-entry allocation.\n\nA device that reports gpio_count > 6 therefore causes an out-of-bounds\nread of gpio_key_map[] on every attention interrupt, and out-of-bounds\naccesses through the input core's default keymap ioctls: EVIOCGKEYCODE\nreads past the buffer (leaking adjacent slab memory to user space) and\nEVIOCSKEYCODE writes a caller-controlled value past it, for any process\nable to open the evdev node, since input_default_getkeycode() and\ninput_default_setkeycode() only bound the index against keycodemax.\n\nSize the keymap for the full gpio_count. The mapping loop is unchanged:\nit still assigns only the first min(gpio_count, TRACKSTICK_RANGE_END)\nentries; the remaining slots stay KEY_RESERVED (devm_kcalloc zero-fills)\nand are skipped when reporting.",
   "datePublished": "Jul 25, 2026, 8:49:21 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:21 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:28:17 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/502ad7caaa1a445b734c827fa256e5311df67e3d",
     "https://git.kernel.org/stable/c/3480e24bc4e178aaa009edb25b6ee12df199e210",
@@ -16,11 +18,22 @@
     "https://git.kernel.org/stable/c/57c10915f2c16c90e0d46ad00876bf39ece40fc2"
   ],
   "aliases": [
-    "CVE-2026-64277"
+    "CVE-2026-64277",
+    "GHSA-p39g-x9xh-7wq9"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "15cc4d75-7ffb-39f3-a0dd-2eb96d314bea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "15dfd74b-3113-34d0-8777-24b168559dec",
       "product": {
@@ -140,16 +153,6 @@
         }
       },
       "product_version": "9e4c596bfd004f447a652205163234dfd4aafa69 <35ed74d32d8260bdfb14a94caf402bf0866bdeec"
-    },
-    {
-      "id": "7719509a-ff20-3644-b3d2-2bbdd825c7bd",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "a599b469-e66a-32f9-9e5f-62b67f7dd92e",

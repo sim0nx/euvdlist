@@ -2,23 +2,36 @@
   "id": "EUVD-2026-58971",
   "enisaUuid": "2df0019c-0ed8-3b1c-96db-8c32e00acf91",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/hugetlb: fix hugetlb cgroup rsvd charge/uncharge mismatch\n\nIn alloc_hugetlb_folio(), a single h_cg pointer is used for both the rsvd\nand non-rsvd hugetlb cgroup charges.  When map_chg is set,\nhugetlb_cgroup_charge_cgroup_rsvd() stores the charged cgroup in h_cg, but\nthe immediately following hugetlb_cgroup_charge_cgroup() overwrites h_cg\nwith the non-rsvd cgroup pointer.\n\nAs a result, hugetlb_cgroup_commit_charge_rsvd() stores the wrong\n(non-rsvd) cgroup pointer into the folio's rsvd slot.\n\nWhen the folio is later freed, free_huge_folio() unconditionally calls\nboth hugetlb_cgroup_uncharge_folio() and\nhugetlb_cgroup_uncharge_folio_rsvd().  The rsvd uncharge reads back the\nwrong cgroup from the folio and decrements a counter that was never\ncharged for that cgroup, causing a page_counter underflow:\n\n  page_counter underflow: -512 nr_pages=512\n  WARNING: mm/page_counter.c:61 at page_counter_cancel\n\nFix this by introducing a separate h_cg_rsvd pointer exclusively for the\nrsvd charge path, keeping the rsvd and non-rsvd charges fully independent\nthrough their charge, commit, and error uncharge paths.",
-  "datePublished": "Aug 15, 2026, 6:32:16 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:16 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:54:07 AM",
+  "dateUpdated": "Oct 30, 2026, 12:28:57 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/f8dfdf725bccb0ae41eead2f6da8183727218855",
+    "https://git.kernel.org/stable/c/043c509f2488033c68c46d2de2af082fcd568612",
     "https://git.kernel.org/stable/c/5c32ae4a91fb5f4941328e0c1720a7fa4189c3bd",
     "https://git.kernel.org/stable/c/1697d253f51cf5e3825a3423ff49e128a3502ab2",
     "https://git.kernel.org/stable/c/b785f2bd9496facedc0a031be09cddcd1d3c84d3",
-    "https://git.kernel.org/stable/c/15807d0ddde37407af72859426b654f3d1972b00",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72213"
+    "https://git.kernel.org/stable/c/15807d0ddde37407af72859426b654f3d1972b00"
   ],
   "aliases": [
     "CVE-2026-72213",
     "GHSA-cqhp-gwhx-vmwp"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
+    {
+      "id": "09501d9b-f089-35e9-960f-7e1ddcb50f7a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
     {
       "id": "374a577e-d4b0-3cf6-b959-f61af9351140",
       "product": {
@@ -40,14 +53,14 @@
       "product_version": "patch: 6.18.40"
     },
     {
-      "id": "774b227c-7397-3f9b-8302-50b0084fb5c2",
+      "id": "721a08bc-ffcf-3c7d-9cd9-eabaefd12c9f",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "81a186b9-4fb1-329b-ba43-00b5cffe25e5",
@@ -80,6 +93,16 @@
       "product_version": "08cf9faf7558020aed6a0da5810b824b07139dfa <15807d0ddde37407af72859426b654f3d1972b00"
     },
     {
+      "id": "a173d08e-25bc-3201-a44d-04a248f4fd92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "08cf9faf7558020aed6a0da5810b824b07139dfa <f8dfdf725bccb0ae41eead2f6da8183727218855"
+    },
+    {
       "id": "a676a4a8-e744-33b7-ad12-9df9d78f7591",
       "product": {
         "name": "Linux",
@@ -88,6 +111,16 @@
         }
       },
       "product_version": "08cf9faf7558020aed6a0da5810b824b07139dfa <1697d253f51cf5e3825a3423ff49e128a3502ab2"
+    },
+    {
+      "id": "c6aaf10d-7937-3b7b-af96-35f52038dd31",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     },
     {
       "id": "d5b49857-220e-3093-b347-b9cb2814999c",
@@ -108,6 +141,16 @@
         }
       },
       "product_version": "5.7"
+    },
+    {
+      "id": "da927beb-50a8-3222-b459-e44012bc4308",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "08cf9faf7558020aed6a0da5810b824b07139dfa <043c509f2488033c68c46d2de2af082fcd568612"
     },
     {
       "id": "e3cba4c2-7faa-3e4f-b8bd-d8f1b18821f1",

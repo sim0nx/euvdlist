@@ -3,8 +3,10 @@
   "enisaUuid": "98b81fab-bc70-33f3-b454-032b9ed2a287",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/uverbs: Validate wqe_size before using it in ib_uverbs_post_send\n\nib_uverbs_post_send() uses cmd.wqe_size from userspace without any\nvalidation before passing it to kmalloc() and using the allocated\nbuffer as struct ib_uverbs_send_wr.\n\nIf a user provides a small wqe_size value (e.g., 1), kmalloc() will\nsucceed, but subsequent accesses to user_wr->opcode, user_wr->num_sge,\nand other fields will read beyond the allocated buffer, resulting in\nan out-of-bounds read from kernel heap memory. This could potentially\nleak sensitive kernel information to userspace.\n\nAdditionally, providing an excessively large wqe_size can trigger a\nWARNING in the memory allocation path, as reported by syzkaller.\n\nThis is inconsistent with ib_uverbs_unmarshall_recv() which properly\nvalidates that wqe_size >= sizeof(struct ib_uverbs_recv_wr) before\nproceeding.\n\nAdd the same validation for ib_uverbs_post_send() to ensure wqe_size\nis at least sizeof(struct ib_uverbs_send_wr).",
   "datePublished": "May 27, 2026, 12:15:33 PM",
-  "dateUpdated": "May 27, 2026, 12:15:33 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 7:26:38 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/9c15ec4cd4e7f57c6bbcb4e73e99290f150dd2a7",
     "https://git.kernel.org/stable/c/9b5ac1c15334d46c0dbd49d64a2257b929500163",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/1956f0a74ccf5dc9c3ef717f2985c3ed3400aab0"
   ],
   "aliases": [
-    "CVE-2026-45856"
+    "CVE-2026-45856",
+    "GHSA-xq3r-74hw-4c5p"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
     {
       "id": "1935cd42-28ed-3bb3-ba8c-fa22d29fe099",

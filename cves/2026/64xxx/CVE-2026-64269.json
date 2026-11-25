@@ -3,9 +3,12 @@
   "enisaUuid": "f16b6bd2-8fe5-30a0-8517-d030ca4756c9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/rtrs-srv: Bound RDMA-Write length to chunk size in rdma_write_sg\n\nWhen the server answers an RTRS READ, rdma_write_sg() builds the source\nscatter/gather entry for the IB_WR_RDMA_WRITE that returns data to the\npeer. Its length is taken directly from the wire descriptor:\n\n  plist->length = le32_to_cpu(id->rd_msg->desc[0].len);\n\nrd_msg points into the chunk buffer that the remote peer filled via\nRDMA-WRITE-WITH-IMM (rtrs_srv_rdma_done() -> process_io_req() ->\nprocess_read()), so desc[0].len is attacker-controlled and, before this\nchange, was only rejected when zero. The source address is the fixed\nchunk start (dma_addr[msg_id]) and the source lkey is the PD-wide\nlocal_dma_lkey, which is not tied to the chunk's MR mapping, so the verbs\nlayer does not constrain the transfer length to max_chunk_size. msg_id\nand off are bounded against queue_depth and max_chunk_size in\nrtrs_srv_rdma_done(), but desc[0].len is a separate field that was not\nchecked against the chunk size.\n\nA peer that advertises desc[0].len larger than max_chunk_size can make\nthe posted RDMA write read past the chunk's mapped region. The resulting\nbehaviour depends on the IOMMU configuration: with no IOMMU or in\npassthrough mode the read may extend into memory adjacent to the chunk\nand be returned to the peer, which can disclose host memory; with a\ntranslating IOMMU the out-of-range access is expected to fault and abort\nthe connection. In either case the transfer exceeds what the protocol\npermits and is driven by a remote peer.\n\nReject a descriptor length above max_chunk_size, mirroring the existing\noff >= max_chunk_size bound in rtrs_srv_rdma_done(). Legitimate clients\ndo not exceed it: the client sets desc[0].len to its MR length, which is\ncapped at the negotiated max_io_size (max_chunk_size - MAX_HDR_SIZE).",
   "datePublished": "Jul 25, 2026, 8:49:16 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:16 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 23, 2026, 12:45:35 PM",
+  "baseScore": 9.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/a35b7a8728a53ddc80b323970689fa5985816836",
     "https://git.kernel.org/stable/c/68c09762172f6224e9ddf9b0a60bacbb36e443eb",
     "https://git.kernel.org/stable/c/6cada540150894e81042a0ae0c796a21a9a877da",
     "https://git.kernel.org/stable/c/2912f3d40355dabc08fdbaaf2764d02445fe88dc",
@@ -15,11 +18,22 @@
     "https://git.kernel.org/stable/c/963af8d97a8c6a117134a8d0db1415e0489200b1"
   ],
   "aliases": [
+    "GHSA-ffxc-rc5x-r6rp",
     "CVE-2026-64269"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.71,
   "enisaIdProduct": [
+    {
+      "id": "0a075140-e710-31f3-87f7-47085ce45a1f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "1220a994-282a-32fe-9308-9df44e44096f",
       "product": {
@@ -61,6 +75,16 @@
       "product_version": "9cb837480424e78ed585376f944088246685aec3 <6cada540150894e81042a0ae0c796a21a9a877da"
     },
     {
+      "id": "3ea5cb4e-a995-30bb-9b31-c1d45b3d5037",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.266"
+    },
+    {
       "id": "505730c6-c9b4-3814-b687-e3dec8e4f25a",
       "product": {
         "name": "Linux",
@@ -99,6 +123,16 @@
         }
       },
       "product_version": "patch: 6.18.39"
+    },
+    {
+      "id": "697e4063-0268-324f-8798-53b84aea21ab",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9cb837480424e78ed585376f944088246685aec3 <a35b7a8728a53ddc80b323970689fa5985816836"
     },
     {
       "id": "83a5a2dc-c3f8-3d07-a1df-61b988e0b3d7",
@@ -169,16 +203,6 @@
         }
       },
       "product_version": "9cb837480424e78ed585376f944088246685aec3 <6f40246f4312fdbab5a13cc440adebf95eb2aa66"
-    },
-    {
-      "id": "db746c2e-6599-3398-a403-c29f56cf6d80",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     }
   ],
   "enisaIdVendor": [

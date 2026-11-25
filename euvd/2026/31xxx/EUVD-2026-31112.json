@@ -1,9 +1,9 @@
 {
   "id": "EUVD-2026-31112",
   "enisaUuid": "f5a0635c-4609-358b-94d4-4e20b0752231",
-  "description": "Code Injection vulnerability in phenixdigital phoenix_storybook allows unauthenticated remote code execution via unsanitized attribute value interpolation in HEEx template generation.\n\nThe psb-assign WebSocket event handler in 'Elixir.PhoenixStorybook.Story.PlaygroundPreviewLive':handle_event/3 accepts arbitrary attribute names and values from unauthenticated clients. These values are passed to 'Elixir.PhoenixStorybook.Helpers.ExtraAssignsHelpers':handle_set_variation_assign/3, which stores them verbatim. When rendering, 'Elixir.PhoenixStorybook.Rendering.ComponentRenderer':attributes_markup/1 interpolates binary attribute values directly into a HEEx template string as name=\"<val>\" without escaping double quotes or HEEx expression delimiters. An attacker can supply a value containing a closing quote followed by a HEEx expression block (e.g. foo\" injected={EXPR} bar=\"), which causes EXPR to be treated as an inline Elixir expression. The resulting template is compiled via EEx.compile_string/2 and executed via Code.eval_quoted_with_env/3 with full Kernel imports and no sandbox, giving the attacker arbitrary code execution on the server.\n\nThis issue affects phoenix_storybook from 0.5.0 before 1.1.0.",
+  "description": "Code Injection vulnerability in phenixdigital phoenix_storybook allows unauthenticated remote code execution via HEEx template injection in the component playground. A client can send attribute values over the playground WebSocket. A value that closes the attribute quote and adds a HEEx expression is evaluated as Elixir code on the server.\n\nPhoenixStorybook.Story.PlaygroundPreviewLive.handle_event/3 accepts attribute names and values from the client and stores them through PhoenixStorybook.ExtraAssignsHelpers.handle_set_variation_assign/3. PhoenixStorybook.Rendering.ComponentRenderer.attributes_markup/1 interpolates string values into a HEEx template without escaping. The template is compiled with EEx.compile_string/2 and evaluated. Releases published as phx_live_storybook have the same code in the PhxLiveStorybook namespace, where the first client entry point is PhxLiveStorybook.Entry.Playground.handle_event/3.\n\nThis issue affects phoenix_storybook: from 0.5.0 before 1.1.0; phx_live_storybook: from 0.3.0 onward.",
   "datePublished": "May 20, 2026, 1:35:29 PM",
-  "dateUpdated": "May 20, 2026, 1:35:29 PM",
+  "dateUpdated": "Nov 20, 2026, 6:26:08 AM",
   "baseScore": 9.5,
   "baseScoreVersion": "4.0",
   "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H",
@@ -11,27 +11,45 @@
     "https://github.com/phenixdigital/phoenix_storybook/security/advisories/GHSA-55hg-8qxv-qj4p",
     "https://cna.erlef.org/cves/CVE-2026-8467.html",
     "https://osv.dev/vulnerability/EEF-CVE-2026-8467",
+    "https://github.com/phenixdigital/phoenix_storybook/commit/e35379dfe2ef1a71b141899e36f431017c55265d",
     "https://github.com/phenixdigital/phoenix_storybook/commit/56ab8464d4375fa52db806148a06cce126ad481d"
   ],
   "aliases": [
+    "GHSA-55hg-8qxv-qj4p",
     "CVE-2026-8467"
   ],
   "assigner": "EEF",
-  "epss": 0.0,
+  "epss": 2.91,
   "enisaIdProduct": [
     {
       "id": "1f4c6a56-756a-3847-bbb0-5bcb084ffef0",
       "product": {
-        "name": "phoenix_storybook"
+        "name": "phoenix_storybook",
+        "vendor": {
+          "name": "phenixdigital"
+        }
       },
       "product_version": "0.5.0 <1.1.0"
     },
     {
       "id": "c730eacc-1d15-3105-9fed-b839e3e83c3e",
       "product": {
-        "name": "phoenix_storybook"
+        "name": "phoenix_storybook",
+        "vendor": {
+          "name": "phenixdigital"
+        }
       },
       "product_version": "e35379dfe2ef1a71b141899e36f431017c55265d <56ab8464d4375fa52db806148a06cce126ad481d"
+    },
+    {
+      "id": "d6136af0-a88a-3585-8823-eb119c4f1f50",
+      "product": {
+        "name": "phoenix_storybook",
+        "vendor": {
+          "name": "phenixdigital"
+        }
+      },
+      "product_version": "0.3.0 <*"
     }
   ],
   "enisaIdVendor": [

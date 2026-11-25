@@ -3,7 +3,7 @@
   "enisaUuid": "2f33f92b-656d-3e14-ad8c-ceae4b938d58",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nInput: goodix - clamp the device-reported contact count\n\ngoodix_ts_read_input_report() copies the number of touch points reported\nby the device into an on-stack buffer\n\n\tu8 point_data[2 + GOODIX_MAX_CONTACT_SIZE * GOODIX_MAX_CONTACTS];\n\nwhich is sized for at most GOODIX_MAX_CONTACTS (10) contacts. The only\nruntime check bounds the per-interrupt count against ts->max_touch_num,\nbut that value is taken verbatim from a 4-bit field of the device\nconfiguration block and is never clamped:\n\n\tts->max_touch_num = ts->config[MAX_CONTACTS_LOC] & 0x0f;\n\nThe nibble can be 0..15, so a malfunctioning, malicious or counterfeit\ncontroller (or an attacker tampering with the I2C bus) can advertise up\nto 15 contacts. goodix_ts_read_input_report() then accepts a touch_num\nof up to 15 and the second goodix_i2c_read() writes\nts->contact_size * (touch_num - 1) bytes past the one-contact header into\npoint_data - up to 30 bytes (45 with the 9-byte report format) beyond the\n92-byte buffer: a stack out-of-bounds write.\n\nClamp max_touch_num to GOODIX_MAX_CONTACTS, the number of contacts\npoint_data[] is sized for, when reading it from the configuration.",
   "datePublished": "Jul 25, 2026, 8:49:20 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:20 AM",
+  "dateUpdated": "Aug 17, 2026, 4:52:28 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/e825f352ef5271255cd08cc994b0dc25648a2f38",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/5ed62a96e06be4e94b8296b7932afee550a70e04"
   ],
   "aliases": [
-    "CVE-2026-64274"
+    "CVE-2026-64274",
+    "GHSA-pfx5-jw3v-f6mp"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "09a997f8-25bb-303e-a4ff-89ffedec8f68",
@@ -132,16 +133,6 @@
       "product_version": "patch: 6.18.39"
     },
     {
-      "id": "b9a5e9ca-1bc2-39bc-807b-b17df635ce12",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
-    },
-    {
       "id": "c6d52198-e12f-39ec-bea8-634f9b7bd864",
       "product": {
         "name": "Linux",
@@ -160,6 +151,16 @@
         }
       },
       "product_version": "a7ac7c95d4682883d141c5d7a7544d2818f0a09f <4bfea9c3a0981c1c7fc5d1a1b27197b2de247902"
+    },
+    {
+      "id": "e8e29f10-ac88-39cf-8223-19fffd35f080",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "ec45a0b3-37db-3f65-b54f-b1b6f692360e",

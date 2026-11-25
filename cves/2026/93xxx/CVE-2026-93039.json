@@ -3,8 +3,10 @@
   "enisaUuid": "1bd157e6-04bb-3c44-902d-ed0b9c5aaa0e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nASoC: meson: Keep link pointers valid on realloc failure\n\nmeson_card_reallocate_links() grows the DAI link and private data\narrays with two consecutive krealloc() calls and updates the owner\npointers only after both calls have succeeded.\n\nA successful krealloc() may move the data: it frees the old block and\nreturns a new one. When that happens for the link array and the second\nkrealloc() then fails, card->dai_link still points to the block that\nkrealloc() already freed, and the error path frees the new block too.\nThe probe error path then calls meson_card_clean_references(), which\ndereferences card->dai_link and kfree()s it again, resulting in a\nuse-after-free and a double free.\n\nCommit card->dai_link and card->num_links right after the first\nkrealloc() succeeds, so the pointer always refers to a valid allocation\nthat meson_card_clean_references() can walk and free. krealloc() with\n__GFP_ZERO zero-initializes the added entries, so walking them on the\nerror path is safe. With both failure paths reduced to a plain return,\ndrop the goto labels and the error message.",
   "datePublished": "Sep 17, 2026, 4:10:32 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:32 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:04:34 AM",
+  "baseScore": 7.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/de33afc57f24538186bccf4c4f6c65dd38634fd8",
     "https://git.kernel.org/stable/c/1c1485343b7c1c39dab7ecb9cd16ba49fd0ce642",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/2aaa41cf974f83a6fb105422bac4e2f107150774"
   ],
   "aliases": [
+    "GHSA-w65f-8rhv-gqvr",
     "CVE-2026-93039"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "10035d13-0c74-3caf-8728-0ae2c1a4f95c",
@@ -60,6 +63,16 @@
         }
       },
       "product_version": "patch: 6.1.188"
+    },
+    {
+      "id": "3a4c8a33-183a-353f-aa1c-4d5d99876ad6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "4a122721-951d-3f36-a759-3d5cb8d6bf85",
@@ -120,16 +133,6 @@
         }
       },
       "product_version": "patch: 6.12.110"
-    },
-    {
-      "id": "7e9ba336-45b0-3ce4-ae3b-99c337e52916",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "8df2edfc-9934-312d-b42f-c195fff15f99",

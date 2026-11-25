@@ -1,0 +1,216 @@
+{
+  "id": "EUVD-2024-41999",
+  "enisaUuid": "677efb7a-69a8-3b28-991e-7ed0a05d4bd7",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nVMCI: Fix use-after-free when removing resource in vmci_resource_remove()\n\nWhen removing a resource from vmci_resource_table in\nvmci_resource_remove(), the search is performed using the resource\nhandle by comparing context and resource fields.\n\nIt is possible though to create two resources with different types\nbut same handle (same context and resource fields).\n\nWhen trying to remove one of the resources, vmci_resource_remove()\nmay not remove the intended one, but the object will still be freed\nas in the case of the datagram type in vmci_datagram_destroy_handle().\nvmci_resource_table will still hold a pointer to this freed resource\nleading to a use-after-free vulnerability.\n\nBUG: KASAN: use-after-free in vmci_handle_is_equal include/linux/vmw_vmci_defs.h:142 [inline]\nBUG: KASAN: use-after-free in vmci_resource_remove+0x3a1/0x410 drivers/misc/vmw_vmci/vmci_resource.c:147\nRead of size 4 at addr ffff88801c16d800 by task syz-executor197/1592\nCall Trace:\n <TASK>\n __dump_stack lib/dump_stack.c:88 [inline]\n dump_stack_lvl+0x82/0xa9 lib/dump_stack.c:106\n print_address_description.constprop.0+0x21/0x366 mm/kasan/report.c:239\n __kasan_report.cold+0x7f/0x132 mm/kasan/report.c:425\n kasan_report+0x38/0x51 mm/kasan/report.c:442\n vmci_handle_is_equal include/linux/vmw_vmci_defs.h:142 [inline]\n vmci_resource_remove+0x3a1/0x410 drivers/misc/vmw_vmci/vmci_resource.c:147\n vmci_qp_broker_detach+0x89a/0x11b9 drivers/misc/vmw_vmci/vmci_queue_pair.c:2182\n ctx_free_ctx+0x473/0xbe1 drivers/misc/vmw_vmci/vmci_context.c:444\n kref_put include/linux/kref.h:65 [inline]\n vmci_ctx_put drivers/misc/vmw_vmci/vmci_context.c:497 [inline]\n vmci_ctx_destroy+0x170/0x1d6 drivers/misc/vmw_vmci/vmci_context.c:195\n vmci_host_close+0x125/0x1ac drivers/misc/vmw_vmci/vmci_host.c:143\n __fput+0x261/0xa34 fs/file_table.c:282\n task_work_run+0xf0/0x194 kernel/task_work.c:164\n tracehook_notify_resume include/linux/tracehook.h:189 [inline]\n exit_to_user_mode_loop+0x184/0x189 kernel/entry/common.c:187\n exit_to_user_mode_prepare+0x11b/0x123 kernel/entry/common.c:220\n __syscall_exit_to_user_mode_work kernel/entry/common.c:302 [inline]\n syscall_exit_to_user_mode+0x18/0x42 kernel/entry/common.c:313\n do_syscall_64+0x41/0x85 arch/x86/entry/common.c:86\n entry_SYSCALL_64_after_hwframe+0x6e/0x0\n\nThis change ensures the type is also checked when removing\nthe resource from vmci_resource_table in vmci_resource_remove().",
+  "datePublished": "Sep 18, 2024, 7:12:00 AM",
+  "dateUpdated": "Aug 5, 2026, 11:38:14 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://git.kernel.org/stable/c/f6365931bf7c07b2b397dbb06a4f6573cc9fae73",
+    "https://git.kernel.org/stable/c/b243d52b5f6f59f9d39e69b191fb3d58b94a43b1",
+    "https://git.kernel.org/stable/c/6c563a29857aa8053b67ee141191f69757f27f6e",
+    "https://git.kernel.org/stable/c/ef5f4d0c5ee22d4f873116fec844ff6edaf3fa7d",
+    "https://git.kernel.org/stable/c/b9efdf333174468651be40390cbc79c9f55d9cce",
+    "https://git.kernel.org/stable/c/39e7e593418ccdbd151f2925fa6be1a616d16c96",
+    "https://git.kernel.org/stable/c/00fe5292f081f8d773e572df8e03bf6e1855fe49",
+    "https://git.kernel.org/stable/c/48b9a8dabcc3cf5f961b2ebcd8933bf9204babb7"
+  ],
+  "aliases": [
+    "GHSA-7h5m-97m9-x6w8",
+    "CVE-2024-46738"
+  ],
+  "assigner": "Linux",
+  "epss": 0.28,
+  "enisaIdProduct": [
+    {
+      "id": "0e251e45-d0c7-3f5d-995c-2fd352cb5069",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc63dedb7d46a7d690c6b6edf69136b88af06cc6 <39e7e593418ccdbd151f2925fa6be1a616d16c96"
+    },
+    {
+      "id": "197f9835-8610-326a-bd42-1dedefeb2a60",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.284"
+    },
+    {
+      "id": "35808fda-8bf1-3c52-b3b2-46a11105b846",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc63dedb7d46a7d690c6b6edf69136b88af06cc6 <ef5f4d0c5ee22d4f873116fec844ff6edaf3fa7d"
+    },
+    {
+      "id": "42bceb6e-85dc-3474-bf90-2a9b85d00cde",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.10.10"
+    },
+    {
+      "id": "4619e8ed-5c1e-3ef7-9a01-754776cfa0cb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11"
+    },
+    {
+      "id": "542c33ed-d680-3625-8514-92da406af879",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.110"
+    },
+    {
+      "id": "54a9466d-209f-3e95-9978-c150d502e09f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.9"
+    },
+    {
+      "id": "630ed20b-8f32-30d6-9557-1c8b7306ead6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.51"
+    },
+    {
+      "id": "7b22bff5-0ee8-3f1d-b23f-9d127f2b3783",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.322"
+    },
+    {
+      "id": "7e6759b4-08fc-3ad0-8f68-c7c9d40f088b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc63dedb7d46a7d690c6b6edf69136b88af06cc6 <f6365931bf7c07b2b397dbb06a4f6573cc9fae73"
+    },
+    {
+      "id": "9e505ca4-b482-3f6e-aa41-e35f638fe646",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc63dedb7d46a7d690c6b6edf69136b88af06cc6 <b243d52b5f6f59f9d39e69b191fb3d58b94a43b1"
+    },
+    {
+      "id": "9eb1c783-3e5b-37ab-b3f4-e5ebc444e5e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc63dedb7d46a7d690c6b6edf69136b88af06cc6 <48b9a8dabcc3cf5f961b2ebcd8933bf9204babb7"
+    },
+    {
+      "id": "a09a9567-ac0c-32b5-939b-7775d8260810",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.226"
+    },
+    {
+      "id": "a3f11831-5245-3fd3-92f8-a2c00337b68b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "b642f86e-487b-3a1a-b62b-a0493ebc818a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.167"
+    },
+    {
+      "id": "ca2373b9-e802-324e-a0c4-e22d2432f342",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc63dedb7d46a7d690c6b6edf69136b88af06cc6 <6c563a29857aa8053b67ee141191f69757f27f6e"
+    },
+    {
+      "id": "eaa20411-7fd3-3f0a-889d-768ce74740f1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc63dedb7d46a7d690c6b6edf69136b88af06cc6 <b9efdf333174468651be40390cbc79c9f55d9cce"
+    },
+    {
+      "id": "efd481af-d7a8-3254-893f-5698ba6329c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bc63dedb7d46a7d690c6b6edf69136b88af06cc6 <00fe5292f081f8d773e572df8e03bf6e1855fe49"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "939bd169-ec65-3a14-8f60-050e1d686a7f",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

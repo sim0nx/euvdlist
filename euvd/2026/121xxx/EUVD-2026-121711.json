@@ -3,8 +3,10 @@
   "enisaUuid": "9db8d547-d404-39c4-b8c8-09be10386e14",
   "description": "Issue summary: Encrypting a CMS message to an EC certificate whose group order\nis 1 may cause CMS_encrypt() or CMS_encrypt_ex() to loop indefinitely.\n\nImpact summary: An attacker able to supply the recipient certificate to an\napplication performing CMS encryption can cause that application to loop\nindefinitely, consuming CPU and resulting in Denial of Service.\n\nCWE: CWE-835: Loop with Unreachable Exit Condition ('Infinite Loop')\n\nDescription: CMS_encrypt() and CMS_encrypt_ex() encrypt a message to one or\nmore recipient certificates and, for an EC recipient, generate an ephemeral\nkey in the recipient's group. If the certificate declares a group order of 1,\nrandom scalar generation can only produce zero. The key generation routine\nthen retries without limit while waiting for a nonzero private scalar, so the\ncall never returns.\n\nThe OpenSSL TLS and QUIC implementations do not use this path. An application\nis exposed only if it calls CMS_encrypt() or CMS_encrypt_ex() with a recipient\ncertificate whose EC parameters are attacker-controlled. Certificates with\nnormal EC group orders do not trigger the loop.\n\nOpenSSL 4.0 and later reject unknown explicit EC groups in default builds.\nThese versions are affected only when configured with the\nenable-ec_explicit_curves option.\n\nThe result is a hang that consumes a CPU core until the process is\ninterrupted, a Denial of Service. The severity is Low because the attacker\nmust supply the recipient certificate and the application must choose to\nencrypt to it; ordinary CMS encryption to trusted recipients is unaffected.\n\nThe fix makes EC key generation fail when the group has no valid nonzero\nprivate scalar, instead of retrying indefinitely.\n\nFIPS impact: no\nThe FIPS modules in 4.1, 4.0, 3.5 and 3.0 are not affected. The FIPS provider\ndoes not support arbitrary explicit EC domain parameters, so an order-1 group\nis rejected during key import before the vulnerable key generation path is\nreached.",
   "datePublished": "Nov 10, 2026, 6:14:18 PM",
-  "dateUpdated": "Nov 10, 2026, 6:14:18 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 16, 2026, 7:11:29 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://openssl-library.org/news/secadv/20261110.txt",
     "https://github.com/openssl/openssl/commit/36e15b618decdff1b116eead6747718e6e729ad2",
@@ -12,10 +14,11 @@
     "https://github.com/openssl/openssl/commit/a0051cfe699bf5a047bc1c4faef65f80f7987366"
   ],
   "aliases": [
-    "CVE-2026-107496"
+    "CVE-2026-107496",
+    "GHSA-vv67-6crp-mvmp"
   ],
   "assigner": "openssl",
-  "epss": 0.0,
+  "epss": 0.4,
   "enisaIdProduct": [
     {
       "id": "0a759d8e-fc16-32e1-8171-a051eaae12ee",

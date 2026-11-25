@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2023-57249",
+  "enisaUuid": "82d91cdb-545e-3e73-b396-5080ffc8ce36",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amd/display: Refactor DMCUB enter/exit idle interface\n\n[Why]\nWe can hang in place trying to send commands when the DMCUB isn't\npowered on.\n\n[How]\nWe need to exit out of the idle state prior to sending a command,\nbut the process that performs the exit also invokes a command itself.\n\nFixing this issue involves the following:\n\n1. Using a software state to track whether or not we need to start\n   the process to exit idle or notify idle.\n\nIt's possible for the hardware to have exited an idle state without\ndriver knowledge, but entering one is always restricted to a driver\nallow - which makes the SW state vs HW state mismatch issue purely one\nof optimization, which should seldomly be hit, if at all.\n\n2. Refactor any instances of exit/notify idle to use a single wrapper\n   that maintains this SW state.\n\nThis works simialr to dc_allow_idle_optimizations, but works at the\nDMCUB level and makes sure the state is marked prior to any notify/exit\nidle so we don't enter an infinite loop.\n\n3. Make sure we exit out of idle prior to sending any commands or\n   waiting for DMCUB idle.\n\nThis patch takes care of 1/2. A future patch will take care of wrapping\nDMCUB command submission with calls to this new interface.",
+  "datePublished": "Mar 26, 2024, 5:49:58 PM",
+  "dateUpdated": "May 11, 2026, 7:30:36 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/820c3870c491946a78950cdf961bf40e28c1025f",
+    "https://git.kernel.org/stable/c/8e57c06bf4b0f51a4d6958e15e1a99c9520d00fa"
+  ],
+  "aliases": [
+    "GHSA-78r6-645f-335q",
+    "CVE-2023-52625"
+  ],
+  "assigner": "Linux",
+  "epss": 0.2,
+  "enisaIdProduct": [
+    {
+      "id": "2e317898-0e2c-3853-b406-5ee119c5ce63",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8"
+    },
+    {
+      "id": "31ebf97d-8864-301d-85a9-7288e18cc0e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4562236b3bc0a28aeb6ee93b2d8a849a4c4e1c7c <820c3870c491946a78950cdf961bf40e28c1025f"
+    },
+    {
+      "id": "70e92ba8-adf1-3f55-8b79-5aace9fd94b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "747079ea-e5e5-3b4e-8304-a5be97ccc98b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.15"
+    },
+    {
+      "id": "857e12bf-5562-31aa-9520-a608b86117f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.3"
+    },
+    {
+      "id": "8920a75c-34f2-35f0-a942-df4c5f5754da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4562236b3bc0a28aeb6ee93b2d8a849a4c4e1c7c <8e57c06bf4b0f51a4d6958e15e1a99c9520d00fa"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "8de579cf-4c58-310c-88cc-68a5dff01d22",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

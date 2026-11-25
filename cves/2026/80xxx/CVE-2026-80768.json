@@ -3,7 +3,7 @@
   "enisaUuid": "218b9d07-ddad-334d-9e84-8ab2226289b1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nHID: ft260: fix stack-use-after-return write in I2C read race\n\nft260_i2c_read() points dev->read_buf at a caller-supplied buffer\n(often an on-stack variable), arms a completion and waits up to five\nseconds for the device to return the data. The HID input callback\nft260_raw_event() runs in the input/IRQ path, independent of the\ndev->lock mutex held by the read path, and copies the device-supplied\npayload into dev->read_buf after a plain NULL check.\n\nThese two paths share read_buf, read_idx and read_len with no\nserialization. If the device delays its response until the read\ntimes out, ft260_i2c_read() resets the controller, clears read_buf\nand returns, unwinding the stack frame the buffer lived in. A\nresponse that arrives at that moment lets ft260_raw_event() pass the\nNULL check and then memcpy() the device-controlled payload into the\nnow-freed stack location, a bounded but attacker-influenced\nstack-use-after-return write triggerable by malicious or\nmalfunctioning hardware.\n\nAdd a dedicated spinlock that serializes every access to read_buf,\nread_idx and read_len. ft260_raw_event() now holds it across the\nNULL check, the memcpy and the index update, while the read path\ntakes it when arming and when clearing the buffer, so the teardown\ncan no longer slip between the check and the copy.",
   "datePublished": "Sep 4, 2026, 3:12:40 PM",
-  "dateUpdated": "Sep 4, 2026, 3:12:40 PM",
+  "dateUpdated": "Oct 19, 2026, 8:43:24 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2b907001e8a83cdb71e899fd3d77ab51e2c03f10",
@@ -16,11 +16,22 @@
     "https://git.kernel.org/stable/c/bf3e39df3a397fd82967a31d17c4e02c7feab221"
   ],
   "aliases": [
-    "CVE-2026-80768"
+    "CVE-2026-80768",
+    "GHSA-qx67-hq8p-m9fm"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
+    {
+      "id": "02fe2333-4435-30ab-8e0e-61c3c277c154",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
     {
       "id": "12404320-c5da-36ae-8d04-739ee5e704df",
       "product": {
@@ -130,16 +141,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "ab0c0455-956a-3ce3-8e36-47fd02822c79",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "ae80f528-e6b5-3397-88b8-469945088991",

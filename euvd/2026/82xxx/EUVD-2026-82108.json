@@ -3,17 +3,18 @@
   "enisaUuid": "7a17ba36-51f5-3161-8463-5106358cc2e7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nexfat: fix valid_size extension over a shared writable mapping\n\nWhen a shared writable mapping has its valid_size extended by a buffered\nwrite or a page fault, exfat zeroes the page-cache gap below the new\nvalid_size. A store through the mapping can race with this zeroing and be\noverwritten.\n\nFix this by zeroing the gap lazily. Drop ->map_pages so that every first\nwrite fault goes through exfat_page_mkwrite(), which advances valid_size to\ncover the faulting page. With fault-around enabled, a store could install a\nwritable PTE, skip ->page_mkwrite(), and land past valid_size without\nadvancing it. Extending valid_size one faulting page at a time also leaves\nnever-written pages in a large mapping alone.\n\nThe gap is filled with block granularity, zeroing only the not-uptodate\nblocks and preserving blocks that may hold data stored through the mapping.\nOn the buffered-write path the invalidate lock is held and the gap is\nunmapped before zeroing, so a racing store re-faults and, under the inode\nlock, completes only after the gap has been zeroed and valid_size covers\nit.",
   "datePublished": "Sep 17, 2026, 4:10:02 PM",
-  "dateUpdated": "Sep 17, 2026, 4:10:02 PM",
+  "dateUpdated": "Oct 19, 2026, 9:03:53 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/24f20986b253c3e4eb13ebe3c2007d1d352408a6",
     "https://git.kernel.org/stable/c/1135704ed22f54873eb0498a232611d9eca30dd4"
   ],
   "aliases": [
+    "GHSA-5qr9-x6vc-9rx2",
     "CVE-2026-92487"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "27c8ff97-7dd9-3c22-9a10-5976c906112a",
@@ -66,14 +67,14 @@
       "product_version": "patch: 7.2.6"
     },
     {
-      "id": "e3088064-1ccc-3440-84de-e2bfa6590d96",
+      "id": "c47a27e6-1db9-3a8a-bc7f-4389a37f4693",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

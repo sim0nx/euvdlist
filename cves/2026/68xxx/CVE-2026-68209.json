@@ -3,9 +3,14 @@
   "enisaUuid": "852efeea-c667-3859-8e4f-2978c828c6d0",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: sun4i-csi: Return queued buffers on start_streaming() failure\n\nThe vb2 framework hands buffers to the driver via buf_queue() before\ncalling start_streaming().  If start_streaming() returns an error\nwithout first returning those buffers via vb2_buffer_done(),\nvb2_start_streaming() fires WARN_ON(owned_by_drv_count) and the queued\nbuffers leak.\n\nsun4i_csi_start_streaming() returned -EINVAL when no matching CSI\nformat could be found, before any setup (scratch buffer allocation,\npipeline start) had been performed.  The remaining error paths already\nconverge on the err_clear_dma_queue label, which calls\nreturn_all_buffers(..., VB2_BUF_STATE_QUEUED) under csi->qlock.  Jump\nto that label directly: the intermediate err_disable_device /\nerr_disable_pipeline / err_free_scratch_buffer labels are skipped,\nwhich is correct because nothing they would undo has happened yet.\n\nThis mirrors the uvcvideo fix in commit 4cf3b6fd54eb (\"media: uvcvideo:\nReturn queued buffers on start_streaming() failure\").",
   "datePublished": "Aug 10, 2026, 12:00:28 PM",
-  "dateUpdated": "Aug 10, 2026, 12:00:28 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 19, 2026, 4:31:31 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/29fce7bcb3b959f6d4fdcdff7d26330152fdf98d",
+    "https://git.kernel.org/stable/c/7c2c30e282745a83d332c3cf92d1c0bcc491ac54",
+    "https://git.kernel.org/stable/c/3c0bd793b0083fd4639ba7f60d1e7db8c8ac459a",
     "https://git.kernel.org/stable/c/4872161e6fbe4e1783daea8bff79caddfae0fb82",
     "https://git.kernel.org/stable/c/a8abecc638a7feb20b78fabd563b05e30c071331",
     "https://git.kernel.org/stable/c/b5184b3f0e9d4cc47059ba1138c9a73d43d2493f",
@@ -13,10 +18,11 @@
     "https://git.kernel.org/stable/c/bbba3e260a62810a717b4442a3bb96d0ec0f6309"
   ],
   "aliases": [
+    "GHSA-93x6-mg2w-rrg6",
     "CVE-2026-68209"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "168c94cf-6ce4-399a-b56f-bb8c21543358",
@@ -47,6 +53,36 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "3febe7f4-203d-3bd7-95a3-9536c013cec7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
+    {
+      "id": "40baaf79-4106-3a96-b369-a363cc1c2324",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "577bbf23b758848f0c4a50d346460b690c753024 <3c0bd793b0083fd4639ba7f60d1e7db8c8ac459a"
+    },
+    {
+      "id": "4efa8228-8175-3dba-a39f-f5696f2a962a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "6d368bdd-a7fd-3ba2-931b-13cb0d54ede6",
@@ -89,6 +125,16 @@
       "product_version": "577bbf23b758848f0c4a50d346460b690c753024 <b5184b3f0e9d4cc47059ba1138c9a73d43d2493f"
     },
     {
+      "id": "9a42f5cf-1134-391a-825d-b61bb6d45085",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "577bbf23b758848f0c4a50d346460b690c753024 <29fce7bcb3b959f6d4fdcdff7d26330152fdf98d"
+    },
+    {
       "id": "9d977de1-fb7b-3b07-8d1c-d71de10ece62",
       "product": {
         "name": "Linux",
@@ -99,14 +145,24 @@
       "product_version": "patch: 6.18.42"
     },
     {
-      "id": "cf0c21b3-84b6-318d-97de-7f2972990377",
+      "id": "a3fe2464-cfb7-38e2-98ce-47b3ec0ca05c",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 5.15.216"
+    },
+    {
+      "id": "c8a27a26-e198-3957-a6ed-9843152686dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "577bbf23b758848f0c4a50d346460b690c753024 <7c2c30e282745a83d332c3cf92d1c0bcc491ac54"
     },
     {
       "id": "d045054f-91d4-3603-9669-cd4e6e6e8c24",
@@ -127,6 +183,16 @@
         }
       },
       "product_version": "patch: 6.12.101"
+    },
+    {
+      "id": "dbbd6540-1dce-3ad4-8671-d82a1720591f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "e7edbf30-a126-3096-953f-7eaf42f2fa7d",

@@ -3,8 +3,10 @@
   "enisaUuid": "7e56eb88-78ac-3c83-92da-a13a8f514e73",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/smc: fix TOCTOU race between smc_listen_out() and listener close\n\nsmc_listen_out() reads lsmc->sk.sk_state without the listener lock,\nthen acquires lock_sock_nested() only after the check passes. This\nopens a window where smc_close_active() can transition the listener\nto SMC_CLOSED, call smc_close_cleanup_listen() to drain the accept\nqueue, and release the lock, all between the lockless read and the\ndelayed lock acquisition:\n\n  smc_listen_work (smc_hs_wq)          smc_close_active()\n  -------------------------------      -------------------------\n  release_sock(child)\n  if (sk_state == SMC_LISTEN) TRUE\n                                        lock_sock(listener)\n                                        sk_state = SMC_CLOSED\n                                        smc_close_cleanup_listen()\n                                        release_sock(listener)\n                                        flush_work(tcp_listen_work)\n  lock_sock_nested(listener)\n  smc_accept_enqueue(listener, child) /* child enqueued on dead listener */\n\nsmc_close_active() flushes only tcp_listen_work. Work items already\ndispatched onto smc_hs_wq for the CLC handshake continue running\nunguarded. smc_accept_enqueue() takes a sock_hold() on the child that\nis never released, so the child smc_sock, its clcsock, and the\nreference all leak. A remote peer that opens TCP connections while the\nserver calls close() can exhaust kernel memory.\n\nMove lock_sock_nested() to before the sk_state check so that the test\nand the enqueue are atomic under the listener lock.",
   "datePublished": "Aug 22, 2026, 3:32:55 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:55 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:16:09 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/53c7938d8bcfde3296ec1a347ba2a9393c1fdcfa",
     "https://git.kernel.org/stable/c/feb71634bb1abab3e8fb5cde874b27001cc1282e",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/185a4caeecabc150106deda1da170b09f2ad803f"
   ],
   "aliases": [
-    "CVE-2026-74692"
+    "CVE-2026-74692",
+    "GHSA-r9r5-95ff-67hq"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.49,
   "enisaIdProduct": [
     {
       "id": "11849525-44fa-3f0b-af1d-7f297d5f455b",

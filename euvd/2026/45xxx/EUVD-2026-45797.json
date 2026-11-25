@@ -3,8 +3,10 @@
   "enisaUuid": "9def7ee5-1be4-395f-92f4-2f334e2267ad",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nrbd: eliminate a race in lock_dwork draining on unmap\n\nGiven how rbd_lock_add_request() and rbd_img_exclusive_lock() are\nwritten, lock_dwork may be (re)queued more than it's actually needed:\nfor example in case a new I/O request comes in while we are in the\nmiddle of rbd_acquire_lock() on behalf of another I/O request.  This is\nexpected and with rbd_release_lock() preemptively canceling lock_dwork\nis benign under normal operation.\n\nA more problematic example is maybe_kick_acquire():\n\n    if (have_requests || delayed_work_pending(&rbd_dev->lock_dwork)) {\n            dout(\"%s rbd_dev %p kicking lock_dwork\\n\", __func__, rbd_dev);\n            mod_delayed_work(rbd_dev->task_wq, &rbd_dev->lock_dwork, 0);\n    }\n\nIt's not unrealistic for lock_dwork to get canceled right after\ndelayed_work_pending() returns true and for mod_delayed_work() to\nrequeue it right there anyway.  This is a classic TOCTOU race.\n\nWhen it comes to unmapping the image, there is an implicit assumption\nof no self-initiated exclusive lock activity past the point of return\nfrom rbd_dev_image_unlock() which unlocks the lock if it happens to be\nheld.  This unlock is assumed to be final and lock_dwork (as well as\nall other exclusive lock tasks, really) isn't expected to get queued\nagain.  However, lock_dwork is canceled only in cancel_tasks_sync()\n(i.e. later in the unmap sequence) and on top of that the cancellation\ncan get in effect nullified by maybe_kick_acquire().  This may result\nin rbd_acquire_lock() executing after rbd_dev_device_release() and\nrbd_dev_image_release() run and free and/or reset a bunch of things.\nOne of the possible failure modes then is a violated\n\n    rbd_assert(rbd_image_format_valid(rbd_dev->image_format));\n\nin rbd_dev_header_info() which is called via rbd_dev_refresh() from\nrbd_post_acquire_action().\n\nRedo exclusive lock task draining to provide saner semantics and try\nto meet the assumptions around rbd_dev_image_unlock().",
   "datePublished": "Jul 19, 2026, 3:40:13 PM",
-  "dateUpdated": "Jul 19, 2026, 3:40:13 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:28:12 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/3427d7ae38337066ce88b68302e285d344ab756b",
     "https://git.kernel.org/stable/c/9dcd4f5c99b491c37be90b0bd9988db48225fb75",
@@ -12,60 +14,31 @@
     "https://git.kernel.org/stable/c/9fc75b71fdd38465c76c6f6a884cdd4ae3c72d90"
   ],
   "aliases": [
-    "CVE-2026-64112"
+    "CVE-2026-64112",
+    "GHSA-559g-j59r-pxg6"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.1,
   "enisaIdProduct": [
     {
-      "id": "38c625e4-2985-340b-9e9b-bd4ed510d03f",
+      "id": "2d61db94-4ffc-375b-97b4-9c15b7e354b9",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <9dcd4f5c99b491c37be90b0bd9988db48225fb75"
+      "product_version": "patch: 0"
     },
     {
-      "id": "42120c7c-380f-3273-88c7-c4c4cf47e013",
+      "id": "78c8fbc3-7c8f-3409-bd58-3ffbe18f9081",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <3427d7ae38337066ce88b68302e285d344ab756b"
-    },
-    {
-      "id": "81dd41ae-58ed-3925-af2a-4ec58c62e150",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.18.34"
-    },
-    {
-      "id": "853a61fe-213a-30a6-b5db-c2cf9a211ff8",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <9fc75b71fdd38465c76c6f6a884cdd4ae3c72d90"
-    },
-    {
-      "id": "86c0ef16-d8e2-3fa3-809b-a9860172b43f",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <9400efc76b42c751211974a25c91d2c19c65b01b"
+      "product_version": "fd22aef8b47cfc068448df65c1183698b0abd815 <9400efc76b42c751211974a25c91d2c19c65b01b"
     },
     {
       "id": "8dbb7360-27cc-3644-8015-7ece5b27a8f3",
@@ -98,24 +71,34 @@
       "product_version": "patch: 7.1"
     },
     {
-      "id": "b00be704-af55-3cc1-a805-1165191e711d",
+      "id": "c57ffd5b-1bb4-3911-9331-e9154c947752",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.12.92"
+      "product_version": "4.12"
     },
     {
-      "id": "da03c350-f9ab-374e-80a9-603a456bb68b",
+      "id": "e66478f4-622d-3bfe-8257-5dac2a065f16",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.0.11"
+      "product_version": "fd22aef8b47cfc068448df65c1183698b0abd815 <9fc75b71fdd38465c76c6f6a884cdd4ae3c72d90"
+    },
+    {
+      "id": "e6930ca0-73e0-3b51-9cff-ad9fc4ca45ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fd22aef8b47cfc068448df65c1183698b0abd815 <3427d7ae38337066ce88b68302e285d344ab756b"
     },
     {
       "id": "e6966921-ea8b-336d-b141-500e720e0cce",
@@ -126,6 +109,16 @@
         }
       },
       "product_version": "patch: 6.12.92"
+    },
+    {
+      "id": "f618f457-9771-3125-9c76-a079c1f19609",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "fd22aef8b47cfc068448df65c1183698b0abd815 <9dcd4f5c99b491c37be90b0bd9988db48225fb75"
     }
   ],
   "enisaIdVendor": [

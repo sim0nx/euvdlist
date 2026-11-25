@@ -3,7 +3,7 @@
   "enisaUuid": "5e3707ae-58df-363a-9b3a-d1681f5396f6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbatman-adv: reject unrepresentable multicast TVLV offsets\n\nThe network and transport header fields in struct sk_buff are 16-bit\noffsets from skb->head, and U16_MAX is reserved as the unset transport\nheader value. batadv_tvlv_call_handler() sets both fields from a received\nmulticast TVLV without checking whether the TVLV end is representable.\n\nIf the end offset exceeds the field's range, skb_set_transport_header()\ntruncates it so that the transport header precedes the network header.\nThe negative difference is then returned by skb_network_header_len() as\na large u32. batadv_mcast_forw_packet() consequently accepts an oversized\nmulticast tracker and accesses memory beyond the skb data.\n\nAdd skb_set_transport_header_careful(), an offset-aware counterpart to\nskb_reset_transport_header_careful(), which validates the final\nhead-relative offset before assigning it. Use the new helper in\nbatadv_tvlv_call_handler() and reject unrepresentable TVLVs before\nsetting the network header.",
   "datePublished": "Sep 4, 2026, 3:54:49 PM",
-  "dateUpdated": "Sep 4, 2026, 3:54:49 PM",
+  "dateUpdated": "Oct 19, 2026, 8:44:32 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/da1f5aa7ec93f2cc17f5cd30efc54f62af433cf2",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/f12c2de4f542e3220e17e0606f492110064f04cb"
   ],
   "aliases": [
-    "CVE-2026-80839"
+    "CVE-2026-80839",
+    "GHSA-676r-cqgf-36vf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "2511a689-8469-3ea3-8f73-ef57d669a601",
@@ -27,6 +28,16 @@
         }
       },
       "product_version": "patch: 6.18.49"
+    },
+    {
+      "id": "3263a7e5-7342-3d94-a7ac-e965cb704ba0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "3c16e52b-34ff-3b5d-97a2-2cf471d0e68f",
@@ -117,16 +128,6 @@
         }
       },
       "product_version": "patch: 7.1.13"
-    },
-    {
-      "id": "d7acf13b-0c86-3fb1-a472-d8b846f9c229",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "f315f047-aaf1-3629-a88f-897fe8bd2274",

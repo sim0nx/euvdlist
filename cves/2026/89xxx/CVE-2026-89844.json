@@ -3,8 +3,10 @@
   "enisaUuid": "49aa7056-9fb6-3c7e-ad8d-464222ff3329",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Hold vport_slock for host map update in report ID acquisition\n\nqla24xx_report_id_acquisition() format-1 handling drops vport_slock after\ntaking the vport reference and then calls qla_update_host_map() without\nthe lock. That reaches qla_update_vp_map(), which mutates the ha->host_map\nbtree via btree_insert32()/btree_update32()/btree_remove32() and is\ndocumented to require vport_slock to be held by the caller. Running it\nunlocked can race concurrent host_map updates and corrupt the btree.\n\nThe format-2 path in the same function already wraps its host_map update\n(SET_AL_PA) in vport_slock; the format-1 path is the lone outlier.\n\nHold vport_slock across the format-1 qla_update_host_map() call to honor\nthe documented locking contract. The vref_count taken in the loop keeps\nthe vport valid, so this only adds the missing host_map serialization.",
   "datePublished": "Sep 16, 2026, 10:31:18 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:18 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:53:37 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/e8f1b0cb9782338c6341ceed816e9c1243743cdd",
     "https://git.kernel.org/stable/c/6ed66e2a67bbd22877008ff9aa64bd574a7fc011",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/7944039ba9cb5c3a935d17c91004e3b8649ff58e"
   ],
   "aliases": [
+    "GHSA-8hj3-p94r-f47v",
     "CVE-2026-89844"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.34,
   "enisaIdProduct": [
     {
       "id": "11caa1a7-072a-3801-af4e-a733d0c23cf0",
@@ -57,16 +60,6 @@
         }
       },
       "product_version": "430eef03a763e5e76a371ba6d02779ae4a64b6ea <e8f1b0cb9782338c6341ceed816e9c1243743cdd"
-    },
-    {
-      "id": "511a40f5-0f2b-3017-ad63-fe3e5ac92fe4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "93bdc7a5-88d5-33d6-849c-d1b67386b46f",
@@ -117,6 +110,16 @@
         }
       },
       "product_version": "patch: 6.12.110"
+    },
+    {
+      "id": "daa04da4-57fc-38e4-9c8a-e3074f008b19",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "efe33138-0eb8-36a4-ba6c-cd284497ef9e",

@@ -3,7 +3,7 @@
   "enisaUuid": "9020eb98-939b-357e-afbb-ec7c74e28501",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Skip NVMe LS reject IOCB when FW not started\n\nqla_nvme_xmt_ls_rsp() bails out to the out: label when firmware is not\nstarted (!ha->flags.fw_started), but the out: path unconditionally calls\nqla_nvme_ls_reject_iocb(), which ends in qla2x00_start_iocbs() and an\nunconditional doorbell write to the request queue in-pointer register.\nThis rings the firmware doorbell and queues an IOCB that stopped or\nresetting firmware cannot consume, and touches MMIO during the reset/EEH\nwindow where fw_started is also clear.\n\nOnly emit the LS reject IOCB (and ring the doorbell) when fw_started is\nset; otherwise just clean up and return. The post-allocation failure\ncases (SRB alloc / qla2x00_start_sp() failure) run with firmware started\nand still send the reject. Apply the same guard to the reject emission\nin qla2xxx_process_purls_pkt().",
   "datePublished": "Sep 16, 2026, 10:31:16 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:16 AM",
+  "dateUpdated": "Oct 19, 2026, 8:53:35 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2935b730211c5c1433aa6101fa3b55df2b63869a",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/f7e46ebffc5781aab3f1f5a5d4350addbb5833f4"
   ],
   "aliases": [
+    "GHSA-3frv-hcwj-933c",
     "CVE-2026-89842"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "0212f63e-0280-3106-a121-32513bb2bdc3",
@@ -37,16 +38,6 @@
         }
       },
       "product_version": "875386b98857822b77ac7f95bdf367b70af5b78c <ac4b019ac07844d3f67ea5e48b1d982b2170d1a7"
-    },
-    {
-      "id": "51deee4e-68ad-3d39-8db9-f6e568647b66",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "54c5fa95-10b8-33e8-aa90-695982a188a9",
@@ -97,6 +88,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "a665f3ad-b0d5-3be2-a7c8-ee8e7699b6d4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "c5255eef-05d2-3e2e-a1e0-95124b69eef4",

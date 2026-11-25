@@ -3,17 +3,20 @@
   "enisaUuid": "8f9704dd-af59-3589-bb6e-1573977a6562",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\naccel/ethosu: fix OOB write in ethosu_gem_cmdstream_copy_and_validate()\n\nThe command stream parsing loop increments the index variable a second\ntime when a 64-bit command word is encountered (bit 14 set), but does\nnot re-check the loop bound before writing the second word:\n\n    for (i = 0; i < size / 4; i++) {\n        bocmds[i] = cmds[0];\n        if (cmd & 0x4000) {\n            i++;\n            bocmds[i] = cmds[1];   /* unchecked */\n        }\n    }\n\nThe buffer bocmds is backed by a DMA allocation of exactly size bytes\nfrom drm_gem_dma_create(ddev, size), giving valid indices [0, size/4-1].\n\nWhen i == size/4 - 1 on entry to an iteration and bit 14 of cmds[0] is\nset, bocmds[size/4-1] is written in bounds, i is then incremented to\nsize/4, and bocmds[size/4] writes four bytes past the end of the\nallocation.\n\nUserspace controls both the buffer contents and the size argument via\nthe ioctl, making this a userspace-triggerable heap out-of-bounds write.\n\nFix by checking the incremented index against the buffer bound before\nthe second write and returning -EINVAL if the buffer is too small to\ncontain the extended command.",
   "datePublished": "Jun 25, 2026, 8:38:50 AM",
-  "dateUpdated": "Jun 25, 2026, 8:38:50 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:33:42 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/db6cb3e35cebf487f9a78ebd4cfa4b83708ff40d",
     "https://git.kernel.org/stable/c/c0837b9cf6eabbad8b8cbddaff1a46a6d0a2e29d"
   ],
   "aliases": [
+    "GHSA-8652-hhjr-7fh7",
     "CVE-2026-53173"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "33e5fa87-01ae-37dd-bc94-7549725251f8",

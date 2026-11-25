@@ -3,8 +3,10 @@
   "enisaUuid": "710b07ef-3f65-3894-82e3-f1c4e0e16e2f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nblk-cgroup: skip dying blkg in blkcg_activate_policy()\n\nWhen switching IO schedulers on a block device, blkcg_activate_policy()\ncan race with concurrent blkcg deletion, leading to a use-after-free in\nrcu_accelerate_cbs.\n\nT1:                               T2:\n                                  blkg_destroy\n                                  kill(&blkg->refcnt) // blkg->refcnt=1->0\n                                  blkg_release // call_rcu(__blkg_release)\n                                  ...\n                                  blkg_free_workfn\n                                  ->pd_free_fn(pd)\nelv_iosched_store\nelevator_switch\n...\niterate blkg list\nblkg_get(blkg) // blkg->refcnt=0->1\n                                  list_del_init(&blkg->q_node)\nblkg_put(pinned_blkg) // blkg->refcnt=1->0\nblkg_release // call_rcu again\nrcu_accelerate_cbs // uaf\n\nFix this by checking hlist_unhashed(&blkg->blkcg_node) before getting\na reference to the blkg. This is the same check used in blkg_destroy()\nto detect if a blkg has already been destroyed. If the blkg is already\nunhashed, skip processing it since it's being destroyed.",
   "datePublished": "Sep 17, 2026, 4:08:40 PM",
-  "dateUpdated": "Sep 17, 2026, 4:08:40 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:01:42 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/b5dae1cd0d8368b4338430ff93403df67f0b8bcc",
     "https://git.kernel.org/stable/c/083b58373463a6e5ee60ecb135269348f68ad7df",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/5e9220389920f33b6a804d50c548cd0cd1b04634"
   ],
   "aliases": [
+    "GHSA-5ghq-73f5-5j56",
     "CVE-2026-90325"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "049a1d36-3e9f-3210-9ddc-87ff6161b2ad",
@@ -171,6 +174,16 @@
       "product_version": "6.2.3 <6.2.4"
     },
     {
+      "id": "d4e6c078-2f4e-3b56-9f82-244e200c7f46",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "e08d2b41-9554-3005-ba7d-00df7f10a2ce",
       "product": {
         "name": "Linux",
@@ -189,16 +202,6 @@
         }
       },
       "product_version": "f1c006f1c6850c14040f8337753a63119bba39b9 <5e9220389920f33b6a804d50c548cd0cd1b04634"
-    },
-    {
-      "id": "f2130f2e-8edf-367c-a05d-6bed83c1c871",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     }
   ],
   "enisaIdVendor": [

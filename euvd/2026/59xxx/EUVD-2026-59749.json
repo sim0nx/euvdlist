@@ -3,7 +3,7 @@
   "enisaUuid": "838cd3cd-6041-3083-93d8-808447ac6d7b",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/vmwgfx: avoid destroy_workqueue(NULL) on vkms init failure\n\nTwo paths through vmw_vkms_init() can leave vmw->crc_workq NULL while\nstill leaving the rest of the driver in a state that calls\nvmw_vkms_cleanup() at module unload:\n\n  1. vmw_host_get_guestinfo(GUESTINFO_VBLANK, ...) failing or\n     returning an oversized buffer -- the common case on hosts\n     without a VBLANK guestinfo entry -- early-returned before the\n     workqueue allocation.\n  2. alloc_ordered_workqueue() returning NULL on memory pressure.\n\nvmw_vkms_cleanup() then calls destroy_workqueue(NULL), which\ndereferences wq->name and panics.\n\nFix the first case by removing the early return: vmw->vkms_enabled\nis already false on the rpci-failure path so no work will ever be\nqueued, and allocating the workqueue unconditionally keeps the\ncontrol flow simple.  Fix the second case by guarding the cleanup\nwith a NULL check, since alloc_ordered_workqueue() can still fail\nunder low memory.",
   "datePublished": "Aug 15, 2026, 12:26:50 PM",
-  "dateUpdated": "Aug 15, 2026, 12:26:50 PM",
+  "dateUpdated": "Nov 6, 2026, 5:05:45 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/7c701778c6a369769992614dac8dc00c8ac72afc",
@@ -12,10 +12,11 @@
     "https://git.kernel.org/stable/c/05eaa887e7b4f40fba425f8a1d7a5a8a043092a6"
   ],
   "aliases": [
+    "GHSA-23jg-69fj-37jm",
     "CVE-2026-74442"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "0d9c6078-3bb4-3370-8f1f-8b766ab083bb",
@@ -36,6 +37,16 @@
         }
       },
       "product_version": "patch: 6.12.103"
+    },
+    {
+      "id": "2410eb7e-fba2-3369-8c55-1ebd719e1d93",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "2473ba97-b775-3b3e-adae-c88cf1e98c1c",
@@ -106,16 +117,6 @@
         }
       },
       "product_version": "7b0062036c3b71b4a69e244ecf0502c06c4cf5f0 <96efee36453b697ccbaf75091b7a1807c11809dd"
-    },
-    {
-      "id": "eee23dee-b350-3d70-b325-94e82e820ec5",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc6"
     }
   ],
   "enisaIdVendor": [

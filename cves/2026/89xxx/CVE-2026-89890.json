@@ -3,8 +3,10 @@
   "enisaUuid": "d4166744-d9e3-3f68-a7b8-d48b23d1bec4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: go7007: defer the ALSA v4l2 put until card release\n\ngo7007_snd_init() already takes a v4l2_device reference for the ALSA\nside, but go7007_snd_remove() drops it immediately after calling\nsnd_card_free_when_closed().\n\nThat is too early when a userspace process still has the capture PCM open.\nThe ALSA card and its PCM callbacks remain alive until the last file is\nclosed, so the release path can still reach struct go7007 through\npcm->private_data and call go7007_snd_hw_free() after the V4L2 release path\nhas freed the object.\n\nMove the matching v4l2_device_put() to the ALSA card private_free callback\nso the existing ALSA reference covers the whole deferred card lifetime.",
   "datePublished": "Sep 16, 2026, 10:31:53 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:53 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 8:54:23 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/1c57d1a3396b2d767d58f10dff09bb397586c714",
     "https://git.kernel.org/stable/c/9c4f9628b8558c87903492a777834cc5be14ded3",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/1bd456afeb8a515137e567967069fce6f8fcd23e"
   ],
   "aliases": [
+    "GHSA-qhgv-8fw2-7hch",
     "CVE-2026-89890"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "07171deb-b83d-3b73-afe2-1605df21b63f",
@@ -172,6 +175,16 @@
       "product_version": "patch: 7.2.5"
     },
     {
+      "id": "f6a59921-6cff-3de5-a9b9-a83be8b9342d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "f6e6b34b-4e9d-3816-8afe-2b53b2fa45e5",
       "product": {
         "name": "Linux",
@@ -180,16 +193,6 @@
         }
       },
       "product_version": "patch: 6.1.188"
-    },
-    {
-      "id": "f705b6bf-52f5-3fd2-817e-394a34a6becd",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "fc47e6c4-b539-34c7-8538-ef8f2d793d3a",

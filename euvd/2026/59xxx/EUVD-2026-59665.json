@@ -3,9 +3,10 @@
   "enisaUuid": "0be01473-9d65-370f-8fc1-ae20d3132545",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nublk: reset kernel-owned dev_info fields in ublk_ctrl_add_dev()\n\nublk_ctrl_add_dev() memcpy()s the userspace ublksrv_ctrl_dev_info into\nub->dev_info and then fixes up the fields the driver owns, but misses\n->state and ->ublksrv_pid.\n\nA device added with ->state = UBLK_S_DEV_LIVE passes the\n\"->state != UBLK_S_DEV_DEAD\" test that ublk_stop_dev_unlocked() uses as its\nproxy for \"a disk is attached\", while ->ub_disk is still NULL, so DEL_DEV\nright after ADD_DEV oopses in del_gendisk().  UBLK_S_DEV_QUIESCED plus\nUBLK_F_USER_RECOVERY dies one step earlier, in ublk_force_abort_dev().  A\npoisoned ->state also gets START_USER_RECOVERY and the char device\nread/write path onto a device that was never started, and wedges START_DEV\nat -EEXIST.  A poisoned ->ublksrv_pid just makes GET_DEV_INFO report an\nunrelated task as the ublk server.\n\nReset both after the memcpy(), as ublk_detach_disk() does.  Userspace only\never reads these back, so correcting them silently breaks nothing.\n\nADD_DEV has copied ->state in unsanitized since ublk was merged, but back\nthen it was harmless: the gendisk was allocated during ADD_DEV, and both\nteardown and the START_DEV -EEXIST check keyed off disk_live() rather than\n->state.  The oops became reachable once the disk allocation moved to\nSTART_DEV and those checks switched to ->state.",
   "datePublished": "Aug 15, 2026, 12:27:08 PM",
-  "dateUpdated": "Aug 15, 2026, 12:27:08 PM",
+  "dateUpdated": "Aug 19, 2026, 4:37:23 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/787c944502e7e63d20a9201bada77e0dd924f458",
     "https://git.kernel.org/stable/c/ee41b00858ca65b4428e99efe39a4277c1f043d2",
     "https://git.kernel.org/stable/c/b67ce16b26ad0f14cfd6071013840aa95f823bea",
     "https://git.kernel.org/stable/c/205feb72e5beb3140e4e1403b6cff30cf739bab9",
@@ -13,10 +14,11 @@
     "https://git.kernel.org/stable/c/e65848e4ce352bac9e3465099354c8b8f845391f"
   ],
   "aliases": [
-    "CVE-2026-74472"
+    "CVE-2026-74472",
+    "GHSA-7jg9-vhj9-wg56"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "4058dc32-4b58-32a8-8d4c-630c00192244",
@@ -49,6 +51,16 @@
       "product_version": "6d9e6dfdf3b207701471f364121c67eefb000682 <127033b79383a3e78361d7e971588aa8849f5124"
     },
     {
+      "id": "5c915ed7-920c-3529-8c2b-7f604ae695c5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6d9e6dfdf3b207701471f364121c67eefb000682 <787c944502e7e63d20a9201bada77e0dd924f458"
+    },
+    {
       "id": "5d7a5598-71ac-3159-bc16-aa43ed11804d",
       "product": {
         "name": "Linux",
@@ -67,6 +79,16 @@
         }
       },
       "product_version": "6d9e6dfdf3b207701471f364121c67eefb000682 <ee41b00858ca65b4428e99efe39a4277c1f043d2"
+    },
+    {
+      "id": "75430cdc-eb31-3e20-b680-3978c438c4e8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "85859508-e3fb-312b-90d4-053fe45b9e3e",
@@ -89,14 +111,14 @@
       "product_version": "patch: 6.6.151"
     },
     {
-      "id": "bab078ae-7b44-33de-a70a-67eefce0447d",
+      "id": "ad56eca9-85b8-31b1-91e7-7e9915250eee",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc6"
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "bfba9979-cb17-3aa9-90cb-620e9b56354a",

@@ -3,9 +3,12 @@
   "enisaUuid": "9858fe70-33f5-3eff-b3cd-8cb0bea21527",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: pin conn during async oplock break notification\n\nsmb2_oplock_break_noti() and smb2_lease_break_noti() store a ksmbd_conn\npointer in an async ksmbd_work and then queue that work on ksmbd-io.  The\nwork only increments conn->r_count, which prevents teardown from passing\nthe pending-request wait after the increment, but it does not pin the\nstruct ksmbd_conn object.\n\nIf connection teardown races with an oplock break notification, the last\nconn reference can be dropped before the queued worker finishes.  The\nworker then uses the freed conn in ksmbd_conn_write() and\nksmbd_conn_r_count_dec().\n\nTake a real conn reference when publishing the conn pointer to the async\nwork item, and drop it after the notification work has decremented\nr_count.  Apply the same lifetime rule to lease break notification, which\nuses the same work->conn pattern.",
   "datePublished": "Aug 10, 2026, 12:03:59 PM",
-  "dateUpdated": "Aug 10, 2026, 12:03:59 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 30, 2026, 12:28:25 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/dab1493bc9d97947f1219d6823c2e2a28636021b",
     "https://git.kernel.org/stable/c/0f72fc9659d7f585460d43c158055df5afdcffb6",
     "https://git.kernel.org/stable/c/793e1c7041b93af96ff87e678329bc16aee7ba88",
     "https://git.kernel.org/stable/c/6ecb252efa0b413ac3d9979fb4eec247f8fc1258",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/aa5d8f3f96aa11a4a54ce993c11ce8af11c546f9"
   ],
   "aliases": [
-    "CVE-2026-68381"
+    "CVE-2026-68381",
+    "GHSA-gq9g-pv9h-2q5v"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.6,
   "enisaIdProduct": [
     {
       "id": "0aa4410d-88d3-3164-b420-1533cb615862",
@@ -69,6 +73,16 @@
       "product_version": "patch: 6.6.148"
     },
     {
+      "id": "5ff6dc86-fe9d-3bd2-873a-a44d2651513e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e6508c7ecb1802909f294827eff38f301d0c937 <dab1493bc9d97947f1219d6823c2e2a28636021b"
+    },
+    {
       "id": "61dec0dc-daad-3917-a4b5-e0dcebf38ce9",
       "product": {
         "name": "Linux",
@@ -77,6 +91,16 @@
         }
       },
       "product_version": "a4261bbc33fbf99b99c80aa3a2c5097611802980 <793e1c7041b93af96ff87e678329bc16aee7ba88"
+    },
+    {
+      "id": "69c2a4f8-0655-3219-963b-c508bb8115b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "734421b0-6a35-3e16-9b89-b4ea45126dd0",
@@ -127,16 +151,6 @@
         }
       },
       "product_version": "patch: 6.12.101"
-    },
-    {
-      "id": "e0f31647-2154-3c86-954e-ead1a16870c8",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
     },
     {
       "id": "e18ba8e7-3821-39e5-abb5-b97e83845007",

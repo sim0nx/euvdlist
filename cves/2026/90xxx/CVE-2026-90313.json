@@ -3,9 +3,10 @@
   "enisaUuid": "52e62bf8-36d6-32bb-aba4-b06a2140a430",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf, cgroup: Fix invalid storage access after __cgroup_bpf_attach failed\n\nA potential invalid storage access issue can occur after replacing a\ncgroup bpf prog.\n\nThis occurs in the following scenario:\n1. prog1 with storage is attached to a cgroup in multi-attach mode.\n2. prog1 is replaced with prog2 using BPF_F_REPLACE in multi-attach\n   mode, but fails midway (e.g. in bpf_trampoline_link_cgroup_shim or\n   update_effective_progs).\n3. A new prog3 is attached to the cgroup in multi-attach mode.\n\nThe reason is that __cgroup_bpf_attach overwrites pl->storage with the\nnew storage prior to attachment completion. When attachment fails\nmidway, the cleanup path calls bpf_cgroup_storages_free(new_storage) to\nfree the newly allocated storage, but fails to restore pl->storage back\nto old_storage.\n\nConsequently, the still-active prog1 holds invalid or dangling storage\npointers, leading to an invalid memory access when prog1 executes and\ncalls bpf_get_local_storage. Additionally, original pl->flags and\ncgrp->bpf.flags[atype] are left unrestored.\n\nFix this by saving old_pl_flags, old_storage, and old_flags prior to the\nupdate, and properly restoring all of them in the cleanup path on error.",
   "datePublished": "Sep 17, 2026, 4:08:32 PM",
-  "dateUpdated": "Sep 17, 2026, 4:08:32 PM",
+  "dateUpdated": "Oct 30, 2026, 12:35:08 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/217b257d2c39e8dc32d691e8952f3cd921a80233",
     "https://git.kernel.org/stable/c/e26db0d636e4c24a6b16683ea95cf5077c64d74b",
     "https://git.kernel.org/stable/c/aaca16e042527f7efe48b50799bc662f1a191ce1",
     "https://git.kernel.org/stable/c/86ead176301109b78e1d14c0e9d0d9ff9723c769",
@@ -13,10 +14,11 @@
     "https://git.kernel.org/stable/c/6655c409707ec8ce9ce0850ffe4fe02331fd4d9c"
   ],
   "aliases": [
-    "CVE-2026-90313"
+    "CVE-2026-90313",
+    "GHSA-2mrf-g72x-r6vx"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "091164a0-cb99-329e-aa05-65780d6f3472",
@@ -29,14 +31,24 @@
       "product_version": "patch: 7.2.6"
     },
     {
-      "id": "0c68e0f5-aa32-373f-82b8-493abebc4d2c",
+      "id": "2819e13d-f5fe-308c-a9da-b374b66e71f8",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "298231e5-654d-3abc-b1b4-14a94dc004d1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7d9c3427894fe70d1347b4820476bf37736d2ff0 <217b257d2c39e8dc32d691e8952f3cd921a80233"
     },
     {
       "id": "31f5ea9a-239b-38e0-9ed2-aca6f0a03465",
@@ -87,6 +99,16 @@
         }
       },
       "product_version": "patch: 6.12.110"
+    },
+    {
+      "id": "58582f68-ef6a-3835-8c4f-00580f4a906f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "60877be0-4221-31bf-98c7-ffba18c6af11",

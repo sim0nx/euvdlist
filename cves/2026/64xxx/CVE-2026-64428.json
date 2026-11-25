@@ -3,7 +3,7 @@
   "enisaUuid": "3ecd7e94-dca3-36c3-af4e-7d575d4bfff6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ngpio: sch: use raw_spinlock_t in the irq startup path\n\nsch_irq_unmask() enables the GPIO IRQ and then updates the controller\nstate through sch_irq_mask_unmask(), which takes sch->lock with\nspin_lock_irqsave().  The callback can be reached from irq_startup()\nwhile setting up a requested IRQ.  That path is not sleepable, but on\nPREEMPT_RT a regular spinlock_t becomes a sleeping lock.\n\nThis issue was found by our static analysis tool and then manually\nreviewed against the current tree.\n\nThe grounded PoC kept the request_threaded_irq() -> __setup_irq() ->\nirq_startup() -> sch_irq_unmask() -> sch_irq_mask_unmask() carrier and\nused the original spin_lock_irqsave(&sch->lock) edge.  Lockdep reported:\n\n  BUG: sleeping function called from invalid context\n  hardirqs last disabled at ... __setup_irq.constprop.0 ... [vuln_msv]\n  sch_rt_spin_lock_irqsave+0x1c/0x30 [vuln_msv]\n  sch_irq_mask_unmask.constprop.0+0x31/0x70 [vuln_msv]\n  __setup_irq.constprop.0+0xd/0x30 [vuln_msv]\n\nConvert the SCH controller lock to raw_spinlock_t.  The same lock is\nalso used by the GPIO direction and value callbacks, but those critical\nsections only update MMIO-backed GPIO registers and do not contain\nsleepable operations.  Keeping this register lock non-sleeping is\ntherefore appropriate for the irqchip callbacks and does not change the\nGPIO-side locking contract.",
   "datePublished": "Jul 25, 2026, 8:51:05 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:05 AM",
+  "dateUpdated": "Aug 17, 2026, 4:55:28 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/3b1aa05ec27eeccc889ecaa3f2d9baa9f453e50d",
@@ -15,11 +15,22 @@
     "https://git.kernel.org/stable/c/286533cb14a3c8a8bd39ff64ea2fc8e1aa0f638b"
   ],
   "aliases": [
-    "CVE-2026-64428"
+    "CVE-2026-64428",
+    "GHSA-3jvv-rp8p-q944"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
+    {
+      "id": "154cf107-8f2d-347d-afc1-60f5ae9f81ec",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "35c531f4-edfa-34cb-b992-38ef3fb474a7",
       "product": {
@@ -169,16 +180,6 @@
         }
       },
       "product_version": "patch: 6.6.145"
-    },
-    {
-      "id": "f8f8478d-0489-3559-baee-dbfd5d559fec",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     }
   ],
   "enisaIdVendor": [

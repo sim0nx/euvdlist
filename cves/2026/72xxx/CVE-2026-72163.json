@@ -2,8 +2,8 @@
   "id": "EUVD-2026-58921",
   "enisaUuid": "049cc7e7-2c70-3bf4-9f38-62dbd0058ffd",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nocfs2: fix NULL h_transaction deref in ocfs2_assure_trans_credits\n\n[BUG]\nA direct write over unwritten extents can panic the kernel in\nocfs2_assure_trans_credits() when the journal aborts during DIO\ncompletion. The crash is a general protection fault from a NULL pointer\ndereference.\n\n[CAUSE]\nocfs2_dio_end_io_write() loops over a direct write's unwritten extents,\nmarking each written under a single journal handle. If the journal\naborts (for example after an I/O error) while the extent tree is being\nupdated, the handle is left aborted with its transaction pointer\ncleared. The extent merge treats that failure as not critical and\nreports success, so the loop keeps using the handle.\nocfs2_assure_trans_credits() reads the handle's remaining credits\nwithout first checking whether the handle is aborted, and that read\ndereferences the cleared transaction pointer.\n\n[FIX]\nA journal abort is recorded in the handle itself, so callers are\nexpected to test the handle rather than rely on a returned error.\nMake ocfs2_assure_trans_credits() do that, as the other ocfs2 journal\nhelpers already do, and return -EROFS when the handle is aborted.",
-  "datePublished": "Aug 15, 2026, 6:32:14 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:14 AM",
+  "datePublished": "Aug 15, 2026, 5:53:31 AM",
+  "dateUpdated": "Nov 6, 2026, 4:55:21 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2d80e9c56718435a9c9f5f24dbc954989aead579",
@@ -13,15 +13,14 @@
     "https://git.kernel.org/stable/c/6ad7532a23bc94076efe9f1486dd7f7493c090ff",
     "https://git.kernel.org/stable/c/bd73971fad89d5ee4ea0ba9b92d2ea08733c4a64",
     "https://git.kernel.org/stable/c/253ed993e0b36997ec7b04c1ff76103b38241de2",
-    "https://git.kernel.org/stable/c/f9ab30c96b0f00c20c6dac93681bdae3a033d229",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72163"
+    "https://git.kernel.org/stable/c/f9ab30c96b0f00c20c6dac93681bdae3a033d229"
   ],
   "aliases": [
     "CVE-2026-72163",
     "GHSA-54g6-8m9x-g4c9"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "078e6723-6ff6-3b46-99d0-ed26d52b7005",
@@ -104,14 +103,14 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "62438050-b66b-3240-8598-8c84ef8bc2e3",
+      "id": "560367b9-86f7-336c-b137-7f716b89a21b",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "patch: 7.2"
     },
     {
       "id": "64ff7b09-f080-3ab0-b9ff-a2c6c9617aad",

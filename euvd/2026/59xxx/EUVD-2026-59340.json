@@ -2,8 +2,8 @@
   "id": "EUVD-2026-59340",
   "enisaUuid": "087c134b-4f0f-35f5-872a-7c04d7ddb0bb",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nieee802154: fix kernel-infoleak in dgram_recvmsg()\n\nKMSAN reported a kernel-infoleak in move_addr_to_user():\n\nBUG: KMSAN: kernel-infoleak in instrument_copy_to_user\ninclude/linux/instrumented.h:131 [inline]\nBUG: KMSAN: kernel-infoleak in _inline_copy_to_user\ninclude/linux/uaccess.h:205 [inline]\nBUG: KMSAN: kernel-infoleak in _copy_to_user+0xcc/0x120\nlib/usercopy.c:26\n instrument_copy_to_user include/linux/instrumented.h:131 [inline]\n _inline_copy_to_user include/linux/uaccess.h:205 [inline]\n _copy_to_user+0xcc/0x120 lib/usercopy.c:26\n copy_to_user include/linux/uaccess.h:236 [inline]\n move_addr_to_user+0x2e7/0x440 net/socket.c:302\n ____sys_recvmsg+0x232/0x610 net/socket.c:2925\n ...\n Uninit was stored to memory at:\n ieee802154_addr_to_sa include/net/ieee802154_netdev.h:369 [inline]\n dgram_recvmsg+0xa09/0xbe0 net/ieee802154/socket.c:739\n\nThe issue occurs because the `pan_id` field of `struct ieee802154_addr`\nis left uninitialized when the address mode is `IEEE802154_ADDR_NONE`.\nThe execution flow is as follows:\n\n1. `__ieee802154_rx_handle_packet()` declares a local `struct\nieee802154_hdr hdr` on the stack.\n2. `ieee802154_hdr_pull()` calls `ieee802154_hdr_get_addr()` to parse\nthe source and destination addresses into this structure.\n3. If the address mode is `IEEE802154_ADDR_NONE`,\n`ieee802154_hdr_get_addr()` previously only set the `mode` field,\nleaving the `pan_id` field containing uninitialized stack memory.\n4. This uninitialized `pan_id` is later copied into a `struct\nsockaddr_ieee802154` in `dgram_recvmsg()` via `ieee802154_addr_to_sa()`.\n5. Finally, `move_addr_to_user()` copies the socket address structure to\nuser space, leaking the uninitialized bytes.\n\nFix this by using `memset` to zero out the address structure in\n`ieee802154_hdr_get_addr()` when the mode is `IEEE802154_ADDR_NONE`.",
-  "datePublished": "Aug 15, 2026, 6:32:24 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:24 AM",
+  "datePublished": "Aug 15, 2026, 5:56:53 AM",
+  "dateUpdated": "Nov 6, 2026, 5:05:42 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/a2ee1a038a16e286d084bc293a7522d010a59ec3",
@@ -13,15 +13,14 @@
     "https://git.kernel.org/stable/c/fc8766467b53335220b4b594ba15bc8f8cee0c76",
     "https://git.kernel.org/stable/c/de3bd9809af7555611334cb6a071806744430ef7",
     "https://git.kernel.org/stable/c/f14802465f5956baafe5f4b4541eb626b06b41f1",
-    "https://git.kernel.org/stable/c/4db86f8ab11b5a41bfc36680be837e6ac1375ec6",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72441"
+    "https://git.kernel.org/stable/c/4db86f8ab11b5a41bfc36680be837e6ac1375ec6"
   ],
   "aliases": [
     "GHSA-rhqf-xfxj-8vg6",
     "CVE-2026-72441"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.24,
   "enisaIdProduct": [
     {
       "id": "0dd9fec6-7ddf-3844-ad59-e67f20849bf3",
@@ -64,6 +63,16 @@
       "product_version": "94b4f6c21cf54029377a0645675a9d81b6cf890d <de3bd9809af7555611334cb6a071806744430ef7"
     },
     {
+      "id": "21cf17bc-69e4-3ce8-93a6-f9097a667838",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "2ca6a2c7-a69b-3d6d-81a8-4d346a797154",
       "product": {
         "name": "Linux",
@@ -102,16 +111,6 @@
         }
       },
       "product_version": "patch: 6.12.97"
-    },
-    {
-      "id": "a324c4b3-8234-388d-8e06-8c81d8242dd6",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "abc4209c-fda5-3f40-9a78-13798267d336",

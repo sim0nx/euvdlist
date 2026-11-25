@@ -3,8 +3,10 @@
   "enisaUuid": "79f7d291-6334-306e-ae66-7164ef144a03",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ni2c: imx: Fix slave registration race and error handling\n\nIn i2c_imx_reg_slave(), the slave pointer was assigned before\npm_runtime_resume_and_get().  If pm_runtime_resume_and_get() failed,\nthe error path returned without clearing i2c_imx->slave, leaving it\nnon-NULL and causing all subsequent registration attempts to fail\nwith -EBUSY.\n\nAdditionally, because this driver uses a shared IRQ, the interrupt\nhandler i2c_imx_isr() can execute concurrently and, after acquiring\nslave_lock, dereference i2c_imx->slave.  The previous fix attempt\nadded a lockless i2c_imx->slave = NULL on the error path, but that\ncould race with the ISR under the lock and still cause a NULL pointer\ndereference.\n\nFix both issues by deferring the assignment of i2c_imx->slave and\ni2c_imx->last_slave_event to after a successful resume, and by\nperforming the assignment inside the slave_lock critical section.\nThis guarantees that the slave pointer is never left stale on the\nerror path and is always valid when observed by the interrupt handler.",
   "datePublished": "Aug 28, 2026, 6:52:47 AM",
-  "dateUpdated": "Aug 28, 2026, 6:52:47 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:26:32 PM",
+  "baseScore": 8.4,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/754bc62f72fd64b202462367134ac8ce95b005de",
     "https://git.kernel.org/stable/c/cfdf6e13518589f911b7eace6ccb788e4ed87397",
@@ -15,10 +17,11 @@
     "https://git.kernel.org/stable/c/d64ec362c369bbc33833f7936d5f3a706b0d5c45"
   ],
   "aliases": [
+    "GHSA-gjgg-c5pr-g266",
     "CVE-2026-80678"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "073cb3a8-6ce7-33a7-bcc4-4e2336758a8e",

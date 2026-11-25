@@ -3,20 +3,36 @@
   "enisaUuid": "9a43794f-ad5d-3b69-b6be-57bc532acf37",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nksmbd: fix overflow in dacloffset bounds check in build_sec_desc()\n\nWhen the large dacl_offset is provided, dacl_offset + sizeof(struct\nsmb_acl) overflows on 32-bit builds and the check is passed,\nWhich makes le16_to_cpu(ppdacl_ptr->size) read out-of-bounds. This\nonly happens for dacl_offset in range [0xFFFFFFF8, 0xFFFFFFFF]. So\nthe oob read is max 8 bytes preceding the allocated ppntsd.\n\n    unsigned int dacl_offset = le32_to_cpu(ppntsd->dacloffset);\n    int ppdacl_size, ntacl_size = ppntsd_size - dacl_offset;\n\n    if (!dacl_offset ||\n\t(dacl_offset + sizeof(struct smb_acl) > ppntsd_size))\n\t    goto out;\n\nCommit beff0bc9d69b (\"ksmbd: fix overflow in dacloffset bounds check\")\nfixes similar checks in other functions. But leaves this one out,\nbecause it is only valid for 32-bit builds.\n\nReproduced on 32-bit ARM with KASAN, by a client sending SMB2\nSET_INFO(SEC) with dacloffset=0xfffffff8, then QUERY_INFO(SEC) on the\nsame file:\n\n BUG: KASAN: slab-out-of-bounds in build_sec_desc (fs/smb/server/smbacl.c:1105)\n Read of size 2 at addr c2a273fa by task kworker/1:1/35\n CPU: 1 UID: 0 PID: 35 Comm: kworker/1:1 Not tainted 7.3.0-rc2+ #5\n Workqueue: ksmbd-io handle_ksmbd_work\n Call trace:\n  kasan_check_range from build_sec_desc (fs/smb/server/smbacl.c:1105)\n  build_sec_desc from smb2_query_info (fs/smb/server/smb2pdu.c:7676)\n  smb2_query_info from handle_ksmbd_work (fs/smb/server/server.c:160)\n  handle_ksmbd_work from process_one_work (kernel/workqueue.c:3401)\n  process_one_work from worker_thread (kernel/workqueue.c:3473)\n  worker_thread from kthread (kernel/kthread.c:436)\n\nAdd overflow check.",
   "datePublished": "Nov 16, 2026, 9:59:32 AM",
-  "dateUpdated": "Nov 16, 2026, 9:59:32 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:01:14 AM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/e32f5d4b1817ba3e9b2b09e4ad2ae6f100f94820",
+    "https://git.kernel.org/stable/c/5ac0483e543a8ecf18f5c571cab4cd7d215e1af5",
+    "https://git.kernel.org/stable/c/82048635ea5fbc625ed810dfb4dc85a7e47a594b",
     "https://git.kernel.org/stable/c/bd92e03122f33c159b552867a4abc098d405dfed",
     "https://git.kernel.org/stable/c/4f238380ea3803afdc815c615521c6f6b13989a3",
     "https://git.kernel.org/stable/c/d1e92aa651caa352261fb3b78460b7722357835c",
     "https://git.kernel.org/stable/c/eb96e2a0e817807c48dc8387ca6a5249fdeae3a0"
   ],
   "aliases": [
+    "GHSA-772j-v3x2-5prg",
     "CVE-2026-99309"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.48,
   "enisaIdProduct": [
+    {
+      "id": "0c6b4f43-f4f0-3755-ac42-3a72890c7f89",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cb69d4d6f709f87c94afa28ae64c501576692171 <e32f5d4b1817ba3e9b2b09e4ad2ae6f100f94820"
+    },
     {
       "id": "17863953-484f-3580-8244-a6f9b7dcf710",
       "product": {
@@ -48,14 +64,34 @@
       "product_version": "8f0541186e9ad1b62accc9519cc2b7a7240272a7 <d1e92aa651caa352261fb3b78460b7722357835c"
     },
     {
-      "id": "39d100c3-9b91-372e-a06e-859478c9604b",
+      "id": "263627b9-450a-3c54-ad87-95b89ef25dd1",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "cb69d4d6f709f87c94afa28ae64c501576692171"
+      "product_version": "patch: 6.1.193"
+    },
+    {
+      "id": "2992a6b3-0c89-37d5-9f2a-6242a2e0c9ff",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.15.62 <5.15.226"
+    },
+    {
+      "id": "4818b14a-0a7e-32ea-9e30-39c6de2a7cfa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8f0541186e9ad1b62accc9519cc2b7a7240272a7 <5ac0483e543a8ecf18f5c571cab4cd7d215e1af5"
     },
     {
       "id": "59190027-b061-306b-8fc2-76c055b5635f",
@@ -108,16 +144,6 @@
       "product_version": "6.0"
     },
     {
-      "id": "9a062457-2333-3783-a0ca-3bb0df0d3c45",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "5.15.62 <5.16"
-    },
-    {
       "id": "a80f09a7-993c-385b-8d57-467973ca0304",
       "product": {
         "name": "Linux",
@@ -136,6 +162,36 @@
         }
       },
       "product_version": "8f0541186e9ad1b62accc9519cc2b7a7240272a7 <bd92e03122f33c159b552867a4abc098d405dfed"
+    },
+    {
+      "id": "b19c2328-0801-3d57-8bdd-560f132d70a3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
+      "id": "bc900513-1900-372e-8208-b29b1dcd57a7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
+      "id": "beb6be29-ea56-3623-b92d-b72307db6169",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8f0541186e9ad1b62accc9519cc2b7a7240272a7 <82048635ea5fbc625ed810dfb4dc85a7e47a594b"
     },
     {
       "id": "cc4740dc-631d-3c7e-beeb-1091e9203a12",

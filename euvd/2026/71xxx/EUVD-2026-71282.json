@@ -3,7 +3,7 @@
   "enisaUuid": "f5cccee2-e386-35be-a9d9-757fd01bac4f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ncrypto: qce - fix CCM AAD buffer underallocation\n\nThe AAD buffer allocated in qce_aead_ccm_prepare_buf_assoclen()\ncan be smaller than the length later programmed into the DMA\nscatterlist.\n\nThe allocation size is currently calculated as:\n\n  ALIGN(assoclen, 16) + MAX_CCM_ADATA_HEADER_LEN\n\nwhile the DMA length is set to:\n\n  ALIGN(assoclen + adata_header_len, 16)\n\nSince ALIGN() does not distribute over addition, the allocation\ncan be smaller than the DMA length. For example, when\nassoclen = 32 and adata_header_len = 2:\n\n  allocation = ALIGN(32, 16) + 6 = 38\n  DMA length = ALIGN(32 + 2, 16) = 48\n\nAs a result, the QCE hardware can read beyond the allocated\nbuffer while computing the CBC-MAC over the associated data.\nThe extra bytes are folded into the authentication tag,\nresulting in an incorrect tag and causing CCM self-test\nfailures such as:\n\n  alg: aead: ccm-aes-qce encryption test failed (wrong result)\n  on test vector 8\n\nFix the allocation by adding the maximum possible AAD header\nlength before alignment:\n\n  ALIGN(assoclen + MAX_CCM_ADATA_HEADER_LEN, 16)\n\nThis guarantees that the allocated buffer is large enough\nfor the fully padded AAD data for all supported header sizes.",
   "datePublished": "Sep 4, 2026, 3:54:40 PM",
-  "dateUpdated": "Sep 4, 2026, 3:54:40 PM",
+  "dateUpdated": "Oct 19, 2026, 8:44:24 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/11775b35ce9f27e73d62188d7d38aa0dc0a219aa",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/7f2345f47dd189625f657cd72437179ab4170ee1"
   ],
   "aliases": [
-    "CVE-2026-80832"
+    "CVE-2026-80832",
+    "GHSA-5ch2-359f-fp8j"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "16be505c-e72d-3be5-99ba-8f2b172028e5",
@@ -50,6 +51,16 @@
         }
       },
       "product_version": "patch: 6.12.108"
+    },
+    {
+      "id": "335539a4-0a3b-3829-a6da-8425d10d5d0b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "473733e5-a850-3940-af32-8bd2e17f3dae",
@@ -190,16 +201,6 @@
         }
       },
       "product_version": "patch: 7.1.13"
-    },
-    {
-      "id": "e2c0f0e2-de97-3901-a502-0271ad8d387e",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     }
   ],
   "enisaIdVendor": [

@@ -3,8 +3,10 @@
   "enisaUuid": "5deeb2d1-eb66-33e2-ab9d-9a2389ae638c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nserial: qcom_geni: fix kfifo underflow when flush precedes DMA completion IRQ\n\nWhen uart_flush_buffer() runs before the DMA completion IRQ is delivered,\nthe following race can occur (all steps serialized by uart_port_lock):\n\n  1. DMA starts: tx_remaining = N, kfifo contains N bytes\n  2. DMA completes in hardware; IRQ is pending but not yet delivered\n  3. uart_flush_buffer() acquires the port lock and calls kfifo_reset(),\n     making kfifo_len() = 0 while tx_remaining remains N\n  4. uart_flush_buffer() releases the port lock\n  5. DMA IRQ fires; handle_tx_dma() acquires the port lock and calls\n     uart_xmit_advance(uport, tx_remaining) on an empty kfifo\n\nuart_xmit_advance() increments kfifo->out by tx_remaining. Since\nkfifo_reset() already set both in and out to 0, out wraps past in,\ncausing kfifo_len() to return UART_XMIT_SIZE - tx_remaining. The next\nstart_tx_dma() call then submits a DMA transfer of stale buffer data.\n\nFix this by snapshotting kfifo_len() at the start of handle_tx_dma()\nand skipping uart_xmit_advance() when fifo_len < tx_remaining, which\nindicates the kfifo was reset by a preceding flush.",
   "datePublished": "Jul 19, 2026, 2:54:56 PM",
-  "dateUpdated": "Jul 19, 2026, 2:54:56 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:36:52 PM",
+  "baseScore": 7.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L",
   "references": [
     "https://git.kernel.org/stable/c/c91ea13375f70f6271a0183445e34e83b8f4d8f7",
     "https://git.kernel.org/stable/c/b1159dce10b38eb795e4c96cdc4d34b83cec81c5",
@@ -13,10 +15,11 @@
     "https://git.kernel.org/stable/c/452d6fa37ae9b021f4f6d397dbae077f7296f6f4"
   ],
   "aliases": [
+    "GHSA-rjh6-3wfg-m2hh",
     "CVE-2026-63883"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "12509faf-1283-3409-9b0f-9bcb542c954a",

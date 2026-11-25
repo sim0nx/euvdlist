@@ -3,7 +3,7 @@
   "enisaUuid": "d8b3bed9-1462-37af-8f9e-afad820cc616",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nscsi: qla2xxx: Zero-init bsg stack buffers to avoid info leak\n\nSeveral bsg handlers stage their request/reply in an uninitialized 256-byte\non-stack buffer (uint8_t bsg[DMA_POOL_SIZE]) and fill it via\nsg_copy_to_buffer(), which only copies as many bytes as the user-supplied\nrequest payload. When the request is shorter than the structure, the\nremainder of the buffer is left holding stale stack data.\n\nqla2x00_read_fru_status() and qla2x00_read_i2c() then copy the full\nstructure back to the reply payload with sg_copy_from_buffer(), leaking the\nuninitialized stack bytes to user space. The write/update paths do not copy\nthe buffer back, but can feed uninitialized fields to the device.\n\nZero the stack buffer at declaration in all five handlers, mirroring the\nheap kzalloc() approach, so short requests can no longer expose stale\nmemory.",
   "datePublished": "Sep 16, 2026, 10:31:17 AM",
-  "dateUpdated": "Sep 16, 2026, 10:31:17 AM",
+  "dateUpdated": "Oct 19, 2026, 8:53:36 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1c820d0900e4aacd5020b989159f6b4b2f7d0d6a",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/b93d3bb3afe1b44489927de1eb4e66e8536a5935"
   ],
   "aliases": [
-    "CVE-2026-89843"
+    "CVE-2026-89843",
+    "GHSA-x3rh-x4gx-m2j8"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "2140c36d-0289-3852-8f9f-15453c4dac90",
@@ -182,16 +183,6 @@
       "product_version": "697a4bc69159c3396035b0506ffa55c4b2d0b1f4 <1c820d0900e4aacd5020b989159f6b4b2f7d0d6a"
     },
     {
-      "id": "b6f5bb2a-3328-32de-af44-352f55465e48",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "ccfa0183-c8a2-3b4d-9739-42245a4a9ff1",
       "product": {
         "name": "Linux",
@@ -200,6 +191,16 @@
         }
       },
       "product_version": "patch: 6.12.110"
+    },
+    {
+      "id": "f08d6e71-2122-3962-a9e7-8dc731c19fb0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

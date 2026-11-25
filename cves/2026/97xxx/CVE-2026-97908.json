@@ -3,20 +3,35 @@
   "enisaUuid": "d0115d27-c14f-3f35-86af-eea6fe15a383",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: btqcomsmd: destroy RPMsg endpoints before freeing hci_dev\n\nThe command and ACL RPMsg endpoints store struct btqcomsmd as their\ncallback private data. The receive callbacks dereference btq->hdev\nwithout taking an hci_dev reference.\n\nThe current teardown order frees the hci_dev before destroying the RPMsg\nendpoints in both the hci_register_dev() error path and the driver remove\npath. If WCNSS delivers data in that window, the endpoint callback can\nrun with an already freed hci_dev and pass it to the Bluetooth core.\n\nFor qcom_smd endpoints, rpmsg_destroy_ept() closes the channel and clears\nthe callback under the channel recv_lock. The receive path holds the same\nlock while invoking the callback, so destroying the endpoints first both\nprevents new callbacks and serializes with any callback already running.\n\nDestroy the command and ACL endpoints before hci_free_dev(). Keep\nhci_unregister_dev() first during remove so the HCI core stops issuing\noperations before the transport endpoints are shut down. In the full\nregistration-error cleanup path, return directly after freeing the hci_dev\nto avoid falling through to the partial-construction labels and destroying\nthe endpoints twice.",
   "datePublished": "Sep 25, 2026, 10:22:32 AM",
-  "dateUpdated": "Sep 25, 2026, 10:22:32 AM",
+  "dateUpdated": "Oct 30, 2026, 12:37:42 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/b9b34cc149f8344d1cffbf318eb1c8cb414f74ac",
+    "https://git.kernel.org/stable/c/e2a0d9401368ec29bd0cdbfe9545d2a800429875",
+    "https://git.kernel.org/stable/c/f5e4f81f4e075cd5ec062f81b576b88cdee998d1",
+    "https://git.kernel.org/stable/c/aaa7f676418e1eb2c4ef0d4e4b07812b25e7b404",
     "https://git.kernel.org/stable/c/962dcc1d8a52e64428cae07806e7f6b8d3ec6ac0",
     "https://git.kernel.org/stable/c/2dcc2240b4e5f6e5dce1736f82666aba40eb3b13",
     "https://git.kernel.org/stable/c/2d016208a011558f211ec9687889df8318654730",
     "https://git.kernel.org/stable/c/f5a427b16e45210dee656b0860728f3d496dee85"
   ],
   "aliases": [
+    "GHSA-rm82-grpq-rh3c",
     "CVE-2026-97908"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "15e3d8a0-92d6-3a6f-8dff-b649389da4c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5052de8deff5619a9b7071f00084fd0264b58e17 <e2a0d9401368ec29bd0cdbfe9545d2a800429875"
+    },
     {
       "id": "1801587b-242b-31a9-aa86-0c85f59c5aba",
       "product": {
@@ -48,14 +63,64 @@
       "product_version": "5052de8deff5619a9b7071f00084fd0264b58e17 <2d016208a011558f211ec9687889df8318654730"
     },
     {
-      "id": "53ebdbd9-ac20-3189-901d-df5a9834d22f",
+      "id": "4eb4ee68-4b9a-3964-9dd4-4e3398388e21",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc3"
+      "product_version": "patch: 5.10.273"
+    },
+    {
+      "id": "531d2aab-ccb1-329f-99e5-eab659e86810",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5052de8deff5619a9b7071f00084fd0264b58e17 <f5e4f81f4e075cd5ec062f81b576b88cdee998d1"
+    },
+    {
+      "id": "74d0c1ec-c6e1-367e-8a31-f027a851f1bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5052de8deff5619a9b7071f00084fd0264b58e17 <b9b34cc149f8344d1cffbf318eb1c8cb414f74ac"
+    },
+    {
+      "id": "86d11f0e-0bfe-3c1e-8774-d3e444ac97ca",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "877e0977-a844-3124-91c0-e7bad7f6795a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5052de8deff5619a9b7071f00084fd0264b58e17 <aaa7f676418e1eb2c4ef0d4e4b07812b25e7b404"
+    },
+    {
+      "id": "8a1fc818-24a8-311a-9684-842572199e4d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
     },
     {
       "id": "8a5c18d8-1b44-37d0-957d-c21940ffbeb1",
@@ -116,6 +181,26 @@
         }
       },
       "product_version": "patch: 6.12.111"
+    },
+    {
+      "id": "f25f35ec-b101-3012-a75d-1cbec9050b18",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "fa3e2dbd-eda9-3349-999f-35b53fb048a1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

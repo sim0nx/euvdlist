@@ -3,7 +3,7 @@
   "enisaUuid": "991aea52-0ecc-3c8a-adf3-ca07759ec6ff",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nhwmon: (hp-wmi-sensors) Fix use-after-free in fungible_show()\n\nnsensor->current_state is dynamically replaced as the sensor's state\nchanges. update_numeric_sensor_from_wobj() does this by freeing the\nold string and installing a new one:\n\n\tif (strcmp(trimmed, nsensor->current_state)) {\n\t\tnew_string = hp_wmi_strdup(dev, trimmed);\n\t\tif (new_string) {\n\t\t\tdevm_kfree(dev, nsensor->current_state);\n\t\t\tnsensor->current_state = new_string;\n\t\t}\n\t}\n\nThis function is only ever called from hp_wmi_update_info() while\nstate->lock is held, so the free-and-replace itself is properly\nserialized against concurrent updates.\n\nfungible_show(), however, reads the same pointer after the lock has\nalready been dropped:\n\n\terr = hp_wmi_update_info(state, info);\n\tif (err)\n\t\treturn err;\n\n\tswitch (prop) {\n\t...\n\tcase HP_WMI_PROPERTY_CURRENT_STATE:\n\t\tseq_printf(seqf, \"%s\\n\", nsensor->current_state);\n\t\tbreak;\n\nhp_wmi_update_info() takes state->lock internally and releases it\nbefore returning, so by the time fungible_show() dereferences\nnsensor->current_state in seq_printf(), no lock is held. Two\nprocesses reading a sensor's current_state debugfs entry at\noverlapping times (or one reading it while another read of the same\nsensor triggers a refresh) can race: one thread's seq_printf() can\nbe part-way through printing the string at the moment another\nthread's call into update_numeric_sensor_from_wobj() frees it with\ndevm_kfree() and installs a new pointer, causing a use-after-free\nread.\n\nTake state->lock around the read in fungible_show() as well, so it\ncan never run concurrently with the free-and-replace in\nupdate_numeric_sensor_from_wobj().",
   "datePublished": "Oct 6, 2026, 8:44:38 AM",
-  "dateUpdated": "Oct 6, 2026, 8:44:38 AM",
+  "dateUpdated": "Oct 19, 2026, 9:15:31 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b6b2a638aa36c441b2c8d0b6bd8ed2bb9701e795",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/e6cb0b4d4ecb8e71fd2200d907ab2e9663356f69"
   ],
   "aliases": [
+    "GHSA-cww6-g46x-9cmq",
     "CVE-2026-98200"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "27da14d0-adee-3ef7-9082-08dcb89ce1cd",
@@ -89,16 +90,6 @@
       "product_version": "23902f98f8d4811ab84dde6419569a5b374f8122 <72c85149794a1ccf8d718ffed1521106b5d31968"
     },
     {
-      "id": "7aad0b5c-38f3-377f-99d1-d7f832bff6bb",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
-    {
       "id": "c104b8e3-083c-34d6-b098-19352776f183",
       "product": {
         "name": "Linux",
@@ -137,6 +128,16 @@
         }
       },
       "product_version": "23902f98f8d4811ab84dde6419569a5b374f8122 <b6b2a638aa36c441b2c8d0b6bd8ed2bb9701e795"
+    },
+    {
+      "id": "fbc178cb-c706-39a9-ac69-7598a3eb6b91",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

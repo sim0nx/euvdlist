@@ -2,9 +2,11 @@
   "id": "EUVD-2026-59545",
   "enisaUuid": "a1c7a348-18cd-3009-9b62-00c4b1d50637",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipv6: addrconf: bail out of dad_failure when state is no longer POSTDAD\n\naddrconf_dad_failure() transitions ifp->state from DAD to POSTDAD\nvia addrconf_dad_end(), which drops ifp->lock on return.  The lock\nis re-acquired after net_info_ratelimited().  A concurrent\nipv6_del_addr() can take the lock in that window, set ifp->state\nto DEAD and run list_del_rcu(&ifp->if_list).\n\naddrconf_dad_failure() then overwrites DEAD with ERRDAD at errdad:\nand schedules a new dad_work.  The work calls ipv6_del_addr()\nagain, hitting the already-poisoned list entry:\n\n  general protection fault: 0000 [#1] SMP NOPTI\n  CPU: 4 PID: 217 Comm: kworker/4:1\n  Workqueue: ipv6_addrconf addrconf_dad_work\n  RIP: 0010:ipv6_del_addr+0xe9/0x280\n  RAX: dead000000000122\n  Call Trace:\n   addrconf_dad_stop+0x113/0x140\n   addrconf_dad_work+0x28c/0x430\n   process_one_work+0x1eb/0x3b0\n   worker_thread+0x4d/0x400\n   kthread+0x104/0x140\n   ret_from_fork+0x35/0x40\n\nFold the addrconf_dad_end() logic into addrconf_dad_failure() under\na single ifp->lock critical section.  The STABLE_PRIVACY branch\ntemporarily drops ifp->lock around address regeneration, so at\nlock_errdad: verify the state is still POSTDAD before transitioning\nto ERRDAD; bail out otherwise to avoid overwriting a state set by\nanother path while the lock was released.",
-  "datePublished": "Aug 15, 2026, 6:32:32 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:32 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:59:10 AM",
+  "dateUpdated": "Oct 16, 2026, 7:05:41 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/47b05836705b63dab93d9ac7c69a3a507375ef80",
     "https://git.kernel.org/stable/c/d21be7d051012c6b572fa4e3334443c250216f7b",
@@ -13,15 +15,14 @@
     "https://git.kernel.org/stable/c/3bdc86d89fd6c6523753fa6f42fcfaf30ee699cb",
     "https://git.kernel.org/stable/c/b61af0268e3d1308c466bf0be5dced844eafc1ef",
     "https://git.kernel.org/stable/c/e889aa99ad3ed48bb0ddcff6475b17542532d18b",
-    "https://git.kernel.org/stable/c/627ac78f2741e2ebd2225e2e953b6964a8a9182f",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-74398"
+    "https://git.kernel.org/stable/c/627ac78f2741e2ebd2225e2e953b6964a8a9182f"
   ],
   "aliases": [
     "GHSA-jvq3-c9fm-53r7",
     "CVE-2026-74398"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.51,
   "enisaIdProduct": [
     {
       "id": "054ef91e-276c-33ea-b4cc-d0f7ea470896",
@@ -74,6 +75,16 @@
       "product_version": "patch: 6.1.178"
     },
     {
+      "id": "5af45d2d-c7df-3343-855f-d541b2703896",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "60e3caa3-cdd1-32ba-bafd-c24ad17ee611",
       "product": {
         "name": "Linux",
@@ -82,16 +93,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "65c54107-27cf-3d23-9fbf-9bb13cca0a6a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "668480a2-1b2b-3a18-bff0-016cbda95a46",

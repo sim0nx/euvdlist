@@ -3,7 +3,7 @@
   "enisaUuid": "b4f9a7b5-cdc8-3363-ac4e-d0b31926b1a1",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: wilc1000: fix out-of-bounds read in P2P public action frames\n\nwilc_wfi_p2p_rx() and mgmt_tx() start parsing a frame once\nieee80211_is_public_action() returns true. That helper only verifies the\nframe is long enough for the action category field, that is\noffsetofend(struct ieee80211_mgmt, u.action.category), 25 bytes. Both\nfunctions then read the P2P public action header up to oui_subtype at\noffset 30 and pass \"size - ie_offset\" to cfg80211_find_vendor_ie(), where\nie_offset is offsetof(struct ieee80211_mgmt, u) + sizeof(*d), i.e. 32.\n\nA public action frame of 25 to 31 bytes passes the check but is shorter\nthan that 32 byte header, so oui_subtype can be read out of bounds, and\nbecause the length is unsigned, \"size - ie_offset\" underflows to a value\nclose to 4 GiB. cfg80211_find_vendor_ie() takes an unsigned int length,\nso even the size_t subtraction in mgmt_tx() is truncated to the same\nvalue. It then walks far past the buffer searching for a vendor element\nuntil it reaches unmapped memory.\n\nIn the receive path the frame arrives over the air and needs no\nassociation, so a nearby unauthenticated device can crash the host while\nit is in P2P listen. Reject frames shorter than the P2P public action\nheader in both paths before dereferencing it.",
   "datePublished": "Oct 6, 2026, 8:44:31 AM",
-  "dateUpdated": "Oct 6, 2026, 8:44:31 AM",
+  "dateUpdated": "Oct 19, 2026, 9:15:21 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/e98ad9f4c59f2e836f8d971b57763a4277680422",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/ba6cb7c0868a412c2eb68e8efd5aa38bfb258a14"
   ],
   "aliases": [
-    "CVE-2026-98190"
+    "CVE-2026-98190",
+    "GHSA-hpwv-qhmc-p3v4"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "120c90c0-b9a1-3ff7-8964-9e351de43090",
@@ -70,16 +71,6 @@
         }
       },
       "product_version": "patch: 5.15.222"
-    },
-    {
-      "id": "19c24c26-77e4-3ae2-aaa7-33e8e213aab5",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "41dd68c2-95aa-37dd-9fe6-82a76b95189e",
@@ -170,6 +161,16 @@
         }
       },
       "product_version": "4fb8b5aa2a1126783ae00bae544d6f3c519408ef <e98ad9f4c59f2e836f8d971b57763a4277680422"
+    },
+    {
+      "id": "912f7d7a-963e-317b-a7a0-82548eb2c351",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "9cfa39e8-7dfb-344d-af36-bf3f6219a1bb",

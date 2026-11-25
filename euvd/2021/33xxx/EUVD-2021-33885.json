@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2021-33885",
+  "enisaUuid": "a178670a-a519-3d64-a1cc-739c437ed2a3",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: hamradio: fix memory leak in mkiss_close\n\nMy local syzbot instance hit memory leak in\nmkiss_open()[1]. The problem was in missing\nfree_netdev() in mkiss_close().\n\nIn mkiss_open() netdevice is allocated and then\nregistered, but in mkiss_close() netdevice was\nonly unregistered, but not freed.\n\nFail log:\n\nBUG: memory leak\nunreferenced object 0xffff8880281ba000 (size 4096):\n  comm \"syz-executor.1\", pid 11443, jiffies 4295046091 (age 17.660s)\n  hex dump (first 32 bytes):\n    61 78 30 00 00 00 00 00 00 00 00 00 00 00 00 00  ax0.............\n    00 27 fa 2a 80 88 ff ff 00 00 00 00 00 00 00 00  .'.*............\n  backtrace:\n    [<ffffffff81a27201>] kvmalloc_node+0x61/0xf0\n    [<ffffffff8706e7e8>] alloc_netdev_mqs+0x98/0xe80\n    [<ffffffff84e64192>] mkiss_open+0xb2/0x6f0 [1]\n    [<ffffffff842355db>] tty_ldisc_open+0x9b/0x110\n    [<ffffffff84236488>] tty_set_ldisc+0x2e8/0x670\n    [<ffffffff8421f7f3>] tty_ioctl+0xda3/0x1440\n    [<ffffffff81c9f273>] __x64_sys_ioctl+0x193/0x200\n    [<ffffffff8911263a>] do_syscall_64+0x3a/0xb0\n    [<ffffffff89200068>] entry_SYSCALL_64_after_hwframe+0x44/0xae\n\nBUG: memory leak\nunreferenced object 0xffff8880141a9a00 (size 96):\n  comm \"syz-executor.1\", pid 11443, jiffies 4295046091 (age 17.660s)\n  hex dump (first 32 bytes):\n    e8 a2 1b 28 80 88 ff ff e8 a2 1b 28 80 88 ff ff  ...(.......(....\n    98 92 9c aa b0 40 02 00 00 00 00 00 00 00 00 00  .....@..........\n  backtrace:\n    [<ffffffff8709f68b>] __hw_addr_create_ex+0x5b/0x310\n    [<ffffffff8709fb38>] __hw_addr_add_ex+0x1f8/0x2b0\n    [<ffffffff870a0c7b>] dev_addr_init+0x10b/0x1f0\n    [<ffffffff8706e88b>] alloc_netdev_mqs+0x13b/0xe80\n    [<ffffffff84e64192>] mkiss_open+0xb2/0x6f0 [1]\n    [<ffffffff842355db>] tty_ldisc_open+0x9b/0x110\n    [<ffffffff84236488>] tty_set_ldisc+0x2e8/0x670\n    [<ffffffff8421f7f3>] tty_ioctl+0xda3/0x1440\n    [<ffffffff81c9f273>] __x64_sys_ioctl+0x193/0x200\n    [<ffffffff8911263a>] do_syscall_64+0x3a/0xb0\n    [<ffffffff89200068>] entry_SYSCALL_64_after_hwframe+0x44/0xae\n\nBUG: memory leak\nunreferenced object 0xffff8880219bfc00 (size 512):\n  comm \"syz-executor.1\", pid 11443, jiffies 4295046091 (age 17.660s)\n  hex dump (first 32 bytes):\n    00 a0 1b 28 80 88 ff ff 80 8f b1 8d ff ff ff ff  ...(............\n    80 8f b1 8d ff ff ff ff 00 00 00 00 00 00 00 00  ................\n  backtrace:\n    [<ffffffff81a27201>] kvmalloc_node+0x61/0xf0\n    [<ffffffff8706eec7>] alloc_netdev_mqs+0x777/0xe80\n    [<ffffffff84e64192>] mkiss_open+0xb2/0x6f0 [1]\n    [<ffffffff842355db>] tty_ldisc_open+0x9b/0x110\n    [<ffffffff84236488>] tty_set_ldisc+0x2e8/0x670\n    [<ffffffff8421f7f3>] tty_ioctl+0xda3/0x1440\n    [<ffffffff81c9f273>] __x64_sys_ioctl+0x193/0x200\n    [<ffffffff8911263a>] do_syscall_64+0x3a/0xb0\n    [<ffffffff89200068>] entry_SYSCALL_64_after_hwframe+0x44/0xae\n\nBUG: memory leak\nunreferenced object 0xffff888029b2b200 (size 256):\n  comm \"syz-executor.1\", pid 11443, jiffies 4295046091 (age 17.660s)\n  hex dump (first 32 bytes):\n    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................\n    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................\n  backtrace:\n    [<ffffffff81a27201>] kvmalloc_node+0x61/0xf0\n    [<ffffffff8706f062>] alloc_netdev_mqs+0x912/0xe80\n    [<ffffffff84e64192>] mkiss_open+0xb2/0x6f0 [1]\n    [<ffffffff842355db>] tty_ldisc_open+0x9b/0x110\n    [<ffffffff84236488>] tty_set_ldisc+0x2e8/0x670\n    [<ffffffff8421f7f3>] tty_ioctl+0xda3/0x1440\n    [<ffffffff81c9f273>] __x64_sys_ioctl+0x193/0x200\n    [<ffffffff8911263a>] do_syscall_64+0x3a/0xb0\n    [<ffffffff89200068>] entry_SYSCALL_64_after_hwframe+0x44/0xae",
+  "datePublished": "May 21, 2024, 2:19:38 PM",
+  "dateUpdated": "May 11, 2026, 1:50:36 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/c634ba0b4159838ff45a60d3a0ace3b4118077a5",
+    "https://git.kernel.org/stable/c/3942d0f9ace1a95a74930b5b4fc0e5005c62b37b",
+    "https://git.kernel.org/stable/c/765a8a04f828db7222b36a42b1031f576bfe95c3",
+    "https://git.kernel.org/stable/c/c16c4716a1b5ba4f83c7e00da457cba06761f119",
+    "https://git.kernel.org/stable/c/a49cbb762ef20655f5c91abdc13658b0af5e159d",
+    "https://git.kernel.org/stable/c/290b0b6432e2599021db0b8d6046f756d931c29f",
+    "https://git.kernel.org/stable/c/f4de2b43d13b7cf3ced9310e371b90c836dbd7cd",
+    "https://git.kernel.org/stable/c/7edcc682301492380fbdd604b4516af5ae667a13"
+  ],
+  "aliases": [
+    "GHSA-7r2w-9mrv-hfqg",
+    "CVE-2021-47237"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "0b7286ca-2943-3adb-bfe4-71fcf783c8c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "1b434d94-dcbc-359f-9db8-63ee97a534c7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "815f62bf742718458ba822a7e1f51f285eb997f2 <290b0b6432e2599021db0b8d6046f756d931c29f"
+    },
+    {
+      "id": "2008c5be-a665-33ca-9514-6d74ec78bd2a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "815f62bf742718458ba822a7e1f51f285eb997f2 <765a8a04f828db7222b36a42b1031f576bfe95c3"
+    },
+    {
+      "id": "34bf2083-3084-3003-b38b-19a637ff3fb5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.9.274"
+    },
+    {
+      "id": "3e8717a0-d122-34a0-a6fc-0f1c5651c42f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "815f62bf742718458ba822a7e1f51f285eb997f2 <a49cbb762ef20655f5c91abdc13658b0af5e159d"
+    },
+    {
+      "id": "4c50de95-2643-3b9f-b5c7-3912edcc85e6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "815f62bf742718458ba822a7e1f51f285eb997f2 <f4de2b43d13b7cf3ced9310e371b90c836dbd7cd"
+    },
+    {
+      "id": "6c312ce9-6a58-340a-9d60-cdf7b34977a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.4.274"
+    },
+    {
+      "id": "7818e1e5-32c6-37f9-a61d-c5c95c5d19b5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "815f62bf742718458ba822a7e1f51f285eb997f2 <c16c4716a1b5ba4f83c7e00da457cba06761f119"
+    },
+    {
+      "id": "80c6b1c5-c16f-361f-aec7-f9d82df4acc8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.238"
+    },
+    {
+      "id": "86c290f3-2e9c-3ec2-b3ca-40fbcdf6427b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.196"
+    },
+    {
+      "id": "8ce9ae23-4de2-3a6e-8ba9-3a5573bc98b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "815f62bf742718458ba822a7e1f51f285eb997f2 <c634ba0b4159838ff45a60d3a0ace3b4118077a5"
+    },
+    {
+      "id": "a73f249f-c259-3735-8a8e-f2a5f9998aa4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.14"
+    },
+    {
+      "id": "af55a58a-7403-3171-945d-2c9f2fa3ff88",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "815f62bf742718458ba822a7e1f51f285eb997f2 <7edcc682301492380fbdd604b4516af5ae667a13"
+    },
+    {
+      "id": "c29eb447-e2e2-3a6e-81fe-7b9c5152643d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.128"
+    },
+    {
+      "id": "c48618c2-eb69-3b26-be4c-a8488a5e65df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.13"
+    },
+    {
+      "id": "d95f0db8-a128-35d7-8591-8b96cfe8ffd4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "815f62bf742718458ba822a7e1f51f285eb997f2 <3942d0f9ace1a95a74930b5b4fc0e5005c62b37b"
+    },
+    {
+      "id": "dfe64896-ef6d-3ba8-8fb6-abe442e92c92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.46"
+    },
+    {
+      "id": "e99800b7-aedd-3440-bbe5-a9b559969c53",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "4c3a5850-73c2-3c39-9ce1-eec11c1fc1c9",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

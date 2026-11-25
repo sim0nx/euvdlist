@@ -3,7 +3,7 @@
   "enisaUuid": "bf2aabc4-796f-34dd-8195-54cffeab5be7",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/smc: free pending qentry in smc_llc_flow_stop() before memset\n\nsmc_llc_flow_stop() resets a flow struct with a blind memset:\n\n\tspin_lock_bh(&lgr->llc_flow_lock);\n\tmemset(flow, 0, sizeof(*flow));\n\tflow->type = SMC_LLC_FLOW_NONE;\n\tspin_unlock_bh(&lgr->llc_flow_lock);\n\nIf flow->qentry is non-NULL at this point the pointer is overwritten without the\nallocation being freed, leaking one kmalloc object.\n\nA late-arriving duplicate CONFIRM_LINK or ADD_LINK_CONT message can set\nflow->qentry after the legitimate message has been consumed by the waiter via\nsmc_llc_flow_qentry_clr() (which NULLs the pointer but leaves flow->type\nnon-zero) but before the flow completes and smc_llc_flow_stop() runs.  In that\nwindow the duplicate is stashed into flow->qentry, and then lost when\nsmc_llc_flow_stop() zeros the struct.\n\nCall smc_llc_flow_qentry_del() inside the lock before the memset.\nsmc_llc_flow_qentry_del() already checks flow->qentry before freeing, so the\nnormal case where no entry is pending is a no-op.",
   "datePublished": "Sep 17, 2026, 4:06:16 PM",
-  "dateUpdated": "Sep 17, 2026, 4:06:16 PM",
+  "dateUpdated": "Oct 19, 2026, 8:58:05 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/8e3deb150a5237b672c4579e69a6deb02027dbed",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/5ee0ceddc7785c6dcf4a8107fef01f0414a354f4"
   ],
   "aliases": [
+    "GHSA-mw8r-cvfc-f297",
     "CVE-2026-90107"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "24e4d30a-ca63-3e69-8d46-3a7ebc3723c1",
@@ -122,14 +123,14 @@
       "product_version": "patch: 7.2.6"
     },
     {
-      "id": "93e6a890-ce9e-3e9f-afd3-c2895937773f",
+      "id": "b0910f7c-bb5d-300e-9e61-ee11a2f1df2e",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "b40cd678-7002-378b-ba7c-3867215ace54",

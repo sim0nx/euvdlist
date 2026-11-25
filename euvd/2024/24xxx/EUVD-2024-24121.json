@@ -1,0 +1,235 @@
+{
+  "id": "EUVD-2024-24121",
+  "enisaUuid": "2d48d743-02e3-3616-9936-f4482051246e",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/bnx2x: Prevent access to a freed page in page_pool\n\nFix race condition leading to system crash during EEH error handling\n\nDuring EEH error recovery, the bnx2x driver's transmit timeout logic\ncould cause a race condition when handling reset tasks. The\nbnx2x_tx_timeout() schedules reset tasks via bnx2x_sp_rtnl_task(),\nwhich ultimately leads to bnx2x_nic_unload(). In bnx2x_nic_unload()\nSGEs are freed using bnx2x_free_rx_sge_range(). However, this could\noverlap with the EEH driver's attempt to reset the device using\nbnx2x_io_slot_reset(), which also tries to free SGEs. This race\ncondition can result in system crashes due to accessing freed memory\nlocations in bnx2x_free_rx_sge()\n\n799  static inline void bnx2x_free_rx_sge(struct bnx2x *bp,\n800\t\t\t\tstruct bnx2x_fastpath *fp, u16 index)\n801  {\n802\tstruct sw_rx_page *sw_buf = &fp->rx_page_ring[index];\n803     struct page *page = sw_buf->page;\n....\nwhere sw_buf was set to NULL after the call to dma_unmap_page()\nby the preceding thread.\n\n    EEH: Beginning: 'slot_reset'\n    PCI 0011:01:00.0#10000: EEH: Invoking bnx2x->slot_reset()\n    bnx2x: [bnx2x_io_slot_reset:14228(eth1)]IO slot reset initializing...\n    bnx2x 0011:01:00.0: enabling device (0140 -> 0142)\n    bnx2x: [bnx2x_io_slot_reset:14244(eth1)]IO slot reset --> driver unload\n    Kernel attempted to read user page (0) - exploit attempt? (uid: 0)\n    BUG: Kernel NULL pointer dereference on read at 0x00000000\n    Faulting instruction address: 0xc0080000025065fc\n    Oops: Kernel access of bad area, sig: 11 [#1]\n    .....\n    Call Trace:\n    [c000000003c67a20] [c00800000250658c] bnx2x_io_slot_reset+0x204/0x610 [bnx2x] (unreliable)\n    [c000000003c67af0] [c0000000000518a8] eeh_report_reset+0xb8/0xf0\n    [c000000003c67b60] [c000000000052130] eeh_pe_report+0x180/0x550\n    [c000000003c67c70] [c00000000005318c] eeh_handle_normal_event+0x84c/0xa60\n    [c000000003c67d50] [c000000000053a84] eeh_event_handler+0xf4/0x170\n    [c000000003c67da0] [c000000000194c58] kthread+0x1c8/0x1d0\n    [c000000003c67e10] [c00000000000cf64] ret_from_kernel_thread+0x5c/0x64\n\nTo solve this issue, we need to verify page pool allocations before\nfreeing.",
+  "datePublished": "Apr 17, 2024, 10:27:23 AM",
+  "dateUpdated": "Oct 15, 2026, 12:38:51 AM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/7bcc090c81116c66936a7415f2c6b1483a4bcfd9",
+    "https://git.kernel.org/stable/c/4f37d3a7e004bbf560c21441ca9c022168017ec4",
+    "https://git.kernel.org/stable/c/8eebff95ce9558be66a36aa7cfb43223f3ab4699",
+    "https://git.kernel.org/stable/c/8ffcd3ccdbda0c918c4a0f922ef1c17010f1b598",
+    "https://git.kernel.org/stable/c/cf7d8cba639ae792a42c2a137b495eac262ac36c",
+    "https://git.kernel.org/stable/c/3a9f78b297e08ca8e88ae3ecff1f6fe2766dc5eb",
+    "https://git.kernel.org/stable/c/c51f8b6930db3f259b8820b589f2459d2df3fc68",
+    "https://git.kernel.org/stable/c/44f9f1abb0ecc43023225ab9539167facbabf0ec",
+    "https://git.kernel.org/stable/c/d27e2da94a42655861ca4baea30c8cd65546f25d"
+  ],
+  "aliases": [
+    "GHSA-3959-j6xj-m4c3",
+    "CVE-2024-26859"
+  ],
+  "assigner": "Linux",
+  "epss": 0.18,
+  "enisaIdProduct": [
+    {
+      "id": "004ea570-0a10-3494-86db-fba762e234d6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4cace675d687ebd2d813e90af80ff87ee85202f9 <8ffcd3ccdbda0c918c4a0f922ef1c17010f1b598"
+    },
+    {
+      "id": "01cc87ce-1e64-3632-ae24-e4f6dc8fc715",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4cace675d687ebd2d813e90af80ff87ee85202f9 <3a9f78b297e08ca8e88ae3ecff1f6fe2766dc5eb"
+    },
+    {
+      "id": "4ee1f11b-f448-30ad-80de-2e60c6109323",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.7.11"
+    },
+    {
+      "id": "538ce50a-aceb-3ad0-b878-be0830c7c253",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4cace675d687ebd2d813e90af80ff87ee85202f9 <44f9f1abb0ecc43023225ab9539167facbabf0ec"
+    },
+    {
+      "id": "57d07f71-ab25-34e5-8229-aef23463b652",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4cace675d687ebd2d813e90af80ff87ee85202f9 <cf7d8cba639ae792a42c2a137b495eac262ac36c"
+    },
+    {
+      "id": "747c3254-f9ff-3fb5-ac09-fde9084f75d8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "758ae41e-034c-3b3e-81c2-e375051fcb6c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.83"
+    },
+    {
+      "id": "813fc348-5ce4-32fb-9682-0edf34d3a641",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4cace675d687ebd2d813e90af80ff87ee85202f9 <8eebff95ce9558be66a36aa7cfb43223f3ab4699"
+    },
+    {
+      "id": "897d46ab-6456-34e2-b435-9e9760203eed",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4cace675d687ebd2d813e90af80ff87ee85202f9 <c51f8b6930db3f259b8820b589f2459d2df3fc68"
+    },
+    {
+      "id": "8bceca62-8244-353e-8f7a-f93ce7c5d7dc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.214"
+    },
+    {
+      "id": "913e88a0-4197-3217-a632-9ede9e69eba9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.8.2"
+    },
+    {
+      "id": "96a14598-6461-31d0-ace4-a2865f77dcad",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4cace675d687ebd2d813e90af80ff87ee85202f9 <7bcc090c81116c66936a7415f2c6b1483a4bcfd9"
+    },
+    {
+      "id": "974011fa-c9c1-30d6-8ddb-4120fd3a3039",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.23"
+    },
+    {
+      "id": "994aa0c8-716c-3a42-941a-8648eabe48a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.311"
+    },
+    {
+      "id": "a2484b64-461a-322f-9eab-e37dde77d429",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.273"
+    },
+    {
+      "id": "c3b53374-d104-34fa-83ce-fbecc34cb2af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4cace675d687ebd2d813e90af80ff87ee85202f9 <4f37d3a7e004bbf560c21441ca9c022168017ec4"
+    },
+    {
+      "id": "d639ec93-512e-3149-8b88-a01411d5be61",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4cace675d687ebd2d813e90af80ff87ee85202f9 <d27e2da94a42655861ca4baea30c8cd65546f25d"
+    },
+    {
+      "id": "dd9c05dd-78e7-3f65-ab1e-b8c95125edd7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.9"
+    },
+    {
+      "id": "f1331f34-9260-31c7-b0f4-b8f13e79e787",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4.2"
+    },
+    {
+      "id": "f9a9de4f-b0f1-381b-bc7d-f41d93c41bda",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.153"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c987fa62-2fae-3ee4-95bb-640dab090e3b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -3,68 +3,133 @@
   "enisaUuid": "f05cd186-ab16-365c-8709-87a712f71d53",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nxfrm: also call xfrm_state_delete_tunnel at destroy time for states that were never added\n\nIn commit b441cf3f8c4b (\"xfrm: delete x->tunnel as we delete x\"), I\nmissed the case where state creation fails between full\ninitialization (->init_state has been called) and being inserted on\nthe lists.\n\nIn this situation, ->init_state has been called, so for IPcomp\ntunnels, the fallback tunnel has been created and added onto the\nlists, but the user state never gets added, because we fail before\nthat. The user state doesn't go through __xfrm_state_delete, so we\ndon't call xfrm_state_delete_tunnel for those states, and we end up\nleaking the FB tunnel.\n\nThere are several codepaths affected by this: the add/update paths, in\nboth net/key and xfrm, and the migrate code (xfrm_migrate,\nxfrm_state_migrate). A \"proper\" rollback of the init_state work would\nprobably be doable in the add/update code, but for migrate it gets\nmore complicated as multiple states may be involved.\n\nAt some point, the new (not-inserted) state will be destroyed, so call\nxfrm_state_delete_tunnel during xfrm_state_gc_destroy. Most states\nwill have their fallback tunnel cleaned up during __xfrm_state_delete,\nwhich solves the issue that b441cf3f8c4b (and other patches before it)\naimed at. All states (including FB tunnels) will be removed from the\nlists once xfrm_state_fini has called flush_work(&xfrm_state_gc_work).",
   "datePublished": "Dec 4, 2025, 4:08:17 PM",
-  "dateUpdated": "Dec 12, 2025, 5:48:29 PM",
+  "dateUpdated": "May 11, 2026, 9:45:48 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/57b72d74d4651dc19d046308a8304eb9abfe66ac",
+    "https://git.kernel.org/stable/c/1dad653643f28ccc89be93f9440b8804cded85b2",
+    "https://git.kernel.org/stable/c/64441724387b4ac92f67ef51caaaeffe99c950d1",
+    "https://git.kernel.org/stable/c/763e5c351206c1e4d910db4a1159053f6263689c",
+    "https://git.kernel.org/stable/c/f7d879c19d306512c2e260f37e8a3e5c85e37c50",
     "https://git.kernel.org/stable/c/d6fe5c740c573af10943b8353992e1325cdb2715",
-    "https://git.kernel.org/stable/c/10deb69864840ccf96b00ac2ab3a2055c0c04721",
-    "https://nvd.nist.gov/vuln/detail/CVE-2025-40256",
-    "https://git.kernel.org/stable/c/f7d879c19d306512c2e260f37e8a3e5c85e37c50"
+    "https://git.kernel.org/stable/c/10deb69864840ccf96b00ac2ab3a2055c0c04721"
   ],
   "aliases": [
+    "GHSA-wxqp-f8fg-rxmv",
     "CVE-2025-40256"
   ],
   "assigner": "Linux",
-  "epss": 0.02,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0516d330-f0f9-3a17-8cdd-058206ec23b4",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.17.10"
     },
     {
+      "id": "191c0da9-3e94-357e-960d-6475f985a062",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d0e0d1097118461463b76562c7ebaabaa5b90b13 <763e5c351206c1e4d910db4a1159053f6263689c"
+    },
+    {
       "id": "6ac79d7a-769a-3ba6-8164-aa6905b4a1f4",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "6.16"
     },
     {
+      "id": "7a440b5d-b431-3fd0-a06b-924be2c0d1c1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1b28a7fae0128fa140a7dccd995182ff6cd1c67b <57b72d74d4651dc19d046308a8304eb9abfe66ac"
+    },
+    {
       "id": "823e2b62-7ac3-37c6-82c6-1c3ae870d0bc",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "dc3636912d41770466543623cb76e7b88fdb42c7 <f7d879c19d306512c2e260f37e8a3e5c85e37c50"
     },
     {
+      "id": "88790e1d-4c60-3105-9341-4e8e237fa35b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4b2c17d0f9be8b58bb30468bc81a4b61c985b04e <1dad653643f28ccc89be93f9440b8804cded85b2"
+    },
+    {
       "id": "97c401bb-b0d6-3ae3-8f1a-4af035a5f2d6",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.18"
     },
     {
       "id": "9d8cc3fe-48d3-3dd4-97e6-8cf2ef7cc4eb",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 0"
     },
     {
       "id": "cad82e5d-dc9a-3e34-a783-574e336d1d06",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "b441cf3f8c4b8576639d20c8eb4aa32917602ecd <d6fe5c740c573af10943b8353992e1325cdb2715"
     },
     {
       "id": "f5c9a310-7195-3f0f-bd3d-a10d94d83313",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "b441cf3f8c4b8576639d20c8eb4aa32917602ecd <10deb69864840ccf96b00ac2ab3a2055c0c04721"
+    },
+    {
+      "id": "ff31198f-f4c2-3140-9519-de9ba4531c1a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0da961fa46da1b37ef868d9b603bd202136f8f8e <64441724387b4ac92f67ef51caaaeffe99c950d1"
     }
   ],
   "enisaIdVendor": [

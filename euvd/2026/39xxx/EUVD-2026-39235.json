@@ -3,7 +3,7 @@
   "enisaUuid": "4afbe281-6413-3997-9c04-222ca791a7a8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/amdkfd: fix NULL dereference in get_queue_ids()\n\nWhen usr_queue_id_array is NULL and num_queues is non-zero,\nget_queue_ids() returns NULL. The callers check only IS_ERR() on the\nreturn value; since IS_ERR(NULL) == false the check passes, and\nsuspend_queues() calls q_array_invalidate() which immediately\ndereferences NULL while iterating num_queues times.\n\nUserspace can trigger this via kfd_ioctl_set_debug_trap() by supplying\nnum_queues > 0 with a zero queue_array_ptr, causing a kernel panic.\n\nA NULL usr_queue_id_array with num_queues == 0 is a legitimate no-op\n(q_array_invalidate never executes, and resume_queues already guards\nall queue_ids dereferences behind a NULL check). Return ERR_PTR(-EINVAL)\nonly when num_queues is non-zero and the pointer is absent; both callers\nalready propagate IS_ERR() returns correctly to userspace.\n\n(cherry picked from commit f165a82cdf503884bb1797771c61b2fcc72113d4)",
   "datePublished": "Jun 25, 2026, 8:38:31 AM",
-  "dateUpdated": "Jun 25, 2026, 8:38:31 AM",
+  "dateUpdated": "Nov 6, 2026, 4:24:04 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/62bd09e23a23da70f9aae02748eba3e6bd93095d",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/2bd550b547deabef98bd3b017ff743b7c34d3a6d"
   ],
   "aliases": [
+    "GHSA-6wmm-rq3j-5c47",
     "CVE-2026-53144"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "1c07d02b-2626-3728-b454-594ba7b46d84",

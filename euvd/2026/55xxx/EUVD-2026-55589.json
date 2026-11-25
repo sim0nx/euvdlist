@@ -3,9 +3,12 @@
   "enisaUuid": "4a2e0023-bb4f-3fc4-a82b-df1ae170e91f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: brcmfmac: initialize SDIO data work before cleanup\n\nbrcmf_sdio_probe() stores the newly allocated bus in sdiodev->bus before\nallocating the ordered workqueue. If that allocation fails, the function\njumps to fail and calls brcmf_sdio_remove().\n\nbrcmf_sdio_remove() unconditionally cancels bus->datawork. Initialize the\nwork item before the first failure path that can reach brcmf_sdio_remove(),\nso the cleanup path always observes a valid work object.\n\nThis issue was found by our static analysis tool and then confirmed by\nmanual review of the probe error path and the remove-time work drain. The\nproblem pattern is an early setup failure that reaches a cleanup helper\nwhich cancels an embedded work item before its initializer has run.\n\nA QEMU PoC forced alloc_ordered_workqueue() to fail at the same point in\nbrcmf_sdio_probe(), before INIT_WORK(&bus->datawork) is reached. The\nresulting fail path calls brcmf_sdio_remove(), and DEBUG_OBJECTS reports\nthe invalid work drain with brcmf_sdio_probe() and brcmf_sdio_remove() in\nthe stack.",
   "datePublished": "Aug 10, 2026, 12:04:23 PM",
-  "dateUpdated": "Aug 10, 2026, 12:04:23 PM",
+  "dateUpdated": "Nov 6, 2026, 4:55:15 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/860887d22890417d43ef8298f0cc4865e29b54de",
+    "https://git.kernel.org/stable/c/9a4be91e5bb032b34cb3c962f6d4f82e7ef09364",
+    "https://git.kernel.org/stable/c/fb12c87ae855346321af72e57a93c146205f1090",
     "https://git.kernel.org/stable/c/f50a2b9e57a751e70ae9a272875d80d39eaccd6a",
     "https://git.kernel.org/stable/c/6bd21ec8549a5854dd64204a66289952917a924c",
     "https://git.kernel.org/stable/c/5c342437ea44bb829680ca9e4f683dd5b325b219",
@@ -13,11 +16,22 @@
     "https://git.kernel.org/stable/c/2a665946e0407a05a3f81bd56a08553c446498e0"
   ],
   "aliases": [
-    "CVE-2026-68403"
+    "CVE-2026-68403",
+    "GHSA-2jx9-wxwh-fv4q"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
+    {
+      "id": "02688825-3ea5-3b2c-9256-7681d0f0d01e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.265"
+    },
     {
       "id": "2d007a3f-a608-3593-805f-dc598552dd34",
       "product": {
@@ -29,6 +43,26 @@
       "product_version": "4.1"
     },
     {
+      "id": "30f7df2d-8584-3de6-8ee5-8c0edf24c4bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.216"
+    },
+    {
+      "id": "3698035f-cdde-385b-8d2f-2167d94063db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9982464379e81ece51ced03ebecbbcd34ea367a6 <9a4be91e5bb032b34cb3c962f6d4f82e7ef09364"
+    },
+    {
       "id": "56f27ccc-cb21-3010-b592-e1a23257409f",
       "product": {
         "name": "Linux",
@@ -37,6 +71,16 @@
         }
       },
       "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "5bec93b0-996b-35cb-9d28-063f575d3b48",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9982464379e81ece51ced03ebecbbcd34ea367a6 <fb12c87ae855346321af72e57a93c146205f1090"
     },
     {
       "id": "5d277080-bb32-3c8d-8605-971ec3a0e395",
@@ -67,16 +111,6 @@
         }
       },
       "product_version": "9982464379e81ece51ced03ebecbbcd34ea367a6 <c73c3fc1c7ca5a927639f0884624cb244ba791e4"
-    },
-    {
-      "id": "70a8947d-93fd-3b2b-ad3a-0a76d2e93835",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc4"
     },
     {
       "id": "79426430-1aa4-3416-b83c-5542494a4123",
@@ -127,6 +161,36 @@
         }
       },
       "product_version": "9982464379e81ece51ced03ebecbbcd34ea367a6 <2a665946e0407a05a3f81bd56a08553c446498e0"
+    },
+    {
+      "id": "bd2f0360-0bc3-3d4b-b83a-24d115de794c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
+      "id": "c42e39a5-afae-3a5d-a878-f03afcdc8ac8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "e8e72bda-f18f-37f0-bb6f-731a6e435b00",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "9982464379e81ece51ced03ebecbbcd34ea367a6 <860887d22890417d43ef8298f0cc4865e29b54de"
     },
     {
       "id": "f06aa112-9ac7-3fc4-b7a4-9dbf4517193c",

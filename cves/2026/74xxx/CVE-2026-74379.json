@@ -2,8 +2,8 @@
   "id": "EUVD-2026-59526",
   "enisaUuid": "a462bbc5-e12c-3d77-88c7-f22d65aed255",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndax/kmem: account for partial discontiguous resource upon removal\n\nWhen dev_dax_kmem_probe() partially succeeds (at least one range is\nmapped) but a subsequent range fails request_mem_region() or\nadd_memory_driver_managed(), the probe silently continues, ultimately\nreturning success, but with the corresponding range resource NULL'ed out.\n\ndev_dax_kmem_remove() iterates over all dax_device ranges regardless of if\nthe underlying resource exists.  When remove_memory() is called later, it\nreturns 0 because the memory was never added which causes\ndev_dax_kmem_remove() to incorrectly assume the (nonexistent) resource can\nbe removed and attempts cleanup on a NULL pointer.\n\nFix this by skipping these ranges altogether, noting that these cases are\nconsidered success, such that the cleanup is still reached when all\nactually-added ranges are successfully removed.",
-  "datePublished": "Aug 15, 2026, 6:32:31 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:31 AM",
+  "datePublished": "Aug 15, 2026, 5:58:57 AM",
+  "dateUpdated": "Nov 6, 2026, 5:05:44 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/ef4fc53898bd6c4d0119cc6d419ebef7f2560f31",
@@ -12,15 +12,14 @@
     "https://git.kernel.org/stable/c/799e54c510a03a65a57627018a817838d72f35bd",
     "https://git.kernel.org/stable/c/598ed7393a639c7547b28ff3e14db9f1ac37c132",
     "https://git.kernel.org/stable/c/30ea97affbcce236c57287c82dc6ef7a29c63b76",
-    "https://git.kernel.org/stable/c/8aa442cfce79e2d69e72fc8e0c0864ac2971149d",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-74379"
+    "https://git.kernel.org/stable/c/8aa442cfce79e2d69e72fc8e0c0864ac2971149d"
   ],
   "aliases": [
     "CVE-2026-74379",
     "GHSA-wpc6-x34r-qgj2"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "25e2c710-dce7-3ef1-856c-cafdb923911e",
@@ -113,6 +112,16 @@
       "product_version": "patch: 7.1.5"
     },
     {
+      "id": "7e7e75c4-1aed-3916-b34c-ce3b72c02a90",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
       "id": "9cafd91c-c740-388e-a521-76712a17fe45",
       "product": {
         "name": "Linux",
@@ -121,16 +130,6 @@
         }
       },
       "product_version": "patch: 6.18.40"
-    },
-    {
-      "id": "a4779098-3786-3015-a666-ba76d4550f93",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "a667a13e-2fcf-3c7f-968d-7ebb80253adf",

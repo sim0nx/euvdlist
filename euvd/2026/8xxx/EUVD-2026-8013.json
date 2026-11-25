@@ -1,0 +1,41 @@
+{
+  "id": "EUVD-2026-8013",
+  "enisaUuid": "b083bff9-b3cb-330f-89ff-9cc4cb56b0fe",
+  "description": "Use After Free vulnerability in Apache Arrow C++.\n\nThis issue affects Apache Arrow C++ from 15.0.0 through 23.0.0. It can be triggered when reading an Arrow IPC file (but not an IPC stream) with pre-buffering enabled, if the IPC file contains data with variadic buffers (such as Binary View and String View data). Depending on the number of variadic buffers in a record batch column and on the temporal sequence of multi-threaded IO, a write to a dangling pointer could occur. The value (a `std::shared_ptr<Buffer>` object)\u00a0that is written to the dangling pointer is not under direct control of the attacker.\n\nPre-buffering is disabled by default but can be enabled using a specific C++ API call (`RecordBatchFileReader::PreBufferMetadata`). The functionality is not exposed in language bindings (Python, Ruby, C GLib), so these bindings are not vulnerable.\n\nThe most likely consequence of this issue would be random crashes or memory corruption when reading specific kinds of IPC files. If the application allows ingesting IPC files from untrusted sources, this could plausibly be exploited for denial of service. Inducing more targeted kinds of misbehavior (such as confidential data extraction from the running process) depends on memory allocation and multi-threaded IO temporal patterns that are unlikely to be easily controlled by an attacker.\n\nAdvice for users of Arrow C++:\n\n1. check whether you enable pre-buffering on the IPC file reader (using\u00a0`RecordBatchFileReader::PreBufferMetadata`)\n\n2. if so, either disable pre-buffering (which may have adverse performance consequences), or switch to Arrow 23.0.1 which is not vulnerable",
+  "datePublished": "Feb 17, 2026, 1:18:25 PM",
+  "dateUpdated": "Feb 20, 2026, 9:56:43 AM",
+  "baseScore": 7.0,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:H",
+  "references": [
+    "https://github.com/apache/arrow/pull/48925",
+    "https://lists.apache.org/thread/mpm4ld1qony30tchfpjtk5b11tcyvmwh"
+  ],
+  "aliases": [
+    "GHSA-rgxp-2hwp-jwgg",
+    "CVE-2026-25087",
+    "PYSEC-2026-113"
+  ],
+  "assigner": "apache",
+  "epss": 0.85,
+  "enisaIdProduct": [
+    {
+      "id": "e6684774-e92d-3fc1-bf83-52edae6b3ffc",
+      "product": {
+        "name": "Apache Arrow",
+        "vendor": {
+          "name": "Apache Software Foundation"
+        }
+      },
+      "product_version": "15.0.0 \u226423.0.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "c5fb6406-2b00-3dbd-8168-ac9513cd32ef",
+      "vendor": {
+        "name": "Apache Software Foundation"
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@
   "enisaUuid": "14927951-329e-37c3-8155-d0c7476f4294",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\narm64: kprobes: Allow reentering kprobes while single-stepping\n\nA kprobe can be hit while another kprobe is in KPROBE_HIT_SS state. This\ncan happen when tracing or perf code runs from the debug exception path\nwhile the first kprobe is preparing or executing its out-of-line\nsingle-step instruction.\n\nCurrently arm64 treats a kprobe hit in KPROBE_HIT_SS as unrecoverable,\nthe same as a hit in KPROBE_REENTER. This is too strict. A hit in\nKPROBE_HIT_SS is still a one-level reentry and can be handled by saving\nthe current kprobe state and setting up single-step for the new probe,\njust like reentry from KPROBE_HIT_ACTIVE or KPROBE_HIT_SSDONE.\n\nThe truly unrecoverable case is hitting another kprobe while already in\nKPROBE_REENTER, because the reentry save area has already been consumed.\n\nMove KPROBE_HIT_SS to the recoverable reentry cases and leave\nKPROBE_REENTER as the unrecoverable nested reentry case.\n\nThis change also requires saving saved_irqflag in struct prev_kprobe.\nWhen a nested kprobe calls kprobes_save_local_irqflag(), it overwrites\nkcb->saved_irqflag with the currently masked DAIF value, losing the\nouter kprobe's original DAIF state. Without this fix, when the outer\nkprobe's single-step finishes, kprobes_restore_local_irqflag() applies\nthe wrong DAIF mask and leaves interrupts permanently disabled.\n\nExtend struct prev_kprobe with a saved_irqflag field and save/restore it\nalongside kp and status. This ensures the outer kprobe's original\ninterrupt state is preserved across reentry.\n\nThis mirrors the x86 fix in commit 6a5022a56ac3\n(\"kprobes/x86: Allow to handle reentered kprobe on single-stepping\").",
   "datePublished": "Oct 23, 2026, 11:37:46 AM",
-  "dateUpdated": "Oct 23, 2026, 11:37:46 AM",
+  "dateUpdated": "Oct 26, 2026, 6:56:13 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/bb0fe9121aa0824211aafa33c7d0151fd25ddb75",
@@ -15,30 +15,31 @@
     "https://git.kernel.org/stable/c/23f851ac0078a908bf3422d6467ebc1db5828c46"
   ],
   "aliases": [
+    "GHSA-g4px-h95h-7mgm",
     "CVE-2026-98888"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
-      "id": "087e6c6f-d6a3-39c7-aaca-5c8f08cac6a7",
+      "id": "1bd5b4c1-0ed9-32e7-afb4-fce03c5043b5",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.1.189"
+      "product_version": "4.8"
     },
     {
-      "id": "1594df7b-efbd-3c2c-be0e-ba780e5fabb8",
+      "id": "1e25d0c5-c9c7-3fb8-a22e-2fd1473b1d84",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.6.158"
+      "product_version": "2dd0e8d2d2a157dbc83295a78336c2217110f2f8 <a21bf9cb893126e8d9730995708d0be5eb167652"
     },
     {
       "id": "2a27ce6a-d4b5-3a01-9471-5986fb7e4d84",
@@ -61,74 +62,34 @@
       "product_version": "patch: 7.2"
     },
     {
-      "id": "38b626ec-9abb-3ce1-b0e7-000e95019bd6",
+      "id": "38d88558-3f67-3a0d-81b9-c37cc82c3f6a",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c8e84e292ed4cfc199824146da71bb4397b02a1f"
+      "product_version": "2dd0e8d2d2a157dbc83295a78336c2217110f2f8 <bb0fe9121aa0824211aafa33c7d0151fd25ddb75"
     },
     {
-      "id": "41cfa5b2-12e2-3c85-a075-245c2659a250",
+      "id": "4882a09e-865f-3e0b-8b88-e9df4cb6b4b5",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <bb0fe9121aa0824211aafa33c7d0151fd25ddb75"
+      "product_version": "2dd0e8d2d2a157dbc83295a78336c2217110f2f8 <68774caca799e9695db56d426c69acebd041c2ed"
     },
     {
-      "id": "4c792d1d-be35-3dee-aecc-be9f18e9ff19",
+      "id": "58907ddc-fc92-381e-be17-20c6e0edaa84",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.18.53"
-    },
-    {
-      "id": "5496a2bd-46f4-3aa5-9292-ff5ab381e95a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <23f851ac0078a908bf3422d6467ebc1db5828c46"
-    },
-    {
-      "id": "5721ee65-e1a5-3d1a-a83d-a7c64f622643",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <68774caca799e9695db56d426c69acebd041c2ed"
-    },
-    {
-      "id": "62da7ddf-8113-39b1-99b5-8795bc3411d2",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f96a0606de6bcc8d937b80e6470fd7a174c17e26"
-    },
-    {
-      "id": "6d4bf7b2-6715-3fbb-b86c-6082e6d8ed6c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <a21bf9cb893126e8d9730995708d0be5eb167652"
+      "product_version": "2dd0e8d2d2a157dbc83295a78336c2217110f2f8 <1f342b3e44c3035a837b53b217d816f7511c0d0a"
     },
     {
       "id": "94f02133-1d09-3c0e-bd04-f681dafba3a8",
@@ -141,16 +102,6 @@
       "product_version": "patch: 5.15.222"
     },
     {
-      "id": "9e0d79bb-4d28-311d-a4c9-3c78970a14ac",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <1f342b3e44c3035a837b53b217d816f7511c0d0a"
-    },
-    {
       "id": "9e3a2e22-008a-3e56-bcca-01c9ce6cc646",
       "product": {
         "name": "Linux",
@@ -161,34 +112,44 @@
       "product_version": "patch: 6.12.111"
     },
     {
-      "id": "bd089169-40c6-306b-b9ba-fadadd4b52f7",
+      "id": "ab81c63b-4573-3360-a31f-9c93ff10a9b3",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.12.111"
+      "product_version": "2dd0e8d2d2a157dbc83295a78336c2217110f2f8 <c8e84e292ed4cfc199824146da71bb4397b02a1f"
     },
     {
-      "id": "d1e16d9f-ebfe-37eb-811d-d8ad485cbcc0",
+      "id": "d75184d7-44bd-323c-b0c1-127765ab20f7",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <5.10.271"
+      "product_version": "patch: 0"
     },
     {
-      "id": "dc412be5-1e45-3475-a39d-17d61254830a",
+      "id": "d947afd4-94c3-36f9-8dd5-eb28adf83c2f",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <5.15.222"
+      "product_version": "2dd0e8d2d2a157dbc83295a78336c2217110f2f8 <f96a0606de6bcc8d937b80e6470fd7a174c17e26"
+    },
+    {
+      "id": "de575c5d-139f-3572-a3e3-58f0813a4e33",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2dd0e8d2d2a157dbc83295a78336c2217110f2f8 <23f851ac0078a908bf3422d6467ebc1db5828c46"
     },
     {
       "id": "f66a2551-1789-3c2a-9669-3d310fc42b95",

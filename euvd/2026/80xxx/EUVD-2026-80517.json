@@ -3,7 +3,7 @@
   "enisaUuid": "ea01d67e-bb9f-363a-964d-e8b05ea0d9e4",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nKVM: arm64: Handle VNCR TLB invalidation race with vcpu_put() VNCR unmapping\n\nWhile VNCR TLB invalidation always occurs under the MMU lock,\nvcpu_put() doesn't, while it unmaps the VNCR page.\n\nThe problem is that the invalidation evaluates vncr_tlb::cpu to\ndecide whether an unmapping needs to take place (cpu != -1) before\nperforming it. On the other hand, this_cpu_reset_vncr_fixmap()\nunconditionally unmaps if L1_VNCR_MAPPED is set.\n\nThese two obviously can race, with a TOCTOU pattern on the TLBI\npath, and a BUG_ON() on the vcpu_put() path. And the two can end-up\ncalling vncr_fixmap(-1), with extra lethal effects.\n\nMove the reset of vncr_tlb::cpu to -1 to a common function, and make\nthis update atomic so that only a single thread can reset the field\nand perform the corresponding unmap. The vcpu_put() still need to\nunconditionally unmap the current VNCR to close another ugly race.\n\nFinally, the assignment of vncr_tlb::cpu is moved to be kept in sync\nwith the actual mapping, similar to L1_VNCR_MAPPED being set.",
   "datePublished": "Sep 16, 2026, 10:32:12 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:12 AM",
+  "dateUpdated": "Oct 19, 2026, 8:54:51 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/5cbd8761d001c11ada73b1753d772c4745a70e72",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/38640bc32be3fcf9526d477155bc19d3f146231f"
   ],
   "aliases": [
+    "GHSA-crq7-3pj4-2vvg",
     "CVE-2026-89917"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "2a2bec49-d1c1-3be3-aa1e-8fbb7129eb21",
@@ -47,16 +48,6 @@
       "product_version": "6.16"
     },
     {
-      "id": "73e5d12b-9452-3994-8b9b-149989b8efed",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
-    },
-    {
       "id": "7606046a-79c9-34ac-9f0c-f313ccf8dabd",
       "product": {
         "name": "Linux",
@@ -75,6 +66,16 @@
         }
       },
       "product_version": "patch: 7.2.5"
+    },
+    {
+      "id": "a1be58b0-979e-37c0-85f2-79a56d4ea2e1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "aa2b0e27-f1a3-389e-b64a-d0b0ed61ac32",

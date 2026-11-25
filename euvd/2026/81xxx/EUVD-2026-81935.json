@@ -3,7 +3,7 @@
   "enisaUuid": "ead5ac4b-eeec-346c-9182-80cdb4896dad",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet/sched: fq_pie: clamp default quantum to avoid signed overflow\n\nfq_pie_init() sets q->quantum = psched_mtu(qdisc_dev(sch)) without\nclamping. A device with a huge MTU (e.g. dummy with max_mtu == 0\naccepting MTU 2147483634) makes psched_mtu() return 0x80000000, which\noverflows the signed flow->deficit to INT_MIN in fq_pie_qdisc_dequeue(),\ncausing an infinite loop and soft lockup. Emulate fq_pie_policy which\nis already bounded to [1, 1 << 20]; clamp the default to [256, 1 << 20].\n256 matches fq_codel's floor and is a sane minimum for a DRR quantum.\n\nConditions to recreate the bug: a device whose MTU (plus\nhard_header_len) wraps psched_mtu() into the sign bit (e.g. a dummy\ndevice with max_mtu == 0 accepting MTU 2147483634). Requires\nCAP_NET_ADMIN in a user namespace.",
   "datePublished": "Sep 17, 2026, 4:05:54 PM",
-  "dateUpdated": "Sep 17, 2026, 4:05:54 PM",
+  "dateUpdated": "Oct 19, 2026, 8:57:31 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1f43e4dbc93b7d02761a024d5f895df823c07b72",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/c86cd7ed0b0e44779a3d1683f03e4353baf4bdc9"
   ],
   "aliases": [
-    "CVE-2026-90074"
+    "CVE-2026-90074",
+    "GHSA-hmm4-p96m-54jg"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "0731977f-e16b-3a7a-84ec-5316588e81f1",
@@ -70,6 +71,16 @@
         }
       },
       "product_version": "ec97ecf1ebe485a17cd8395a5f35e6b80b57665a <f7942b2693bc24c7d609a03d06f97bee3b0bd96a"
+    },
+    {
+      "id": "2478d35d-7140-30b7-ad33-c0619190e353",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "5387c2d1-6601-3ca2-ae0b-6a7c9ea933b6",
@@ -160,16 +171,6 @@
         }
       },
       "product_version": "ec97ecf1ebe485a17cd8395a5f35e6b80b57665a <6f1be05faecef4c0f9a008200209f66ef2e133f7"
-    },
-    {
-      "id": "e86709c5-2df8-3042-b8ff-f4e1bbad6115",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "eb3a4f79-a883-36eb-9f55-ff079fff0f07",

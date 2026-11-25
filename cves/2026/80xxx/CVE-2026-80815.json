@@ -3,7 +3,7 @@
   "enisaUuid": "90ef8490-50fe-3ca8-b2b5-af4c308c9f08",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nALSA: scarlett2: Use a private URB for the notification endpoint\n\nscarlett2_init_notify() used mixer->urb, which\nsnd_usb_mixer_status_create() allocates for the UAC2 status interrupt\nendpoint and mixer.c manages. On a device with that endpoint, the\n\"already in use\" check fires on the status URB and returns 0 for\nsuccess without doing anything. No notification URB is submitted, and\ncmd_done is left zeroed because it is initialised past that check and\nnowhere else. scarlett2_usb_init() then issues SCARLETT2_USB_INIT_1\nand wait_for_completion_timeout() would crash adding to the zeroed\nwait.head.\n\nUse a separate URB in scarlett2_data, as done for FCP, and initialise\ncmd_done in scarlett2_init_private(). mixer.c was also freeing the URB\nin snd_usb_mixer_free() and resubmitting it in\nsnd_usb_mixer_activate(), so scarlett2 must now do both: add\nscarlett2_cleanup_urb(), called from private_free and private_suspend,\nand a private_resume callback to re-establish the URB after resume.\nscarlett2_init_notify() is reached from there, and the URB kill path\nin scarlett2_notify() completes cmd_done, leaving a stale count that\nwould satisfy the next command's wait before the device ACKs. Use\nreinit_completion() to clear it.\n\nAlso free the URB if the transfer buffer allocation fails, and both if\nusb_submit_urb() fails. Move scarlett2_init_notify() up next to\nscarlett2_cleanup_urb() so scarlett2_init_private() can reference it\nwithout a forward declaration.",
   "datePublished": "Sep 4, 2026, 3:13:35 PM",
-  "dateUpdated": "Sep 4, 2026, 3:13:35 PM",
+  "dateUpdated": "Oct 19, 2026, 8:44:09 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/013448eb7b0d0b91d6168685dab10e9b41baa825",
@@ -13,10 +13,11 @@
     "https://git.kernel.org/stable/c/cd17d6ff7b7d2b1dd9bcc80ae7b4a83773f918c6"
   ],
   "aliases": [
+    "GHSA-m2f4-m4qw-2jqv",
     "CVE-2026-80815"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "07d18f59-c37d-30ba-a8ba-0e9d0c332100",
@@ -27,6 +28,16 @@
         }
       },
       "product_version": "6.10"
+    },
+    {
+      "id": "1c927be5-d327-369d-a968-a8a51eee74db",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "1d135140-1f03-340f-948d-ab80ee6fa91a",
@@ -97,16 +108,6 @@
         }
       },
       "product_version": "patch: 6.12.106"
-    },
-    {
-      "id": "db96e170-9339-3140-a138-d35c4835f994",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "defa14fb-e144-38d0-a0ae-117484fbc205",

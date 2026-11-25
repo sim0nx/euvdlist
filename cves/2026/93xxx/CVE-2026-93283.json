@@ -3,7 +3,7 @@
   "enisaUuid": "6ed5d131-cdf2-390e-948e-f272d0bc4d4e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ni3c: master: Fix device_register() error path\n\nWhen device_register() fails in i3c_master_register_new_i3c_devs(),\nput_device() is called to drop the reference taken by\ndevice_register().  That drops the last reference, so the device's\nrelease callback i3c_device_release() runs and frees the i3c_device.\n\nTwo problems follow from that:\n\ni3c_device_release() does WARN_ON(i3cdev->desc), so it warns because\ndesc->dev->desc still points back at the descriptor.  Clear it before\ncalling put_device().\n\nAfter put_device() frees the i3c_device, desc->dev is left pointing at\nfreed memory, so clear desc->dev as well.  That prevents, for example,\ni3c_master_unregister_i3c_devs() seeing desc->dev as non-NULL and\ndereferencing it.",
   "datePublished": "Sep 24, 2026, 3:52:26 PM",
-  "dateUpdated": "Sep 24, 2026, 3:52:26 PM",
+  "dateUpdated": "Oct 19, 2026, 9:08:37 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/5bf498623f8397d45f85f14cd631c5e5a565c2fb",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/74be657d98a8d684c0475f3cbd450ef2a30ffc73"
   ],
   "aliases": [
-    "CVE-2026-93283"
+    "CVE-2026-93283",
+    "GHSA-6m8v-mm29-jx9w"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.2,
   "enisaIdProduct": [
     {
       "id": "09149c5c-6484-38a8-8c95-88cd61ac9110",
@@ -80,16 +81,6 @@
         }
       },
       "product_version": "patch: 5.15.221"
-    },
-    {
-      "id": "36c28c92-950d-3406-9804-409e2eabe695",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "3cd77346-fae0-31f2-a135-0d6103ba2219",
@@ -230,6 +221,16 @@
         }
       },
       "product_version": "6.6.2 <6.6.157"
+    },
+    {
+      "id": "bc54ee2f-1078-3f72-a03a-3ba7c0566ba2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "bdd01fbc-bac1-3af8-9ea5-becf3220b0d0",

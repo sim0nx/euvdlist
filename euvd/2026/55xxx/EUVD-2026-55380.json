@@ -3,9 +3,12 @@
   "enisaUuid": "57bcd32c-2b98-3fa5-826b-ef3e1eac39d9",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ndrm/dp/mst: fix OOB reads in remote DPCD/I2C sideband reply parsers\n\ndrm_dp_sideband_parse_remote_dpcd_read() reads num_bytes from the raw\nmessage and then unconditionally does:\n\n  memcpy(bytes, &raw->msg[idx], num_bytes);\n\nwithout checking that idx + num_bytes <= raw->curlen. raw->msg[] is\n256 bytes; if a malicious or misbehaving MST hub sets num_bytes larger\nthan the remaining payload, the memcpy reads past the received data\ninto whatever follows in raw->msg[].\n\ndrm_dp_sideband_parse_remote_i2c_read_ack() has the same flaw (noted\nwith a /* TODO check */ comment since the code was introduced).\n\nFix both functions by using a single combined check\n(idx + num_bytes > curlen) before each memcpy. Since num_bytes is u8,\nit is always >= 0, so this strictly subsumes the simpler idx > curlen\nform and no separate step is needed.\n\n[added missing fixes tag]",
   "datePublished": "Aug 10, 2026, 12:02:09 PM",
-  "dateUpdated": "Aug 10, 2026, 12:02:09 PM",
+  "dateUpdated": "Nov 6, 2026, 4:55:12 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/185de1d74e658e2edb723ba76fa61903f77d8a68",
+    "https://git.kernel.org/stable/c/d7b9b1e33b4ed8c48d4db6e6e21c257ebbbb2586",
+    "https://git.kernel.org/stable/c/c2fbda0fe0163c55ba3820ee6cea0c6b43622eda",
     "https://git.kernel.org/stable/c/22d9f7fc1aaabaf73d5f30e8b0c9aa814ecd6ed2",
     "https://git.kernel.org/stable/c/04d953f50d61e542e94a5977822cc53735f8c0ce",
     "https://git.kernel.org/stable/c/533d9e2bede4aeefdc2a0561d7071cfede95958f",
@@ -13,11 +16,22 @@
     "https://git.kernel.org/stable/c/1a8f537f5a1eeac941f262fe73078d6b08ba83c0"
   ],
   "aliases": [
+    "GHSA-p23r-m2g4-23pq",
     "CVE-2026-68279"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
+    {
+      "id": "05b78f94-0b87-3678-afee-f8aa01d05898",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
     {
       "id": "3054ad51-f86b-38ac-809a-6afe899a02ce",
       "product": {
@@ -29,6 +43,16 @@
       "product_version": "ad7f8a1f9ced7f049f9b66d588723f243a7034cd <e6ef5455b06cb4e5d181aabcd723791587c79f12"
     },
     {
+      "id": "32b28925-351c-3f29-84ab-0eb3752c3bbf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
       "id": "39616bec-e5a1-3626-a0b7-142c9ddde807",
       "product": {
         "name": "Linux",
@@ -37,6 +61,26 @@
         }
       },
       "product_version": "patch: 7.1.6"
+    },
+    {
+      "id": "4334c9a2-7326-316c-9f17-ae38ca9800a5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ad7f8a1f9ced7f049f9b66d588723f243a7034cd <c2fbda0fe0163c55ba3820ee6cea0c6b43622eda"
+    },
+    {
+      "id": "52383412-92b1-3892-8083-fc94698cc200",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.217"
     },
     {
       "id": "5b6d5f69-d239-3b74-9279-343a359c6702",
@@ -59,14 +103,24 @@
       "product_version": "patch: 6.18.42"
     },
     {
-      "id": "85fe5427-a846-3d50-a682-2a33f243e0bc",
+      "id": "7ec80a87-0af6-33a2-9f9b-fbee39a6ca32",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "ad7f8a1f9ced7f049f9b66d588723f243a7034cd <d7b9b1e33b4ed8c48d4db6e6e21c257ebbbb2586"
+    },
+    {
+      "id": "848959b7-7852-3630-a2cb-6b80a94ff039",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "ad7f8a1f9ced7f049f9b66d588723f243a7034cd <185de1d74e658e2edb723ba76fa61903f77d8a68"
     },
     {
       "id": "ad3561f6-e885-3c68-ba5f-1f74a8a04c5a",
@@ -77,6 +131,16 @@
         }
       },
       "product_version": "3.17"
+    },
+    {
+      "id": "b05f99eb-4bbc-3512-a779-408e761eeb79",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.266"
     },
     {
       "id": "c7481716-86a1-3e67-9c8f-4969006c364c",

@@ -3,8 +3,10 @@
   "enisaUuid": "1ed13af4-07e6-38ed-a4f2-ee2e1e9df5f2",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipv6: prevent in6_dev_get() from resurrecting inet6_dev\n\nin6_dev_get() reads dev->ip6_ptr under RCU and then unconditionally\nincrements its refcount. Device teardown can clear the pointer and drop\nthe last reference between these operations. The increment then\nresurrects an object whose RCU free has already been queued, so callers\ncan use it after it is freed.\n\nUse refcount_inc_not_zero() and return NULL when the object has already\nreached zero. RCU keeps the memory accessible through the attempted\nreference acquisition, and a successful increment pins the object for\nthe caller.\n\nAn independent run on the exact unpatched 6f5156d7a31a (v7.2-rc3)\nkernel reproduced the invalid reference acquisition as UID 1000:\n\n  refcount_t: addition on 0; use-after-free.\n  ip6_mc_source+0xef4/0x17e0\n\nIt was followed by the corresponding reference underflow in\nip6_mc_source(). The supplied trace from the same unpatched revision\nadditionally shows the access after the RCU read-side section ends:\n\n  BUG: KASAN: slab-use-after-free in mutex_lock+0x76/0xe0\n  Write of size 8 at addr ffff888015b50240 by task poc/1219\n\nBug found and triaged by OpenAI Security Research and\nvalidated by Trail of Bits.",
   "datePublished": "Aug 22, 2026, 3:32:11 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:11 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:06:03 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/785d908f8d21c8bc78b6fb2c2932ab662bf6918a",
     "https://git.kernel.org/stable/c/aedcfefdb5b7ed7f8a6196a3e68a25bdbe51d2f8",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/0e243671bc7b8eaf00f83dd2f4367436dc0cff98"
   ],
   "aliases": [
+    "GHSA-6g8v-5hwp-cmr2",
     "CVE-2026-74630"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "1e35e963-bc3b-3326-a3fe-d3eb96ae9d94",

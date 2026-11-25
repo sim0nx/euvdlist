@@ -1,0 +1,87 @@
+{
+  "id": "EUVD-2021-34556",
+  "enisaUuid": "c3011c59-ad64-3f13-91dc-062058556a29",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvdpa_sim: avoid putting an uninitialized iova_domain\n\nThe system will crash if we put an uninitialized iova_domain, this\ncould happen when an error occurs before initializing the iova_domain\nin vdpasim_create().\n\nBUG: kernel NULL pointer dereference, address: 0000000000000000\n...\nRIP: 0010:__cpuhp_state_remove_instance+0x96/0x1c0\n...\nCall Trace:\n <TASK>\n put_iova_domain+0x29/0x220\n vdpasim_free+0xd1/0x120 [vdpa_sim]\n vdpa_release_dev+0x21/0x40 [vdpa]\n device_release+0x33/0x90\n kobject_release+0x63/0x160\n vdpasim_create+0x127/0x2a0 [vdpa_sim]\n vdpasim_net_dev_add+0x7d/0xfe [vdpa_sim_net]\n vdpa_nl_cmd_dev_add_set_doit+0xe1/0x1a0 [vdpa]\n genl_family_rcv_msg_doit+0x112/0x140\n genl_rcv_msg+0xdf/0x1d0\n ...\n\nSo we must make sure the iova_domain is already initialized before\nput it.\n\nIn addition, we may get the following warning in this case:\nWARNING: ... drivers/iommu/iova.c:344 iova_cache_put+0x58/0x70\n\nSo we must make sure the iova_cache_put() is invoked only if the\niova_cache_get() is already invoked. Let's fix it together.",
+  "datePublished": "May 24, 2024, 3:09:56 PM",
+  "dateUpdated": "May 11, 2026, 1:56:52 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/e4d58ac67e63727aa45a4a26185876f598e8b3dd",
+    "https://git.kernel.org/stable/c/bb93ce4b150dde79f58e34103cbd1fe829796649"
+  ],
+  "aliases": [
+    "CVE-2021-47554"
+  ],
+  "assigner": "Linux",
+  "epss": 0.2,
+  "enisaIdProduct": [
+    {
+      "id": "4dd1814b-79b5-38aa-8750-6846b18f85ac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "564b07b1-6e15-3e3e-ad97-35aa6acfa2bc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4080fc1067501707b9693b8003feae7d50d14e35 <e4d58ac67e63727aa45a4a26185876f598e8b3dd"
+    },
+    {
+      "id": "a76d0b71-1d0a-3b84-9cd6-36a5890b0a96",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "5.13"
+    },
+    {
+      "id": "b0943ec3-1f63-33cc-bc46-2fff7cc03db5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.6"
+    },
+    {
+      "id": "eb502e86-6241-36f0-942a-6e4aa73c1118",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.16"
+    },
+    {
+      "id": "f4045f72-539b-3999-9280-6933cb2fd234",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4080fc1067501707b9693b8003feae7d50d14e35 <bb93ce4b150dde79f58e34103cbd1fe829796649"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "53ff86e2-c912-3a60-b6c4-0fb19dc80e15",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

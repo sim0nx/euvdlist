@@ -2,9 +2,11 @@
   "id": "EUVD-2026-59510",
   "enisaUuid": "749924d5-cabb-3173-b1bc-5cf50568652a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: fix UAF by restoring RCU-delayed inode freeing in bpffs\n\ncommit 4f375ade6aa9 (\"bpf: Avoid RCU context warning when unpinning\nhtab with internal structs\") moved inode cleanup from ->free_inode()\ninto ->destroy_inode() to avoid sleeping in RCU context when calling\nbpf_any_put(). However this removed the RCU delay on freeing the\ninode itself and the cached symlink body (i_link), both of which\ncan be accessed by RCU pathwalk (pick_link, may_lookup etc.).\n\nThis causes a use-after-free when a concurrent unlinkat() drops the\nlast inode reference and destroy_inode() frees the inode immediately,\nwhile another task is still walking the path in RCU mode and reads\ninode->i_opflags (offset +2) inside current_time() -> is_mgtime().\n\nKASAN reports:\n  BUG: KASAN: slab-use-after-free in is_mgtime include/linux/fs.h:2313\n  Read of size 2 at addr ffff8880407e4282 (offset +2 = i_opflags)\n\nThe rules (per Al Viro):\n  ->destroy_inode()  called immediately, can sleep, use for blocking\n                     cleanup e.g. bpf_any_put()\n  ->free_inode()     called after RCU grace period, use for freeing\n                     inode and anything RCU-accessible e.g. i_link\n\nFix: split the two concerns properly:\n  - keep bpf_any_put() in bpf_destroy_inode() since it is blocking\n    and needs to run promptly\n  - introduce bpf_free_inode() to handle kfree(i_link) and\n    free_inode_nonrcu() with proper RCU delay, preventing the UAF",
-  "datePublished": "Aug 15, 2026, 6:32:31 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:31 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:58:46 AM",
+  "dateUpdated": "Oct 16, 2026, 6:55:35 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ea1c243c39e32b7fc1c2edfe32081ff7e30a877c",
     "https://git.kernel.org/stable/c/5fecb71c10c28aef276ba49c718dc961745fdcf0",
@@ -12,15 +14,14 @@
     "https://git.kernel.org/stable/c/53649846e0437d1d9b7cb993cfe54c367addf7ae",
     "https://git.kernel.org/stable/c/61f19729728243c82476dee31315143ed3275e7f",
     "https://git.kernel.org/stable/c/0497ff765746d9b2d17445c8f7cc737b36c0152a",
-    "https://git.kernel.org/stable/c/b93c55b4932dd7e32dca8cf34a3443cc87a02906",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-74363"
+    "https://git.kernel.org/stable/c/b93c55b4932dd7e32dca8cf34a3443cc87a02906"
   ],
   "aliases": [
     "CVE-2026-74363",
     "GHSA-99p6-gfcm-83g8"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "00b0d2ba-9e39-3474-b4d1-1d76fc5e9d86",
@@ -101,6 +102,16 @@
         }
       },
       "product_version": "6.6.113 <6.6.145"
+    },
+    {
+      "id": "47f39d6e-3a70-3daa-9930-a61b7033391d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "5c00a6b6-7330-3e0c-b118-26cfcf0a9628",
@@ -191,16 +202,6 @@
         }
       },
       "product_version": "patch: 6.1.178"
-    },
-    {
-      "id": "d3bcae12-b51e-33cb-a151-46cff21074af",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "dd7e8a2d-e9b1-33b6-9c61-3dfb7938efec",

@@ -3,9 +3,12 @@
   "enisaUuid": "8c574129-f6c8-3678-8e43-f0d05d380f44",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\namt: re-read skb header pointers after every pull\n\nSeveral AMT receive and transmit paths cache a pointer into the skb head\n(ip_hdr(), ipv6_hdr(), eth_hdr() or the AMT message header) and then call\na helper that can reallocate that head before the cached pointer is used\nagain.  pskb_may_pull(), ip_mc_may_pull(), ipv6_mc_may_pull(),\niptunnel_pull_header(), ip_mc_check_igmp() and ipv6_mc_check_mld() can all\nfree the old head and move the data, so a pointer taken before the call\ndangles afterwards and the later access is a use-after-free of the freed\nhead.\n\nThe affected sites are:\n\n  amt_rcv() caches ip_hdr() before amt_parse_type() pulls, then reads\n  iph->saddr.\n\n  amt_dev_xmit() caches ip_hdr()/ipv6_hdr() before ip_mc_check_igmp()/\n  ipv6_mc_check_mld() and pskb_may_pull(), then reads the group address.\n\n  amt_multicast_data_handler() caches eth_hdr() before pskb_may_pull(),\n  then writes the L2 header.\n\n  amt_membership_query_handler() caches the AMT header, the outer and\n  inner eth_hdr() and ip_hdr() before iptunnel_pull_header() and several\n  pulls, then reads and writes them.\n\n  amt_igmpv3_report_handler() and amt_mldv2_report_handler() cache\n  ip_hdr()/ipv6_hdr() and the current group record and read the record\n  count from the report header inside the record loop, across the\n  *_mc_may_pull() calls.\n\n  amt_update_handler() caches ip_hdr() and the AMT membership-update\n  header before pskb_may_pull(), iptunnel_pull_header(),\n  ip_mc_check_igmp() and the report handler, then reads iph->daddr and\n  amtmu->nonce / amtmu->response_mac.\n\nFix each site by either snapshotting the scalar that is used after the\npull before the first pull runs, or re-deriving the header pointer from\nthe skb after the last pull that can move the head.  Values that are\nstable across the pull (source and group address, the response MAC and\nnonce, the record count, the outer source MAC) are snapshotted; pointers\nthat are written through or read repeatedly are re-derived.",
   "datePublished": "Aug 10, 2026, 12:02:36 PM",
-  "dateUpdated": "Aug 10, 2026, 12:02:36 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 19, 2026, 4:32:55 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/37ff890f9c18dfbcf57e17199901d4fd1e4c174e",
     "https://git.kernel.org/stable/c/9005b221cb1f9c3c1a2ef656fb0e8fa80c0a187e",
     "https://git.kernel.org/stable/c/7746d588d42a4ac0117b68ed8e9b22a9da53dfb7",
     "https://git.kernel.org/stable/c/ca0e8b661957f777591efe874cd9d9a63619cd99",
@@ -13,10 +16,11 @@
     "https://git.kernel.org/stable/c/3656a79f94c471827a08f2cacce5f94ad5e52c24"
   ],
   "aliases": [
+    "GHSA-9gq3-j787-cjhr",
     "CVE-2026-68302"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.48,
   "enisaIdProduct": [
     {
       "id": "15df5d54-240f-3cff-8a85-79639930e470",
@@ -27,6 +31,26 @@
         }
       },
       "product_version": "5.16"
+    },
+    {
+      "id": "1d5249c9-8448-35e4-98a2-87515c343109",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "51665036-5813-38fc-8b97-82e98dec5776",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "cbc21dc1cfe949e37b2a54c71511579f1899e8d4 <37ff890f9c18dfbcf57e17199901d4fd1e4c174e"
     },
     {
       "id": "742c1ced-b9b2-393b-8711-3a59e624db95",
@@ -69,14 +93,14 @@
       "product_version": "cbc21dc1cfe949e37b2a54c71511579f1899e8d4 <3656a79f94c471827a08f2cacce5f94ad5e52c24"
     },
     {
-      "id": "8bc8c71a-ff1d-3aa4-98b5-d6ee8bb5619f",
+      "id": "90d1d492-19c5-3a55-ba4c-46e02ec78059",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc5"
+      "product_version": "patch: 6.1.183"
     },
     {
       "id": "939c8182-1bf8-35df-898c-b9d605b157f0",

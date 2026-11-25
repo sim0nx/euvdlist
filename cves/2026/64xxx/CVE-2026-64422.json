@@ -3,8 +3,10 @@
   "enisaUuid": "59a73886-2465-3559-8428-20ed08a4b0f8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: ipv4: bound TCP reordering sysctl writes and MTU probe sizes\n\nReject invalid `net.ipv4.tcp_reordering` values before they reach TCP\nsocket state. The sysctl is stored as an `int` but copied into the\n`u32` `tp->reordering` field for new sockets, so negative writes wrap\nto large values.\n\nWith `tcp_mtu_probing=2`, the wrapped value can overflow the\n`tcp_mtu_probe()` size calculation and drive the MTU probing path into\nan out-of-bounds read. Route `tcp_reordering` writes through\n`proc_dointvec_minmax()` and require it to be at least 1. Also require\n`tcp_max_reordering` to be at least 1 so the configured maximum cannot\nbecome negative either.\n\nWhen registering the table for a non-init network namespace, relocate\n`extra2` pointers that refer into `init_net.ipv4` so the\n`tcp_reordering` upper bound follows that namespace's\n`tcp_max_reordering`.\n\nHarden `tcp_mtu_probe()` itself by computing `size_needed` as `u64`.\nThis keeps the send queue and window checks from being bypassed through\nsigned integer overflow.",
   "datePublished": "Jul 25, 2026, 8:51:00 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:00 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 10, 2026, 12:49:19 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
     "https://git.kernel.org/stable/c/f0d88a4cd03affff6c08adf6c63964e235aede43",
     "https://git.kernel.org/stable/c/27ddf4486c7dbf5bdd393fa8bef6b67179796d98",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/efb8763d7bbb40cff4cc55a6b62c3095a038149c"
   ],
   "aliases": [
+    "GHSA-gwmg-q555-3325",
     "CVE-2026-64422"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "00926802-277b-3f32-8dc5-58d5d72abd98",
@@ -40,16 +43,6 @@
         }
       },
       "product_version": "91cc17c0e5e5ada156a8d5787a2509d263ea6bbf <99206ce2244f8a3ed64298d0667c9055845a5dc7"
-    },
-    {
-      "id": "0a01dc5a-dd31-3267-b998-4b4f5c982170",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "13bdbff3-e492-3a7e-80a9-fdc47ac2cf77",
@@ -80,6 +73,16 @@
         }
       },
       "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "2566e539-2ad7-3563-b3bc-413023355ffb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "412ae247-3056-35c3-b9b3-894e43fd5a0c",

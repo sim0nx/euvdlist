@@ -3,7 +3,7 @@
   "enisaUuid": "64829c66-68f9-3446-af12-a9d0646ffaba",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nlibfs: set SB_I_NOEXEC and SB_I_NODEV by default in init_pseudo()\n\nSince commit 1e7ab6f67824 (\"anon_inode: rework assertions\"),\npath_noexec() warns when an anonymous-inode file is mmap'd from a\nsuperblock that has not set SB_I_NOEXEC. dma-buf backs its files this\nway and never set the flag, so mmap of any exported buffer trips the\nwarning on a CONFIG_DEBUG_VFS=y kernel:\n\n  WARNING: CPU: 11 PID: 121813 at fs/exec.c:118 path_noexec+0x47/0x50\n   do_mmap+0x2b5/0x680\n   vm_mmap_pgoff+0x129/0x210\n   ksys_mmap_pgoff+0x177/0x240\n   __x64_sys_mmap+0x33/0x70\n\ninit_pseudo() sets up internal SB_NOUSER mounts that are never\npath-reachable. Set both flags here so every pseudo filesystem gets\nthem by default instead of each caller setting them.\n\nSB_I_NODEV is inert for unreachable mounts. SB_I_NOEXEC has one\nvisible effect: an executable mapping of a pseudo-fs fd, such as a\ndma-buf, now fails with -EPERM, which is the invariant the assertion\nenforces. No in-tree caller maps these executable.\n\nReproduce on CONFIG_DEBUG_VFS=y:\n\n  make -C tools/testing/selftests/dmabuf-heaps\n  sudo ./tools/testing/selftests/dmabuf-heaps/dmabuf-heap -t system",
   "datePublished": "Aug 6, 2026, 7:13:51 AM",
-  "dateUpdated": "Aug 6, 2026, 7:13:51 AM",
+  "dateUpdated": "Aug 17, 2026, 4:58:18 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b9d45d328fcda4f0d3d281b7d6f12d3f181d9381",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/6de2aeffabaafaeda819e60ec8d04f199711e11a"
   ],
   "aliases": [
+    "GHSA-99j8-6mjv-5hff",
     "CVE-2026-64596"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "03c0968b-bf4c-3c8e-b7d8-5d10ee5971ec",
@@ -25,16 +26,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "088db60b-eb27-34b2-acd9-852535f41586",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "120e0983-bd35-3274-8a9c-1a32a9021df0",
@@ -95,6 +86,16 @@
         }
       },
       "product_version": "1e7ab6f67824343ee3e96f100f0937c393749a8a <8e931557b317f0fb414839fa51fae1d5feb0ad97"
+    },
+    {
+      "id": "b6ea613f-802b-316a-8e54-41c5592abdb3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "b720e0be-2d1d-3e47-b9e3-ace3233a2b9a",

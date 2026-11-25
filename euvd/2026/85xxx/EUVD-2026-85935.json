@@ -3,7 +3,7 @@
   "enisaUuid": "21e773f9-260a-3a57-a750-2fdf2c9bdcc3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nPCI/proc: Use file_ns_capable() when checking config space read access\n\nproc_bus_pci_read() decides how much of the config space is readable based\non capable(CAP_SYS_ADMIN), which checks the credentials of the task calling\nread(), not the credentials of the process that opened the file.\n\nThe sysfs equivalent, pci_read_config(), has checked the credentials of the\nopening process since commit de139a339395 (\"pci: check caps from sysfs file\nopen to read device dependent config space\"), so a privileged process can\nopen the config space file and pass the file descriptor to an unprivileged\nprocess (for example, a process running a KVM guest with an assigned\ndevice), which can then read the entire config space.  The check was\nsubsequently routed through the LSM framework in commit 47970b1b2aa6 (\"pci:\nuse security_capable() when checking capablities during config space read\")\nand converted to the dedicated helper in commit ab0fa82b2df9 (\"pci-sysfs:\nuse proper file capability helper function\").\n\nThus, the two interfaces check the same capability against different\ncredentials.  Checking the credentials of the task calling read() makes the\noutcome depend on who reads rather than who opened, so the restriction is\nbypassed whenever a more privileged process reads through the descriptor.\nChecking the credentials recorded in file->f_cred settles the decision at\nopen() time and ties it to the file, where it cannot change with the\ncaller.\n\nUse file_ns_capable() to check CAP_SYS_ADMIN against the credentials in\neffect when the file was opened, bringing the procfs interface in line with\nthe sysfs behaviour.\n\nAs a result, a file descriptor opened by a privileged process and passed to\nan unprivileged one now allows the entire config space to be read through\nprocfs, matching sysfs.",
   "datePublished": "Sep 24, 2026, 3:10:29 PM",
-  "dateUpdated": "Sep 24, 2026, 3:10:29 PM",
+  "dateUpdated": "Oct 19, 2026, 9:07:18 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/8a3a54aa3e65ed76f8560a387243a7738ae0cb1c",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/f82f53e75eff382fc8f56b73279b54f7cf5a5c65"
   ],
   "aliases": [
-    "CVE-2026-93206"
+    "CVE-2026-93206",
+    "GHSA-fjc2-7frc-hj2c"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.19,
   "enisaIdProduct": [
     {
       "id": "06995e62-540a-32a5-b0be-2945e470e695",
@@ -52,16 +53,6 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <c2d4174f492458ecdcdef309243624999612d526"
     },
     {
-      "id": "357a37ee-f0c8-3096-b59e-d6c4dccd2362",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.18.50"
-    },
-    {
       "id": "38e76761-c114-3b85-9435-ac513bd71480",
       "product": {
         "name": "Linux",
@@ -70,26 +61,6 @@
         }
       },
       "product_version": "patch: 5.10.270"
-    },
-    {
-      "id": "5a770e86-ea25-3425-9539-f4473e5eacf3",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <5.15.221"
-    },
-    {
-      "id": "5f564a9b-200b-33fe-95b1-fb4980cc5603",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.1.188"
     },
     {
       "id": "69293849-c791-3827-afad-3cf96e2a980b",
@@ -142,14 +113,14 @@
       "product_version": "patch: 5.15.221"
     },
     {
-      "id": "752aab2c-07de-3fec-ba9d-6495ca0d9e8f",
+      "id": "797b95ad-b7e2-3e20-8734-e60461b49687",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <7.2.4"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "9a3f9c6b-815d-3dfd-b765-b48ec0e7d568",
@@ -172,14 +143,14 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <5c7ab4ca66f0880cffc3735555ea719dd5253726"
     },
     {
-      "id": "af07b0a5-8641-3fd4-823d-264994527a3d",
+      "id": "b0788eb6-8bfb-3548-a213-980abd95376e",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc1"
+      "product_version": "2.6.12"
     },
     {
       "id": "b9cf7352-f20b-3082-900c-f4c6d44353eb",
@@ -192,34 +163,14 @@
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <f82f53e75eff382fc8f56b73279b54f7cf5a5c65"
     },
     {
-      "id": "cb24c13b-53ce-3e63-8475-1b69c2b2d218",
+      "id": "c7763379-9fcf-36a8-b412-d2ead4e04980",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "0 <6.6.157"
-    },
-    {
-      "id": "cf3a282d-7027-3ed6-a02d-712f37901e1a",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <6.12.109"
-    },
-    {
-      "id": "d43bbe56-570c-317f-86e5-9fac44543363",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "0 <5.10.270"
+      "product_version": "patch: 0"
     },
     {
       "id": "d775566e-a221-3d3b-bb9d-d755b7f52c17",

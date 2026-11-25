@@ -3,18 +3,22 @@
   "enisaUuid": "0006a0dc-5d99-39a2-9311-89f0ca24d145",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmptcp: pm: kernel: drop pending ADD_ADDR when removing ID0\n\nThe in-kernel MPTCP path manager can leave a stale ADD_ADDR announcement\nentry alive when removing the id 0 endpoint. This happens because the id 0\nremoval path does not tear down pending announcements, unlike the non-zero\nid path.\n\nWhen the PM later reselects id 0 after adding another signal endpoint, it\nfinds the stale anno_list entry and hits WARN_ON_ONCE(mptcp_pm_is_kernel())\nin mptcp_pm_announced_alloc().\n\nRoot cause: asymmetry between removal paths.\n- Non-zero id path: mptcp_nl_remove_subflow_and_signal_addr() calls\n  mptcp_pm_remove_announced() to clean up.\n- Id 0 path: mptcp_nl_remove_id_zero_address() skips cleanup entirely.\n\nFix by making the id 0 path symmetric: call mptcp_pm_announced_remove()\nand decrement add_addr_signaled before queuing the RM_ADDR.\n\nSubtle detail: signal endpoints are stored in anno_list with port 0, but\nmsk_local carries the connection's local port. In other words, entries\nlinked to ID0 paths should have port == 0. A follow-up patch will ensure\nthat. mptcp_pm_announced_remove() uses use_port=true for comparison. So\nclear the port before the lookup.",
   "datePublished": "Sep 25, 2026, 10:21:53 AM",
-  "dateUpdated": "Sep 25, 2026, 10:21:53 AM",
+  "dateUpdated": "Oct 30, 2026, 12:37:27 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/4af59a98aead422a152d805a89586dbb65616fc8",
+    "https://git.kernel.org/stable/c/189d60057e5f3d6a62e3d71a3cc428c9150bc14f",
+    "https://git.kernel.org/stable/c/bacf23e7c9876c9f4170166b3597cb22ea3ed39b",
     "https://git.kernel.org/stable/c/d4a67a880654e1bfe318a31bea0bdbb026a09ade",
     "https://git.kernel.org/stable/c/545616b4e7325be3c61fc082538cb06d14f7b1db",
     "https://git.kernel.org/stable/c/2ac7d6e620764f1fc79eb4edd3610a7a661981ca"
   ],
   "aliases": [
+    "GHSA-27x2-682m-9qm4",
     "CVE-2026-97566"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "169dac16-f61e-3592-aa0a-b2b082b247aa",
@@ -47,6 +51,26 @@
       "product_version": "patch: 7.2.7"
     },
     {
+      "id": "424e66ad-39f3-33e9-9354-0ce6e5cc1236",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "740d798e8767d8a449902b1a1bbc70facfce19b5 <4af59a98aead422a152d805a89586dbb65616fc8"
+    },
+    {
+      "id": "629e8776-0da0-313c-987f-9272653464c6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "740d798e8767d8a449902b1a1bbc70facfce19b5 <189d60057e5f3d6a62e3d71a3cc428c9150bc14f"
+    },
+    {
       "id": "66084218-24a3-3de2-b5d7-3e94afd5e9f2",
       "product": {
         "name": "Linux",
@@ -67,14 +91,34 @@
       "product_version": "740d798e8767d8a449902b1a1bbc70facfce19b5 <545616b4e7325be3c61fc082538cb06d14f7b1db"
     },
     {
-      "id": "a3462060-7f99-371c-b86c-293c36715f79",
+      "id": "91e443db-b63d-3b2a-ad05-81babac1468b",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc3"
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "93d2f2b4-f2f2-3840-a060-2d98628a09b7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "aa144a38-4e96-3417-a616-9655cbe7c29e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "740d798e8767d8a449902b1a1bbc70facfce19b5 <bacf23e7c9876c9f4170166b3597cb22ea3ed39b"
     },
     {
       "id": "b340b404-ba18-3be3-b4e0-1ff4130a9356",
@@ -87,6 +131,16 @@
       "product_version": "740d798e8767d8a449902b1a1bbc70facfce19b5 <d4a67a880654e1bfe318a31bea0bdbb026a09ade"
     },
     {
+      "id": "e0b21caf-1a10-310a-9c2a-41d55411cb52",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.112"
+    },
+    {
       "id": "e98fa265-2c1b-3c76-9445-2637cf666b2b",
       "product": {
         "name": "Linux",
@@ -95,6 +149,16 @@
         }
       },
       "product_version": "patch: 6.18.53"
+    },
+    {
+      "id": "f147058b-ce19-3465-a8fe-5dba0606dcbd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     }
   ],
   "enisaIdVendor": [

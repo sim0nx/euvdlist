@@ -3,8 +3,10 @@
   "enisaUuid": "055964d6-40ae-322f-8c57-d5a61224c4f6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nsvcrdma: Fix unmatched rn_unregister on failed accept\n\nWhen svc_rdma_accept() takes the errout path before\nrpcrdma_rn_register() has succeeded, the existing cleanup block\ncalls rpcrdma_rn_unregister(dev, &newxprt->sc_rn) unconditionally.\nsvcxprt_rdma is kzalloc'd, so on that path sc_rn.rn_index is 0 and\nsc_rn.rn_done is NULL; the unregister therefore xa_erase()s another\ncaller's slot 0 and performs an unmatched kref_put() on the\nrpcrdma_device's rd_kref.\n\nThe same errout also brackets the cleanup with svc_xprt_get()/\nsvc_xprt_put() around the kref_init() birth reference. The kref\ngoes 1 -> 2 -> 1 and never reaches 0, so the svcxprt_rdma (and the\nnet/ns_tracker it pinned) is leaked on every failed accept.\n\nrpcrdma_rn_register() writes rn->rn_done last, only after xa_alloc()\nand kref_get() have both succeeded, so rn_done == NULL is a natural\n\"never registered\" sentinel. Guard rpcrdma_rn_unregister() with an\nearly return when rn_done is NULL, and clear rn_done before the\nmatching xa_erase() so a repeated unregister is also a no-op.\n\nWith that guard in place, the accept errout drops the kref_init()\nbirth reference via svc_xprt_put(), which dispatches svc_rdma_free().\nTeardown of sc_qp, sc_sq_cq, sc_rq_cq, and sc_pd runs under existing\nIS_ERR/NULL guards in svc_rdma_free(); sc_rn is covered by the new\nrn_done sentinel; sc_cm_id is non-NULL on every errout path because\nsvc_rdma_accept() dereferences it above the first goto errout.\n\nsvc_xprt_free() drops the module reference associated with the freed\ntransport, and svc_handle_xprt() drops its pre-acquired reference\nwhen ->xpo_accept() returns NULL. Take a replacement module reference\nbefore svc_xprt_put() so the two module_put()s remain balanced.\n\nThe rn_done guard also covers svc_rdma_free()'s non-listener call\nto rpcrdma_rn_unregister() for transports whose register attempt\nfailed or never ran.",
   "datePublished": "Sep 24, 2026, 3:21:10 PM",
-  "dateUpdated": "Sep 24, 2026, 3:21:10 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:07:35 AM",
+  "baseScore": 8.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/0335800071a6dfdf7d21d729b5e7d8fa98936211",
     "https://git.kernel.org/stable/c/5aabe070c00e5bdf4ab150fb5f72ad5f266d6241",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/26190394c64c9429481fc88a4738f70bb92fb352"
   ],
   "aliases": [
-    "CVE-2026-93224"
+    "CVE-2026-93224",
+    "GHSA-g4hj-w3xr-5rr3"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.45,
   "enisaIdProduct": [
     {
       "id": "07d6916b-ab50-3bf4-a53a-9c1717cfdeaa",
@@ -58,6 +61,16 @@
       "product_version": "6.12.35 <6.12.109"
     },
     {
+      "id": "2fb44034-39a6-3e52-9aa0-427791ff256f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "4fe6bece-d85d-35cd-af7c-8fc67aad1127",
       "product": {
         "name": "Linux",
@@ -96,16 +109,6 @@
         }
       },
       "product_version": "patch: 6.18.50"
-    },
-    {
-      "id": "b2434a3e-744c-3915-a89a-824c7d3a6b65",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "b52dcb4c-ba2e-3b3a-8647-f73569bc9890",

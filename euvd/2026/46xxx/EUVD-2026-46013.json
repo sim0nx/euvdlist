@@ -3,18 +3,21 @@
   "enisaUuid": "7ee5e731-d2e4-32df-b996-b00064b9baa3",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ni2c: i801: fix hardware state machine corruption in error path\n\nA severe livelock and subsequent Hung Task panic were observed in the\ni2c-i801 driver during concurrent Fuzzing. The crash is caused by an\nunconditional hardware register cleanup in the error handling path of\ni801_access().\n\nWhen i801_check_pre() fails (e.g., returning -EBUSY because the SMBus\ncontroller is actively used by BIOS/ACPI), the kernel does not actually\nacquire the hardware ownership. However, the code jumps to the 'out'\nlabel and executes:\n\n    iowrite8(SMBHSTSTS_INUSE_STS | STATUS_FLAGS, SMBHSTSTS(priv));\n\nThis forcefully clears the INUSE_STS lock and resets the hardware status\nflags without owning the controller. Doing so interrupts ongoing BIOS/ACPI\ntransactions and totally corrupts the SMBus hardware state machine.\n\nConsequently, all subsequent i801_access() calls fail at the pre-check\nstage, triggering an endless stream of \"SMBus is busy, can't use it!\"\nerror logs. Over a slow serial console, this printk flood monopolizes\nthe CPU (Console Livelock), starving other processes trying to acquire\nthe mmap_lock down_read semaphore, ultimately triggering the hung task\nwatchdog.\n\nFix this by moving the 'out' label below the hardware register cleanup.\nIf i801_check_pre() fails, we safely bypass the iowrite8() and only\nrelease the software locks (pm_runtime and mutex), strictly adhering to\nthe rule of not releasing resources that were never acquired.",
   "datePublished": "Jul 20, 2026, 4:27:53 PM",
-  "dateUpdated": "Jul 20, 2026, 4:27:53 PM",
+  "dateUpdated": "Nov 6, 2026, 4:34:29 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/2ef69871b313aa0f02182795f5e0f5aa455f203c",
+    "https://git.kernel.org/stable/c/ef5a347532932f58748dad485c15039f5168c377",
     "https://git.kernel.org/stable/c/bb5133a7d5f3fe5c387770e25f2e00e682ce11ed",
     "https://git.kernel.org/stable/c/00904687b9c5527d569d9a1ca72119823e735a61",
     "https://git.kernel.org/stable/c/10dd1a736d557e310a77117832874729a0175d57"
   ],
   "aliases": [
-    "CVE-2026-64205"
+    "CVE-2026-64205",
+    "GHSA-cfcm-pxwx-hg62"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "09f7ef3b-f327-3d0d-bea0-1f32942c3de5",
@@ -25,6 +28,16 @@
         }
       },
       "product_version": "6.3"
+    },
+    {
+      "id": "121fc740-7592-3303-b0b2-2e5c15ab36da",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1f760b87e54cf56a25ab68f8dc625e339f6e46d5 <ef5a347532932f58748dad485c15039f5168c377"
     },
     {
       "id": "170da45a-0666-3915-b052-08415df8892c",
@@ -47,14 +60,24 @@
       "product_version": "1f760b87e54cf56a25ab68f8dc625e339f6e46d5 <bb5133a7d5f3fe5c387770e25f2e00e682ce11ed"
     },
     {
-      "id": "53222374-3807-3e02-9e53-f44493288a9f",
+      "id": "47c10398-5003-3644-b323-4afa5a0ce523",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc1"
+      "product_version": "1f760b87e54cf56a25ab68f8dc625e339f6e46d5 <2ef69871b313aa0f02182795f5e0f5aa455f203c"
+    },
+    {
+      "id": "61371851-03bd-31a3-97db-77dd56e646ba",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "83398075-3bd7-3789-ab1c-1236273871d1",
@@ -95,6 +118,26 @@
         }
       },
       "product_version": "patch: 7.1.4"
+    },
+    {
+      "id": "ce2926cb-93a8-3c2f-b8e7-046ec0649b47",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.148"
+    },
+    {
+      "id": "dfeac085-90fe-3121-bc9a-0c2d0e3827b4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.101"
     }
   ],
   "enisaIdVendor": [

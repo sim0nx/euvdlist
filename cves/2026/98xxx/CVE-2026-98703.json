@@ -3,20 +3,44 @@
   "enisaUuid": "0a7dbe03-6bfc-3ce4-9bca-0d0c386f87e6",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: mac80211: minstrel_ht: validate fixed rate index\n\nThe fixed_rate_idx debugfs file is a plain u32 attribute, so any value\ncan be written to it.  minstrel_ht_update_stats() then copies the value\ninto mi->max_tp_rate[] and mi->max_prob_rate, and\nminstrel_ht_set_rate() uses MI_RATE_GROUP()/MI_RATE_IDX() to index\nminstrel_mcs_groups[] (42 entries) and mi->groups[].rates[] (10 entries)\nwith it.\n\nWriting e.g. 65535 selects group 4095 and rate index 15, far outside\nboth arrays.  The out-of-bounds entries are dereferenced and updated as\nstruct minstrel_rate_stats (retry counts, etc.), so the invalid index\ncorrupts adjacent kernel memory.  With CONFIG_UBSAN_BOUNDS the access is\nreported as an array-index-out-of-bounds in minstrel_ht_set_rate().\n\nOnly a valid group/rate pair, or U32_MAX to disable fixed rate\nprocessing, can be used safely, so reject any other value when the\ndebugfs file is written.\n\nThe file is only reachable through a root-only debugfs mount, so this is\nnot a privilege boundary.  The out-of-bounds access is still a bug that\nmust not be reachable through a writable debugfs attribute.",
   "datePublished": "Oct 18, 2026, 3:46:33 PM",
-  "dateUpdated": "Oct 18, 2026, 3:46:33 PM",
+  "dateUpdated": "Oct 30, 2026, 12:38:53 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/63097bf1b7f17f14bd9ffcae6590c63272da8bb0",
+    "https://git.kernel.org/stable/c/9b685cfb5cc8ed57991b1a956b06c6658d7cf455",
+    "https://git.kernel.org/stable/c/eebc70f132041b35da9ec74d5d395083125289b2",
     "https://git.kernel.org/stable/c/f8ab6ae1fa360b0191252677f41e781dcb0ffe6e",
     "https://git.kernel.org/stable/c/42aa9feb27b600809414a3c6b0c650bafba542a9",
     "https://git.kernel.org/stable/c/43082d604a9937b94ceb2e484403956d0f363324",
     "https://git.kernel.org/stable/c/15fb9e3cea55fbc378261ce35a32b0f8828f0000"
   ],
   "aliases": [
+    "GHSA-h4f8-3q7w-49pw",
     "CVE-2026-98703"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
+    {
+      "id": "192744a9-3510-3c91-a64d-951da3708bbc",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
+      "id": "1ef8d772-fcd0-38c0-bdc7-58a67898ba6c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "24f7580e852b5472b51eea322bb78454df0054b8 <9b685cfb5cc8ed57991b1a956b06c6658d7cf455"
+    },
     {
       "id": "2ebdb4b7-1054-350a-ab20-7ceccda290a6",
       "product": {
@@ -28,6 +52,16 @@
       "product_version": "24f7580e852b5472b51eea322bb78454df0054b8 <43082d604a9937b94ceb2e484403956d0f363324"
     },
     {
+      "id": "31668e70-aca3-3970-b0bd-a8d4e0610b1b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "44c0b39c-bbdf-3e6e-be60-5aa0880fdd4f",
       "product": {
         "name": "Linux",
@@ -36,6 +70,16 @@
         }
       },
       "product_version": "patch: 6.12.113"
+    },
+    {
+      "id": "790c8307-3a5a-3f6c-92d2-4defc1acc92c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
     },
     {
       "id": "84012bda-6338-3965-946e-ef06f631bfa8",
@@ -68,6 +112,16 @@
       "product_version": "patch: 6.18.56"
     },
     {
+      "id": "8c9408ef-3915-3122-b709-9872060bb803",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "24f7580e852b5472b51eea322bb78454df0054b8 <eebc70f132041b35da9ec74d5d395083125289b2"
+    },
+    {
       "id": "91c34b44-492e-3743-9394-45a34eebff56",
       "product": {
         "name": "Linux",
@@ -76,16 +130,6 @@
         }
       },
       "product_version": "24f7580e852b5472b51eea322bb78454df0054b8 <42aa9feb27b600809414a3c6b0c650bafba542a9"
-    },
-    {
-      "id": "b87f8673-db81-30f2-a1ee-41cfd431e6b0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc6"
     },
     {
       "id": "c3025ce3-90e1-357f-b633-09da9147da4b",
@@ -116,6 +160,26 @@
         }
       },
       "product_version": "24f7580e852b5472b51eea322bb78454df0054b8 <15fb9e3cea55fbc378261ce35a32b0f8828f0000"
+    },
+    {
+      "id": "e1de2334-2af0-37ae-bc1b-f785dfd2e702",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "fdbc3cfb-4567-3d3c-a9f2-2c5852b9f142",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "24f7580e852b5472b51eea322bb78454df0054b8 <63097bf1b7f17f14bd9ffcae6590c63272da8bb0"
     }
   ],
   "enisaIdVendor": [

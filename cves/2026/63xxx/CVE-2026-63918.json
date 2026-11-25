@@ -3,8 +3,10 @@
   "enisaUuid": "1e6b6eef-e28a-3542-a440-d519423f0c13",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nl2tp: use refcount_inc_not_zero in l2tp_session_get_by_ifname\n\nA reader in l2tp_session_get_by_ifname() can return a pointer to a\nsession whose refcount has reached zero. The getter takes its\nreference with plain refcount_inc(), but every other session getter\nin the same file (l2tp_v2_session_get, l2tp_v3_session_get, and the\ncorresponding _get_next variants) uses refcount_inc_not_zero()\nbecause the IDR/RCU lookup can race with refcount_dec_and_test() ->\nl2tp_session_free() -> kfree_rcu(). The ifname getter is the only\noutlier; the inconsistency was raised on-list after 979c017803c4\n(\"l2tp: use list_del_rcu in l2tp_session_unhash\").\n\nA reader inside rcu_read_lock_bh() that matches session->ifname can\nbe preempted between the strcmp() and the refcount_inc(). If the\nlast reference drops on another CPU in that window, the reader's\nrefcount_inc() runs on a counter that has reached zero. refcount_t\ncatches the addition-on-zero, prints \"refcount_t: addition on 0;\nuse-after-free\", saturates the counter, and returns the saturated\npointer to the caller. Session memory is held live by the in-flight\nRCU read section, but the kfree_rcu() callback queued from\nl2tp_session_free() will free it once the grace period closes; a\ncaller that dereferences the returned session past that point hits\na slab-use-after-free. On PREEMPT_RT local_bh_disable() is a per-CPU\nsleeping lock and the preemption window is real; on stock PREEMPT\nkernels local_bh_disable() is a preempt_count increment that closes\nthe cross-CPU race in practice (see below).\n\nUse refcount_inc_not_zero() and continue the list walk on failure,\nmatching the other session getters in the file. The ifname getter\nis the only session getter in net/l2tp/ that still uses the bare\nrefcount_inc() pattern; this change restores file-internal\nconsistency. The success path is unchanged.",
   "datePublished": "Jul 19, 2026, 2:55:21 PM",
-  "dateUpdated": "Jul 19, 2026, 2:55:21 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:37:12 PM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ee80455feffb9cb62b5b58715cabeff495e666b2",
     "https://git.kernel.org/stable/c/947013fd7c8c35dd5856557b215840098a3f67f8",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/05f95729ca844704d15e49ce14868af4b403b32b"
   ],
   "aliases": [
-    "CVE-2026-63918"
+    "CVE-2026-63918",
+    "GHSA-9qwr-gw6x-fmgj"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "02188e87-ffd8-395e-9081-360c34304df6",

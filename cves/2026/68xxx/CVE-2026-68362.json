@@ -3,9 +3,10 @@
   "enisaUuid": "3311e331-b5c2-3a38-82a4-cf252116b60c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: ath11k: fix NULL pointer dereference in ath11k_hal_srng_access_begin\n\nIn ATH11K_QMI_EVENT_FW_READY, ATH11K_FLAG_REGISTERED is set\nunconditionally even when ath11k_core_qmi_firmware_ready() fails.\nThis leaves the driver in an inconsistent state where\ninitialization is considered complete although the firmware ready\nhandling did not finish successfully. During the subsequent SSR,\nthe driver enters the restart path based on this incorrect state\nand dereferences uninitialized srng members, resulting in a NULL\npointer dereference.\n\nCall trace:\n  ath11k_hal_srng_access_begin+0xc/0x60 [ath11k] (P)\n  ath11k_ce_cleanup_pipes+0x17c/0x180 [ath11k]\n  ath11k_core_restart+0x40/0x168 [ath11k]\n\nFix this by:\n- skipping firmware_ready if ATH11K_FLAG_REGISTERED is already set\n- setting ATH11K_FLAG_REGISTERED only when firmware_ready succeeds\n- setting ATH11K_FLAG_QMI_FAIL and aborting the FW_READY handling\non error\n\nTested-on: WCN6750 hw1.0 AHB WLAN.MSL.2.0.c2-00204-QCAMSLSWPLZ-1",
   "datePublished": "Aug 10, 2026, 12:03:39 PM",
-  "dateUpdated": "Aug 10, 2026, 12:03:39 PM",
+  "dateUpdated": "Aug 19, 2026, 4:34:15 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/66bf998b18334ca97321433e4ab783b6ff267e9d",
     "https://git.kernel.org/stable/c/e517e207300edcf7f3a8f6c45f9155c0e419ffb9",
     "https://git.kernel.org/stable/c/d6bba659ac30d862ee7bab92862cd6e514f07521",
     "https://git.kernel.org/stable/c/e5394605f9a985cc3a8263e610ba84b33cbe7b0c",
@@ -13,10 +14,11 @@
     "https://git.kernel.org/stable/c/e8d85672dd7e2523f774caafba8f858384e18df7"
   ],
   "aliases": [
-    "CVE-2026-68362"
+    "CVE-2026-68362",
+    "GHSA-2m2r-2qvp-946c"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "02ccbdee-4a5c-3393-9645-01037169d7cc",
@@ -39,6 +41,16 @@
       "product_version": "patch: 6.12.101"
     },
     {
+      "id": "951de0f2-c3d7-3561-a8d9-c88e1ad665fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.183"
+    },
+    {
       "id": "9524160e-4091-305a-ba81-00ca44bb4825",
       "product": {
         "name": "Linux",
@@ -47,6 +59,16 @@
         }
       },
       "product_version": "6fe62a8cec51c756159c71be35a16b2cc8cbd4c0 <d6bba659ac30d862ee7bab92862cd6e514f07521"
+    },
+    {
+      "id": "a4f645fe-eb87-3c82-b80d-e3c5e98e8138",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6fe62a8cec51c756159c71be35a16b2cc8cbd4c0 <66bf998b18334ca97321433e4ab783b6ff267e9d"
     },
     {
       "id": "a8453689-7874-3565-b2e3-2043a51fd56c",
@@ -67,16 +89,6 @@
         }
       },
       "product_version": "6fe62a8cec51c756159c71be35a16b2cc8cbd4c0 <e5394605f9a985cc3a8263e610ba84b33cbe7b0c"
-    },
-    {
-      "id": "aef16f72-db7a-392b-94f3-04a775cd7278",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc5"
     },
     {
       "id": "bf302a00-9d94-3838-8742-9d648385a5ce",
@@ -107,6 +119,16 @@
         }
       },
       "product_version": "6.1"
+    },
+    {
+      "id": "e9716262-dfe3-313b-b960-43ab7c46d750",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "f7b5276a-5e53-3941-a457-39c4616be084",

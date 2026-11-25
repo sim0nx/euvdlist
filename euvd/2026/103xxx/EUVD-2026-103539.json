@@ -3,7 +3,7 @@
   "enisaUuid": "b005dfdd-41b2-31c9-b179-434be0cc3771",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: flowtable: publish HW_DEAD after worker is done\n\nflow_offload_work_del() sets NF_FLOW_HW_DEAD before the work handler\nclears NF_FLOW_HW_PENDING. Once a flow is both HW_DYING and HW_DEAD, a\nconcurrent garbage collection pass can remove it and schedule it for RCU\nfreeing.\n\nThe offload worker holds neither an RCU read lock nor a reference to the\nflow. If it is preempted after publishing HW_DEAD, the RCU callback can\nfree the flow before the worker resumes and clears HW_PENDING, resulting\nin a use-after-free.\n\nMove HW_DEAD publication to the common worker epilogue after the pending\nbit is cleared, making it the final flow access by destroy work. Order all\npreceding flow accesses before publishing the bit that allows garbage\ncollection to free the object.",
   "datePublished": "Oct 18, 2026, 3:19:46 PM",
-  "dateUpdated": "Oct 18, 2026, 3:19:46 PM",
+  "dateUpdated": "Oct 19, 2026, 9:22:53 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/f92e8f39726ba68a7c42c6b7566be687c8161579",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/d644b23afe1ef509c9961a6d84a093c2587edf02"
   ],
   "aliases": [
-    "CVE-2026-98625"
+    "CVE-2026-98625",
+    "GHSA-42xw-mjh5-fhf4"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "16afaaae-512a-37cc-866a-5e5d8f8f8e4d",
@@ -60,6 +61,16 @@
         }
       },
       "product_version": "patch: 5.10.271"
+    },
+    {
+      "id": "368c4e21-69fd-3fcc-b626-c27f7af0fda4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "3caa476e-4fd6-3e82-891f-c808a62d2f8d",
@@ -110,16 +121,6 @@
         }
       },
       "product_version": "patch: 6.18.55"
-    },
-    {
-      "id": "906f9acf-cfcb-361b-9293-6ccec2867219",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc5"
     },
     {
       "id": "94469f24-dfe4-33af-a193-4bdba42ede6e",

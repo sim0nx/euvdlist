@@ -1,0 +1,88 @@
+{
+  "id": "EUVD-2024-43717",
+  "enisaUuid": "79691b53-c5b0-3507-a9a0-3b4e13b2f11a",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/filemap: fix filemap_get_folios_contig THP panic\n\nPatch series \"memfd-pin huge page fixes\".\n\nFix multiple bugs that occur when using memfd_pin_folios with hugetlb\npages and THP.  The hugetlb bugs only bite when the page is not yet\nfaulted in when memfd_pin_folios is called.  The THP bug bites when the\nstarting offset passed to memfd_pin_folios is not huge page aligned.  See\nthe commit messages for details.\n\n\nThis patch (of 5):\n\nmemfd_pin_folios on memory backed by THP panics if the requested start\noffset is not huge page aligned:\n\nBUG: kernel NULL pointer dereference, address: 0000000000000036\nRIP: 0010:filemap_get_folios_contig+0xdf/0x290\nRSP: 0018:ffffc9002092fbe8 EFLAGS: 00010202\nRAX: 0000000000000002 RBX: 0000000000000002 RCX: 0000000000000002\n\nThe fault occurs here, because xas_load returns a folio with value 2:\n\n    filemap_get_folios_contig()\n        for (folio = xas_load(&xas); folio && xas.xa_index <= end;\n                        folio = xas_next(&xas)) {\n                ...\n                if (!folio_try_get(folio))   <-- BOOM\n\n\"2\" is an xarray sibling entry.  We get it because memfd_pin_folios does\nnot round the indices passed to filemap_get_folios_contig to huge page\nboundaries for THP, so we load from the middle of a huge page range see a\nsibling.  (It does round for hugetlbfs, at the is_file_hugepages test).\n\nTo fix, if the folio is a sibling, then return the next index as the\nstarting point for the next call to filemap_get_folios_contig.",
+  "datePublished": "Oct 21, 2024, 6:01:14 PM",
+  "dateUpdated": "May 11, 2026, 8:40:53 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/570dd14bfecf281fa467c80f8ec92b26370ee36a",
+    "https://git.kernel.org/stable/c/c225c4f6056b46a8a5bf2ed35abf17a2d6887691"
+  ],
+  "aliases": [
+    "CVE-2024-49873",
+    "GHSA-j2cc-c4fg-77cq"
+  ],
+  "assigner": "Linux",
+  "epss": 0.2,
+  "enisaIdProduct": [
+    {
+      "id": "19ad5280-a5a0-302d-ad90-8d6fc1ca39bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "89c1905d9c140372b7f50ef48f42378cf85d9bc5 <570dd14bfecf281fa467c80f8ec92b26370ee36a"
+    },
+    {
+      "id": "acf49d9a-3ee1-323b-91a5-ccd94d77c270",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12"
+    },
+    {
+      "id": "b5829755-6b75-3e7e-959c-faec2511252d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.11.3"
+    },
+    {
+      "id": "c53c88a4-fb3d-3b74-bb21-22146fc5b072",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "89c1905d9c140372b7f50ef48f42378cf85d9bc5 <c225c4f6056b46a8a5bf2ed35abf17a2d6887691"
+    },
+    {
+      "id": "d500ba56-e7c9-3a47-a219-682b11770442",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.11"
+    },
+    {
+      "id": "eafd153d-c92b-33c2-982a-17e5bbaf2f07",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a79f05c1-171a-3b97-8069-647bcfc71646",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

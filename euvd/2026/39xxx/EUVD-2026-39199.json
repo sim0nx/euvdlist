@@ -3,18 +3,21 @@
   "enisaUuid": "097d28f9-b1a6-3e44-890b-a895fb884750",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: airoha: Fix use-after-free in metadata dst teardown\n\nairoha_metadata_dst_free() runs metadata_dst_free() which frees the\nmetadata_dst with kfree() immediately, bypassing the RCU grace period.\nIn the RX path, skb_dst_set_noref() sets a non-refcounted pointer from\nthe skb to the metadata_dst. This function requires RCU read-side\nprotection and the dst must remain valid until all RCU readers complete.\nSince metadata_dst_free() calls kfree() directly, an use-after-free can\noccur if any skb still holds a noref pointer to the dst when the driver\ntears it down.\nReplace metadata_dst_free() with dst_release() which properly goes\nthrough the refcount path: when the refcount drops to zero, it schedules\nthe actual free via call_rcu_hurry(), ensuring all RCU readers have\ncompleted before the memory is freed.",
   "datePublished": "Jun 25, 2026, 8:39:41 AM",
-  "dateUpdated": "Jun 25, 2026, 8:39:41 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 5, 2026, 12:34:32 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/6f829e2c17a53a35321268339cd252aff6d6d723",
     "https://git.kernel.org/stable/c/4b5a574e033e66d2131eff1c18feef8d8643c67e",
     "https://git.kernel.org/stable/c/b38cae85d1c45ff189d7ecb6ac36f41cdc3d84d0"
   ],
   "aliases": [
-    "CVE-2026-53248"
+    "CVE-2026-53248",
+    "GHSA-83pq-fmf8-563q"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.53,
   "enisaIdProduct": [
     {
       "id": "1e00d6d0-86c9-31af-a5a2-833d86dfb7a5",

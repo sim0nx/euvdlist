@@ -3,7 +3,7 @@
   "enisaUuid": "a57f8c0c-7b97-36e6-8070-26c73283d82a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf, sockmap: Reject max_entries > INT_MAX in sock_map_alloc\n\nsock_map_alloc() only rejects max_entries == 0 and otherwise allows any\nu32 value.  sock_map_free() then walks the sks[] array with a signed int\niterator:\n\n\tint i;\n\tfor (i = 0; i < stab->map.max_entries; i++)\n\t\tstruct sock **psk = &stab->sks[i];\n\nWhen a SOCKMAP is created with max_entries = 0xffffffff (UINT_MAX), the\nallocation of 32 GiB can succeed on large-memory hosts.  During free the\ncounter reaches 0x80000000, wraps to INT_MIN, is sign-extended by movslq\nand turned into a ~16 GiB negative offset from stab->sks, pointing far\nbelow the allocation.\n\nThe faulting access is an xchg() write in sock_map_free().  Without\nKASAN, the same out-of-bounds write can fault on an unmapped vmalloc page\nor corrupt an unrelated allocation if that vmalloc address is populated.\nOn a KASAN kernel with CONFIG_KASAN_VMALLOC=y, the shadow check for that\naddress hits an unmapped shadow page and oopses first:\n\n  BUG: unable to handle page fault for address: fffff521b59c5a00\n  RIP: 0010:kasan_check_range+0x107/0x190\n  Call Trace:\n   sock_map_free+0x93/0x190\n   map_create+0x68d/0xb30\n   __sys_bpf+0x21e/0x2e70\n\nVmcore confirmed stab->map.max_entries == 0xffffffff, stab->sks ==\n0xffffc911ace2d000, and the faulting address sks + (s64)INT_MIN * 8\nexactly at 0xffffc90dace2d000.  The same buggy path is reached on the\nnormal close()/bpf_map_free_deferred() path whenever such a map is\ndestroyed.\n\nsock_map_alloc() used to bound its allocation size through\nbpf_map_charge_init(), but the bound was dropped when rlimit-based memory\naccounting was removed.  Reject max_entries > INT_MAX at creation time so\nthe signed iterator in sock_map_free() never sees a value that would\noverflow.\n\nTriggered by syzkaller and reproduced on both a 6.6-based KASAN kernel\nand the upstream v7.3-rc2 kernel.",
   "datePublished": "Oct 18, 2026, 3:19:00 PM",
-  "dateUpdated": "Oct 18, 2026, 3:19:00 PM",
+  "dateUpdated": "Oct 19, 2026, 9:22:13 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/f4a73f49e256bd835368504462be3b57b03febff",
@@ -15,10 +15,11 @@
     "https://git.kernel.org/stable/c/814a81c842bd88f6bd8a4ce550d560df071a5d03"
   ],
   "aliases": [
-    "CVE-2026-98588"
+    "CVE-2026-98588",
+    "GHSA-v3gv-6qr6-4mh5"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "04f8e880-f039-3cb3-b23c-6a982d6fcdb9",
@@ -51,14 +52,14 @@
       "product_version": "patch: 6.12.112"
     },
     {
-      "id": "591dd98b-46c7-35c7-8367-018b27ec910f",
+      "id": "53b091c0-8596-3882-955c-be5e035a9f1f",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc5"
+      "product_version": "patch: 7.3"
     },
     {
       "id": "7d333ab5-8066-3ed3-a890-641e4da8824b",

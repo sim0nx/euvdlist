@@ -3,7 +3,7 @@
   "enisaUuid": "9ca72116-6dec-3ed3-8803-d8856f5a0d9e",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nusb: xhci: Fix sleep in atomic context in xhci_free_streams()\n\nWhen a USB device with active stream endpoints is disconnected,\nxhci_free_streams() is called from the hub_event workqueue to\nfree the stream resources.  It calls xhci_free_stream_info()\nwhile holding xhci->lock with irqs disabled.\n\nxhci_free_stream_info() invokes xhci_free_stream_ctx(), which\ncalls dma_free_coherent() for large stream context arrays.\n\ndma_free_coherent() can sleep (e.g. via vunmap), triggering\na BUG when called from atomic context.\n\nCall trace:\n dma_free_attrs+0x174/0x220\n xhci_free_stream_info+0xd0/0x11c\n xhci_free_streams+0x278/0x37c\n usb_free_streams+0x98/0xc0\n usb_unbind_interface+0x1b8/0x2f8\n device_release_driver_internal+0x1d4/0x2cc\n device_release_driver+0x18/0x28\n bus_remove_device+0x160/0x1a4\n device_del+0x1ec/0x350\n usb_disable_device+0x98/0x214\n usb_disconnect+0xf0/0x35c\n hub_event+0xab4/0x19ec\n process_one_work+0x278/0x63c\n\nFix this by saving the stream_info pointers and clearing the\nep references under the lock, then calling xhci_free_stream_info()\noutside the lock where sleeping is allowed.",
   "datePublished": "Jul 25, 2026, 8:51:31 AM",
-  "dateUpdated": "Jul 25, 2026, 8:51:31 AM",
+  "dateUpdated": "Nov 6, 2026, 4:44:53 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/e623e4a203f56d5c57519a9a3cb29600551534ad",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/42c37c4b75d38b51d84f31a8e29427f5e06a7c2a"
   ],
   "aliases": [
+    "GHSA-5wmv-5wg4-7mv5",
     "CVE-2026-64465"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.1,
   "enisaIdProduct": [
     {
       "id": "001d0833-fbeb-3a9b-8ee3-624ee9cb440c",
@@ -50,16 +51,6 @@
         }
       },
       "product_version": "2.6.35"
-    },
-    {
-      "id": "478ad484-a808-3f21-9fc0-0bbc103c43f0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     },
     {
       "id": "579acac0-9b80-3a13-91af-ac7dd8c7d7d7",
@@ -200,6 +191,16 @@
         }
       },
       "product_version": "8df75f42f8e67e2851cdcf6da91640fb881defd1 <1e45aa722c4ce5663e987102aac18c8ad6a83fdd"
+    },
+    {
+      "id": "ed7bb995-d08e-33c7-afdd-039ac997c024",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     }
   ],
   "enisaIdVendor": [

@@ -3,8 +3,10 @@
   "enisaUuid": "528ca41a-f58a-3540-9125-2cc53f2badfc",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvdpa/mlx5: Fix buffer length in create_direct_keys()\n\nWe have seen in our CI the following KASAN message:\nBUG: KASAN: slab-out-of-bounds in cmd_exec+0x550/0xca0 [mlx5_core]\nRead of size 272 at addr 0000000176795020 by task qemu-system-s39/82764\n[...]\n[<000011388ab3a7a0>] cmd_exec+0x550/0xca0 [mlx5_core]\n[<000011388ab3b61c>] mlx5_cmd_exec_cb+0x25c/0x4f0 [mlx5_core]\n[<000011388b21e82e>] mlx5_vdpa_exec_async_cmds+0x22e/0x5e0 [mlx5_vdpa]\n[<000011388b21fd44>] create_direct_keys+0x954/0xef0 [mlx5_vdpa]\n[...]\nThe buggy address is located 4128 bytes inside of\nallocated 4384-byte region [0000000176794000, 0000000176795120)\n\nSo in essence we read 16 bytes beyond 4384-byte allocation.\ncreate_direct_keys calculates the pointer and length for in and out\nbuffers.\nThe size calculation for in includes the entire structure\nsize (out + in + mtt[]) but the pointer passed to cmd_exec points only\nto the 'in' field, skipping the 'out' field.\n\nThis causes mlx5_copy_to_msg() to read beyond the allocated buffer\nby sizeof(out) bytes when copying command data.\n\nProperly calculate the input size to match the pointer and allocation size.",
   "datePublished": "Aug 22, 2026, 3:33:08 PM",
-  "dateUpdated": "Aug 22, 2026, 3:33:08 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 25, 2026, 5:41:54 AM",
+  "baseScore": 9.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ec3bb289cf19d526224117d5d450a5fd9cbd5ab2",
     "https://git.kernel.org/stable/c/cde8931a25392670dd59a0acfcab87a830ab66c5",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/727e1f569855df83579edbd73dcb4a0723543a12"
   ],
   "aliases": [
-    "CVE-2026-74712"
+    "CVE-2026-74712",
+    "GHSA-8f7v-7fr8-r5c3"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.14,
   "enisaIdProduct": [
     {
       "id": "07ca34d3-7c8f-35bd-b7a8-31da51076d3c",

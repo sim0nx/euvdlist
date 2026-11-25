@@ -3,7 +3,7 @@
   "enisaUuid": "8dc298eb-d158-37ea-9321-7b41837fb60a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nwifi: mt76: mt7996: fix TX DMA mapping leak for AddBA req frames\n\nmt7996/mt7992 hand the firmware a HW MAC-TXP for AddBA req action frames\n(MT_TXD7_MAC_TXD, set in mt7996_mac_write_txwi_80211()), but are otherwise\nFW-TXP devices. On tx free mt76_connac_txp_skb_unmap() therefore decodes\nthe per-frame txp as a struct mt76_connac_fw_txp. For a MAC-TXP the\nfw_txp.nbuf byte aliases the AddBA TID word (MT_TXP1_TID_ADDBA), which is\nalways zero, so the unmap loop runs zero times and the skb DMA mapping in\nbuf[1] is never unmapped. buf[1].skip_unmap is set unconditionally, so the\ngeneric DMA-ring cleanup skips it as well.\n\nEach AddBA req therefore leaks one TX DMA mapping, roughly one per\n(re)association. With WED enabled these mappings are bounced through the\nWED swiotlb pool, so under continuous client reconnect churn the pool is\nexhausted after ~1-2 days, after which DMA mapping fails for WED, the WiFi\nMCU and other on-SoC consumers.\n\nKeep the deferred (token release) unmap that the design relies on, and add\nan mt7996-specific txp unmap that inspects MT_TXD7_MAC_TXD and unmaps\nbuf[1] from the MAC-TXP layout for those frames, delegating to\nmt76_connac_txp_skb_unmap() otherwise.",
   "datePublished": "Sep 11, 2026, 7:42:08 PM",
-  "dateUpdated": "Sep 11, 2026, 7:42:08 PM",
+  "dateUpdated": "Oct 19, 2026, 8:45:18 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/01f2e0da8548f82d704b65b513026cfedc5f8962",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/deaa2e3656937fbbe312f0ee2616c756c6e2511f"
   ],
   "aliases": [
+    "GHSA-8jh2-32h2-grwf",
     "CVE-2026-80934"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.21,
   "enisaIdProduct": [
     {
       "id": "00f1eae9-da35-303b-a292-1d6db9bcbc0a",
@@ -77,6 +78,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "54524b22-74a5-3aaf-9e87-62f24ab16439",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "65ca9406-01d2-3289-b17e-8756d5074a03",
       "product": {
         "name": "Linux",
@@ -105,16 +116,6 @@
         }
       },
       "product_version": "patch: 6.18.50"
-    },
-    {
-      "id": "b95375f7-7195-3f2c-ab3c-a30ef336bfc4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     }
   ],
   "enisaIdVendor": [

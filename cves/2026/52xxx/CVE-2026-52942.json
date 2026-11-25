@@ -3,9 +3,12 @@
   "enisaUuid": "2bbde7af-d356-3e12-97d7-e2516a312248",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnetfilter: nf_log: validate MAC header was set before dumping it\n\nThe fallback path of dump_mac_header() guards the MAC header access\nonly with \"skb->mac_header != skb->network_header\", without checking\nskb_mac_header_was_set(). When the MAC header is unset, mac_header is\n0xffff, so the test passes and skb_mac_header(skb) returns\nskb->head + 0xffff, ~64 KiB past the buffer; the loop then reads\ndev->hard_header_len bytes out of bounds into the kernel log.\n\nThis is reachable via the netdev logger: nf_log_unknown_packet() calls\ndump_mac_header() unconditionally, and an skb sent through AF_PACKET\nwith PACKET_QDISC_BYPASS reaches the egress hook with mac_header still\nunset (__dev_queue_xmit(), which would reset it, is bypassed).\n\nAdd the skb_mac_header_was_set() check the ARPHRD_ETHER path already\nuses, and replace the open-coded MAC header length test with\nskb_mac_header_len(). Only skbs with an unset MAC header are affected;\nvalid ones are dumped as before.\n\n BUG: KASAN: slab-out-of-bounds in dump_mac_header (net/netfilter/nf_log_syslog.c:831)\n Read of size 1 at addr ffff88800ea49d3f by task exploit/148\n Call Trace:\n  kasan_report (mm/kasan/report.c:595)\n  dump_mac_header (net/netfilter/nf_log_syslog.c:831)\n  nf_log_netdev_packet (net/netfilter/nf_log_syslog.c:938 net/netfilter/nf_log_syslog.c:963)\n  nf_log_packet (net/netfilter/nf_log.c:260)\n  nft_log_eval (net/netfilter/nft_log.c:60)\n  nft_do_chain (net/netfilter/nf_tables_core.c:285)\n  nft_do_chain_netdev (net/netfilter/nft_chain_filter.c:307)\n  nf_hook_slow (net/netfilter/core.c:619)\n  nf_hook_direct_egress (net/packet/af_packet.c:257)\n  packet_xmit (net/packet/af_packet.c:280)\n  packet_sendmsg (net/packet/af_packet.c:3114)\n  __sys_sendto (net/socket.c:2265)",
   "datePublished": "Jun 24, 2026, 7:14:30 AM",
-  "dateUpdated": "Jun 24, 2026, 7:14:30 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 10, 2026, 12:47:46 PM",
+  "baseScore": 7.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/2e96e1bc9b4d5450e6c33f078e19a9bc1dda6c0b",
     "https://git.kernel.org/stable/c/d704ee9c7bc68a161684c51a7ac05b446dcf38d4",
     "https://git.kernel.org/stable/c/befb8968a2abdfa948d5600ea7f7a509a292a590",
     "https://git.kernel.org/stable/c/8a81e336da685423f5b64aac4d571e63d674c52a",
@@ -15,10 +18,11 @@
     "https://git.kernel.org/stable/c/a84b6fedbc97078788be78dbdd7517d143ad1a77"
   ],
   "aliases": [
+    "GHSA-3p98-fq5j-wx55",
     "CVE-2026-52942"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "016cd626-c799-3f25-866d-cc5d26d77522",
@@ -141,6 +145,16 @@
       "product_version": "patch: 7.1"
     },
     {
+      "id": "a8cf2028-5206-3a65-9bd5-3a34a5950d63",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "7eb9282cd0efac08b8377cbd5037ba297c77e3f7 <2e96e1bc9b4d5450e6c33f078e19a9bc1dda6c0b"
+    },
+    {
       "id": "b2825476-78f9-3d0f-aeb0-ea24d88ae527",
       "product": {
         "name": "Linux",
@@ -169,6 +183,16 @@
         }
       },
       "product_version": "patch: 5.15.210"
+    },
+    {
+      "id": "f0607066-2ecc-31df-a2de-90a5e3fdec26",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.261"
     },
     {
       "id": "fe8b2f7e-fc49-32f9-bd1e-1ada371973fa",

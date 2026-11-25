@@ -3,8 +3,10 @@
   "enisaUuid": "9a38bc73-abdb-3b2a-abd7-fd0e6af8448c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nBluetooth: ISO: avoid deadlocks in iso_sock_timeout\n\niso_sock_timeout() takes lock_sock, so sync disabling the timer while\nholding that lock may deadlock.\n\niso_sock_timeout() may also run concurrently with iso_conn_del(), which\nleads to UAF\n\n        [Task 1]                      [Task hdev->workqueue]\n        iso_sock_timeout              iso_conn_del\n          iso_conn_hold_unless_zero     iso_chan_del\n                           `------------> iso_conn_put\n                                      caller frees hcon\n          iso_conn_put\n            iso_conn_free\n              conn->hcon->iso_data = NULL; /* UAF */\n\nFix the deadlock by removing the disable from the lock_sock sections.\nMove the timer from iso_conn to iso_pinfo to decouple it from iso_conn\nwhich may need to be freed in lock_sock section. Convert some of the\nclear_timer to disable_timer.",
   "datePublished": "Aug 15, 2026, 12:27:48 PM",
-  "dateUpdated": "Aug 15, 2026, 12:27:48 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 16, 2026, 7:05:53 PM",
+  "baseScore": 8.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/16d89a63e08280abeef7218970a3bbd7ca62b021",
     "https://git.kernel.org/stable/c/82e982f54f962f72646868ddbb2c3bd9ea178568",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/200fa1629c57a3ca2b03d3ca63fd3a9bfd910c43"
   ],
   "aliases": [
+    "GHSA-m6r7-j582-3j5f",
     "CVE-2026-74535"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.24,
   "enisaIdProduct": [
     {
       "id": "101076d3-9fb4-3343-857b-aa3fd2aa3f2a",
@@ -78,16 +81,6 @@
       "product_version": "6.11.11 <6.12"
     },
     {
-      "id": "7bd8b813-094a-3893-a5e2-f5abf7258d43",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc6"
-    },
-    {
       "id": "8042ee92-423c-3892-97e9-4ad17bcee230",
       "product": {
         "name": "Linux",
@@ -136,6 +129,16 @@
         }
       },
       "product_version": "dc26097bdb864a0d5955b9a25e43376ffc1af99b <3c3d5f85db80145636bb991a6005e2760012b985"
+    },
+    {
+      "id": "bcd5fbfc-a8ba-3e39-8236-7e8b181f3de8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "c7f2bace-1676-351a-8baa-33ac086e1dad",

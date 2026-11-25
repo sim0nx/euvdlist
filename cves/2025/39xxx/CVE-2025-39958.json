@@ -2,47 +2,121 @@
   "id": "EUVD-2025-33325",
   "enisaUuid": "e929863b-5274-3065-b95f-074a95a2acfa",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\niommu/s390: Make attach succeed when the device was surprise removed\n\nWhen a PCI device is removed with surprise hotplug, there may still be\nattempts to attach the device to the default domain as part of tear down\nvia (__iommu_release_dma_ownership()), or because the removal happens\nduring probe (__iommu_probe_device()). In both cases zpci_register_ioat()\nfails with a cc value indicating that the device handle is invalid. This\nis because the device is no longer part of the instance as far as the\nhypervisor is concerned.\n\nCurrently this leads to an error return and s390_iommu_attach_device()\nfails. This triggers the WARN_ON() in __iommu_group_set_domain_nofail()\nbecause attaching to the default domain must never fail.\n\nWith the device fenced by the hypervisor no DMAs to or from memory are\npossible and the IOMMU translations have no effect. Proceed as if the\nregistration was successful and let the hotplug event handling clean up\nthe device.\n\nThis is similar to how devices in the error state are handled since\ncommit 59bbf596791b (\"iommu/s390: Make attach succeed even if the device\nis in error state\") except that for removal the domain will not be\nregistered later. This approach was also previously discussed at the\nlink.\n\nHandle both cases, error state and removal, in a helper which checks if\nthe error needs to be propagated or ignored. Avoid magic number\ncondition codes by using the pre-existing, but never used, defines for\nPCI load/store condition codes and rename them to reflect that they\napply to all PCI instructions.",
-  "datePublished": "Oct 9, 2025, 12:30:18 PM",
-  "dateUpdated": "Oct 9, 2025, 12:30:19 PM",
+  "datePublished": "Oct 9, 2025, 9:47:35 AM",
+  "dateUpdated": "Nov 5, 2026, 9:23:07 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/3b32cf6e279597d1b6477fb89d46abf65263c139",
+    "https://git.kernel.org/stable/c/79fa3a19aa6114189b33e2ba1f393b0f635d7544",
     "https://git.kernel.org/stable/c/359613f2fa009587154511e4842e8ab9532edd15",
-    "https://git.kernel.org/stable/c/9ffaf5229055fcfbb3b3d6f1c7e58d63715c3f73",
-    "https://nvd.nist.gov/vuln/detail/CVE-2025-39958"
+    "https://git.kernel.org/stable/c/9ffaf5229055fcfbb3b3d6f1c7e58d63715c3f73"
   ],
   "aliases": [
+    "GHSA-p5vh-p63c-cg4v",
     "CVE-2025-39958"
   ],
   "assigner": "Linux",
-  "epss": 0.02,
+  "epss": 0.19,
   "enisaIdProduct": [
-    {
-      "id": "08a089d5-be9e-3e14-8d14-9f5f442e4273",
-      "product": {
-        "name": "Linux"
-      },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <359613f2fa009587154511e4842e8ab9532edd15"
-    },
     {
       "id": "3da9c971-0dd0-37db-87e3-819fdf0f084b",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.16.9"
     },
     {
-      "id": "4896bfd8-46da-3679-9c1e-ca9bb138750b",
+      "id": "42f55fa0-8ea5-364e-b9fe-485c6b6ae1b3",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
-      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <9ffaf5229055fcfbb3b3d6f1c7e58d63715c3f73"
+      "product_version": "59bbf596791b89c7f88fdcac29dfc39c1221d25d <3b32cf6e279597d1b6477fb89d46abf65263c139"
+    },
+    {
+      "id": "51d18817-ef74-3685-ad7b-11bd198d8bf0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "6.2"
+    },
+    {
+      "id": "6c7349c4-a2d1-3b5d-8980-91ff148f8bef",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.114"
+    },
+    {
+      "id": "97295459-52bc-31db-b251-10f4caf07a92",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "59bbf596791b89c7f88fdcac29dfc39c1221d25d <9ffaf5229055fcfbb3b3d6f1c7e58d63715c3f73"
+    },
+    {
+      "id": "9ed91d16-5002-355c-8ac1-9cf1a8259fb2",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "59bbf596791b89c7f88fdcac29dfc39c1221d25d <79fa3a19aa6114189b33e2ba1f393b0f635d7544"
+    },
+    {
+      "id": "e884c744-92b8-3aff-a044-0e1f4dc04fee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "ed7c4abd-c9e3-3c32-b6a1-7958db0b3cf4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
     },
     {
       "id": "fe77a691-5bfd-3894-91d2-1267a12f6be1",
       "product": {
-        "name": "Linux"
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
       },
       "product_version": "patch: 6.17"
+    },
+    {
+      "id": "feb55802-5c97-3307-b461-3f4414e961d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "59bbf596791b89c7f88fdcac29dfc39c1221d25d <359613f2fa009587154511e4842e8ab9532edd15"
     }
   ],
   "enisaIdVendor": [

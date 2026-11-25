@@ -3,7 +3,7 @@
   "enisaUuid": "5e14d7a0-59c5-3df3-88f5-344ea64c8b66",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nneighbour: Enforce min/max to NDTPA_INTERVAL_PROBE_TIME_MS.\n\nNDTPA_INTERVAL_PROBE_TIME_MS sets .type and .min but misses\n.validation_type, so no validation is applied:\n\n  # ynl --family rt-neigh --do setneightbl \\\n  --json '{\"name\": \"arp_cache\", \"parms\": {\"interval-probe-time-ms\": 0}}'\n\n  # ynl --family rt-neigh --dump getneightbl --output-json | \\\n  jq '.[] | select(.name == \"arp_cache\" and has(\"config\"))\n          | .parms[\"interval-probe-time-ms\"]'\n  0\n\nMoreover, nla_get_msecs() uses msecs_to_jiffies(), and u64 is\nsilently cast to u32, so a larger value can bypass the min check:\n\n  e.g. 4294967296 == 0x100000000\n\n  # ynl --family rt-neigh --do setneightbl \\\n  --json '{\"name\": \"arp_cache\", \"parms\": {\"interval-probe-time-ms\": 4294967296}}'\n\n  # ynl --family rt-neigh --dump getneightbl --output-json | \\\n  jq '.[] | select(.name == \"arp_cache\" and has(\"config\"))\n          | .parms[\"interval-probe-time-ms\"]'\n  0\n\nmsecs_to_jiffies() returns MAX_JIFFY_OFFSET if the value is\nlarger than INT_MAX.  Also, INT_MAX ms overflows int NEIGH_VAR()\nwhen HZ > 1000 (Alpha, MIPS), and passing a negative integer to\nqueue_delayed_work(unsigned long delay) causes sign extension,\nwhich wraps around the expiry time to the past, resulting in it\nbeing handled as 0 delay in the timer wheel.\n\nLet's use NLA_POLICY_FULL_RANGE() and limit the max to 1 day.\n\nThe same max check is applied to sysctl as well.\n\nNote that this controls the probe interval for NTF_MANAGED\nentries, so the max of 1 day is unlikely to break any\ndeployments.",
   "datePublished": "Oct 6, 2026, 8:46:12 AM",
-  "dateUpdated": "Oct 6, 2026, 8:46:12 AM",
+  "dateUpdated": "Oct 19, 2026, 9:17:27 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/982c7f66c04134b77126edbfd8a63ecd6928cfd9",
@@ -11,10 +11,11 @@
     "https://git.kernel.org/stable/c/6d79b223ec44ada58ad37db42f539b60985a7722"
   ],
   "aliases": [
-    "CVE-2026-98317"
+    "CVE-2026-98317",
+    "GHSA-52cr-c2c7-9x84"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "31cad867-57d2-3f8b-8043-ee754958b3b8",
@@ -25,16 +26,6 @@
         }
       },
       "product_version": "211da42eaa45db7b0edfde187dd88a85fbd466b5 <6d79b223ec44ada58ad37db42f539b60985a7722"
-    },
-    {
-      "id": "40d5e648-f1ed-31b5-9aa0-3dab24d9d984",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
     },
     {
       "id": "51c01139-12a9-399d-abd2-6205ad01f468",
@@ -55,6 +46,16 @@
         }
       },
       "product_version": "patch: 6.18.54"
+    },
+    {
+      "id": "6ef44f67-7ca4-3bdd-96c5-c8246281edf1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "9f5ab355-2134-3525-ab66-18248265d8b9",

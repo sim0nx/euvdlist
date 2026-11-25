@@ -3,29 +3,34 @@
   "enisaUuid": "a12f3f28-b132-3e44-b708-be2c3059c694",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nvt: skip screen update for DEC alignment test on backgroup consoles\n\n[BUG]\nRecently, we encountered a KASAN warning as follows:\n\nBUG: KASAN: slab-out-of-bounds in fb_pad_aligned_buffer+0x11f/0x140\nRead of size 1 at addr ff1100015fd9f6a4 by task tty_fbcon_oob/1239\nCPU: 7 UID: 0 PID: 1239 Comm: tty_fbcon_oob Not tainted 7.3.0-rc1 #100 PREEMPT(full)\nHardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.17.0-4.fc41 04/01/2014\nCall Trace:\n <TASK>\n ...\n kasan_report+0xf0/0x120\n fb_pad_aligned_buffer+0x11f/0x140\n ccw_putcs+0x86c/0xa80\n fbcon_putcs+0x338/0x410\n do_update_region+0x21d/0x450\n do_con_write+0x1e0e/0x4880\n con_write+0x13/0x80\n n_tty_write+0x374/0x1010\n file_tty_write.isra.0+0x404/0x7a0\n ...\n\nreproduce:\n1) open /dev/tty0, set a KDFONTOP ioctl with op.op = KD_FONT_OP_SET,\nop.width = 8 and op.height = 16 (visible VC1)\n2) open /dev/tty1, set a KDFONTOP ioctl with op.op = KD_FONT_OP_SET,\nop.width = 28 and op.height = 24 (invisible VC2)\n3) echo 3 > /sys/devices/virtual/graphics/fbcon/rotate_all\n4) write EShash8(esc hash8) to tty1\n\n[CAUSE]\nAll VCs render to the framebuffer. setfont only modifies the target VC's\nfont without resizing the framebuffer backing buffer (par->rotated.buf);\nthe buffer is only resized for the visible VC\n(fbcon_do_set_font -> ... -> vc_do_resize -> update_screen). This relies on\nthe con_should_update() check performed before every update_region().\n\nHowever, the ESC # 8 path (do_con_trol -> do_update_region) omits the\ncon_should_update() check. After changing the font size of an invisible VC,\ndo_update_region() fills using the new font size against a buffer that was\nnever resized, causing an out-of-bounds access.\n\n[FIX]\nOnly push the update when the console is visible and not blanked, add\nthe con_should_update() check in the do_con_trol() like every other call\nsite of do_update_region() (update_region(), invert_screen(), ...).",
   "datePublished": "Oct 18, 2026, 3:50:07 PM",
-  "dateUpdated": "Oct 18, 2026, 3:50:07 PM",
+  "dateUpdated": "Oct 30, 2026, 12:40:07 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/d388658505bf707ff0cd7142c37c868febf8c2a5",
+    "https://git.kernel.org/stable/c/82561eee12a342994daf3a70590f5d07c35da743",
+    "https://git.kernel.org/stable/c/663cf98baced6941a0f3f00e1be61024e57d4429",
+    "https://git.kernel.org/stable/c/2fc4e71aefab57c80ccc9775aad2af503fc90810",
     "https://git.kernel.org/stable/c/985c000b046ca4ee11ee34ef85db500c569ef6e8",
     "https://git.kernel.org/stable/c/ad06f7312d3f615dd466483ce81a9b9619166686",
     "https://git.kernel.org/stable/c/0ee53081425a1a31ce15089012cd96b8353eb44e",
     "https://git.kernel.org/stable/c/0928ed9bd7946baee911efa401088697836e3b1e"
   ],
   "aliases": [
-    "CVE-2026-98838"
+    "CVE-2026-98838",
+    "GHSA-798g-xwjp-798r"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
-      "id": "06a3e41a-c4a8-3303-9cfd-a541fdbeb79d",
+      "id": "023efc27-d872-3dec-aa8f-f8466e8515a6",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc6"
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <82561eee12a342994daf3a70590f5d07c35da743"
     },
     {
       "id": "0d170203-dac8-3b39-936c-5aba3876c9f4",
@@ -68,6 +73,16 @@
       "product_version": "patch: 6.18.56"
     },
     {
+      "id": "263456ae-4f97-3606-8d02-cb7440a1f202",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
+    {
       "id": "34204fca-6c81-3e35-821c-31280f128df6",
       "product": {
         "name": "Linux",
@@ -76,6 +91,26 @@
         }
       },
       "product_version": "patch: 6.12.113"
+    },
+    {
+      "id": "38daaaba-2a43-3b74-8207-3cea4d5d2549",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.224"
+    },
+    {
+      "id": "3e0e7522-d9b7-35f3-8731-294917c40107",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.273"
     },
     {
       "id": "5942f8a8-ac7a-319a-b18a-28c70f44cb5a",
@@ -88,6 +123,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "680e2264-ba5e-3659-90a1-51b0ed4fcbc8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d388658505bf707ff0cd7142c37c868febf8c2a5"
+    },
+    {
       "id": "69d55c4c-c4c4-37e4-a59b-a5b64df7a3d0",
       "product": {
         "name": "Linux",
@@ -96,6 +141,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <0ee53081425a1a31ce15089012cd96b8353eb44e"
+    },
+    {
+      "id": "72777a23-eace-3488-bcd6-d661141d1039",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <663cf98baced6941a0f3f00e1be61024e57d4429"
     },
     {
       "id": "aabcecda-76f7-3d57-97a7-3305aedeb088",
@@ -116,6 +171,36 @@
         }
       },
       "product_version": "2.6.12"
+    },
+    {
+      "id": "b9f1a8c3-4bd3-3f80-9cdd-5ccda3e01ffa",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "e0fde1ae-5fe3-35b4-8fb0-fe1babf24895",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "ed994482-fcc7-3911-98cf-80e000aacbf1",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <2fc4e71aefab57c80ccc9775aad2af503fc90810"
     }
   ],
   "enisaIdVendor": [

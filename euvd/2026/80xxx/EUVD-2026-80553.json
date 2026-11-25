@@ -3,7 +3,7 @@
   "enisaUuid": "d3c87570-4ae1-39cf-a04d-3fea9fa76c5d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmtd: mtdoops: free page bitmap when the backing MTD is removed\n\nmtdoops_notify_add() allocates oops_page_used when the configured MTD\ndevice is registered.  mtdoops_notify_remove() detaches from that device\nbut leaves the bitmap allocated.  If the same MTD device is later\nregistered again, the add path allocates a new bitmap and overwrites the\nold pointer, leaking one vmalloc allocation per remove/add cycle.\n\nThis is only visible when the backing MTD device can disappear and be\nregistered again while mtdoops remains loaded, so the usual static MTD\ncase does not expose it.\n\nFree the bitmap after unregistering the dumper and flushing the pending\nworkers, then clear the pointer and page count before a later attach can\nallocate fresh state.  Clearing the pointer also keeps the module exit\npath from freeing the same bitmap a second time after a remove event.",
   "datePublished": "Sep 16, 2026, 10:32:37 AM",
-  "dateUpdated": "Sep 16, 2026, 10:32:37 AM",
+  "dateUpdated": "Oct 19, 2026, 8:55:27 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/477d61d54e097e90f748aa18d013805abd56bcbd",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/956e7da12c114f13c63d126ab1d79c3b6a819060"
   ],
   "aliases": [
+    "GHSA-wvj7-v5wh-67w6",
     "CVE-2026-89953"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "026490d7-7b57-3c0a-a7a0-94466855fd2e",
@@ -152,6 +153,16 @@
       "product_version": "be95745f01677245a061a8f51473ef5ec8ad008e <a91ac71e67c3e01ed9afd9841435bebb930293f8"
     },
     {
+      "id": "881712b0-8274-3107-8c91-59260c154988",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "a3afa8b0-5390-365e-b675-99963b2b08f5",
       "product": {
         "name": "Linux",
@@ -190,16 +201,6 @@
         }
       },
       "product_version": "be95745f01677245a061a8f51473ef5ec8ad008e <1e5cd8bc902331ff801df88cbb299029ae062753"
-    },
-    {
-      "id": "f8017d41-9c6e-3059-99dc-e163ab14a9d9",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     }
   ],
   "enisaIdVendor": [

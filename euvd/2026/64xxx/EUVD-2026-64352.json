@@ -3,8 +3,10 @@
   "enisaUuid": "63b75208-7618-3081-aa64-8ea5056ddd63",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: fix skb length accounting after generic XDP frag adjustment\n\nGeneric XDP exposes non-linear skb fragments through an xdp_buff. If an\nXDP program adjusts the fragment area, bpf_prog_run_generic_xdp() copies\nxdp_frags_size back to skb->data_len but leaves skb->len containing the\nold fragment contribution.\n\nAfter a fragment shrink, this makes skb_headlen() larger than the actual\nlinear area. In the reproduced UDP receive path, __skb_datagram_iter()\ncopied 1024 bytes past the actual linear tail to userspace, starting at\nstruct skb_shared_info. The copied bytes included the affected skb's\nnr_frags, xdp_frags_size and a kernel pointer from\nskb_shinfo(skb)->frags[0]. Real packet data was displaced by the same\namount and truncated at the end.\n\nSubtract the old data_len before replacing it and add the new data_len\nafterwards, keeping skb->len and skb->data_len synchronized.\n\nA 60000-byte UDP datagram on a veth pair with MTU 64000 was shortened by\n1024 bytes from its fragment area. Before the fix, all 10 runs produced\ncorrupted payloads. After the fix, all 10 runs matched the expected\npayload exactly.",
   "datePublished": "Aug 22, 2026, 3:32:37 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:37 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Aug 25, 2026, 5:41:19 AM",
+  "baseScore": 9.1,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N",
   "references": [
     "https://git.kernel.org/stable/c/72468efcc089782fa047afddd10856b11a14ef5b",
     "https://git.kernel.org/stable/c/5f30f9c302cea1f2ebf97abe574c1826544223d7",
@@ -12,10 +14,11 @@
     "https://git.kernel.org/stable/c/33f2b2eb33d666ecac68031e0f31424fb70528db"
   ],
   "aliases": [
-    "CVE-2026-74665"
+    "CVE-2026-74665",
+    "GHSA-2vgp-f9r9-4w6f"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.37,
   "enisaIdProduct": [
     {
       "id": "113647ac-e64f-3610-a7ca-384412a0541d",

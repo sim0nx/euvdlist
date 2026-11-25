@@ -3,18 +3,22 @@
   "enisaUuid": "64cd2f1d-6125-3ee5-8bb4-1dd8ad75cdcf",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nspi: microchip-core-qspi: control built-in cs manually\n\nThe coreQSPI IP supports only a single chip select, which is\nautomagically operated by the hardware - set low when the transmit\nbuffer first gets written to and set high when the number of bytes\nwritten to the TOTALBYTES field of the FRAMES register have been sent on\nthe bus. Additional devices must use GPIOs for their chip selects.\nIt was reported to me that if there are two devices attached to this\nQSPI controller that the in-built chip select is set low while linux\ntries to access the device attached to the GPIO.\n\nThis went undetected as the boards that connected multiple devices to\nthe SPI controller all exclusively used GPIOs for chip selects, not\nrelying on the built-in chip select at all. It turns out that this was\nbecause the built-in chip select, when controlled automagically, is set\nlow when active and high when inactive, thereby ruling out its use for\nactive-high devices or devices that need to transmit with the chip\nselect disabled.\n\nModify the driver so that it controls chip select directly, retaining\nthe behaviour for mem_ops of setting the chip select active for the\nentire duration of the transfer in the exec_op callback. For regular\ntransfers, implement the set_cs callback for the core to use.\n\nAs part of this, the existing setup callback, mchp_coreqspi_setup_op(),\nis removed. Modifying the CLKIDLE field is not safe to do during\noperation when there are multiple devices, so this code is removed\nentirely. Setting the MASTER and ENABLE fields is something that can be\ndone once at probe, it doesn't need to be re-run for each device.\nInstead the new setup callback sets the built-in chip select to its\ninactive state for active-low devices, as the reset value of the chip\nselect in software controlled mode is low.",
   "datePublished": "May 28, 2026, 9:36:04 AM",
-  "dateUpdated": "May 28, 2026, 9:36:04 AM",
+  "dateUpdated": "Oct 30, 2026, 12:26:00 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/06b14dd2393933e8cd574157369e551bd615b52a",
+    "https://git.kernel.org/stable/c/783dc000b8be6d18713bde4d2705e168f2a61782",
+    "https://git.kernel.org/stable/c/244fc8942123afe753ae8962407fb312a1d96a07",
     "https://git.kernel.org/stable/c/998f43196d732f20f9b71eb6ebd973736c9fa911",
     "https://git.kernel.org/stable/c/ee3c99aa102212ad59dc2c19595515c4a6729307",
     "https://git.kernel.org/stable/c/7672749e1496215e8683ce57cf323119033954cf"
   ],
   "aliases": [
+    "GHSA-v9m3-f9j3-xrv6",
     "CVE-2026-46148"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.12,
   "enisaIdProduct": [
     {
       "id": "0fe664b3-e1cd-3870-9ef1-e42639a2daa1",
@@ -25,6 +29,26 @@
         }
       },
       "product_version": "8596124c4c1bc7561454cee0463c16eca70b5d25 <998f43196d732f20f9b71eb6ebd973736c9fa911"
+    },
+    {
+      "id": "2312e69f-b4fe-3178-9f99-ceadaa714f61",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8596124c4c1bc7561454cee0463c16eca70b5d25 <244fc8942123afe753ae8962407fb312a1d96a07"
+    },
+    {
+      "id": "39131f60-2ad9-3fc2-8ad3-6c39ba0a6321",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.1"
     },
     {
       "id": "40b2c9bb-d8a0-36f7-a164-c1253a4bded2",
@@ -57,14 +81,24 @@
       "product_version": "6.1"
     },
     {
-      "id": "8a45c23d-8bdd-3374-8974-2e199e752ce4",
+      "id": "64d1aabc-8033-3e7e-ae65-0262968373a7",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.1-rc3"
+      "product_version": "8596124c4c1bc7561454cee0463c16eca70b5d25 <783dc000b8be6d18713bde4d2705e168f2a61782"
+    },
+    {
+      "id": "a6c1cec1-b911-312a-9997-ce67e74ea45a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8596124c4c1bc7561454cee0463c16eca70b5d25 <06b14dd2393933e8cd574157369e551bd615b52a"
     },
     {
       "id": "a9732961-e406-31ca-b90a-70ba4c69cd94",
@@ -87,6 +121,16 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "c043f191-d599-371d-8870-81243d34e1bd",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.12.114"
+    },
+    {
       "id": "d7166782-5731-3bfa-8057-4d962d8b1be2",
       "product": {
         "name": "Linux",
@@ -95,6 +139,26 @@
         }
       },
       "product_version": "patch: 7.0.7"
+    },
+    {
+      "id": "e5064e1d-4458-3d44-8589-3dde8eeca870",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
+      "id": "e99d7a23-4dbc-3ddf-8a4a-c19fc63d277f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
     }
   ],
   "enisaIdVendor": [

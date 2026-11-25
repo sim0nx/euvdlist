@@ -1,0 +1,214 @@
+{
+  "id": "EUVD-2021-34282",
+  "enisaUuid": "9d22bf8d-e8aa-3f49-86eb-1e9e7dd850c6",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nkvm: avoid speculation-based attacks from out-of-range memslot accesses\n\nKVM's mechanism for accessing guest memory translates a guest physical\naddress (gpa) to a host virtual address using the right-shifted gpa\n(also known as gfn) and a struct kvm_memory_slot.  The translation is\nperformed in __gfn_to_hva_memslot using the following formula:\n\n      hva = slot->userspace_addr + (gfn - slot->base_gfn) * PAGE_SIZE\n\nIt is expected that gfn falls within the boundaries of the guest's\nphysical memory.  However, a guest can access invalid physical addresses\nin such a way that the gfn is invalid.\n\n__gfn_to_hva_memslot is called from kvm_vcpu_gfn_to_hva_prot, which first\nretrieves a memslot through __gfn_to_memslot.  While __gfn_to_memslot\ndoes check that the gfn falls within the boundaries of the guest's\nphysical memory or not, a CPU can speculate the result of the check and\ncontinue execution speculatively using an illegal gfn. The speculation\ncan result in calculating an out-of-bounds hva.  If the resulting host\nvirtual address is used to load another guest physical address, this\nis effectively a Spectre gadget consisting of two consecutive reads,\nthe second of which is data dependent on the first.\n\nRight now it's not clear if there are any cases in which this is\nexploitable.  One interesting case was reported by the original author\nof this patch, and involves visiting guest page tables on x86.  Right\nnow these are not vulnerable because the hva read goes through get_user(),\nwhich contains an LFENCE speculation barrier.  However, there are\npatches in progress for x86 uaccess.h to mask kernel addresses instead of\nusing LFENCE; once these land, a guest could use speculation to read\nfrom the VMM's ring 3 address space.  Other architectures such as ARM\nalready use the address masking method, and would be susceptible to\nthis same kind of data-dependent access gadgets.  Therefore, this patch\nproactively protects from these attacks by masking out-of-bounds gfns\nin __gfn_to_hva_memslot, which blocks speculation of invalid hvas.\n\nSean Christopherson noted that this patch does not cover\nkvm_read_guest_offset_cached.  This however is limited to a few bytes\npast the end of the cache, and therefore it is unlikely to be useful in\nthe context of building a chain of data dependent accesses.",
+  "datePublished": "May 21, 2024, 2:20:04 PM",
+  "dateUpdated": "May 11, 2026, 1:51:23 PM",
+  "baseScore": 0.0,
+  "references": [
+    "https://git.kernel.org/stable/c/3098b86390a6b9ea52657689f08410baf130ceff",
+    "https://git.kernel.org/stable/c/740621309b25bbf619b8a0ba5fd50a8e58989441",
+    "https://git.kernel.org/stable/c/361ce3b917aff93123e9e966d8608655c967f438",
+    "https://git.kernel.org/stable/c/22b87fb17a28d37331bb9c1110737627b17f6781",
+    "https://git.kernel.org/stable/c/bff1fbf0cf0712686f1df59a83fba6e31d2746a0",
+    "https://git.kernel.org/stable/c/7af299b97734c7e7f465b42a2139ce4d77246975",
+    "https://git.kernel.org/stable/c/ed0e2a893092c7fcb4ff7ba74e5efce53a6f5940",
+    "https://git.kernel.org/stable/c/da27a83fd6cc7780fea190e1f5c19e87019da65c"
+  ],
+  "aliases": [
+    "CVE-2021-47277",
+    "GHSA-6239-6f98-f8vf"
+  ],
+  "assigner": "Linux",
+  "epss": 0.26,
+  "enisaIdProduct": [
+    {
+      "id": "17aeb77e-846f-3edf-9591-518633659ee9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8a7ae055f3533b520401c170ac55e30628b34df5 <3098b86390a6b9ea52657689f08410baf130ceff"
+    },
+    {
+      "id": "1d370b53-c961-3abb-9356-6b97527a84bb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8a7ae055f3533b520401c170ac55e30628b34df5 <361ce3b917aff93123e9e966d8608655c967f438"
+    },
+    {
+      "id": "234183cf-1266-3cc4-9a33-d7fcd802ff9f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.4.273"
+    },
+    {
+      "id": "4d06769b-e538-31b0-a038-ca4eea4d1b9b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8a7ae055f3533b520401c170ac55e30628b34df5 <7af299b97734c7e7f465b42a2139ce4d77246975"
+    },
+    {
+      "id": "6a5fb856-e83f-3122-ad97-34e98b61812e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.195"
+    },
+    {
+      "id": "98b3350d-48fd-3b06-a84b-b4742685293a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "a1ab6590-5e9e-36c3-bfd8-f8bf6a94f765",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8a7ae055f3533b520401c170ac55e30628b34df5 <ed0e2a893092c7fcb4ff7ba74e5efce53a6f5940"
+    },
+    {
+      "id": "a2f870fa-fd90-3dc4-bb26-70f9f6ef8b57",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.237"
+    },
+    {
+      "id": "a46e31d5-6052-35b4-b35c-65e9ad22a453",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8a7ae055f3533b520401c170ac55e30628b34df5 <bff1fbf0cf0712686f1df59a83fba6e31d2746a0"
+    },
+    {
+      "id": "a7aeadf9-1014-3e07-809c-7067b5392b7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    },
+    {
+      "id": "bf730114-527c-37ce-ad1f-1bb01857e98d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "2.6.25"
+    },
+    {
+      "id": "da1668de-f5d3-332c-abd6-850cb2484054",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.11"
+    },
+    {
+      "id": "deda82aa-a3d7-3b8f-8e33-711a916dfc2d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8a7ae055f3533b520401c170ac55e30628b34df5 <740621309b25bbf619b8a0ba5fd50a8e58989441"
+    },
+    {
+      "id": "e69ece10-6df8-3a38-8291-c5764eab9470",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8a7ae055f3533b520401c170ac55e30628b34df5 <da27a83fd6cc7780fea190e1f5c19e87019da65c"
+    },
+    {
+      "id": "f3acae32-c05b-341d-9d19-75361dc77eeb",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.44"
+    },
+    {
+      "id": "f663185c-2d88-3bad-9549-59babf227ba6",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8a7ae055f3533b520401c170ac55e30628b34df5 <22b87fb17a28d37331bb9c1110737627b17f6781"
+    },
+    {
+      "id": "fbad96af-a189-3c15-9622-314a29108c8d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.9.273"
+    },
+    {
+      "id": "fef6a4e9-880f-3342-a450-0175fff04a66",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.126"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "fefc4bd8-74b0-370f-9871-5cb30a637693",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -2,9 +2,11 @@
   "id": "EUVD-2026-59238",
   "enisaUuid": "cfe45d6a-40bd-33a3-b67f-d3b1028eef3a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nqede: fix off-by-one in BD ring consumption on build_skb failure\n\nqede_rx_build_skb() and qede_tpa_rx_build_skb() do not check for a\nNULL return from qede_build_skb(). When it returns NULL under memory\npressure, the functions still consume a BD from the ring before\nreturning NULL. The callers then recycle additional BDs, resulting in\none extra BD being consumed (off-by-one). This desynchronizes the BD\nring, which can corrupt DMA page reference counts and lead to SLUB\nfreelist corruption.\n\nCommit 4e910dbe3650 (\"qede: confirm skb is allocated before using\")\nadded a NULL check inside qede_build_skb() to prevent a NULL pointer\ndereference, but did not address the missing NULL checks in the\ncallers, making this off-by-one reachable.\n\nFix this by adding NULL checks for the return value of\nqede_build_skb() in both qede_rx_build_skb() and\nqede_tpa_rx_build_skb(), returning NULL immediately before any BD ring\nmanipulation.",
-  "datePublished": "Aug 15, 2026, 6:32:21 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:21 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:55:46 AM",
+  "dateUpdated": "Oct 16, 2026, 6:55:18 PM",
+  "baseScore": 9.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/ecc05d4b20220a09c9c69584fc46ca55248a374a",
     "https://git.kernel.org/stable/c/07be8b8adf91b7ada4c3dacce064d572a6066421",
@@ -13,15 +15,14 @@
     "https://git.kernel.org/stable/c/814a5edac8c9fc04051808d5faaa93768e989281",
     "https://git.kernel.org/stable/c/b066420e57f3402a52c998678b4678252ac9bb63",
     "https://git.kernel.org/stable/c/982d6d6bc059c5dff37a2201c2f08c14bcfcbd20",
-    "https://git.kernel.org/stable/c/a0a558ca7e75b49e71f8c545c30e8c005e6e4e2f",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72339"
+    "https://git.kernel.org/stable/c/a0a558ca7e75b49e71f8c545c30e8c005e6e4e2f"
   ],
   "aliases": [
     "GHSA-447g-7f2j-g4vp",
     "CVE-2026-72339"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.75,
   "enisaIdProduct": [
     {
       "id": "1b6337d7-e6ea-3591-a16e-d7df4356544e",
@@ -94,16 +95,6 @@
       "product_version": "patch: 5.10.261"
     },
     {
-      "id": "503c692e-e252-373b-9682-e83bf89e9dfe",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
-    },
-    {
       "id": "6397da97-e755-3497-911f-8bcd2b5e391e",
       "product": {
         "name": "Linux",
@@ -162,6 +153,16 @@
         }
       },
       "product_version": "patch: 6.12.97"
+    },
+    {
+      "id": "ac8221ff-c9b9-3bde-8d0b-19aa38c44eea",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "bcb1e343-287f-3a37-b1ad-d48133319013",

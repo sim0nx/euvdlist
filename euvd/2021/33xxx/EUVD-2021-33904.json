@@ -1,0 +1,172 @@
+{
+  "id": "EUVD-2021-33904",
+  "enisaUuid": "17ec19f9-3344-3f10-b819-ae55d275bad8",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmm/memory-failure: make sure wait for page writeback in memory_failure\n\nOur syzkaller trigger the \"BUG_ON(!list_empty(&inode->i_wb_list))\" in\nclear_inode:\n\n  kernel BUG at fs/inode.c:519!\n  Internal error: Oops - BUG: 0 [#1] SMP\n  Modules linked in:\n  Process syz-executor.0 (pid: 249, stack limit = 0x00000000a12409d7)\n  CPU: 1 PID: 249 Comm: syz-executor.0 Not tainted 4.19.95\n  Hardware name: linux,dummy-virt (DT)\n  pstate: 80000005 (Nzcv daif -PAN -UAO)\n  pc : clear_inode+0x280/0x2a8\n  lr : clear_inode+0x280/0x2a8\n  Call trace:\n    clear_inode+0x280/0x2a8\n    ext4_clear_inode+0x38/0xe8\n    ext4_free_inode+0x130/0xc68\n    ext4_evict_inode+0xb20/0xcb8\n    evict+0x1a8/0x3c0\n    iput+0x344/0x460\n    do_unlinkat+0x260/0x410\n    __arm64_sys_unlinkat+0x6c/0xc0\n    el0_svc_common+0xdc/0x3b0\n    el0_svc_handler+0xf8/0x160\n    el0_svc+0x10/0x218\n  Kernel panic - not syncing: Fatal exception\n\nA crash dump of this problem show that someone called __munlock_pagevec\nto clear page LRU without lock_page: do_mmap -> mmap_region -> do_munmap\n-> munlock_vma_pages_range -> __munlock_pagevec.\n\nAs a result memory_failure will call identify_page_state without\nwait_on_page_writeback.  And after truncate_error_page clear the mapping\nof this page.  end_page_writeback won't call sb_clear_inode_writeback to\nclear inode->i_wb_list.  That will trigger BUG_ON in clear_inode!\n\nFix it by checking PageWriteback too to help determine should we skip\nwait_on_page_writeback.",
+  "datePublished": "May 21, 2024, 2:19:50 PM",
+  "dateUpdated": "May 11, 2026, 1:50:58 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/d05267fd27a5c4f54e06daefa3035995d765ca0c",
+    "https://git.kernel.org/stable/c/6d210d547adc2218ef8b5bcf23518c5f2f1fd872",
+    "https://git.kernel.org/stable/c/566345aaabac853aa866f53a219c4b02a6beb527",
+    "https://git.kernel.org/stable/c/9e379da727a7a031be9b877cde7b9c34a0fb8306",
+    "https://git.kernel.org/stable/c/28788dc5c70597395b6b451dae4549bbaa8e2c56",
+    "https://git.kernel.org/stable/c/e8675d291ac007e1c636870db880f837a9ea112a"
+  ],
+  "aliases": [
+    "CVE-2021-47256",
+    "GHSA-p52g-5qgx-4crw"
+  ],
+  "assigner": "Linux",
+  "epss": 0.23,
+  "enisaIdProduct": [
+    {
+      "id": "23cbec22-a9b8-3a03-bed2-d012fbb83933",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.16"
+    },
+    {
+      "id": "2dbf867b-489b-3d9f-ab01-8f7c7c65e5fe",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0bc1f8b0682caa39f45ce1e0228ebf43acb46111 <e8675d291ac007e1c636870db880f837a9ea112a"
+    },
+    {
+      "id": "3225587c-935d-3b2d-b441-3c843843d90b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.19.196"
+    },
+    {
+      "id": "559560d6-c0d5-368e-a754-430a67a4ad7c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0bc1f8b0682caa39f45ce1e0228ebf43acb46111 <566345aaabac853aa866f53a219c4b02a6beb527"
+    },
+    {
+      "id": "8e039ad3-3253-30fc-8e34-74574b9d2158",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0bc1f8b0682caa39f45ce1e0228ebf43acb46111 <d05267fd27a5c4f54e06daefa3035995d765ca0c"
+    },
+    {
+      "id": "a1d99590-05c0-3c17-a70f-6bd2b0c7fe8e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 4.14.238"
+    },
+    {
+      "id": "b4659470-e1d2-3fe4-9a58-30d2abff70c9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.13"
+    },
+    {
+      "id": "c2e632c8-c029-39c1-81b4-ea001416fd29",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.46"
+    },
+    {
+      "id": "c6fd19c2-591a-3844-bac4-4b5b7dfb2e62",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0bc1f8b0682caa39f45ce1e0228ebf43acb46111 <6d210d547adc2218ef8b5bcf23518c5f2f1fd872"
+    },
+    {
+      "id": "c855da13-76de-37e3-9127-74304aa4a590",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.128"
+    },
+    {
+      "id": "d7c2770d-8fcb-3505-a8ca-0d7b90ba2b72",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0bc1f8b0682caa39f45ce1e0228ebf43acb46111 <9e379da727a7a031be9b877cde7b9c34a0fb8306"
+    },
+    {
+      "id": "dc9e849e-1697-3cd7-82e8-77745c82c7bf",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.12.13"
+    },
+    {
+      "id": "de06098c-27cd-378f-b1d9-d587433828df",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "0bc1f8b0682caa39f45ce1e0228ebf43acb46111 <28788dc5c70597395b6b451dae4549bbaa8e2c56"
+    },
+    {
+      "id": "de076491-eb22-33f0-b98a-b2cdf9704d71",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "751e8a69-e3e9-3292-a78a-fcdee98399ea",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

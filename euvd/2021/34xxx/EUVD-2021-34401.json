@@ -1,0 +1,130 @@
+{
+  "id": "EUVD-2021-34401",
+  "enisaUuid": "a07ee685-abea-354f-bc93-b8038924cadb",
+  "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmac80211-hwsim: fix late beacon hrtimer handling\n\nThomas explained in https://lore.kernel.org/r/87mtoeb4hb.ffs@tglx\nthat our handling of the hrtimer here is wrong: If the timer fires\nlate (e.g. due to vCPU scheduling, as reported by Dmitry/syzbot)\nthen it tries to actually rearm the timer at the next deadline,\nwhich might be in the past already:\n\n 1          2          3          N          N+1\n |          |          |   ...    |          |\n\n ^ intended to fire here (1)\n            ^ next deadline here (2)\n                                      ^ actually fired here\n\nThe next time it fires, it's later, but will still try to schedule\nfor the next deadline (now 3), etc. until it catches up with N,\nbut that might take a long time, causing stalls etc.\n\nNow, all of this is simulation, so we just have to fix it, but\nnote that the behaviour is wrong even per spec, since there's no\nvalue then in sending all those beacons unaligned - they should be\naligned to the TBTT (1, 2, 3, ... in the picture), and if we're a\nbit (or a lot) late, then just resume at that point.\n\nTherefore, change the code to use hrtimer_forward_now() which will\nensure that the next firing of the timer would be at N+1 (in the\npicture), i.e. the next interval point after the current time.",
+  "datePublished": "May 21, 2024, 3:03:52 PM",
+  "dateUpdated": "May 11, 2026, 1:53:52 PM",
+  "baseScore": null,
+  "references": [
+    "https://git.kernel.org/stable/c/9bee85de2c8155388c09a2e1530a243ec1c96f05",
+    "https://git.kernel.org/stable/c/2c204cf594df3b9468368dc9d0b24d482d93cda7",
+    "https://git.kernel.org/stable/c/ed2adf69e29848d1eb9df99633dde655421c92ed",
+    "https://git.kernel.org/stable/c/313bbd1990b6ddfdaa7da098d0c56b098a833572"
+  ],
+  "aliases": [
+    "GHSA-cwq4-fr9x-6844",
+    "CVE-2021-47396"
+  ],
+  "assigner": "Linux",
+  "epss": 0.24,
+  "enisaIdProduct": [
+    {
+      "id": "0276a91a-e3f4-3d91-803a-743e1a06e600",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "01e59e467ecf976c782eecd4dc99644802cc60e2 <2c204cf594df3b9468368dc9d0b24d482d93cda7"
+    },
+    {
+      "id": "07b730e7-7b31-32e6-abf8-57fda3369c0a",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "01e59e467ecf976c782eecd4dc99644802cc60e2 <ed2adf69e29848d1eb9df99633dde655421c92ed"
+    },
+    {
+      "id": "0c10ee30-a7de-334a-9c8e-9218ee37fc22",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15"
+    },
+    {
+      "id": "103a07b2-788e-3383-a245-4cda832ac7f9",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.4.151"
+    },
+    {
+      "id": "5732647b-949c-3ee0-b8fc-1ed80d952486",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.14.10"
+    },
+    {
+      "id": "6c960164-5747-301b-a5cf-0c441f966697",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.71"
+    },
+    {
+      "id": "71a662fe-d48b-3a78-9888-e3adf7da40a0",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 0"
+    },
+    {
+      "id": "af907594-f27a-3881-967a-166f43a85e26",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "01e59e467ecf976c782eecd4dc99644802cc60e2 <313bbd1990b6ddfdaa7da098d0c56b098a833572"
+    },
+    {
+      "id": "d0d629ca-e2bf-3b9d-b1a6-2dd9f3090ae5",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "01e59e467ecf976c782eecd4dc99644802cc60e2 <9bee85de2c8155388c09a2e1530a243ec1c96f05"
+    },
+    {
+      "id": "df3c72a4-8a63-3234-8316-5da3b250202b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "3.9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "b5011431-45cb-3486-9cf1-8f889566e50b",
+      "vendor": {
+        "name": "Linux"
+      }
+    }
+  ]
+}

@@ -2,24 +2,25 @@
   "id": "EUVD-2026-59512",
   "enisaUuid": "5ada43bd-3ed1-32cd-acad-c8adb889afdf",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnvdimm/btt: Handle preemption in BTT lane acquisition\n\nBTT lanes serialize access to per-lane metadata and workspace state\nduring BTT I/O. The btt-check unit test reports data mismatches during\nBTT writes due to a race in lane acquisition that can lead to silent\ndata corruption.\n\nThe existing lane model uses a spinlock together with a per-CPU\nrecursion count. That recursion model stopped being valid after BTT\nlanes became preemptible: another task can run on the same CPU,\nobserve a non-zero recursion count, bypass locking, and use the same\nlane concurrently.\n\nBTT lanes are also held across arena_write_bytes() calls. That path\nreaches nsio_rw_bytes(), which flushes writes with nvdimm_flush().\nSome provider flush callbacks can sleep, making a spinlock the wrong\nprimitive for the lane lifetime.\n\nReplace the spinlock-based recursion model with a dynamically\nallocated per-lane mutex array and take the lane lock\nunconditionally.\n\nAdd might_sleep() to catch any future atomic-context caller.\n\nFound with the ndctl unit test btt-check.sh.",
-  "datePublished": "Aug 15, 2026, 6:32:31 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:31 AM",
-  "baseScore": 0.0,
+  "datePublished": "Aug 15, 2026, 5:58:47 AM",
+  "dateUpdated": "Oct 16, 2026, 6:55:35 PM",
+  "baseScore": 7.3,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L",
   "references": [
     "https://git.kernel.org/stable/c/fd7a97b2514cfc4b4cc067a27dd39bde2a8b1735",
     "https://git.kernel.org/stable/c/73e35c1bdfa160b41fdbe204e02325f0687de506",
     "https://git.kernel.org/stable/c/417918783bcfe0be135019df16a267b3af442efd",
     "https://git.kernel.org/stable/c/5c53406098b599c420b031e6ec5ba8a2f3794c50",
     "https://git.kernel.org/stable/c/4eafa810b042d985ec6bbf5b514414e73cee6f6f",
-    "https://git.kernel.org/stable/c/8d4b989d9c9afe5f185aa5853b666fc4617afe9e",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-74365"
+    "https://git.kernel.org/stable/c/8d4b989d9c9afe5f185aa5853b666fc4617afe9e"
   ],
   "aliases": [
     "CVE-2026-74365",
     "GHSA-h26r-wqjv-57jf"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.13,
   "enisaIdProduct": [
     {
       "id": "0186c116-5dd2-3834-866c-492a4f57d3c0",
@@ -40,16 +41,6 @@
         }
       },
       "product_version": "6.1.63 <6.1.178"
-    },
-    {
-      "id": "1265e8c4-60c7-3ac0-9ed2-5a9a9355bc15",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "17579c5a-3c39-32de-9c8d-483aa10df7f6",
@@ -120,6 +111,16 @@
         }
       },
       "product_version": "patch: 0"
+    },
+    {
+      "id": "52d2d884-55d7-3499-9b5f-e3094836d2b8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "66dad05f-0e8c-337d-8f5c-0a1489549e26",

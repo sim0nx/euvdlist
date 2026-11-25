@@ -3,17 +3,18 @@
   "enisaUuid": "ff85bd74-3dd7-3a2a-bd95-c7ef7cfdfd16",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nthunderbolt: Fix NULL dereference in tb_remove_work()\n\nThere is a slight race between tb_remove_work() and tb_domain_remove()\nwhich leads to dereferencing a NULL tb->root_switch pointer inside\ntb_free_unplugged_xdomains():\n\n        Thread A                            Thread B\n\n  tb_remove_work()\n                                    tb_domain_remove()\n                                      mutex_lock(&tb->lock)\n                                      tb_stop()\n                                        /* doesn't cancel a running callback */\n                                        cancel_delayed_work(&tcm->remove_work)\n                                        ...\n                                        tb_switch_remove(tb->root_switch)\n                                        tb->root_switch = NULL\n                                      mutex_unlock(&tb->lock)\n    mutex_lock(&tb->lock)\n    ...\n    /* without checking ->root_switch */\n    tb_free_unplugged_xdomains(tb->root_switch)\n    mutex_unlock(&tb->lock)\n\nCommit a8937f35cf39 (\"thunderbolt: Remove XDomain from the bus without\nholding tb->lock\") doesn't seem right to move tb_free_unplugged_xdomains()\nout of the &tb->lock section and the check for tb->root_switch, in\nparticular.  It states:\n\n  For this reason separate removing the XDomain from the topology data\n  structures (where we need the lock) from unregistering the device from\n  the bus (where remove callbacks of the drivers are being called).\n\ntb_free_unplugged_xdomains() belongs to the former group of functions\nrequiring the lock.  And it also calls tb_xdomain_remove() which should\nonly be called with &tb->lock held.\n\nFound by Linux Verification Center (linuxtesting.org) with Svace static\nanalysis tool.",
   "datePublished": "Oct 18, 2026, 3:46:02 PM",
-  "dateUpdated": "Oct 18, 2026, 3:46:02 PM",
+  "dateUpdated": "Oct 19, 2026, 9:23:58 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/2f4cd43faa9d6470b30a9fbcbac6584db8108c1f",
     "https://git.kernel.org/stable/c/4310c6b8e75d6a47f7548e5948fbe6318aa4440a"
   ],
   "aliases": [
-    "CVE-2026-98688"
+    "CVE-2026-98688",
+    "GHSA-g38j-2fmx-j974"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "0fa78e43-6bb5-31a2-b8f1-9d3883e2bd01",
@@ -34,6 +35,16 @@
         }
       },
       "product_version": "7.2"
+    },
+    {
+      "id": "1c669f02-2bc5-3384-9bbf-230d4cb1deee",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "42eacc97-d651-3c64-bc6d-173a8441512f",
@@ -104,16 +115,6 @@
         }
       },
       "product_version": "a8937f35cf39c39c64325aa84d0463d866850857 <2f4cd43faa9d6470b30a9fbcbac6584db8108c1f"
-    },
-    {
-      "id": "e47f1668-fe0c-3c94-b9ed-3028f05e648c",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc6"
     }
   ],
   "enisaIdVendor": [

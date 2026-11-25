@@ -3,7 +3,7 @@
   "enisaUuid": "c90d1dc4-6fbf-3a0c-b5d3-88710e58c21d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nInput: evdev - zero absinfo before partial copy in EVIOCSABS\n\nThe EVIOCSABS handler copies at most the user supplied ioctl size into\nan uninitialized on-stack struct input_absinfo:\n\n\tif (copy_from_user(&abs, p, min_t(size_t,\n\t\t\tsize, sizeof(struct input_absinfo))))\n\nThe size comes from _IOC_SIZE() of the ioctl command and is therefore\nfully controlled by userspace. A short size leaves the trailing part of\nthe structure holding whatever was on the kernel stack, and the whole\nstructure is then stored into the device:\n\n\tdev->absinfo[t] = abs;\n\nEVIOCGABS hands that back to userspace, disclosing the stale stack\nbytes. Only the resolution field is currently cleared, which covers the\nlegacy struct layout but not an arbitrarily short size.\n\nZero the structure before the copy so any part not supplied by the\ncaller reads back as zero. The existing resolution fixup is kept, since\nit also handles a size that partially overlaps that field.",
   "datePublished": "Oct 6, 2026, 8:44:42 AM",
-  "dateUpdated": "Oct 6, 2026, 8:44:42 AM",
+  "dateUpdated": "Oct 19, 2026, 9:15:36 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/c0aebb57b73c7d06ad21731099afe119b113c403",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/8b852965b8eaf910c314dc346967ed82c8d4f235"
   ],
   "aliases": [
-    "CVE-2026-98205"
+    "CVE-2026-98205",
+    "GHSA-jw64-9g8w-pg6v"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "05649569-a1b1-3ca2-bc0b-6019f960a69d",
@@ -172,16 +173,6 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "b9e93552-9930-36a2-af16-e3b8ebe27d9b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc4"
-    },
-    {
       "id": "bef6df1b-c5b4-3d9d-abdb-7f518cacb3a0",
       "product": {
         "name": "Linux",
@@ -190,6 +181,16 @@
         }
       },
       "product_version": "patch: 5.10.271"
+    },
+    {
+      "id": "bf93443b-e107-3503-b211-a7839a57ec10",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "e2f797af-bc3d-3e42-99c3-09aba56f1d33",

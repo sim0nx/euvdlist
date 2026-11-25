@@ -3,8 +3,10 @@
   "enisaUuid": "3eb5a11b-00d4-35ed-ac0d-9ccd6d6328d8",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfc: nci: fix double completion race in nci_data_exchange_complete\n\nnci_close_device() and nci_rx_work can both call\nnci_data_exchange_complete() concurrently.  After commit 4527025d440ce8\n(\"nfc: nci: fix circular locking dependency in nci_close_device\") moved\nflush_workqueue(ndev->rx_wq) after mutex_unlock(&ndev->req_lock),\nrx_work is no longer serialized with the explicit completion call in the\nclose path.  Both callers read the non-NULL callback pointer and invoke\nrawsock_data_exchange_complete(), which calls sock_put() -- but only one\nsock_hold() was taken, so the second sock_put() underflows the refcount\nand frees the socket while it is still in use.\n\nReplace the bare clear_bit(NCI_DATA_EXCHANGE) with\ntest_and_clear_bit() so that only the first caller proceeds to invoke\nthe callback.",
   "datePublished": "Sep 17, 2026, 4:07:34 PM",
-  "dateUpdated": "Sep 17, 2026, 4:07:34 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:00:00 AM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/3f075832734005310740d148d1cf1c1e792ebdca",
     "https://git.kernel.org/stable/c/588ccd19a6e69eca72d54608c3ab3b45709b2305",
@@ -16,10 +18,11 @@
     "https://git.kernel.org/stable/c/8265a626cc14a48e46e6dc8c47667e72b4232ac2"
   ],
   "aliases": [
-    "CVE-2026-90224"
+    "CVE-2026-90224",
+    "GHSA-xj24-p6ph-p2w7"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.36,
   "enisaIdProduct": [
     {
       "id": "040ae235-5e57-3a6c-85a7-7fb0c1bb3418",
@@ -40,6 +43,16 @@
         }
       },
       "product_version": "6.18.21 <6.18.52"
+    },
+    {
+      "id": "07a77acc-f730-394b-a9ec-49c9d8f03731",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "0c7e7817-dd21-3e43-8f57-0c4ee1b7e03e",
@@ -200,16 +213,6 @@
         }
       },
       "product_version": "4527025d440ce84bf56e75ce1df2e84cb8178616 <ee08414d78b851e3d1856d6e4d631939b01a1bbe"
-    },
-    {
-      "id": "a1075782-9c92-37d7-880e-f31a59c7b83b",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "b5b4d52c-a0b8-324c-ba94-0fca2cac4e81",

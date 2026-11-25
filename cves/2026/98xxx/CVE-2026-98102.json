@@ -3,19 +3,21 @@
   "enisaUuid": "b30dd11c-b0a2-34e8-b8ab-fd35c4e8d72a",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nipv6: mcast: fix RCU list diversion in ip6_mc_del1_src()\n\nWhen removing a source filter whose count reaches zero, ip6_mc_del1_src()\nunlinks psf from pmc->mca_sources. If the filter was previously active,\nthe code moved psf directly into pmc->mca_tomb by updating psf->sf_next.\n\nBecause pmc->mca_sources is traversed locklessly under RCU (e.g. by\nipv6_chk_mcast_addr()), mutating psf->sf_next before a grace period\nelapses diverts concurrent readers to the tombstone list. Consequently,\nreaders miss remaining active sources in pmc->mca_sources and improperly\nexamine deleted tombstone entries.\n\nFix this by allocating a new tombstone node for pmc->mca_tomb (as done\nin sf_setstate()) and retiring the original psf via kfree_rcu().",
   "datePublished": "Sep 25, 2026, 10:35:53 AM",
-  "dateUpdated": "Sep 25, 2026, 10:35:53 AM",
+  "dateUpdated": "Oct 19, 2026, 9:13:54 AM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/c3343cd7ec8706c221e52b782f386b9af14a928a",
     "https://git.kernel.org/stable/c/4352737297b262e8367675c19a7dc6a9f53c97af",
     "https://git.kernel.org/stable/c/8d4fe5c13f5056faa6deb09a90e24a89f9ebfad4",
     "https://git.kernel.org/stable/c/5149c60c406595b56fda0c6e9aae7fd287f636aa",
     "https://git.kernel.org/stable/c/93b49239840b91313adbd77b8b52993eff2d08c1"
   ],
   "aliases": [
-    "CVE-2026-98102"
+    "CVE-2026-98102",
+    "GHSA-g228-xhf6-wqq6"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.09,
   "enisaIdProduct": [
     {
       "id": "0a7b041a-39dd-3451-8796-668ad687fceb",
@@ -28,14 +30,14 @@
       "product_version": "5.13"
     },
     {
-      "id": "43f2c8aa-7021-3612-8a43-719458e7bb4a",
+      "id": "4b3ad460-7e1f-365a-a92f-1f6b42e8ced9",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc2"
+      "product_version": "patch: 6.6.158"
     },
     {
       "id": "4d20791b-5531-3a63-b82a-a30451c215b7",
@@ -88,6 +90,16 @@
       "product_version": "4b200e398953c237c86d32bf26d4cb2a96556a6f <8d4fe5c13f5056faa6deb09a90e24a89f9ebfad4"
     },
     {
+      "id": "99f27333-720b-38f0-95f3-3aca4b014c7b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "4b200e398953c237c86d32bf26d4cb2a96556a6f <c3343cd7ec8706c221e52b782f386b9af14a928a"
+    },
+    {
       "id": "9b62689d-49e7-3f9c-90e6-74e44cdc6b87",
       "product": {
         "name": "Linux",
@@ -136,6 +148,16 @@
         }
       },
       "product_version": "patch: 7.2.7"
+    },
+    {
+      "id": "dc71695c-6f83-3e73-8478-ae3939eb77af",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     }
   ],
   "enisaIdVendor": [

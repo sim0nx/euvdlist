@@ -2,23 +2,34 @@
   "id": "EUVD-2026-59224",
   "enisaUuid": "aefc9f11-3b0b-3564-b4aa-3bd1e0fec722",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nperf/x86/amd/core: Avoid enabling BRS from the SVM reload path\n\nBranch Sampling (BRS) and Last Branch Record (LBR) are mutually\nexclusive hardware features, and users of both are tracked via\ncpuc->lbr_users.\n\nWhen SVM is toggled on a CPU, the host perf events are reprogrammed to\nupdate the HostOnly filter bit (set when virtualization is enabled,\ncleared when it is disabled). On PerfMonV2-capable processors, this\nreprogramming is performed by calling amd_pmu_enable_all() to rewrite\nthe event selectors. However, amd_pmu_enable_all() also calls\namd_brs_enable_all(), which enables BRS whenever cpuc->lbr_users > 0.\nHaving active LBR events satisfies this gating on processors that have\nLBR but not BRS. The kernel then tries to set the BRS enable bit in\nDebugExtnCfg (MSR 0xc000010f). Since that bit is deprecated on such\nhardware, the write results in a #GP:\n\n  Call Trace:\n   <IRQ>\n   amd_pmu_enable_all+0x1d/0x90\n   amd_pmu_disable_virt+0x62/0xb0\n   kvm_arch_disable_virtualization_cpu+0xa/0x40 [kvm]\n   hardware_disable_nolock+0x1a/0x30 [kvm]\n   __flush_smp_call_function_queue+0x9b/0x410\n   __sysvec_call_function+0x18/0xc0\n   sysvec_call_function+0x69/0x90\n   </IRQ>\n   <TASK>\n   asm_sysvec_call_function+0x16/0x20\n  RIP: 0010:cpuidle_enter_state+0xc4/0x450\n   ? cpuidle_enter_state+0xb7/0x450\n   cpuidle_enter+0x29/0x40\n   cpuidle_idle_call+0xf5/0x160\n   do_idle+0x7b/0xe0\n   cpu_startup_entry+0x26/0x30\n   start_secondary+0x115/0x140\n   secondary_startup_64_no_verify+0x194/0x19b\n   </TASK>\n\nFix this by ensuring that BRS is not enabled from the event selector\nreprogramming path even when cpuc->lbr_users > 0.",
-  "datePublished": "Aug 15, 2026, 6:32:20 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:20 AM",
+  "datePublished": "Aug 15, 2026, 5:55:36 AM",
+  "dateUpdated": "Oct 30, 2026, 12:29:03 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/cb5322d04694d153cd5418267f8765a44b935f82",
+    "https://git.kernel.org/stable/c/3b0aa139ba09a5b73c0f300e652076232f869f68",
     "https://git.kernel.org/stable/c/e9b1a7411a667539c2f55e720bbb5f623b526a32",
     "https://git.kernel.org/stable/c/7cc438c99bba324a0562b1bafa747b10f7e251df",
     "https://git.kernel.org/stable/c/46d0fd8535edce31f15e48d2de1bdee39a4850e5",
-    "https://git.kernel.org/stable/c/07c60dda9c059c09f83d42a3ebda2e7cc1cf3bc2",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72325"
+    "https://git.kernel.org/stable/c/07c60dda9c059c09f83d42a3ebda2e7cc1cf3bc2"
   ],
   "aliases": [
     "GHSA-522h-ffm3-c569",
     "CVE-2026-72325"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
+    {
+      "id": "3c008825-c7b0-3728-9335-d4b59a566ca4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.191"
+    },
     {
       "id": "4485a3c7-834b-39a9-95dc-0c70e301b57b",
       "product": {
@@ -28,6 +39,26 @@
         }
       },
       "product_version": "patch: 6.18.40"
+    },
+    {
+      "id": "562a15fc-c81e-3ef8-9f10-f5de7c02191e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "70ba88f6-e7de-32e8-953f-a3a86eee1743",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bae19fdd7e9e759580ac4693d2df3bc23ab415d7 <cb5322d04694d153cd5418267f8765a44b935f82"
     },
     {
       "id": "85dd97c6-96d3-3eea-bc66-dbbad011c4e4",
@@ -70,6 +101,16 @@
       "product_version": "bae19fdd7e9e759580ac4693d2df3bc23ab415d7 <46d0fd8535edce31f15e48d2de1bdee39a4850e5"
     },
     {
+      "id": "b52bf9b4-e5ab-3fb3-9439-c0d54ba09942",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "bae19fdd7e9e759580ac4693d2df3bc23ab415d7 <3b0aa139ba09a5b73c0f300e652076232f869f68"
+    },
+    {
       "id": "b72770d1-d5eb-37ee-9cf5-645ede34c3f0",
       "product": {
         "name": "Linux",
@@ -90,6 +131,16 @@
       "product_version": "bae19fdd7e9e759580ac4693d2df3bc23ab415d7 <7cc438c99bba324a0562b1bafa747b10f7e251df"
     },
     {
+      "id": "cf23491a-0ada-35f5-bac2-babf7043a74f",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.160"
+    },
+    {
       "id": "e617fd53-7d54-3558-bfad-254ed55c84f8",
       "product": {
         "name": "Linux",
@@ -108,16 +159,6 @@
         }
       },
       "product_version": "patch: 0"
-    },
-    {
-      "id": "f57ee06c-4fc2-3134-acb5-ea429a21d721",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc3"
     }
   ],
   "enisaIdVendor": [

@@ -3,7 +3,7 @@
   "enisaUuid": "357546ce-9e10-3970-b396-6c2653a2ad04",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnfc: nci: fix use of uninitialized memory in CORE_INIT_RSP parsing\n\nnci_core_init_rsp_packet_v1() and nci_core_init_rsp_packet_v2() parse\nthe CORE_INIT_RSP packet without validating that the skb contains\nenough data. A malformed response (e.g. injected via virtual_ncidev)\ncan declare a large num_supported_rf_interfaces while providing\ninsufficient data, causing reads of uninitialized slab memory. This\nis later used in nci_init_complete_req(), triggering a KMSAN\nuninit-value warning.\n\nAdd skb length checks before accessing packet fields:\n- Validate the skb has at least 1 byte for the status field.\n- Validate the skb can hold the fixed-size header before parsing.\n- In v2, bounds-check each variable-length rf_interface entry and its\n  extension parameters within the parsing loop.\n- In v1, verify the skb is large enough for both the variable-length\n  rf_interfaces array and the trailing rsp_2 structure.",
   "datePublished": "Sep 17, 2026, 4:07:32 PM",
-  "dateUpdated": "Sep 17, 2026, 4:07:32 PM",
+  "dateUpdated": "Oct 19, 2026, 8:59:57 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/baed3fdf6ed2195c56f25ae18a086b938dcd3983",
@@ -15,10 +15,11 @@
     "https://git.kernel.org/stable/c/d56575a2595ee1f597f39e8a1cfb67ed3501678d"
   ],
   "aliases": [
+    "GHSA-h298-hpmc-3w4v",
     "CVE-2026-90221"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "02968404-601c-34d8-962c-b36c1400dc3b",
@@ -69,6 +70,16 @@
         }
       },
       "product_version": "bcd684aace34fedbd473fbd9b21ed06b0c2d2212 <2f434478771a4ebdd535033561c0590bcde39753"
+    },
+    {
+      "id": "426ab97f-c9c4-34a2-8308-e7914b06d384",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "4fad8135-a091-3ba7-a6ed-cd7f5ffec3a9",
@@ -159,16 +170,6 @@
         }
       },
       "product_version": "patch: 7.2.6"
-    },
-    {
-      "id": "f4e801fa-7017-3139-b8e6-ed3a98e393e4",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "fbaa96b6-0959-390d-a89d-25dd135cb6d2",

@@ -3,7 +3,7 @@
   "enisaUuid": "c9a34df9-754a-30de-bd4b-58ed9e59c42f",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nnet: atlantic: free RX pages of consumed but not refilled buffers\n\naq_ring_rx_deinit() only walks [sw_head, sw_tail), the region posted to\nhardware. Since the page reuse strategy was added, a cleaned RX buffer\nkeeps its page (and its DMA mapping) in the ring for reuse, and refill\nis batched: aq_ring_rx_fill() returns early until AQ_CFG_RX_REFILL_THRES\nslots are free. Slots that were consumed but not yet reposted therefore\nsit in the complementary [sw_tail, sw_head) gap with a live page, and\nthe deinit walk never visits them: up to a refill batch worth of pages\nand DMA mappings leak on every interface down.\n\nWalk the whole ring instead and release whatever is still there. Also\nbail out if the buffer ring is already gone: a partial\naq_ptp_ring_alloc() failure frees the ring but leaves aq_nic set, so\naq_ptp_ring_deinit() still gets here on the unwind path.",
   "datePublished": "Aug 22, 2026, 3:32:05 PM",
-  "dateUpdated": "Aug 22, 2026, 3:32:05 PM",
+  "dateUpdated": "Nov 6, 2026, 5:05:49 PM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1e58b0bab40dcbdfc04acaba6a221d40801c3770",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/e8e7471ef686b6c002218fee9671cc61992ae01a"
   ],
   "aliases": [
+    "GHSA-897x-r623-rfvq",
     "CVE-2026-74622"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.18,
   "enisaIdProduct": [
     {
       "id": "01ea8797-56e5-3363-b220-b946e7df89e4",

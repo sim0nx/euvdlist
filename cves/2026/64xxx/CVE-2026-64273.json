@@ -3,7 +3,7 @@
   "enisaUuid": "bdd7fbf5-1a86-392f-bbad-428e31361105",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nInput: iforce - bound the device-reported force-feedback effect index\n\niforce_process_packet() handles a status report (packet id 0x02) by\ntaking a force-feedback effect index straight from the device wire and\nusing it to address the per-effect state array:\n\n\ti = data[1] & 0x7f;\n\tif (data[1] & 0x80) {\n\t\tif (!test_and_set_bit(FF_CORE_IS_PLAYED,\n\t\t\t\t      iforce->core_effects[i].flags))\n\t\t\t...\n\t} else if (test_and_clear_bit(FF_CORE_IS_PLAYED,\n\t\t\t\t      iforce->core_effects[i].flags)) {\n\t\t...\n\t}\n\nThe index is masked only with 0x7f, so it ranges 0..127, but\ncore_effects[] holds only IFORCE_EFFECTS_MAX (32) entries.  For an index\nof 32..127 the test_and_set_bit()/test_and_clear_bit() is an\nout-of-bounds single-bit read-modify-write past the array.  core_effects[]\nis the second-to-last member of struct iforce, so the write lands in the\ntrailing members and beyond the embedding kzalloc()'d iforce_serio /\niforce_usb object.\n\ndata[1] is unvalidated device payload on both transports (the USB\ninterrupt endpoint and serio), and the status path is not gated on force\nfeedback being present, so a malicious or counterfeit device can set or\nclear a bit at an attacker-chosen offset past the object.\n\nReject an out-of-range index instead of indexing with it.  Bound against\nthe array dimension IFORCE_EFFECTS_MAX rather than dev->ff->max_effects so\nthe check guarantees memory safety regardless of how many effects the\ndevice registered.  A legitimate \"effect started/stopped\" status always\ncarries an index below IFORCE_EFFECTS_MAX, so well-formed devices are\nunaffected; the neighbouring mark_core_as_ready() loop is already bounded\nand is left untouched.",
   "datePublished": "Jul 25, 2026, 8:49:19 AM",
-  "dateUpdated": "Jul 25, 2026, 8:49:19 AM",
+  "dateUpdated": "Aug 17, 2026, 4:52:27 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/b1b79e89bc33e4c682d3df7ae2aadc62b5a0c310",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/0e9943d2e4c63496b6ca84bc66fd3c71d40558e2"
   ],
   "aliases": [
+    "GHSA-mwj6-9jph-6qp6",
     "CVE-2026-64273"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "1890bd75-151f-3f44-b6d6-ed7ac65fe8d6",
@@ -30,16 +31,6 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <d10b0507fa0f5b46764b178e3271f9012f2df677"
-    },
-    {
-      "id": "23161e8f-d207-3748-9f7e-46f9472291e6",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.2-rc1"
     },
     {
       "id": "2a0dbc84-a564-385e-a413-eeed2266869b",
@@ -130,6 +121,16 @@
         }
       },
       "product_version": "1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 <6c0f2901c9d325d4a0574c4237fd507810d225ff"
+    },
+    {
+      "id": "ab6df52d-73f0-3329-a380-cd0a272d6623",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.2"
     },
     {
       "id": "bc1763ae-fcd5-3338-a01f-4d1a606ba801",

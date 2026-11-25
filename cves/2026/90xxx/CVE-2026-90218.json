@@ -3,7 +3,7 @@
   "enisaUuid": "16b3fc06-0aec-3d5b-9f80-fdfe8ef160cd",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nRDMA/cma: Fix WARNING in res_to_rt\n\nsyzbot reported a WARN_ON(!res->dev) in res_to_rt() triggered via\naddr_handler() during asynchronous address resolution:\n\n\"\nWARNING: drivers/infiniband/core/restrack.c:138 at res_to_rt+0x1c4/0x230\nCPU#1: kworker/u8:4/59\nModules linked in:\nCPU: 1 UID: 0 PID: 59 Comm: kworker/u8:4 Not tainted syzkaller #0 PREEMPT(full)\nHardware name: Google Compute Engine, BIOS Google 07/24/2026\nWorkqueue: ib_addr process_one_req\nRIP: 0010:res_to_rt+0x1c4/0x230 drivers/infiniband/core/restrack.c:138\nRSP: 0018:ffffc9000201f850 EFLAGS: 00010293\nRAX: ffffffff88d00ce5 RBX: ffff88807f0fd4f8 RCX: ffff88801e6e0000\nRDX: 0000000000000000 RSI: ffffffff8fd996f0 RDI: 0000000000000003\nRBP: 0000000000000000 R08: ffff88801e6e0000 R09: 000000000000000a\nR10: 0000000000000009 R11: 0000000000000000 R12: dffffc0000000000\nR13: 1ffff1100fe1fa9f R14: 0000000000000000 R15: 0000000000000003\nFS:  0000000000000000(0000) GS:ffff888125012000(0000) knlGS:0000000000000000\nCS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033\nCR2: 00001d559c3d2000 CR3: 0000000077c4c000 CR4: 00000000003526f0\nCall Trace:\n <TASK>\n rdma_restrack_add+0x5a/0x8a0 drivers/infiniband/core/restrack.c:236\n addr_handler+0x41a/0x5a0 drivers/infiniband/core/cma.c:3534\n process_one_req+0x2eb/0x540 drivers/infiniband/core/addr.c:624\n process_one_work kernel/workqueue.c:3375 [inline]\n process_scheduled_works+0xc4e/0x1630 kernel/workqueue.c:3458\n worker_thread+0xa47/0xfb0 kernel/workqueue.c:3539\n kthread+0x388/0x470 kernel/kthread.c:436\n ret_from_fork+0x514/0xb70 arch/x86/kernel/process.c:158\n ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245\n </TASK>\n\"\n\nIn addr_handler(), cma_acquire_dev_by_src_ip() is called to populate\nid_priv->cma_dev and bind the associated ib_device to id_priv->id.device.\nIf cma_acquire_dev_by_src_ip() returns an error (non-zero status), the ID\nremains unassociated with any RDMA device.\n\nPreviously, rdma_restrack_add(&id_priv->res) was invoked unconditionally\neven when cma_acquire_dev_by_src_ip() failed, passing a resource with a\nNULL dev pointer and triggering the WARN_ON assertion in res_to_rt().\n\nFix this by only adding the resource to restrack when acquiring the device\nsucceeds.",
   "datePublished": "Sep 17, 2026, 4:07:30 PM",
-  "dateUpdated": "Sep 17, 2026, 4:07:30 PM",
+  "dateUpdated": "Oct 19, 2026, 8:59:54 AM",
   "baseScore": 0.0,
   "references": [
     "https://git.kernel.org/stable/c/1d7e55ea64dd15769318ba2e0fe0956db82ba3c3",
@@ -16,10 +16,11 @@
     "https://git.kernel.org/stable/c/c6d1ec4fbe56492bb88987d577f04a5fb6955f26"
   ],
   "aliases": [
+    "GHSA-674r-g85v-jff6",
     "CVE-2026-90218"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "06990abd-6a99-3c38-b6a8-f8aed68cfc9b",
@@ -102,6 +103,16 @@
       "product_version": "patch: 5.15.221"
     },
     {
+      "id": "728f31e2-2069-3908-8882-60337583e83e",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
       "id": "7581ff23-d4c9-36c2-8467-d48ed6694bb1",
       "product": {
         "name": "Linux",
@@ -170,16 +181,6 @@
         }
       },
       "product_version": "c5ebaca402f5c5bd61ac8316feb2aa3a0be4d4a8 <1d7e55ea64dd15769318ba2e0fe0956db82ba3c3"
-    },
-    {
-      "id": "d3357c59-828f-3a04-9590-3db2e5976bd0",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "d6e193db-4281-37c5-834d-210ce548d28d",

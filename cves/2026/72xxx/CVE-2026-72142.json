@@ -2,23 +2,25 @@
   "id": "EUVD-2026-58900",
   "enisaUuid": "6d0979df-4feb-3e16-814f-0a5f34ee1497",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\ni2c: imx: fix locked bus on SMBus block-read of 0 (atomic)\n\nSMBus 3.1 6.5.7 allows a Block Read byte count of 0, but the atomic\n(polling) path rejects it as -EPROTO. Worse, it returns without a\nNACK+STOP: the next receive cycle has already started, so the target\nkeeps holding SDA and the bus stays stuck until a power cycle for\nthis i2c controller.\n\nReading I2DR to obtain the count likewise arms the next byte on the\ncount > I2C_SMBUS_BLOCK_MAX path, which also returned -EPROTO directly\nand left the bus held.\n\nHandle both: NACK the in-flight dummy byte (TXAK) and extend msgs->len so\nthe existing last-byte handling emits STOP; the dummy byte is discarded.\nA count of 0 is a valid empty block read; a count above\nI2C_SMBUS_BLOCK_MAX is still reported as -EPROTO, but only after the bus\nhas been released.\n\nThe interrupt-driven path has the same flaw from a later commit and is\nfixed separately, as it carries a different Fixes: tag and stable range.",
-  "datePublished": "Aug 15, 2026, 6:32:13 AM",
-  "dateUpdated": "Aug 15, 2026, 6:32:13 AM",
+  "datePublished": "Aug 15, 2026, 5:53:15 AM",
+  "dateUpdated": "Nov 6, 2026, 4:55:20 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/0f29df3c3d607a9dbc14aed0e45504ced4d2e7ec",
+    "https://git.kernel.org/stable/c/38d4947431b2410850409fda016b2ac9f640a4dd",
+    "https://git.kernel.org/stable/c/e3e8b02d4773cfc5ad561d2e5505efde36c6927a",
     "https://git.kernel.org/stable/c/016ef0f6ca4bc9bf0330ac41bd2ea349759643e3",
     "https://git.kernel.org/stable/c/c882e8cc68fb993700dc21fd6e754001e6297934",
     "https://git.kernel.org/stable/c/6d2c973926d0612360693bc559be2ffde836151b",
     "https://git.kernel.org/stable/c/60ed00d46616a9232e42ea7a3e3c0273d7cf7543",
-    "https://git.kernel.org/stable/c/cb2fc37857693b55909fb77dc2c87cfbc1cdc476",
-    "https://nvd.nist.gov/vuln/detail/CVE-2026-72142"
+    "https://git.kernel.org/stable/c/cb2fc37857693b55909fb77dc2c87cfbc1cdc476"
   ],
   "aliases": [
     "GHSA-63x6-874m-qjjg",
     "CVE-2026-72142"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.22,
   "enisaIdProduct": [
     {
       "id": "1d033929-dd00-3a33-ad90-34ddcae2b29f",
@@ -31,6 +33,16 @@
       "product_version": "patch: 6.18.40"
     },
     {
+      "id": "21abaf52-1861-36fa-bb18-716ecb607833",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e8782c71595a5ad29e234ce6b3d2fce787fb07a <38d4947431b2410850409fda016b2ac9f640a4dd"
+    },
+    {
       "id": "286fcbd5-f7d5-3d10-9c75-754d09aefb2e",
       "product": {
         "name": "Linux",
@@ -41,6 +53,26 @@
       "product_version": "8e8782c71595a5ad29e234ce6b3d2fce787fb07a <60ed00d46616a9232e42ea7a3e3c0273d7cf7543"
     },
     {
+      "id": "3f98b20b-c75c-303a-b45e-10c5f881abc4",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e8782c71595a5ad29e234ce6b3d2fce787fb07a <0f29df3c3d607a9dbc14aed0e45504ced4d2e7ec"
+    },
+    {
+      "id": "400db800-439b-3f8c-8c75-b09d42039638",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.266"
+    },
+    {
       "id": "4113d584-41f4-3e2a-8005-a23efc3a2145",
       "product": {
         "name": "Linux",
@@ -49,6 +81,16 @@
         }
       },
       "product_version": "8e8782c71595a5ad29e234ce6b3d2fce787fb07a <c882e8cc68fb993700dc21fd6e754001e6297934"
+    },
+    {
+      "id": "45cec6ce-fe7d-32d1-84a9-b4861835a0d3",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.184"
     },
     {
       "id": "62564d0d-b9f7-3727-8b6e-c98a0fa39ff5",
@@ -91,6 +133,16 @@
       "product_version": "patch: 7.1.5"
     },
     {
+      "id": "ab692b2b-029b-3440-91d7-7349dc36835c",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.217"
+    },
+    {
       "id": "be3ac421-d189-3012-b455-022b8f0c7351",
       "product": {
         "name": "Linux",
@@ -121,14 +173,24 @@
       "product_version": "8e8782c71595a5ad29e234ce6b3d2fce787fb07a <6d2c973926d0612360693bc559be2ffde836151b"
     },
     {
-      "id": "dedea3de-c178-3927-9dd2-8659dae15f3c",
+      "id": "d699369f-07e8-3cd6-8b81-d239ab2c4b25",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.2-rc4"
+      "product_version": "patch: 7.2"
+    },
+    {
+      "id": "d7c5ba8c-8438-3065-98d7-239bc4da7945",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "8e8782c71595a5ad29e234ce6b3d2fce787fb07a <e3e8b02d4773cfc5ad561d2e5505efde36c6927a"
     },
     {
       "id": "e8603d06-e390-362e-aa67-dad8a97be8cc",

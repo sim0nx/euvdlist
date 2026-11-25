@@ -3,20 +3,37 @@
   "enisaUuid": "4313bb31-8ce5-3386-b57a-7434022c5202",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nmedia: em28xx: fix double free in em28xx_alloc_urbs\n\nWhen allocation of usb_bufs->buf[i] fails, em28xx_alloc_urbs()\nexplicitly frees all items within usb_bufs->buf before calling\nem28xx_uninit_usb_xfer(), which also frees these items, causing them to be\nfreed twice.\n\nBUG: KASAN: double-free in usb_free_urb.part.0 (drivers/usb/core/urb.c:25 ./include/linux/kref.h:65 drivers/usb/core/urb.c:96)\nFree of addr ffff88802fd37c00 by task kworker/1:2/1182\nWorkqueue: events request_module_async\nCall Trace:\n  kasan_report_invalid_free (mm/kasan/report.c:557)\n  check_slab_allocation (mm/kasan/common.c:235)\n  kfree (./include/linux/kasan.h:199 (discriminator 1) mm/slub.c:2693 (discriminator 1) mm/slub.c:6508 (discriminator 1) mm/slub.c:6801 (discriminator 1))\n  usb_free_urb.part.0 (drivers/usb/core/urb.c:25 ./include/linux/kref.h:65 drivers/usb/core/urb.c:96)\n  usb_free_urb (drivers/usb/core/urb.c:95)\n  em28xx_uninit_usb_xfer (drivers/media/usb/em28xx/em28xx-core.c:964)\n  em28xx_alloc_urbs (drivers/media/usb/em28xx/em28xx-core.c:1076)\n  em28xx_dvb_init (drivers/media/usb/em28xx/em28xx-dvb.c:1734 drivers/media/usb/em28xx/em28xx-dvb.c:1698)\n  em28xx_init_extension (drivers/media/usb/em28xx/em28xx-core.c:1248)\n  request_module_async (drivers/media/usb/em28xx/em28xx-cards.c:3685)\n  process_one_work (kernel/workqueue.c:3396)\n  worker_thread (kernel/workqueue.c:3479 kernel/workqueue.c:3560)\n  kthread (kernel/kthread.c:436)\n  ret_from_fork (arch/x86/kernel/process.c:158)\n  ret_from_fork_asm (arch/x86/entry/entry_64.S:245)\n  Allocated by task 1182:\n  kasan_save_stack (mm/kasan/common.c:57)\n  kasan_save_track (mm/kasan/common.c:78)\n  __kasan_kmalloc (mm/kasan/common.c:398 mm/kasan/common.c:415)\n  __kmalloc_noprof (./include/linux/kasan.h:263 mm/slub.c:5414 mm/slub.c:5439)\n  em28xx_alloc_urbs (./include/linux/slab.h:995 ./include/linux/slab.h:1312 drivers/media/usb/em28xx/em28xx-core.c:1081)\n  em28xx_dvb_init (drivers/media/usb/em28xx/em28xx-dvb.c:1734 drivers/media/usb/em28xx/em28xx-dvb.c:1698)\n  em28xx_init_extension (drivers/media/usb/em28xx/em28xx-core.c:1248)\n  request_module_async (drivers/media/usb/em28xx/em28xx-cards.c:3685)\n  process_one_work (kernel/workqueue.c:3396)\n  worker_thread (kernel/workqueue.c:3479 kernel/workqueue.c:3560)\n  kthread (kernel/kthread.c:436)\n  ret_from_fork (arch/x86/kernel/process.c:158)\n  ret_from_fork_asm (arch/x86/entry/entry_64.S:245)\n  Freed by task 1182:\n  kasan_save_stack (mm/kasan/common.c:57)\n  kasan_save_track (mm/kasan/common.c:78)\n  kasan_save_free_info (mm/kasan/generic.c:584)\n  __kasan_slab_free (mm/kasan/common.c:253 mm/kasan/common.c:285)\n  kfree (./include/linux/kasan.h:235 mm/slub.c:2748 mm/slub.c:6508 mm/slub.c:6801)\n  em28xx_alloc_urbs (drivers/media/usb/em28xx/em28xx-core.c:1084)\n  em28xx_dvb_init (drivers/media/usb/em28xx/em28xx-dvb.c:1734 drivers/media/usb/em28xx/em28xx-dvb.c:1698)\n  em28xx_init_extension (drivers/media/usb/em28xx/em28xx-core.c:1248)\n  request_module_async (drivers/media/usb/em28xx/em28xx-cards.c:3685)\n  process_one_work (kernel/workqueue.c:3396)\n  worker_thread (kernel/workqueue.c:3479 kernel/workqueue.c:3560)\n  kthread (kernel/kthread.c:436)\n  ret_from_fork (arch/x86/kernel/process.c:158)\n  ret_from_fork_asm (arch/x86/entry/entry_64.S:245)\n\nRemove the explicit cleanup loop and let em28xx_uninit_usb_xfer()\nhandle the cleanup.",
   "datePublished": "Nov 16, 2026, 9:59:24 AM",
-  "dateUpdated": "Nov 16, 2026, 9:59:24 AM",
-  "baseScore": 0.0,
+  "dateUpdated": "Nov 23, 2026, 8:01:02 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
+    "https://git.kernel.org/stable/c/c4ca656ac8f6ee0808fb6789b1b7abc50acb7b3a",
+    "https://git.kernel.org/stable/c/504fa5e460aa0f0b9b1aa4958c291ad3f0f5faa1",
+    "https://git.kernel.org/stable/c/7e88a3d81166e669d940ac8c1033b8b196d79ba8",
+    "https://git.kernel.org/stable/c/8eaa3f63541dd03ae0457d89dc3e891f37412354",
     "https://git.kernel.org/stable/c/9bc203322dbc8c2fe608555e387d4b493c4da2ef",
     "https://git.kernel.org/stable/c/ecf511b8157e0648080bdae37f4f2eb98328c4b2",
     "https://git.kernel.org/stable/c/660c91b3100c949a0c33faf9d659d1c786ccd1ee",
     "https://git.kernel.org/stable/c/fd427b8adae437cac78a2332241a03cac56e95c2"
   ],
   "aliases": [
+    "GHSA-87xq-p988-hqqv",
     "CVE-2026-99297"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
+    {
+      "id": "17d05157-e140-398b-a4c8-88bf32f3dc2d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d571b592c6206d33731f41aa710fa0f69ac8611b <504fa5e460aa0f0b9b1aa4958c291ad3f0f5faa1"
+    },
     {
       "id": "2d50246b-20f7-37f9-8c04-b89395237bc4",
       "product": {
@@ -26,6 +43,16 @@
         }
       },
       "product_version": "patch: 6.18.63"
+    },
+    {
+      "id": "36667b04-e89c-307f-85dd-a724a1a8c443",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d571b592c6206d33731f41aa710fa0f69ac8611b <c4ca656ac8f6ee0808fb6789b1b7abc50acb7b3a"
     },
     {
       "id": "3767a970-42f0-381d-af2c-72cdef4d5e04",
@@ -58,6 +85,26 @@
       "product_version": "patch: 0"
     },
     {
+      "id": "71938433-373d-3b83-a193-85858fee5285",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d571b592c6206d33731f41aa710fa0f69ac8611b <7e88a3d81166e669d940ac8c1033b8b196d79ba8"
+    },
+    {
+      "id": "843568f5-54bf-31cc-a44b-23b358410fac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.6.163"
+    },
+    {
       "id": "88966368-5bb3-3ac1-8e97-eff25cbc4601",
       "product": {
         "name": "Linux",
@@ -66,6 +113,26 @@
         }
       },
       "product_version": "4.17"
+    },
+    {
+      "id": "8c9f2dcc-15c3-351f-a952-1dce5366bfac",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "d571b592c6206d33731f41aa710fa0f69ac8611b <8eaa3f63541dd03ae0457d89dc3e891f37412354"
+    },
+    {
+      "id": "8ead83f8-9fc4-31b0-8004-e45ab999253b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.1.193"
     },
     {
       "id": "8f50c60d-03f5-383b-bd64-a51c482e16f5",
@@ -88,6 +155,16 @@
       "product_version": "d571b592c6206d33731f41aa710fa0f69ac8611b <9bc203322dbc8c2fe608555e387d4b493c4da2ef"
     },
     {
+      "id": "bc447621-1859-3d5b-9fe9-4c2dd298e016",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.15.226"
+    },
+    {
       "id": "c7fa7dfb-44d4-37a6-ba4e-b1688c11241e",
       "product": {
         "name": "Linux",
@@ -96,6 +173,16 @@
         }
       },
       "product_version": "patch: 6.12.117"
+    },
+    {
+      "id": "cc6fe166-8d19-38b9-ad64-760d03ad74c8",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 5.10.275"
     },
     {
       "id": "d8b22746-d9c8-3d7f-bbf7-d8260902833b",

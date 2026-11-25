@@ -3,17 +3,19 @@
   "enisaUuid": "739611c2-d2db-3574-816f-f714b7eb755c",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nthunderbolt: Make the DP tunnel activation callback mandatory\n\ntb_tunnel_alloc_dp() takes an optional callback which is run from\ndprx_work once the DPRX capabilities read has completed. Without that\ncallback tb_dp_dprx_start() reads the capabilities synchronously and\nnever queues the work. It however always takes a tunnel reference which\nis only dropped by dprx_work itself or by tb_dp_dprx_stop() when\ncancel_delayed_work() actually canceled that work. That reference is\nthus leaked for every tunnel without a callback.\n\nThe only tunnels without one are those from tb_tunnel_discover_dp(),\nwhich are activated again when restoring from hibernation.\nPass the callback to tb_tunnel_discover_dp() as well and drop the\nsynchronous path such that the DPRX capabilities are always read from\ndprx_work. Hibernation restore then also no longer blocks for up to 12\nseconds while waiting for that read to complete.\n\nAlso fix up the KUnit tests.",
   "datePublished": "Oct 18, 2026, 3:46:16 PM",
-  "dateUpdated": "Oct 18, 2026, 3:46:16 PM",
+  "dateUpdated": "Nov 6, 2026, 5:15:04 PM",
   "baseScore": 0.0,
   "references": [
+    "https://git.kernel.org/stable/c/39a2c4e5e606cf49b83595971b449b3fb80743c6",
     "https://git.kernel.org/stable/c/47d60ea801fc333a10c576691eca2e7840b02d3d",
     "https://git.kernel.org/stable/c/12f5d8b85a66a0ac08d082517d92ce136f8c0d42"
   ],
   "aliases": [
+    "GHSA-j976-jwv6-gqm2",
     "CVE-2026-98692"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.17,
   "enisaIdProduct": [
     {
       "id": "4991a520-b048-381f-aad1-6df8c85c7298",
@@ -46,14 +48,14 @@
       "product_version": "patch: 0"
     },
     {
-      "id": "b235292c-ec94-3b6c-a811-1bc4eccaaba9",
+      "id": "a9465643-431f-39c2-9825-bfa9d05b4543",
       "product": {
         "name": "Linux",
         "vendor": {
           "name": "Linux"
         }
       },
-      "product_version": "patch: 7.3-rc6"
+      "product_version": "d6d458d42e1e1544a18f37f1d5c840e00d5261b9 <39a2c4e5e606cf49b83595971b449b3fb80743c6"
     },
     {
       "id": "c1700feb-db93-3adb-b5f3-84c8dc5ae979",
@@ -74,6 +76,26 @@
         }
       },
       "product_version": "6.14"
+    },
+    {
+      "id": "dec817c7-aa84-3328-be80-5a4a0c1266f7",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
+    },
+    {
+      "id": "e40986f4-ff91-3b7a-9dd2-4c8f99d4f03b",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 6.18.61"
     }
   ],
   "enisaIdVendor": [

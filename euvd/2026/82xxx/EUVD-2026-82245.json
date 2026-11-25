@@ -3,8 +3,10 @@
   "enisaUuid": "d77786a4-312d-3c50-835a-95aa913a4a5d",
   "description": "In the Linux kernel, the following vulnerability has been resolved:\n\nbpf: Fix use-after-free on mm_struct in bpf_find_vma()\n\nbpf_find_vma() reads task->mm and calls mmap_read_trylock(mm) without\nholding a reference on the mm. On a foreign task, a concurrent exit_mm()\ncan free the mm_struct between the lockless read and the trylock,\nresulting in a use-after-free. mm_struct is not SLAB_TYPESAFE_BY_RCU.\n\nFor the current task, task->mm is stable. For a foreign task, pin the mm\nunder task->alloc_lock and release it with mmput_async(), mirroring commit\nd8e27d2d22b6 (\"bpf: fix mm lifecycle in open-coded task_vma iterator\").\nUse spin_trylock() instead of get_task_mm() so BPF context does not block\non alloc_lock. Reject irqs-disabled contexts and !CONFIG_MMU on the\nforeign-task path because dropping the mm reference is not safe there.\n\nRace:\n\n  CPU0 (BPF program)                  CPU1 (exiting task)\n  ============================        ==========================\n  bpf_find_vma(foreign_task):\n    mm = task->mm\n                                      exit_mm():\n                                        task->mm = NULL\n                                        mmput(mm) -> frees mm_struct\n    mmap_read_trylock(mm)\n        // UAF on mm",
   "datePublished": "Sep 17, 2026, 4:11:38 PM",
-  "dateUpdated": "Sep 17, 2026, 4:11:38 PM",
-  "baseScore": 0.0,
+  "dateUpdated": "Oct 19, 2026, 9:06:10 AM",
+  "baseScore": 7.8,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
   "references": [
     "https://git.kernel.org/stable/c/db347840d6b6ee9bb9b8e4a985d4b4419f9f3200",
     "https://git.kernel.org/stable/c/8e1101fc4118019a69c96ced4aec93164f89cbd5",
@@ -14,10 +16,11 @@
     "https://git.kernel.org/stable/c/47b079e2117a2ee52e21f8b72935900c702fc0b5"
   ],
   "aliases": [
+    "GHSA-45wg-mg8v-jx77",
     "CVE-2026-93137"
   ],
   "assigner": "Linux",
-  "epss": 0.0,
+  "epss": 0.16,
   "enisaIdProduct": [
     {
       "id": "0743e392-9c78-35f1-8b5e-a7a1ca76eb50",
@@ -28,6 +31,16 @@
         }
       },
       "product_version": "patch: 7.2.6"
+    },
+    {
+      "id": "079db47e-b459-3016-81bb-0d40e2ece11d",
+      "product": {
+        "name": "Linux",
+        "vendor": {
+          "name": "Linux"
+        }
+      },
+      "product_version": "patch: 7.3"
     },
     {
       "id": "280da908-4d9f-3197-b451-3d0f027187ab",
@@ -138,16 +151,6 @@
         }
       },
       "product_version": "patch: 6.1.188"
-    },
-    {
-      "id": "d8b4fb05-b8c8-32f9-9f94-fc646e4035fe",
-      "product": {
-        "name": "Linux",
-        "vendor": {
-          "name": "Linux"
-        }
-      },
-      "product_version": "patch: 7.3-rc1"
     },
     {
       "id": "f273a1e7-ef1e-3b9d-b9ea-5235e4e1768d",
