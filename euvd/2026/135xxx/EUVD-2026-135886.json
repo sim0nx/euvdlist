@@ -1,0 +1,39 @@
+{
+  "id": "EUVD-2026-135886",
+  "enisaUuid": "7854ffcd-781a-3a28-b2b3-02dc29facf2f",
+  "description": "psqlODBC rewrites statement text for keyset-driven cursors and ODBC escapes using positions it found in the text. These positions could lie outside the text or describe another statement:\n\n- After SQLExecDirect() failed on a statement handle, the FROM and WHERE positions of the failed statement were applied to the next, shorter statement on that handle.\n- The parser could record a FROM position with no text after it, and the rewrite then copied a negative length.\n- An {fn \u2026} escape whose arguments contain FOR UPDATE, ; or INTO \u2026 FROM made the driver remove a cursor prefix from the wrong buffer.\n- {fn CONVERT(?, \u2026)} with an output parameter produced a negative argument length.\n- An unclosed {fn \u2026} escape made the driver read past the statement, and a few thousand nested ones exhausted the stack.\n- Translating @@identity in long statement text read an uninitialised pointer, and {? = call \u2026} with nothing bound for the return value dereferenced NULL.\n\nWhoever supplies the text of a statement that an application opens on a keyset-driven or dynamic cursor with a concurrency other than read-only, or calls with an output parameter, can corrupt the application's heap and end it. That includes the users of query tools, report builders and other applications that run SQL their users type. Code execution has not been demonstrated.\n\nVersions up to and including psqlODBC 18.00.0006 are affected.",
+  "datePublished": "Nov 25, 2026, 10:25:54 PM",
+  "dateUpdated": "Nov 25, 2026, 10:25:54 PM",
+  "baseScore": 7.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+  "references": [
+    "https://github.com/postgresql-interfaces/psqlodbc/security/advisories/GHSA-pw7w-x92p-r3q2",
+    "https://odbc.postgresql.org/changelog/"
+  ],
+  "aliases": [
+    "CVE-2026-136515"
+  ],
+  "assigner": "PostgreSQL",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "663a30cd-bdc2-3d26-8cce-a5068107b42f",
+      "product": {
+        "name": "psqlODBC",
+        "vendor": {
+          "name": "PostgreSQL"
+        }
+      },
+      "product_version": "0 \u226418.00.0006"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "6e68b32c-fff2-3cf0-8f7d-206fcb26a514",
+      "vendor": {
+        "name": "PostgreSQL"
+      }
+    }
+  ]
+}
