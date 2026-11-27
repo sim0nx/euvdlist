@@ -1,0 +1,49 @@
+{
+  "id": "EUVD-2026-137047",
+  "enisaUuid": "46e3fe9b-6404-373e-88e3-cf0e5b93fc10",
+  "description": "A code injection vulnerability exists in Epiphany when the user invokes form autofill from the context menu on a page containing a malicious HTML form.\n\nIn embed/web-process-extension/resources/js/ephy_autofill.js, getSelector() builds a CSS selector by directly interpolating an element's id attribute:\n\n    path.unshift(`#${el.id}`);\n\nWhen the user selects an autofill entry, the browser process in embed/ephy-web-view.c previously constructed JavaScript using sprintf with the selector embedded in single quotes:\n\n    EphyAutofill.fill(PAGE_ID, 'SELECTOR', FILL_CHOICE);\n\nBecause SELECTOR comes from attacker-controlled page content and is not escaped, a crafted id such as a'); PAYLOAD; var _=(' breaks out of the string literal and executes arbitrary JavaScript when the script is evaluated.\n\nThe injected code runs in Epiphany's private autofill script world, which hosts EphyAutofill credential APIs and password manager save/request handlers. The reporter demonstrated a proof of concept that injects credentials into another domain and uses Ephy.permissionsManager to enumerate domains with special permissions. Full exfiltration of all saved passwords was not demonstrated but may be possible given the privileges of this context.\n\nExploitation requires the victim to visit a malicious page, right-click on a form field, and choose an Autofill context menu item. This is a deliberate user action but does not require installing software or entering credentials manually.\n\nAffected versions: Epiphany >= 47.beta.\nFixed upstream in epiphany 50.6 and 49.9 via merge request !2147, which replaces sprintf-based script evaluation with a WebKit user message and jsc_value_object_invoke_method() passing the selector as a typed string argument.\nUpstream report: https://gitlab.gnome.org/GNOME/epiphany/-/issues/2921",
+  "datePublished": "Nov 27, 2026, 6:46:35 AM",
+  "dateUpdated": "Nov 27, 2026, 6:46:35 AM",
+  "baseScore": 0.0,
+  "references": [
+    "https://access.redhat.com/security/cve/CVE-2026-77682",
+    "https://bugzilla.redhat.com/show_bug.cgi?id=2520893",
+    "https://gitlab.gnome.org/GNOME/epiphany/-/issues/2921",
+    "https://gitlab.gnome.org/GNOME/epiphany/-/merge_requests/2147"
+  ],
+  "aliases": [
+    "CVE-2026-77682"
+  ],
+  "assigner": "fedora",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "66934b47-fa6c-3bfd-9d9d-9bb17112ef65",
+      "product": {
+        "name": "Epiphany",
+        "vendor": {
+          "name": "Gnome"
+        }
+      },
+      "product_version": "50.0 <50.6"
+    },
+    {
+      "id": "95bf1862-83c4-3c8d-9293-49f9909680e9",
+      "product": {
+        "name": "Epiphany",
+        "vendor": {
+          "name": "Gnome"
+        }
+      },
+      "product_version": "47.0 <49.9"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "18cb2d62-785d-3b7d-b36e-26fe5a4227f6",
+      "vendor": {
+        "name": "Gnome"
+      }
+    }
+  ]
+}
