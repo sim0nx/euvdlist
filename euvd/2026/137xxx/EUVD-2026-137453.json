@@ -1,0 +1,49 @@
+{
+  "id": "EUVD-2026-137453",
+  "enisaUuid": "9516d8b0-797a-3565-bd6f-a9799cba1e6a",
+  "description": "The MCUmgr SMP client matched an incoming response to a pending command in smp_client_response_discover() (subsys/mgmt/mcumgr/smp_client/src/client.c) using only the 8-bit sequence number and the operation. It did not check the transport the response arrived on, or the group and command ID. smp_process_request_packet() hands every MGMT_OP_READ_RSP/MGMT_OP_WRITE_RSP packet received on any SMP transport to smp_client_single_response(), so a response from any SMP peer could complete any pending client command.\n\nOn a device that is both an SMP server (for example over Bluetooth LE or UDP) and an SMP client (CONFIG_SMP_CLIENT, for example using img_mgmt_client to update a companion MCU over UART), a peer on the server transport can send up to 256 forged response packets while a client operation is pending and have one of them accepted as the reply from the managed device. Non-matching responses are dropped silently. The response path bypasses the server command handlers, so restricting which server groups a peer may use does not prevent it.\n\nThe attacker can forge the results of client operations. For example, a forged image-upload offset makes img_mgmt_client_upload() report success after only part of the image was sent, a forged image-state response can report arbitrary versions or flags, and any pending command can be forced to fail. No memory corruption results: the response callbacks bound-check the decoded data. The target's own image validation limits the result to failed or suppressed updates and disrupted management operations. The fix restricts matching to commands sent on the same transport with the same group and command ID. Responses from a different peer on the same transport are still not distinguished.",
+  "datePublished": "Nov 27, 2026, 3:42:03 PM",
+  "dateUpdated": "Nov 27, 2026, 3:42:03 PM",
+  "baseScore": 4.2,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:L",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/7b68698aebe95a761f60d1b3b7621e63b3e67c2c",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-7vjf-63w6-f743"
+  ],
+  "aliases": [
+    "CVE-2026-102962"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "47ca0c33-5cf2-3a94-9d4e-36e835b713fb",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.4.0 <4.5.0"
+    },
+    {
+      "id": "9183745d-4b2b-3858-86e2-a6c4b51042bc",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "3.5.0 <4.3.2"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "2ea9ede7-b3ec-3aca-aee8-6a5cbe507dbb",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}

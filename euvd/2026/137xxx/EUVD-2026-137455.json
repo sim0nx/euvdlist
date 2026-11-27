@@ -1,0 +1,39 @@
+{
+  "id": "EUVD-2026-137455",
+  "enisaUuid": "df8d966f-b940-36b3-a9f6-da65b022f4a9",
+  "description": "dns_resolve_cancel_with_name() in subsys/net/lib/dns/resolve.c looks up the pending query to cancel by DNS id plus a hash of the name the caller originally asked for. When a reply contains only a CNAME, the resolver sends a new query for the alias and overwrites the slot's query_hash with the hash of the alias name. After one or more CNAME hops, cancelling by the original name silently fails with -ENOENT and the query stays pending.\n\nzsock_getaddrinfo() (exec_query() in subsys/net/lib/sockets/getaddrinfo.c) passes a pointer to its stack-local ai_state as the resolver callback context. When its semaphore wait times out, it calls dns_cancel_addr_info_with_name(), ignores the result, and returns. The CNAME re-query restarts the resolver timer, so a CNAME-only response that arrives more than about 100 ms after the query lets the getaddrinfo() wait expire first. The cancel then fails and getaddrinfo() returns. An attacker who can supply DNS responses can trigger this reliably: a malicious or compromised DNS server, an on-path attacker, or any host on the link for mDNS/LLMNR lookups. The device only has to resolve a name with getaddrinfo().\n\nWhen the orphaned query later times out, dns_resolve_cb() writes the status and calls k_sem_give() on the dead stack frame. If the attacker answers the alias query instead, the callback copies attacker-supplied address data through a stale ai_arr pointer read from the reused stack. The result is a kernel fault (denial of service) or memory corruption in the calling thread's stack and whatever memory the stale pointer references.",
+  "datePublished": "Nov 27, 2026, 3:42:06 PM",
+  "dateUpdated": "Nov 27, 2026, 3:42:06 PM",
+  "baseScore": 6.5,
+  "baseScoreVersion": "3.1",
+  "baseScoreVector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:H",
+  "references": [
+    "https://github.com/zephyrproject-rtos/zephyr/commit/50a1257c045af73bc3e00df92728ede68627ffe8",
+    "https://github.com/zephyrproject-rtos/zephyr/security/advisories/GHSA-j577-282h-9jjr"
+  ],
+  "aliases": [
+    "CVE-2026-102963"
+  ],
+  "assigner": "zephyr",
+  "epss": 0.0,
+  "enisaIdProduct": [
+    {
+      "id": "3ac7b023-c67d-38b7-97ae-d957d37645e4",
+      "product": {
+        "name": "Zephyr",
+        "vendor": {
+          "name": "zephyrproject-rtos"
+        }
+      },
+      "product_version": "4.4.2 <4.5.0"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "a5b72591-bdb1-3f43-b802-a8b28b746e6c",
+      "vendor": {
+        "name": "zephyrproject"
+      }
+    }
+  ]
+}
